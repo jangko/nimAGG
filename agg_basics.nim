@@ -1,3 +1,5 @@
+import math
+
 template `+`*[T](p: ptr T, off: int): ptr T =
   cast[ptr type(p[])](cast[ByteAddress](p) +% off * sizeof(p[]))
 
@@ -27,3 +29,11 @@ template doWhile*(a: typed, b: typed) =
     b
     if not a:
       break
+
+type
+  const_row_info*[T] = object
+    x1, x2: int
+    data: ptr T
+        
+proc uround*(x: float64): int {.inline.} =
+  result = math.round(x).int
