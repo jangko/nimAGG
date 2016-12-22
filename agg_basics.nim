@@ -21,8 +21,14 @@ template `-=`*[T](p: ptr T, off: int) =
 template `[]`*[T](p: ptr T, off: int): T =
   (p + off)[]
 
+template `[]`*[O: enum; T](p: ptr T, off: O): T =
+  (p + off.ord)[]
+
 template `[]=`*[T](p: ptr T, off: int, val: T) =
   (p + off)[] = val
+
+template `[]=`*[O: enum; T](p: ptr T, off: O, val: T) =
+  (p + off.ord)[] = val
 
 template doWhile*(a: typed, b: typed) =
   while true:
@@ -31,7 +37,7 @@ template doWhile*(a: typed, b: typed) =
       break
 
 type
-  const_row_info*[T] = object
+  RowInfo*[T] = object
     x1, x2: int
     data: ptr T
         

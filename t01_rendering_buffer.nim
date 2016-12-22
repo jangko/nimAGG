@@ -25,7 +25,7 @@ proc draw_black_frame(rbuf: var RenderingBuffer) =
 proc main() =
   var buffer = newString(frame_width * frame_height * 3)
   for i in 0.. <buffer.len: buffer[i] = 255.chr
-  var rbuf = initRowAccessor(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
+  var rbuf = newRenderingBuffer(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
 
   let h = rbuf.height() div 2
   for i in 0.. <h:
@@ -39,6 +39,6 @@ proc main() =
     row[] = 98;  row.inc # B
     
   draw_black_frame(rbuf)
-  saveBMP24("test.bmp", buffer, frame_width, frame_height)
+  saveBMP24("tut01.bmp", buffer, frame_width, frame_height)
 
 main()

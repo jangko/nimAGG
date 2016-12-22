@@ -1,6 +1,6 @@
 import agg_basics, agg_color_conv
 
-proc color_conv_gray16_to_gray8*(dst, src: ptr uint8, width: int) =
+proc color_conv_gray16_to_gray8*(dst, src: ptr uint8, width: int) {.procvar.} =
   var
     s = cast[ptr uint16](src)
     d = dst
@@ -13,7 +13,7 @@ proc color_conv_gray16_to_gray8*(dst, src: ptr uint8, width: int) =
     dec w
 
 template color_conv_rgb24_rgb48(I1, I3: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int){.procvar.}  =
     var
       d = cast[ptr uint16](dst)
       s = src
@@ -33,7 +33,7 @@ color_conv_rgb24_rgb48(2,0, color_conv_bgr24_to_rgb48)
 
 
 template color_conv_rgb48_rgb24(I1, I3: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = cast[ptr uint16](src)
       d = dst
@@ -53,7 +53,7 @@ color_conv_rgb48_rgb24(2,0, color_conv_bgr48_to_rgb24)
 
 
 template color_conv_rgbAAA_rgb24(R, B: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = src
       d = dst
@@ -75,7 +75,7 @@ color_conv_rgbAAA_rgb24(0,2, color_conv_bgrAAA_to_bgr24)
 
 
 template color_conv_rgbBBA_rgb24(R, B: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = src
       d = dst
@@ -95,7 +95,7 @@ color_conv_rgbBBA_rgb24(2,0, color_conv_rgbBBA_to_bgr24)
 
 
 template color_conv_bgrABB_rgb24(B, R: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = src
       d = dst
@@ -115,7 +115,7 @@ color_conv_bgrABB_rgb24(0,2, color_conv_bgrABB_to_bgr24)
 
 
 template color_conv_rgba64_rgba32(I1, I2, I3, I4: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = cast[ptr uint16](src)
       d = dst
@@ -148,7 +148,7 @@ color_conv_rgba64_rgba32(3,2,1,0, color_conv_abgr64_to_rgba32)  #----color_conv_
 
 
 template color_conv_rgb24_rgba64(I1, I2, I3, A: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = src
       d = cast[ptr uint16](dst)
@@ -174,7 +174,7 @@ color_conv_rgb24_rgba64(2,1,0,3, color_conv_bgr24_to_rgba64)  #----color_conv_bg
 
 
 template color_conv_rgb24_gray16(R, B: int, x: untyped) =
-  proc x*(dst, src: ptr uint8, width: int) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
       s = src
       d = cast[ptr uint16](dst)

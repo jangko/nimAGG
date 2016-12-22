@@ -7,9 +7,9 @@ const
 proc main() =
   var buffer = newString(frame_width * frame_height * 3)
   for i in 0.. <buffer.len: buffer[i] = 255.chr
-  var rbuf = initRowAccessor(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
+  var rbuf = newRenderingBuffer(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
   var pixf = initPixFmtRgb24(rbuf)
-  var span: array[frame_width, rgba8]
+  var span: array[frame_width, Rgba8]
 
   let f = frame_width.float
   for i in 0.. <frame_width:
@@ -17,8 +17,8 @@ proc main() =
     span[i] = initRgba8(c)
   
   for i in 0.. <frame_height:
-    pixf.blend_color_hspan(0, i, frame_width, span[0].addr, nil, 255)
+    pixf.blendColorHspan(0, i, frame_width, span[0].addr, nil, 255)
   
-  saveBMP24("test.bmp", buffer, frame_width, frame_height)
+  saveBMP24("tut04.bmp", buffer, frame_width, frame_height)
   
 main()

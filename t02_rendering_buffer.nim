@@ -6,7 +6,7 @@ const
 
 # Draw a black frame around the rendering buffer, assuming it has 
 # RGB-structure, one byte per color component
-proc draw_black_frame(rbuf: var RenderingBuffer) =
+proc draw_black_frame(rbuf: RenderingBuffer) =
   let h = rbuf.height()
   for i in 0.. <h:
     var p = rbuf.rowPtr(i)
@@ -25,7 +25,7 @@ proc draw_black_frame(rbuf: var RenderingBuffer) =
 proc main() =
   var buffer = newString(frame_width * frame_height * 3)
   for i in 0.. <buffer.len: buffer[i] = 255.chr
-  var rbuf = initRowAccessor(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
+  var rbuf = newRenderingBuffer(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
 
   # Draw the outer black frame
   draw_black_frame(rbuf)
@@ -55,6 +55,6 @@ proc main() =
     
   # draw inner frame
   draw_black_frame(rbuf)
-  saveBMP24("test.bmp", buffer, frame_width, frame_height)
+  saveBMP24("tut02.bmp", buffer, frame_width, frame_height)
 
 main()

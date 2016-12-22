@@ -1,64 +1,64 @@
 import agg_basics, math
 
 type  
-  order_rgb* {.pure.} = enum
+  OrderRgb* {.pure.} = enum
     R=0, G=1, B=2
     
-  order_bgr* {.pure.} = enum
+  OrderBgr* {.pure.} = enum
     B=0, G=1, R=2
 
-  order_rgba* {.pure.} = enum 
+  OrderRgba* {.pure.} = enum 
     R=0, G=1, B=2, A=3
     
-  order_argb* {.pure.} = enum 
+  OrderArgb* {.pure.} = enum 
     A=0, R=1, G=2, B=3
     
-  order_abgr* {.pure.} = enum 
+  OrderAbgr* {.pure.} = enum 
     A=0, B=1, G=2, R=3
     
-  order_bgra* {.pure.} = enum 
+  OrderBgra* {.pure.} = enum 
     B=0, G=1, R=2, A=3
 
-  rgba* = object
+  Rgba* = object
     r*, g*, b*, a*: float64
     
-  rgba8* = object
+  Rgba8* = object
     r*, g*, b*, a*: uint8
   
-  rgba16* = object
+  Rgba16* = object
     r*, g*, b*, a*: uint16
     
-proc initRgba*(): rgba =
-  result = rgba(r:0.0, g:0.0, b:0.0, a:0.0)
+proc initRgba*(): Rgba =
+  result = Rgba(r:0.0, g:0.0, b:0.0, a:0.0)
   
-proc initRgba*(r,g,b: float64, a=1.0'f64): rgba =
-  result = rgba(r:r, g:g, b:b, a:a)
+proc initRgba*(r,g,b: float64, a=1.0'f64): Rgba =
+  result = Rgba(r:r, g:g, b:b, a:a)
   
-proc initRgba*(c: rgba, a: float64): rgba =
-  result = rgba(r:c.r, g:c.g, b:c.b, a:a)
+proc initRgba*(c: Rgba, a: float64): Rgba =
+  result = Rgba(r:c.r, g:c.g, b:c.b, a:a)
 
-proc clear*(c: var rgba) =
+proc clear*(c: var Rgba) =
   c.r = 0.0; c.g = 0.0; c.b = 0.0; c.a = 0.0
   
-proc transparent*(c: var rgba): var rgba {.discardable.} =
+proc transparent*(c: var Rgba): var Rgba {.discardable.} =
   c.a = 0.0
   result = c
   
-proc opacity*(c: var rgba, a: float64): var rgba {.discardable.} =
+proc opacity*(c: var Rgba, a: float64): var Rgba {.discardable.} =
   if a < 0.0: c.a = 0.0
   if a > 1.0: c.a = 1.0
   result = c
   
-proc opacity*(c: rgba): float64 =
+proc opacity*(c: Rgba): float64 =
   result = c.a
         
-proc premultiply*(c: var rgba): var rgba {.discardable.} =
+proc premultiply*(c: var Rgba): var Rgba {.discardable.} =
   c.r = c.r * c.a
   c.g = c.g * c.a
   c.b = c.b * c.a
   result = c
         
-proc premultiply*(c: var rgba, a: float64): var rgba {.discardable.} =
+proc premultiply*(c: var Rgba, a: float64): var Rgba {.discardable.} =
   if (c.a <= 0.0) or (a <= 0.0):
     c.r = 0.0
     c.g = 0.0
@@ -72,7 +72,7 @@ proc premultiply*(c: var rgba, a: float64): var rgba {.discardable.} =
   c.b = c.b * c.a
   result = c
         
-proc demultiply*(c: var rgba): var rgba {.discardable.} =
+proc demultiply*(c: var Rgba): var Rgba {.discardable.} =
   if c.a == 0.0:
     c.r = 0.0
     c.g = 0.0
@@ -86,15 +86,15 @@ proc demultiply*(c: var rgba): var rgba {.discardable.} =
   c.b = c.r * a
   result = c
         
-proc gradient*(a, c: rgba, k: float64): rgba =
+proc gradient*(a, c: Rgba, k: float64): Rgba =
   result.r = a.r + (c.r - a.r) * k
   result.g = a.g + (c.g - a.g) * k
   result.b = a.b + (c.b - a.b) * k
   result.a = a.a + (c.a - a.a) * k
         
-proc rgba_no_color*(): rgba = initRgba()
+proc RgbaNoColor*(): Rgba = initRgba()
         
-proc rgba_from_wavelength*(wl: float64, gamma = 1.0'f64): rgba =
+proc RgbaFromWavelength*(wl: float64, gamma = 1.0'f64): Rgba =
   var t = initRgba(0.0, 0.0, 0.0)
 
   if(wl >= 380.0) and (wl <= 440.0):
@@ -126,48 +126,48 @@ proc rgba_from_wavelength*(wl: float64, gamma = 1.0'f64): rgba =
   t.b = math.pow(t.b * s, gamma)
   result = t
         
-proc rgba_pre*(r, g, b: float64, a = 1.0'f64): rgba {.inline.} =
+proc Rgba_pre*(r, g, b: float64, a = 1.0'f64): Rgba {.inline.} =
   result = initRgba(r, g, b, a)
   result.premultiply()
     
-proc rgba_pre*(c: rgba): rgba {.inline.} =
+proc Rgba_pre*(c: Rgba): Rgba {.inline.} =
   result = c
   result.premultiply()
   
-proc rgba_pre*(c: rgba, a: float64): rgba {.inline.} =
+proc Rgba_pre*(c: Rgba, a: float64): Rgba {.inline.} =
   result = initRgba(c, a)
   result.premultiply()
 
-proc initRgba*(wavelen: float64, gamma = 1.0'f64): rgba =
-  result = rgba_from_wavelength(wavelen, gamma)
+proc initRgba*(wavelen: float64, gamma = 1.0'f64): Rgba =
+  result = RgbaFromWavelength(wavelen, gamma)
         
-template get_value_type*(x: typedesc[rgba8]): typedesc = uint8
-template get_calc_type*(x: typedesc[rgba8]): typedesc = uint32
-template get_long_type*(x: typedesc[rgba8]): typedesc = int32
-template get_base_shift*(x: typedesc[rgba8]): int = 8
-template get_base_scale*(x: typedesc[rgba8]): int = 1 shl get_base_shift(x)
-template get_base_mask*(x: typedesc[rgba8]): int = get_base_scale(x) - 1
+template getValueType*(x: typedesc[Rgba8]): typedesc = uint8
+template getCalcType*(x: typedesc[Rgba8]): typedesc = uint32
+template getLongType*(x: typedesc[Rgba8]): typedesc = int32
+template getBaseShift*(x: typedesc[Rgba8]): int = 8
+template getBaseScale*(x: typedesc[Rgba8]): int = 1 shl getBaseShift(x)
+template getBaseMask*(x: typedesc[Rgba8]): int = getBaseScale(x) - 1
 
-proc initRgba8*(r,g,b:uint): rgba8 =
-  type value_type = get_value_type(rgba8)
-  result.r = r.value_type
-  result.g = g.value_type
-  result.b = b.value_type
-  result.a = get_base_mask(rgba8).value_type
+proc initRgba8*(r,g,b:uint): Rgba8 =
+  type ValueType = getValueType(Rgba8)
+  result.r = r.ValueType
+  result.g = g.ValueType
+  result.b = b.ValueType
+  result.a = getBaseMask(Rgba8).ValueType
         
-proc initRgba8*(c: rgba): rgba8 =
-  type value_type = get_value_type(rgba8)
-  const base_mask = get_base_mask(rgba8).float64
-  result.r = value_type(uround(c.r * base_mask))
-  result.g = value_type(uround(c.g * base_mask))
-  result.b = value_type(uround(c.b * base_mask))
-  result.a = value_type(uround(c.a * base_mask))
+proc initRgba8*(c: Rgba): Rgba8 =
+  type ValueType = getValueType(Rgba8)
+  const baseMask = getBaseMask(Rgba8).float64
+  result.r = ValueType(uround(c.r * baseMask))
+  result.g = ValueType(uround(c.g * baseMask))
+  result.b = ValueType(uround(c.b * baseMask))
+  result.a = ValueType(uround(c.a * baseMask))
             
             
-template get_value_type*(x: typedesc[rgba16]): typedesc = uint16
-template get_calc_type*(x: typedesc[rgba16]): typedesc = uint32
-template get_long_type*(x: typedesc[rgba16]): typedesc = int64
-template get_base_shift*(x: typedesc[rgba16]): int = 16
-template get_base_scale*(x: typedesc[rgba16]): int = 1 shl get_base_shift(x)
-template get_base_mask*(x: typedesc[rgba16]): int = get_base_scale(x) - 1
+template getValueType*(x: typedesc[Rgba16]): typedesc = uint16
+template getCalcType*(x: typedesc[Rgba16]): typedesc = uint32
+template getLongType*(x: typedesc[Rgba16]): typedesc = int64
+template getBaseShift*(x: typedesc[Rgba16]): int = 16
+template getBaseScale*(x: typedesc[Rgba16]): int = 1 shl getBaseShift(x)
+template getBaseMask*(x: typedesc[Rgba16]): int = getBaseScale(x) - 1
 
