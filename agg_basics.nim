@@ -43,3 +43,10 @@ type
         
 proc uround*(x: float64): int {.inline.} =
   result = math.round(x).int
+  
+const
+  coverShift* = 8                  #----cover_shift
+  coverSize*  = 1 shl cover_shift  #----cover_size 
+  coverMask*  = cover_size - 1     #----cover_mask 
+  coverNone*  = 0                  #----cover_none 
+  coverFull*  = cover_mask         #----cover_full 

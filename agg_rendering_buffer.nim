@@ -72,7 +72,7 @@ proc copyFrom*[T](self, src: RowAccessor[T]) =
   for y in 0.. <h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), s)
 
-proc clear*[T](self, src: RowAccessor[T], value: T) =
+proc clear*[T](self: RowAccessor[T], value: T) =
   let
     w = self.width.int
     h = self.height.int
@@ -85,7 +85,7 @@ proc clear*[T](self, src: RowAccessor[T], value: T) =
       inc p
 
 
-proc attach*[T](self: RowPtrCache, buf: ptr T, width, height: uint, stride: int): RowPtrCache[T] =
+proc attach*[T](self: RowPtrCache, buf: ptr T, width, height: uint, stride: int) =
   self.buf = buf
   self.width = width
   self.height = height
@@ -103,6 +103,7 @@ proc attach*[T](self: RowPtrCache, buf: ptr T, width, height: uint, stride: int)
     inc(p, stride)
 
 proc newRowPtrCache*[T](buf: ptr T, width, height: uint, stride: int): RowPtrCache[T] =
+  new(result)
   result.buf = nil
   result.rows = newSeq[ptr T](height.int)
   result.width = 0
@@ -146,7 +147,7 @@ proc copyFrom*[T](self, src: RowPtrCache[T]) =
   for y in 0.. <h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), s)
 
-proc clear*[T](self, src: RowPtrCache[T], value: T) =
+proc clear*[T](self: RowPtrCache[T], value: T) =
   let
     w = self.width.int
     h = self.height.int

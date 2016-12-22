@@ -1,5 +1,5 @@
 AGGLIBS= -lagg 
-AGGCXXFLAGS = -O3
+AGGCXXFLAGS = -O3 -static-libgcc -static-libstdc++
 CXX = g++
 C = gcc
 #CXX = icc

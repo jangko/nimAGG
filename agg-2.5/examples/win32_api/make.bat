@@ -85,7 +85,7 @@ cd ..
 cd image_resample
 mingw32-make
 cd ..
-cd images1
+cd image1
 mingw32-make
 cd ..
 cd line_patterns

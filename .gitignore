@@ -2,3 +2,4 @@ nimcache
 master
 *.exe
 *.bmp
+*.o
