@@ -1,4 +1,2 @@
-test color_rgba
-
 translate pixfmt_rgb
 test pixfmt_rgb

@@ -82,8 +82,8 @@ proc demultiply*(c: var Rgba): var Rgba {.discardable.} =
 
   let a = 1.0 / c.a
   c.r = c.r * a
-  c.g = c.r * a
-  c.b = c.r * a
+  c.g = c.g * a
+  c.b = c.b * a
   result = c
 
 proc gradient*(a, c: Rgba, k: float64): Rgba =
