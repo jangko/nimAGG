@@ -61,7 +61,7 @@ proc rowPtr*[T](self: RowAccessor[T], x, y, z: int): ptr T {.inline.} =
   result = self.start + y * self.stride
 
 proc row*[T](self: RowAccessor[T], y: int): RowInfo[T] {.inline.} =
-  result = RowInfo(x1:0, x2:(self.width-1).int, data: self.rowPtr(y))
+  result = RowInfo[T](x1:0, x2:(self.width-1).int, data: self.rowPtr(y))
 
 proc copyFrom*[T](self, src: RowAccessor[T]) =
   let

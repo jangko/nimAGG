@@ -105,7 +105,7 @@ proc test_rgba8() =
   doAssert(a == b)
   
   var g = create_gamma_lut8()
-  var h = initGammaLut()
+  var h = newGammaLut()
   
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
@@ -120,7 +120,7 @@ proc test_rgba8() =
   doAssert(a == b)
   
   g = create_gamma_lut8_a(cdouble(0.6))
-  h = initGammaLut(0.6)
+  h = newGammaLut(0.6)
   
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
@@ -175,7 +175,7 @@ proc test_Rgba16() =
   doAssert(a == b)
   
   var g = create_gamma_lut16()
-  var h = initGammaLut16()
+  var h = newGammaLut16()
   
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
@@ -190,7 +190,7 @@ proc test_Rgba16() =
   doAssert(a == b)
   
   g = create_gamma_lut16_a(cdouble(0.6))
-  h = initGammaLut16(0.6)
+  h = newGammaLut16(0.6)
   
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a

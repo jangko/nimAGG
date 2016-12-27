@@ -38,8 +38,8 @@ template doWhile*(a: typed, b: typed) =
 
 type
   RowInfo*[T] = object
-    x1, x2: int
-    data: ptr T
+    x1*, x2*: int
+    data*: ptr T
         
 proc uround*(x: float64): int {.inline.} =
   result = math.round(x).int
