@@ -1,9 +1,9 @@
 renderer_scanline
 renderer_scanline_p
-renderer_base
 ellipse
 
 translate ok:
+renderer_base
 rasterizer_scanline_aa
 rasterizer_cells_aa
 rasterizer_sl_clip
@@ -14,3 +14,7 @@ test pending:
     blendFromColor
     blendFromLut
     attach
+  pixfmt_gray:
+    blendFromColor
+    blendFromLut
+    

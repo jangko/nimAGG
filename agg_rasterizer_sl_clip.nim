@@ -6,47 +6,47 @@ const
 type
   RasConvInt* = object
 
-template mulDiv*(x: typedesc[RasConvInt], a, b, c: float64): int = iround((a) * (b) / (c))
-template xi*(x: typedesc[RasConvInt], v: int): int = (v)
-template yi*(x: typedesc[RasConvInt], v: int): int = (v)
-template upscale*(x: typedesc[RasConvInt], v: float64): int = iround((v) * polySubpixelScale)
-template downscale*(x: typedesc[RasConvInt], v: int): int = (v)
+proc mulDiv*(x: typedesc[RasConvInt], a, b, c: float64): int = iround((a) * (b) / (c))
+proc xi*(x: typedesc[RasConvInt], v: int): int = (v)
+proc yi*(x: typedesc[RasConvInt], v: int): int = (v)
+proc upscale*(x: typedesc[RasConvInt], v: float64): int = iround((v) * polySubpixelScale)
+proc downscale*(x: typedesc[RasConvInt], v: int): int = (v)
 
 type
   RasConvIntSat* = object
 
-template mulDiv*(x: typedesc[RasConvIntSat], a, b, c: float64): int = iround((a) * (b) / (c), polyMaxCoord)
-template xi*(x: typedesc[RasConvIntSat], v: int): int = (v)
-template yi*(x: typedesc[RasConvIntSat], v: int): int = (v)
-template upscale*(x: typedesc[RasConvIntSat], v: float64): int = iround((v) * polySubpixelScale, polyMaxCoord)
-template downscale*(x: typedesc[RasConvIntSat], v: int): int = (v)
+proc mulDiv*(x: typedesc[RasConvIntSat], a, b, c: float64): int = iround((a) * (b) / (c), polyMaxCoord)
+proc xi*(x: typedesc[RasConvIntSat], v: int): int = (v)
+proc yi*(x: typedesc[RasConvIntSat], v: int): int = (v)
+proc upscale*(x: typedesc[RasConvIntSat], v: float64): int = iround((v) * polySubpixelScale, polyMaxCoord)
+proc downscale*(x: typedesc[RasConvIntSat], v: int): int = (v)
 
 type
   RasConvInt3x* = object
 
-template mulDiv*(x: typedesc[RasConvInt3x], a, b, c: float64): int = iround((a) * (b) / (c))
-template xi*(x: typedesc[RasConvInt3x], v: int): int = ((v) * 3)
-template yi*(x: typedesc[RasConvInt3x], v: int): int = (v)
-template upscale*(x: typedesc[RasConvInt3x], v: float64): int = iround((v) * polySubpixelScale)
-template downscale*(x: typedesc[RasConvInt3x], v: int): int = (v)
+proc mulDiv*(x: typedesc[RasConvInt3x], a, b, c: float64): int = iround((a) * (b) / (c))
+proc xi*(x: typedesc[RasConvInt3x], v: int): int = ((v) * 3)
+proc yi*(x: typedesc[RasConvInt3x], v: int): int = (v)
+proc upscale*(x: typedesc[RasConvInt3x], v: float64): int = iround((v) * polySubpixelScale)
+proc downscale*(x: typedesc[RasConvInt3x], v: int): int = (v)
 
 type
   RasConvDbl* = object
 
-template mulDiv*(x: typedesc[RasConvDbl], a, b, c: float64): float64 = ((a) * (b) / (c))
-template xi*(x: typedesc[RasConvDbl], v: float64): int = iround((v) * polySubPixelScale)
-template yi*(x: typedesc[RasConvDbl], v: float64): int = iround((v) * polySubPixelScale)
-template upscale*(x: typedesc[RasConvDbl], v: float64): float64 = (v)
-template downscale*(x: typedesc[RasConvDbl], v: int): float64 = ((v)float64 / polySubPixelScale.float64)
+proc mulDiv*(x: typedesc[RasConvDbl], a, b, c: float64): float64 = ((a) * (b) / (c))
+proc xi*(x: typedesc[RasConvDbl], v: float64): int = iround((v) * polySubPixelScale)
+proc yi*(x: typedesc[RasConvDbl], v: float64): int = iround((v) * polySubPixelScale)
+proc upscale*(x: typedesc[RasConvDbl], v: float64): float64 = (v)
+proc downscale*(x: typedesc[RasConvDbl], v: int): float64 = ((v)float64 / polySubPixelScale.float64)
 
 type
   RasConvDbl3x* = object
 
-template mulDiv*(x: typedesc[RasConvDbl3x], a, b, c: float64): float64 = ((a) * (b) / (c))
-template xi*(x: typedesc[RasConvDbl3x], v: float64): int = iround((v) * polySubPixelScale * 3)
-template yi*(x: typedesc[RasConvDbl3x], v: float64): int = iround((v) * polySubPixelScale)
-template upscale*(x: typedesc[RasConvDbl3x], v: float64): float64 = (v)
-template downscale*(x: typedesc[RasConvDbl3x], v: int): float64 = ((v)float64 / polySubPixelScale.float64)
+proc mulDiv*(x: typedesc[RasConvDbl3x], a, b, c: float64): float64 = ((a) * (b) / (c))
+proc xi*(x: typedesc[RasConvDbl3x], v: float64): int = iround((v) * polySubPixelScale * 3)
+proc yi*(x: typedesc[RasConvDbl3x], v: float64): int = iround((v) * polySubPixelScale)
+proc upscale*(x: typedesc[RasConvDbl3x], v: float64): float64 = (v)
+proc downscale*(x: typedesc[RasConvDbl3x], v: int): float64 = ((v)float64 / polySubPixelScale.float64)
 
 template rasterizerSlClip(Conv, name: untyped, CoordType) =
   type

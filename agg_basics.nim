@@ -52,6 +52,9 @@ proc iround*(v: float64, Limit: static[int]): int {.inline.} =
   if v > float64( Limit): return  Limit
   result = iround(v)
 
+type
+  CoverType* = uint8
+
 const
   coverShift* = 8                  #----cover_shift
   coverSize*  = 1 shl cover_shift  #----cover_size
@@ -81,6 +84,10 @@ proc initRectBase*[T](x1, y1, x2, y2: T): RectBase[T] =
   result.y1 = y1
   result.x2 = x2
   result.y2 = y2
+
+template initRectI*(x1, y1, x2, y2: untyped) = initRectBase[int](x1, y1, x2, y2)
+template initRectF*(x1, y1, x2, y2: untyped) = initRectBase[float32](x1, y1, x2, y2)
+template initRectD*(x1, y1, x2, y2: untyped) = initRectBase[float64](x1, y1, x2, y2)
 
 proc normalize*[T](r: var RectBase[T]) =
   if r.x1 > r.x2: swap(r.x1, r.x2)
@@ -124,13 +131,13 @@ const
   pathCmdUbspline* = 7'u
   pathCmdEndPoly*  = 0x0F'u
   pathCmdMask*     = 0x0F'u
-  
+
   pathFlagsNone*  = 0'u
   pathFlagsCcw*   = 0x10'u
   pathFlagsCw*    = 0x20'u
   pathFlagsClose* = 0x40'u
   pathFlagsMask*  = 0xF0'u
-  
+
 proc isVertex*(c: uint): bool {.inline.} =
   result = c >= pathCmdMoveTo and c < pathCmdEndPoly
 

@@ -153,7 +153,7 @@ proc add*(self: var Gray8, c: Gray8, cover: uint) {.inline.} =
     self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
     self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
 
-proc Gray8NoColor*(): Gray8 = Gray8(v: 0, a: 0)
+proc noColor*(x: typedesc[Gray8]): Gray8 = Gray8(v: 0, a: 0)
 
 proc Gray8Pre*(v: uint): Gray8 =
   const baseMask = getBaseMask(Gray8)
@@ -339,7 +339,7 @@ proc add*(self: var Gray16, c: Gray16, cover: uint) {.inline.} =
     self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
     self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
 
-proc Gray16NoColor*(): Gray16 = Gray16(v:0, a:0)
+proc noColor*(x: typedesc[Gray16]): Gray16 = Gray16(v:0, a:0)
 
 proc Gray16Pre*(v: uint): Gray16 =
   const baseMask = getBaseMask(Gray16)

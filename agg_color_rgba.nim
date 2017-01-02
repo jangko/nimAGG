@@ -92,7 +92,7 @@ proc gradient*(a, c: Rgba, k: float64): Rgba =
   result.b = a.b + (c.b - a.b) * k
   result.a = a.a + (c.a - a.a) * k
 
-proc rgbaNoColor*(): Rgba = initRgba()
+proc noColor*(x: typedesc[Rgba]): Rgba = initRgba()
 
 proc rgbaFromWavelength*(wl: float64, gamma = 1.0'f64): Rgba =
   var t = initRgba(0.0, 0.0, 0.0)
@@ -329,7 +329,7 @@ proc applyGammaInv*[GammaLUT](c: var Rgba8, gamma: GammaLUT) =
   c.g = gamma.inv(c.g)
   c.b = gamma.inv(c.b)
 
-proc rgba8NoColor*(): Rgba8 =
+proc noColor*(x: typedesc[Rgba8]): Rgba8 =
   result = Rgba8(r:0,g:0,b:0,a:0)
 
 proc rgba8FromWavelength*(wl: float64, gamma = 1.0'f64): Rgba8 {.inline.} =
@@ -578,7 +578,7 @@ proc applyGammaInv*[GammaLUT](c: var Rgba16, gamma: GammaLUT) =
   c.g = gamma.inv(c.g)
   c.b = gamma.inv(c.b)
   
-proc rgba16NoColor*(): Rgba16 =
+proc noColor*(x: typedesc[Rgba16]): Rgba16 =
   result = Rgba16(r:0,g:0,b:0,a:0)
 
 proc rgab16FromWavelength*(wl: float64, gamma = 1.0'f64): Rgba16 =
