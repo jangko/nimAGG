@@ -1,2 +1,18 @@
-translate pixfmt_rgb
-test pixfmt_rgb
+renderer_scanline
+renderer_scanline_p
+renderer_base
+ellipse
+
+translate ok:
+pixfmt_gray
+color_gray
+rasterizer_scanline_aa
+rasterizer_cells_aa
+rasterizer_sl_clip
+
+test pending:
+  pixfmt_rgb:
+    blendFrom
+    blendFromColor
+    blendFromLut
+    attach

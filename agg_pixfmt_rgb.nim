@@ -1,4 +1,4 @@
-import agg_basics, agg_rendering_buffer, agg_color_rgba, strutils
+import agg_basics, agg_rendering_buffer, agg_color_rgba
 
 type
   BlenderRgb*[ColorT, OrderT] = object
@@ -558,18 +558,19 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
       inc(pdst, 3)
       dec len
 
-#proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-#  pixf: PixFmt, x1, y1, x2, y2: int): bool =
-#  rect_i r(x1, y1, x2, y2);
-#  if(r.clip(rect_i(0, 0, pixf.width()-1, pixf.height()-1)))
-#    int stride = pixf.stride();
-#    m_rbuf->attach(pixf.pix_ptr(r.x1, stride < 0 ? r.y2 : r.y1),
-#                               (r.x2 - r.x1) + 1,
-#                               (r.y2 - r.y1) + 1,
-#                               stride);
-#    return true;
-#  return false;
-
+proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
+  pixf: PixFmt, x1, y1, x2, y2: int): bool =
+  
+  var r = initRectBase[int](x1, y1, x2, y2)
+  let c = initRectBase[int](0, 0, pixf.width()-1, pixf.height()-1)
+  
+  if r.clip(c):
+    let stride = pixf.stride()
+    self.rbuf.attach(pixf.pixPtr(r.x1, 
+      if stride < 0: r.y2 else: r.y1),
+      (r.x2 - r.x1) + 1, (r.y2 - r.y1) + 1, stride)
+    return true
+  result = false
 
 type
   PixfmtRgb24* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba8, OrderRgb], RenderingBuffer]
