@@ -4,8 +4,6 @@ renderer_base
 ellipse
 
 translate ok:
-pixfmt_gray
-color_gray
 rasterizer_scanline_aa
 rasterizer_cells_aa
 rasterizer_sl_clip

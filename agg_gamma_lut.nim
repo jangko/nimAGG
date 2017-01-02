@@ -69,5 +69,5 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
   proc inv*(self: nameT, v: HiResT): LoResT =
     result = self.invGamma[v.int]
 
-gamma_lut(GammaLut, uint8, uint8, 8, 8)
+gamma_lut(GammaLut8, uint8, uint8, 8, 8)
 gamma_lut(GammaLut16, uint16, uint16, 16, 16)

@@ -1,6 +1,7 @@
 #include <agg_basics.h>
 #include <agg_color_rgba.h>
 #include <agg_gamma_lut.h>
+#include <agg_color_gray.h>
 
 typedef agg::gamma_lut<agg::int8u, agg::int8u, 8, 8> GammaLUT8; 
 typedef agg::gamma_lut<agg::int16u, agg::int16u, 16, 16> GammaLUT16; 
@@ -111,4 +112,107 @@ GammaLUT16* create_gamma_lut16_a(double a) {
   return new GammaLUT16(a);
 }
 
+agg::gray8 init_gray8_a(agg::rgba& c) {
+  return agg::gray8(c);
+}
+  
+agg::gray8 init_gray8_b(agg::rgba& c, double a) {
+  return agg::gray8(c, a);
+}
+  
+agg::gray8 init_gray8_c(agg::rgba8& c) {
+  return agg::gray8(c);
+}
+  
+agg::gray8 init_gray8_d(agg::rgba8& c, unsigned a) {
+  return agg::gray8(c, a);
+}
+  
+void gray8_clear(agg::gray8& c) {
+  c.clear();
+}
+  
+void gray8_transparent(agg::gray8& c) {
+  c.transparent();
+}
+  
+void gray8_opacity(agg::gray8& c, double a) {
+  c.opacity(a);
+}
+  
+double gray8_get_opacity(agg::gray8& c) {
+  return c.opacity();
+}
+  
+void gray8_premultiply(agg::gray8& c) {
+  c.premultiply();
+}
+  
+void gray8_premultiply_a(agg::gray8& c, unsigned a) {
+  c.premultiply(a);
+}
+  
+void gray8_demultiply(agg::gray8& c) {
+  c.demultiply();
+}
+  
+agg::gray8 gray8_gradient(agg::gray8& self, agg::gray8& c, double k) {
+  return self.gradient(c, k);
+}
+  
+void gray8_add(agg::gray8& self, agg::gray8& c, unsigned cover) {
+  self.add(c, cover);
+}
+
+agg::gray16 init_gray16_a(agg::rgba& c) {
+  return agg::gray16(c);
+}
+  
+agg::gray16 init_gray16_b(agg::rgba& c, double a) {
+  return agg::gray16(c, a);
+}
+  
+agg::gray16 init_gray16_c(agg::rgba8& c) {
+  return agg::gray16(c);
+}
+  
+agg::gray16 init_gray16_d(agg::rgba8& c, unsigned a) {
+  return agg::gray16(c, a);
+}
+  
+void gray16_clear(agg::gray16& c) {
+  c.clear();
+}
+  
+void gray16_transparent(agg::gray16& c) {
+  c.transparent();
+}
+  
+void gray16_opacity(agg::gray16& c, double a) {
+  c.opacity(a);
+}
+  
+double gray16_get_opacity(agg::gray16& c) {
+  return c.opacity();
+}
+  
+void gray16_premultiply(agg::gray16& c) {
+  c.premultiply();
+}
+  
+void gray16_premultiply_a(agg::gray16& c, unsigned a) {
+  c.premultiply(a);
+}
+  
+void gray16_demultiply(agg::gray16& c) {
+  c.demultiply();
+}
+  
+agg::gray16 gray16_gradient(agg::gray16& self, agg::gray16& c, double k) {
+  return self.gradient(c, k);
+}
+  
+void gray16_add(agg::gray16& self, agg::gray16& c, unsigned cover) {
+  self.add(c, cover);
+}  
 }

@@ -78,13 +78,13 @@ proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, 
     OrderType = getOrderType(Blender)
     ValueType = getValueType(Blender)
 
-  var p = cast[ptr ValueType](self.rbuf.rowPtr(x, y, 1) + x + x + x)
+  var p = self.rbuf.rowPtr(x, y, 1) + x + x + x
   p[OrderType.R] = c.r
   p[OrderType.G] = c.g
   p[OrderType.B] = c.b
 
 proc makePix*[Blender, RenBuf, ColorT](x: typedesc[PixfmtAlphaBlendRgb[Blender, RenBuf]],
-  p: ptr uint8, c: ColorT) =
+  p: pointer, c: ColorT) =
 
   type
     OrderType = getOrderType(Blender)
@@ -99,6 +99,7 @@ proc pixel*[Blender, RenBuf](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
 
   type
     OrderType = getOrderType(Blender)
+    ValueType = getValueType(Blender)
 
   var p = self.rbuf.rowPtr(y) + x + x + x
   result = construct(getColorType(Blender), p[OrderType.R], p[OrderType.G], p[OrderType.B])
@@ -131,15 +132,12 @@ proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, Re
     baseMask = getBaseMask(C)
 
   if c.a != 0:
-   # echo "A"
     let alpha = (CalcType(c.a) * CalcType(cover + 1)) shr 8
     if alpha == baseMask:
-      #echo "B"
       p[OrderType.R] = c.r
       p[OrderType.G] = c.g
       p[OrderType.B] = c.b
     else:
-      #echo "C"
       self.blender.blendPix(p, c.r.uint, c.g.uint, c.b.uint, alpha, cover)
 
 proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
@@ -575,13 +573,13 @@ proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf]
 type
   PixfmtRgb24* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba8, OrderRgb], RenderingBuffer]
   PixfmtBgr24* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba8, OrderBgr], RenderingBuffer]
-  PixfmtRgb48* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba16, OrderRgb], RenderingBuffer]
-  PixfmtBgr48* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba16, OrderBgr], RenderingBuffer]
+  PixfmtRgb48* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba16, OrderRgb], RenderingBuffer16]
+  PixfmtBgr48* = PixfmtAlphaBlendRgb[BlenderRgb[Rgba16, OrderBgr], RenderingBuffer16]
 
   PixfmtRgb24Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba8, OrderRgb], RenderingBuffer]
   PixfmtBgr24Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba8, OrderBgr], RenderingBuffer]
-  PixfmtRgb48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderRgb], RenderingBuffer]
-  PixfmtBgr48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderBgr], RenderingBuffer]
+  PixfmtRgb48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderRgb], RenderingBuffer16]
+  PixfmtBgr48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderBgr], RenderingBuffer16]
 
 proc initPixFmtRgb24*(rbuf: RenderingBuffer): PixfmtRgb24 =
   result.rbuf = rbuf
@@ -589,10 +587,10 @@ proc initPixFmtRgb24*(rbuf: RenderingBuffer): PixfmtRgb24 =
 proc initPixFmtBgr24*(rbuf: RenderingBuffer): PixfmtBgr24 =
   result.rbuf = rbuf
 
-proc initPixFmtRgb48*(rbuf: RenderingBuffer): PixfmtRgb48 =
+proc initPixFmtRgb48*(rbuf: RenderingBuffer16): PixfmtRgb48 =
   result.rbuf = rbuf
 
-proc initPixFmtBgr48*(rbuf: RenderingBuffer): PixfmtBgr48 =
+proc initPixFmtBgr48*(rbuf: RenderingBuffer16): PixfmtBgr48 =
   result.rbuf = rbuf
 
 proc initPixFmtRgb24Pre*(rbuf: RenderingBuffer): PixfmtRgb24Pre =
@@ -601,10 +599,10 @@ proc initPixFmtRgb24Pre*(rbuf: RenderingBuffer): PixfmtRgb24Pre =
 proc initPixFmtBgr24Pre*(rbuf: RenderingBuffer): PixfmtBgr24Pre =
   result.rbuf = rbuf
 
-proc initPixFmtRgb48Pre*(rbuf: RenderingBuffer): PixfmtRgb48Pre =
+proc initPixFmtRgb48Pre*(rbuf: RenderingBuffer16): PixfmtRgb48Pre =
   result.rbuf = rbuf
 
-proc initPixFmtBgr48Pre*(rbuf: RenderingBuffer): PixfmtBgr48Pre =
+proc initPixFmtBgr48Pre*(rbuf: RenderingBuffer16): PixfmtBgr48Pre =
   result.rbuf = rbuf
 
 template PixfmtRgb24Gamma*(name: untyped, Gamma: typed) =
@@ -625,7 +623,7 @@ template PixfmtBgr24Gamma*(name: untyped, Gamma: typed) =
 
 template PixfmtRgb48Gamma*(name: untyped, Gamma: typed) =
   type
-    name* = PixfmtAlphaBlendRgb[BlenderRgbGamma[Rgba16, OrderRgb, Gamma], RenderingBuffer]
+    name* = PixfmtAlphaBlendRgb[BlenderRgbGamma[Rgba16, OrderRgb, Gamma], RenderingBuffer16]
 
   proc `init name`*(rbuf: RenderingBuffer, gamma: Gamma): name =
     result.rbuf = rbuf
@@ -633,7 +631,7 @@ template PixfmtRgb48Gamma*(name: untyped, Gamma: typed) =
 
 template PixfmtBgr48Gamma*(name: untyped, Gamma: typed) =
   type
-    name* = PixfmtAlphaBlendRgb[BlenderRgbGamma[Rgba16, OrderBgr, Gamma], RenderingBuffer]
+    name* = PixfmtAlphaBlendRgb[BlenderRgbGamma[Rgba16, OrderBgr, Gamma], RenderingBuffer16]
 
   proc `init name`*(rbuf: RenderingBuffer, gamma: Gamma): name =
     result.rbuf = rbuf
