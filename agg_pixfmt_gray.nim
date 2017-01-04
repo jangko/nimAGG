@@ -39,19 +39,19 @@ proc BlenderGrayPreBlendPix*[C,T](p: ptr T; cv, alpha: uint) {.inline.} =
     ValueType = getValueType(C)
   p[] = ValueType(((p[] * (baseMask - alpha)) shr baseShift) + cv)
 
-template blendPix[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha: uint) =
+template blendPix*[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha: uint) =
   BlenderGrayBlendPix[C.type, getValueType(C.type)](p, cv, alpha)
 
-template blendPix[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha, cover: uint) =
+template blendPix*[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha, cover: uint) =
   BlenderGrayBlendPix[C.type, getValueType(C.type)](p, cv, alpha, cover)
 
-template blendPix[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha: uint) =
+template blendPix*[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha: uint) =
   BlenderGrayPreBlendPix[C.type, getValueType(C.type)](p, cv, alpha)
 
-template blendPix[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha, cover: uint) =
+template blendPix*[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha, cover: uint) =
   BlenderGrayPreBlendPix[C.type, getValueType(C.type)](p, cv, alpha, cover)
 
-template pixfmtAlphaBlendGray(Blender, RenBuf: typed, Step, Offset: int, name: untyped) =
+template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: untyped) =
   type
     name* = object
       rbuf: RenBuf
@@ -396,10 +396,10 @@ template pixfmtAlphaBlendGray(Blender, RenBuf: typed, Step, Offset: int, name: u
           dec len
 
 type
-  BlenderGray8     = BlenderGray[Gray8]
-  BlenderGray8Pre  = BlenderGrayPre[Gray8]
-  BlenderGray16    = BlenderGray[Gray16]
-  BlenderGray16Pre = BlenderGrayPre[Gray16]
+  BlenderGray8*     = BlenderGray[Gray8]
+  BlenderGray8Pre*  = BlenderGrayPre[Gray8]
+  BlenderGray16*    = BlenderGray[Gray16]
+  BlenderGray16Pre* = BlenderGrayPre[Gray16]
 
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 1, 0, PixfmtGray8)
 pixfmtAlphaBlendGray(BlenderGray8Pre, RenderingBuffer, 1, 0, PixfmtGray8Pre)

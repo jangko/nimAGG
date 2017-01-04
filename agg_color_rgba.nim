@@ -177,6 +177,8 @@ proc initRgba8*(c: Rgba8, a: uint): Rgba8 =
   result.g = c.g
   result.b = c.b
   result.a = ValueType(a)
+  
+proc initRgba8*(c: Rgba8): Rgba8 = c
 
 proc initRgba8*(c: Rgba, a: float64): Rgba8 =
   type ValueType = getValueType(Rgba8)
@@ -404,6 +406,8 @@ proc initRgba16*(c: Rgba16, a: uint): Rgba16 =
   result.g = c.g
   result.b = c.b
   result.a = ValueType(a)
+
+proc initRgba16*(c: Rgba16): Rgba16 = c
 
 proc initRgba16*(c: Rgba): Rgba16 =
   type ValueType = getValueType(Rgba16)

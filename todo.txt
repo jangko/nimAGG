@@ -1,8 +1,8 @@
 renderer_scanline
-renderer_scanline_p
-ellipse
 
 translate ok:
+renderer_scanline_p
+ellipse
 renderer_base
 rasterizer_scanline_aa
 rasterizer_cells_aa

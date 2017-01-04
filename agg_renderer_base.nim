@@ -5,7 +5,9 @@ type
     ren: PixFmt
     clipBox: RectI
         
-proc initRendererRase*[PixFmt](ren: PixFmt): RendererBase[PixFmt] =
+template getColorType*[PixFmt](x: typedesc[RendererBase[PixFmt]]): typedesc = getColorType(PixFmt.type)
+        
+proc initRendererBase*[PixFmt](ren: PixFmt): RendererBase[PixFmt] =
   result.ren = ren
   result.clipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
 
@@ -167,6 +169,7 @@ proc blendSolidHSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
 
   var 
     len = len
+    x = x
     covers = covers
     
   if x < self.xmin():

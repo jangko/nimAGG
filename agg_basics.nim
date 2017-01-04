@@ -71,6 +71,15 @@ type
    fillNonZero
    fillEvenOdd
 
+const 
+  pi* = 3.14159265358979323846'f64
+
+proc deg2rad*(deg: float64): float64 {.inline.} =
+  result = deg * pi / 180.0
+
+proc rad2deg*(rad: float64): float64 {.inline.} =
+  result = rad * 180.0 / pi
+    
 type
   RectBase*[T] = object
     x1*, y1*, x2*, y2*: T

@@ -102,19 +102,19 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
         ty2 = y2
 
       if (f1 and 8) != 0: # y1 < clip.y1
-        tx1 = x1 + Conv.mulDiv(self.clipBox.y1-y1, x2-x1, y2-y1)
+        tx1 = x1 + Conv.mulDiv((self.clipBox.y1-y1).float64, (x2-x1).float64, (y2-y1).float64)
         ty1 = self.clipBox.y1
 
       if (f1 and 2) != 0: # y1 > clip.y2
-        tx1 = x1 + Conv.mulDiv(self.clipBox.y2-y1, x2-x1, y2-y1)
+        tx1 = x1 + Conv.mulDiv((self.clipBox.y2-y1).float64, (x2-x1).float64, (y2-y1).float64)
         ty1 = self.clipBox.y2
 
       if (f2 and 8) != 0: # y2 < clip.y1
-        tx2 = x1 + Conv.mulDiv(self.clipBox.y1-y1, x2-x1, y2-y1)
+        tx2 = x1 + Conv.mulDiv((self.clipBox.y1-y1).float64, (x2-x1).float64, (y2-y1).float64)
         ty2 = self.clipBox.y1
 
       if (f2 and 2) != 0: # y2 > clip.y2
-        tx2 = x1 + Conv.mulDiv(self.clipBox.y2-y1, x2-x1, y2-y1)
+        tx2 = x1 + Conv.mulDiv((self.clipBox.y2-y1).float64, (x2-x1).float64, (y2-y1).float64)
         ty2 = self.clipBox.y2
 
       ras.line(Conv.xi(tx1), Conv.yi(ty1), Conv.xi(tx2), Conv.yi(ty2))
@@ -140,38 +140,38 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
       of 0: # Visible by X
         self.lineClipY(ras, x1, y1, x2, y2, f1, f2)
       of 1: # x2 > clip.x2
-        y3 = y1 + Conv.mulDiv(self.clipBox.x2-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x2-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         self.lineClipY(ras, x1, y1, self.clipBox.x2, y3, f1, f3)
         self.lineClipY(ras, self.clipBox.x2, y3, self.clipBox.x2, y2, f3, f2)
       of 2: # x1 > clip.x2
-        y3 = y1 + Conv.mulDiv(self.clipBox.x2-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x2-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         self.lineClipY(ras, self.clipBox.x2, y1, self.clipBox.x2, y3, f1, f3)
         self.lineClipY(ras, self.clipBox.x2, y3, x2, y2, f3, f2)
       of 3: # x1 > clip.x2 && x2 > clip.x2
          self.lineClipY(ras, self.clipBox.x2, y1, self.clipBox.x2, y2, f1, f2)
       of 4: # x2 < clip.x1
-        y3 = y1 + Conv.mulDiv(self.clipBox.x1-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x1-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         self.lineClipY(ras, x1, y1, self.clipBox.x1, y3, f1, f3)
         self.lineClipY(ras, self.clipBox.x1, y3, self.clipBox.x1, y2, f3, f2)
       of 6: # x1 > clip.x2 && x2 < clip.x1
-        y3 = y1 + Conv.mulDiv(self.clipBox.x2-x1, y2-y1, x2-x1)
-        y4 = y1 + Conv.mulDiv(self.clipBox.x1-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x2-x1).float64, (y2-y1).float64, (x2-x1).float64)
+        y4 = y1 + Conv.mulDiv((self.clipBox.x1-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         f4 = clippingFlagsY(y4, self.clipBox)
         self.lineClipY(ras, self.clipBox.x2, y1, self.clipBox.x2, y3, f1, f3)
         self.lineClipY(ras, self.clipBox.x2, y3, self.clipBox.x1, y4, f3, f4)
         self.lineClipY(ras, self.clipBox.x1, y4, self.clipBox.x1, y2, f4, f2)
       of 8: # x1 < clip.x1
-        y3 = y1 + Conv.mulDiv(self.clipBox.x1-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x1-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         self.lineClipY(ras, self.clipBox.x1, y1, self.clipBox.x1, y3, f1, f3)
         self.lineClipY(ras, self.clipBox.x1, y3, x2, y2, f3, f2)
       of 9:  # x1 < clip.x1 && x2 > clip.x2
-        y3 = y1 + Conv.mulDiv(self.clipBox.x1-x1, y2-y1, x2-x1)
-        y4 = y1 + Conv.mulDiv(self.clipBox.x2-x1, y2-y1, x2-x1)
+        y3 = y1 + Conv.mulDiv((self.clipBox.x1-x1).float64, (y2-y1).float64, (x2-x1).float64)
+        y4 = y1 + Conv.mulDiv((self.clipBox.x2-x1).float64, (y2-y1).float64, (x2-x1).float64)
         f3 = clippingFlagsY(y3, self.clipBox)
         f4 = clippingFlagsY(y4, self.clipBox)
         self.lineClipY(ras, self.clipBox.x1, y1, self.clipBox.x1, y3, f1, f3)
