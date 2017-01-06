@@ -150,7 +150,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       len = length
       p = self.rbuf.rowPtr(x, y, len) + x * Step + Offset
 
-    let alpha = (CalcType(c.a) * (cover + 1)) shr 8
+    let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
     if alpha == baseMask:
       doWhile len != 0:
         p[] = c.v
@@ -170,7 +170,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       baseMask = getBaseMask(ColorT)
 
     if c.a == 0: return
-    let alpha = (CalcType(c.a) * (cover + 1)) shr 8
+    let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
     var
       p: ptr ValueType
       line = y

@@ -265,21 +265,22 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
   # Finally arrange the X-arrays
   for x in mitems(self.sortedY):
     #let currY = self.sortedY[i]
-    if x.num != 0: x.cells.sort(proc(a, b: ptr T): int = cmp(a.x, b.x))
+    if x.num != 0: 
+      x.cells.sort(proc(a, b: ptr T): int = cmp(a.x, b.x))
      # qsortCells(self.sortedCells[0].addr + currY.start, currY.num)
 
+  self.sortedY[self.maxY - self.minY].cells.add nil
   self.sorted = true
 
 proc totalCells*[T](self: RasterizerCellsAA[T]): int =
   result = self.numCells
 
 proc scanlineNumCells*[T](self: RasterizerCellsAA[T], y: int): int =
+  #echo y, " ", $(y - self.minY), " ", self.sortedY.len
   result = self.sortedY[y - self.minY].num
 
 proc scanlineCells*[T](self: RasterizerCellsAA[T], y: int): ptr ptr T =
   #result = self.sortedCells[self.sortedY[y - self.minY].start].addr
-  echo "num: ", self.sortedY[y - self.minY].num
-  echo "y: ", y
   result = self.sortedY[y - self.minY].cells[0].addr
 
 proc sorted*[T](self: RasterizerCellsAA[T]): bool =
@@ -368,7 +369,7 @@ proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
 proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
   const
     dxLimit = 16384 shl polySubpixelShift
-
+  
   let dx = x2 - x1
   if(dx >= dxLimit) or (dx <= -dxLimit):
     let cx = (x1 + x2) shr 1

@@ -44,7 +44,6 @@
 #include "agg_math.h"
 #include "agg_array.h"
 
-
 namespace agg
 {
 

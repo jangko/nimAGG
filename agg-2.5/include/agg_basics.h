@@ -27,6 +27,7 @@
 
 #include <math.h>
 #include "agg_config.h"
+#include <stdio.h>
 
 //---------------------------------------------------------AGG_CUSTOM_ALLOCATOR
 #ifdef AGG_CUSTOM_ALLOCATOR

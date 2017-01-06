@@ -304,7 +304,7 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
-  let alpha = (CalcType(c.a) * (cover + 1)) shr 8
+  let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
   var
     len = length
     line = y

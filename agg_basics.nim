@@ -30,12 +30,20 @@ template `[]=`*[T](p: ptr T, off: int, val: T) =
 template `[]=`*[O: enum; T](p: ptr T, off: O, val: T) =
   (p + off.ord)[] = val
 
+template `-`*[T](a, b: ptr T): int =
+  (cast[int](a) - cast[int](b)) div sizeof(T)
+
 template doWhile*(a: typed, b: typed) =
   while true:
     b
     if not a:
       break
 
+proc sar*(x: int, shift: SomeInteger): int =
+  const W = sizeof(int) * 8
+  let signBit = x shr (W-1)
+  result = (x shr shift) or (((0-signBit) shl 1) shl (W-1-shift))
+  
 type
   RowInfo*[T] = object
     x1*, x2*: int

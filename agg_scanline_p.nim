@@ -96,7 +96,7 @@ proc resetSpans*(self: var ScanlineP8) =
   self.curSpan.len = 0
 
 proc getY*(self: ScanlineP8): int = self.y
-proc numSpans*(self: ScanlineP8): int = cast[int](self.curSpan) - cast[int](self.spans[0].unsafeAddr)
+proc numSpans*(self: var ScanlineP8): int = self.curSpan - self.spans[0].unsafeAddr
   
 proc begin*(self: var ScanlineP8): ptr Span16 = self.spans[1].addr
 
