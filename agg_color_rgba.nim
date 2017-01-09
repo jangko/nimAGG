@@ -148,6 +148,7 @@ template getBaseShift*(x: typedesc[Rgba8]): int = 8
 template getBaseScale*(x: typedesc[Rgba8]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Rgba8]): int = getBaseScale(x) - 1
 template construct*(x: typedesc[Rgba8], r,g,b: typed): untyped = initRgba8(r,g,b)
+template construct*(x: typedesc[Rgba8], c: typed): untyped = initRgba8(c)
 
 proc initRgba8*(r,g,b:uint): Rgba8 =
   type ValueType = getValueType(Rgba8)
@@ -385,6 +386,7 @@ template getBaseShift*(x: typedesc[Rgba16]): int = 16
 template getBaseScale*(x: typedesc[Rgba16]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Rgba16]): int = getBaseScale(x) - 1
 template construct*(x: typedesc[Rgba16], r,g,b: typed): untyped = initRgba16(r,g,b)
+template construct*(x: typedesc[Rgba16], c: typed): untyped = initRgba16(c)
 
 proc initRgba16*(r, g, b, a: uint): Rgba16 =
   type ValueType = getValueType(Rgba16)

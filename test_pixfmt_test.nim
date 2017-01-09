@@ -84,11 +84,11 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
   
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
-        pixf.copyPixel(x, y, `init ColorT`((x mod baseMask).uint, (y mod baseMask).uint, (x mod baseMask).uint, baseMask.uint))
+        pixf.copyPixel(x, y, `init ColorT`((x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint))
   
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
-        let a = `init ColorT`((x mod baseMask).uint, (y mod baseMask).uint, (x mod baseMask).uint, baseMask.uint)
+        let a = `init ColorT`((x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint)
         let b = pixf.pixel(x, y)
         doAssert(a == b)
   
@@ -121,10 +121,10 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
       doAssert(p[OrderType.B] == color.b)
   
     for i in 0.. <frameWidth:
-      span[i].r = ValueType(i.uint mod baseMask.uint)
-      span[i].g = ValueType(i.uint mod baseMask.uint)
-      span[i].b = ValueType(i.uint mod baseMask.uint)
-      covers[i] = uint8(i.uint mod baseMask.uint)
+      span[i].r = ValueType(i.uint and baseMask.uint)
+      span[i].g = ValueType(i.uint and baseMask.uint)
+      span[i].b = ValueType(i.uint and baseMask.uint)
+      covers[i] = uint8(i.uint and baseMask.uint)
   
     pixf.copyColorHspan(0, 0, frameWidth, span[0].addr)
     pixf.copyColorVspan(0, 0, frameWidth, span[0].addr)
@@ -153,8 +153,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy, xx, yy)
         cpixf.blend_pixel(x.cint, y.cint, c, xx.uint8)
         pixf.blendPixel(x, y, c, xx.uint8)
@@ -164,7 +164,7 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
+          xx = (x and baseMask).uint
         cpixf.blend_color_hspan(0, y.cint, frameWidth.cuint, span[0].addr, nil, xx.uint8)
         cpixf.blend_color_vspan(x.cint, 0, frameHeight.cuint, span[0].addr, nil, xx.uint8)
         pixf.blendColorHspan(0, y, frameWidth, span[0].addr, nil, xx.uint8)
@@ -175,8 +175,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy, xx, yy)
         cpixf.blend_hline(0, y.cint, frameWidth.cuint, c, xx.uint8)
         cpixf.blend_vline(x.cint, 0, frameHeight.cuint, c, xx.uint8)
@@ -188,8 +188,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy, xx, yy)
         cpixf.blend_solid_hspan(0, y.cint, frameWidth.cuint, c, covers[0].addr)
         cpixf.blend_solid_vspan(x.cint, 0, frameHeight.cuint, c, covers[0].addr)
@@ -237,11 +237,11 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
   
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
-        pixf.copyPixel(x, y, `init ColorT`((x mod baseMask).uint, baseMask.uint))
+        pixf.copyPixel(x, y, `init ColorT`((x and baseMask).uint, baseMask.uint))
   
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
-        let a = `init ColorT`((x mod baseMask).uint, baseMask.uint)
+        let a = `init ColorT`((x and baseMask).uint, baseMask.uint)
         let b = pixf.pixel(x, y)
         doAssert(a == b)
 
@@ -269,8 +269,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
   
     for i in 0.. <frameWidth:
-      span[i].v = ValueType(i.uint mod baseMask.uint)
-      covers[i] = uint8(i.uint mod baseMask.uint)
+      span[i].v = ValueType(i.uint and baseMask.uint)
+      covers[i] = uint8(i.uint and baseMask.uint)
   
     pixf.copyColorHspan(0, 0, frameWidth, span[0].addr)
     pixf.copyColorVspan(0, 0, frameWidth, span[0].addr)
@@ -295,8 +295,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy)
         cpixf.blend_pixel(x.cint, y.cint, c, xx.uint8)
         pixf.blendPixel(x, y, c, xx.uint8)
@@ -306,7 +306,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
+          xx = (x and baseMask).uint
         cpixf.blend_color_hspan(0, y.cint, frameWidth.cuint, span[0].addr, nil, xx.uint8)
         cpixf.blend_color_vspan(x.cint, 0, frameHeight.cuint, span[0].addr, nil, xx.uint8)
         pixf.blendColorHspan(0, y, frameWidth, span[0].addr, nil, xx.uint8)
@@ -317,8 +317,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy)
         cpixf.blend_hline(0, y.cint, frameWidth.cuint, c, xx.uint8)
         cpixf.blend_vline(x.cint, 0, frameHeight.cuint, c, xx.uint8)
@@ -330,8 +330,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         let
-          xx = (x mod baseMask).uint
-          yy = (y mod baseMask).uint
+          xx = (x and baseMask).uint
+          yy = (y and baseMask).uint
         var c = `init ColorT`(xx, yy)
         cpixf.blend_solid_hspan(0, y.cint, frameWidth.cuint, c, covers[0].addr)
         cpixf.blend_solid_vspan(x.cint, 0, frameHeight.cuint, c, covers[0].addr)

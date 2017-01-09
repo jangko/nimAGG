@@ -82,7 +82,7 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
 
   proc lineClipY*[Rasterizer](self: var name, ras: Rasterizer,
     x1, y1, x2, y2: CoordType, cf1, cf2: uint) {.inline.} =
-
+    
     let
       f1 = cf1 and 10
       f2 = cf2 and 10

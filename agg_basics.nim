@@ -39,11 +39,17 @@ template doWhile*(a: typed, b: typed) =
     if not a:
       break
 
-proc sar*(x: int, shift: SomeInteger): int =
-  const W = sizeof(int) * 8
-  let signBit = x shr (W-1)
-  result = (x shr shift) or (((0-signBit) shl 1) shl (W-1-shift))
-  
+const
+  platIntWidth* = sizeof(int) * 8
+
+template sar*(x: int, shift: SomeInteger): int =
+  (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
+
+proc c_memset(p: pointer, value: cint, size: csize): pointer {.
+  importc: "memset", header: "<string.h>", discardable.}
+
+template setMem*(p: pointer, value: typed, size: typed) = c_memset(p, cint(value), csize(size))
+
 type
   RowInfo*[T] = object
     x1*, x2*: int
@@ -79,7 +85,7 @@ type
    fillNonZero
    fillEvenOdd
 
-const 
+const
   pi* = 3.14159265358979323846'f64
 
 proc deg2rad*(deg: float64): float64 {.inline.} =
@@ -87,7 +93,7 @@ proc deg2rad*(deg: float64): float64 {.inline.} =
 
 proc rad2deg*(rad: float64): float64 {.inline.} =
   result = rad * 180.0 / pi
-    
+
 type
   RectBase*[T] = object
     x1*, y1*, x2*, y2*: T

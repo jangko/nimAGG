@@ -1,12 +1,12 @@
 import agg_basics
 
 type
-  Span16* = object
+  Span16P8* = object
     x*: int16
     len*: int16
     covers*: ptr uint8
 
-  Span32* = object
+  Span32P8* = object
     x*: int32
     len*: int32
     covers*: ptr uint8
@@ -16,8 +16,8 @@ type
     y: int
     covers: seq[uint8]
     coverPtr: ptr uint8
-    spans: seq[Span16]
-    curSpan: ptr Span16
+    spans: seq[Span16P8]
+    curSpan: ptr Span16P8
   
   Scanline32P8* = object
     maxLen: uint
@@ -25,7 +25,7 @@ type
     y: int
     covers: seq[uint8]
     coverPtr: ptr uint8
-    spans: seq[Span32]
+    spans: seq[Span32P8]
     
 proc initScanlineP8*(): ScanlineP8 =
   result.lastX = 0x7FFFFFF0
@@ -98,7 +98,7 @@ proc resetSpans*(self: var ScanlineP8) =
 proc getY*(self: ScanlineP8): int = self.y
 proc numSpans*(self: var ScanlineP8): int = self.curSpan - self.spans[0].unsafeAddr
   
-proc begin*(self: var ScanlineP8): ptr Span16 = self.spans[1].addr
+proc begin*(self: var ScanlineP8): ptr Span16P8 = self.spans[1].addr
 
 #[
 scanline32_p8() :

@@ -44,3 +44,11 @@ proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: Ra
         if numSpans == 0: break
         inc span
     
+proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: Rasterizer, sl: var Scanline, ren: var Renderer) =
+  mixin reset
+  if ras.rewindScanlines():
+    sl.reset(ras.minX(), ras.maxX())
+    ren.prepare()
+    while ras.sweepScanline(sl):
+      ren.render(sl)
+        

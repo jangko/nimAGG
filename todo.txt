@@ -1,3 +1,10 @@
+vertex_sequence
+math_stroke
+vcgen_stroke
+conv_adaptor_vcgen
+conv_stroke
+path_storage
+
 renderer_scanline
 
 translate ok:
