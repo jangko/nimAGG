@@ -1,19 +1,21 @@
-vertex_sequence
-math_stroke
-vcgen_stroke
-conv_adaptor_vcgen
-conv_stroke
-path_storage
-
-renderer_scanline
+incomplete:
+  path_storage
+  renderer_scanline
+  trans_affine
 
 translate ok:
-renderer_scanline_p
-ellipse
-renderer_base
-rasterizer_scanline_aa
-rasterizer_cells_aa
-rasterizer_sl_clip
+  bezier_arc
+  conv_stroke
+  conv_adaptor_vcgen
+  vcgen_stroke
+  math_stroke
+  vertex_sequence
+  renderer_scanline_p
+  ellipse
+  renderer_base
+  rasterizer_scanline_aa
+  rasterizer_cells_aa
+  rasterizer_sl_clip
 
 test pending:
   pixfmt_rgb:
@@ -24,4 +26,3 @@ test pending:
   pixfmt_gray:
     blendFromColor
     blendFromLut
-    

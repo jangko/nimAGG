@@ -17,10 +17,10 @@ type
 
   DynaRow*[T] = ref object
     rows: seq[RowInfo[T]]
-    width: int 
+    width: int
     height: int
     byteWidth: int
-    
+
   RenderingBuffer* = RowAccessor[uint8]
   RenderingBufferCached* = RowPtrCache[uint8]
   RenderingBuffer16* = RowAccessor[uint16]
@@ -180,7 +180,7 @@ proc init*[T](self: DynaRow[T], width, height, byteWidth: int) =
 
 proc finalizer[T](self: DynaRow[T]) =
   self.init(0, 0, 0)
-    
+
 proc newDynaRow*[T](width, height, byteWidth: int): DynaRow[T] =
   new(result, finalizer[T])
   result.rows = newSeq[RowInfo[T]](height)
@@ -194,7 +194,7 @@ proc height*[T](self: DynaRow[T]): int = self.height
 proc byteWidth*[T](self: DynaRow[T]): int = self.byteWidth
 
 proc rowPtr*[T](self: DynaRow[T], x, y, len: int): ptr T =
-  var 
+  var
     r = self.rows[y].addr
     x2 = x + len - 1
   if r.data != nil:
@@ -205,7 +205,7 @@ proc rowPtr*[T](self: DynaRow[T], x, y, len: int): ptr T =
     r.x1  = x
     r.x2  = x2
   result = r.data
-  
+
 proc rowPtr*[T](self: DynaRow[T], y: int): ptr T =
   result = self.rowPtr(0, y, self.width)
 

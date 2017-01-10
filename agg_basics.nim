@@ -55,6 +55,21 @@ type
     x1*, x2*: int
     data*: ptr T
 
+  PointBase*[T] = object
+    x*, y*: T
+
+  PointI* = PointBase[int]
+  PointF* = PointBase[float32]
+  PointD* = PointBase[float64]
+
+  VertexBase[T] = object
+    x*, y*: T
+    cmd*: uint
+
+  VertexI* = VertexBase[int]
+  VertexF* = VertexBase[float32]
+  VertexD* = VertexBase[float64]
+
 proc iround*(v: float64): int {.inline.} =
   result = if v < 0.0: (v - 0.5).int else: (v + 0.5).int
 

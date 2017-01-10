@@ -178,7 +178,7 @@ proc initRgba8*(c: Rgba8, a: uint): Rgba8 =
   result.g = c.g
   result.b = c.b
   result.a = ValueType(a)
-  
+
 proc initRgba8*(c: Rgba8): Rgba8 = c
 
 proc initRgba8*(c: Rgba, a: float64): Rgba8 =
@@ -463,7 +463,7 @@ proc opacity*(c: var Rgba16, a: float64): var Rgba16 {.discardable.} =
 proc opacity*(c: var Rgba16): float64 =
   const baseMask = getBaseMask(Rgba16).float64
   result = c.a.float64 / baseMask
-  
+
 proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
   type
     ValueType = getValueType(Rgba16)
@@ -483,7 +483,7 @@ proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
   c.g = ValueType((CalcType(c.g) * c.a) shr baseShift)
   c.b = ValueType((CalcType(c.b) * c.a) shr baseShift)
   result = c
-  
+
 proc premultiply*(c: var Rgba16, a: uint): var Rgba16 {.discardable, inline.} =
   type
     ValueType = getValueType(Rgba16)
@@ -529,7 +529,7 @@ proc demultiply*(c: var Rgba16): var Rgba16 {.discardable, inline.} =
   c.g = ValueType(if g > CalcType(baseMask): CalcType(baseMask) else: g)
   c.b = ValueType(if b > CalcType(baseMask): CalcType(baseMask) else: b)
   result = c
-  
+
 proc gradient*(self, c: Rgba16, k: float64): Rgba16 =
   type
     ValueType = getValueType(Rgba16)
@@ -583,7 +583,7 @@ proc applyGammaInv*[GammaLUT](c: var Rgba16, gamma: GammaLUT) =
   c.r = gamma.inv(c.r)
   c.g = gamma.inv(c.g)
   c.b = gamma.inv(c.b)
-  
+
 proc noColor*(x: typedesc[Rgba16]): Rgba16 =
   result = Rgba16(r:0,g:0,b:0,a:0)
 
@@ -593,12 +593,12 @@ proc rgab16FromWavelength*(wl: float64, gamma = 1.0'f64): Rgba16 =
 proc rgba16Pre*(r, g, b, a: uint): Rgba16 {.inline.} =
   result = initRgba16(r,g,b,a)
   result.premultiply()
-  
+
 proc rgba16Pre*(r, g, b: uint): Rgba16 {.inline.} =
   const baseMask = getBaseMask(Rgba16)
   result = initRgba16(r,g,b,baseMask)
   result.premultiply()
-  
+
 proc rgba16Pre*(c: Rgba16, a: uint): Rgba16 {.inline.} =
   result = initRgba16(c,a)
   result.premultiply()
@@ -610,11 +610,11 @@ proc rgba16Pre*(c: Rgba): Rgba16 {.inline.} =
 proc rgba16Pre*(c: Rgba, a: float64): Rgba16 {.inline.} =
   result = initRgba16(c,a)
   result.premultiply()
-  
+
 proc rgba16Pre*(c: Rgba8): Rgba16 {.inline.} =
   result = initRgba16(c)
   result.premultiply()
-  
+
 proc rgba16Pre*(c: Rgba8, a: float64): Rgba16 {.inline.} =
   result = initRgba16(c,a)
   result.premultiply()

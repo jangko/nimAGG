@@ -7,7 +7,7 @@ import agg_color_rgba, agg_gamma_lut, agg_color_gray
 type
   GammaLUT8 = distinct pointer
   GammaLUT16 = distinct pointer
-  
+
 proc rgba_premultiply(c: var Rgba) {.importc.}
 proc rgba_premultiply_a(c: var Rgba, a: cdouble) {.importc.}
 proc rgba_demultiply(c: var Rgba) {.importc.}
@@ -72,19 +72,19 @@ proc test_rgba() =
   a.rgba_premultiply()
   b.premultiply()
   doAssert(a == b)
-  
+
   a = initRgba(0.1,0.2,0.3,0.4)
   b = a
   a.rgba_premultiply_a(0.5)
   b.premultiply(0.5)
   doAssert(a == b)
-  
+
   a = initRgba(0.1,0.2,0.3,0.4)
   b = a
   a.rgba_demultiply()
   b.demultiply()
   doAssert(a == b)
-  
+
   a = initRgba(0.1,0.2,0.3,0.4)
   b = a
   var c = initRgba(0.2,0.4,0.6,0.8)
@@ -97,9 +97,9 @@ proc test_rgba8() =
   var b = a
   a.rgba8_opacity(cdouble(0.7))
   b.opacity(0.7)
-  
+
   doAssert(a.rgba8_get_opacity() == b.opacity())
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_premultiply_a(100)
@@ -111,65 +111,65 @@ proc test_rgba8() =
   a.rgba8_premultiply()
   b.premultiply()
   doAssert(a == b)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_demultiply()
   b.demultiply()
   doAssert(a == b)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   var c = initRgba8(initRgba(0.2,0.4,0.6,0.8))
   var d = a.rgba8_gradient(c, cdouble(0.8))
   var e = b.gradient(c, 0.8)
   doAssert(d == e)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   c = initRgba8(initRgba(0.2,0.4,0.6,0.8))
   a.rgba8_add(c, 100.cuint)
   b.add(c, 100)
   doAssert(a == b)
-  
+
   var g = create_gamma_lut8()
   var h = newGammaLut()
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_apply_gamma_dir(g)
   b.apply_gamma_dir(h)
   doAssert(a == b)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_apply_gamma_inv(g)
   b.apply_gamma_inv(h)
   doAssert(a == b)
-  
+
   g = create_gamma_lut8_a(cdouble(0.6))
   h = newGammaLut(0.6)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_apply_gamma_dir(g)
   b.apply_gamma_dir(h)
   doAssert(a == b)
-  
+
   a = initRgba8(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba8_apply_gamma_inv(g)
   b.apply_gamma_inv(h)
   doAssert(a == b)
- 
+
 proc test_Rgba16() =
   var a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   var b = a
   a.rgba16_opacity(cdouble(0.7))
   b.opacity(0.7)
-  
+
   doAssert(a.rgba16_get_opacity() == b.opacity())
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_premultiply_a(100)
@@ -181,73 +181,73 @@ proc test_Rgba16() =
   a.rgba16_premultiply()
   b.premultiply()
   doAssert(a == b)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_demultiply()
   b.demultiply()
   doAssert(a == b)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   var c = initRgba16(initRgba(0.2,0.4,0.6,0.8))
   var d = a.rgba16_gradient(c, cdouble(0.8))
   var e = b.gradient(c, 0.8)
   doAssert(d == e)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   c = initRgba16(initRgba(0.2,0.4,0.6,0.8))
   a.rgba16_add(c, 100.cuint)
   b.add(c, 100)
   doAssert(a == b)
-  
+
   var g = create_gamma_lut16()
   var h = newGammaLut16()
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_apply_gamma_dir(g)
   b.apply_gamma_dir(h)
   doAssert(a == b)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_apply_gamma_inv(g)
   b.apply_gamma_inv(h)
   doAssert(a == b)
-  
+
   g = create_gamma_lut16_a(cdouble(0.6))
   h = newGammaLut16(0.6)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_apply_gamma_dir(g)
   b.apply_gamma_dir(h)
   doAssert(a == b)
-  
+
   a = initRgba16(initRgba(0.1,0.2,0.3,0.4))
   b = a
   a.rgba16_apply_gamma_inv(g)
   b.apply_gamma_inv(h)
   doAssert(a == b)
-  
+
 proc test_gray8() =
-  var 
+  var
     rgba = initRgba(0.1,0.2,0.3,0.4)
     rgba8 = initRgba8(rgba)
     a = init_gray8_a(rgba)
     b = initGray8(rgba)
   doAssert(a == b)
-    
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   doAssert(a == b)
-  
+
   a = init_gray8_c(rgba8)
   b = initGray8(rgba8)
   doAssert(a == b)
-  
+
   a = init_gray8_d(rgba8, 100)
   b = initGray8(rgba8, 100)
   doAssert(a == b)
@@ -255,31 +255,31 @@ proc test_gray8() =
   a.gray8_clear()
   b.clear()
   doAssert(a == b)
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_transparent()
   b.transparent()
   doAssert(a == b)
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_opacity(0.8)
   b.opacity(0.8)
   doAssert(a.gray8_get_opacity() == b.opacity())
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_premultiply()
   b.premultiply()
   doAssert(a == b)
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_premultiply_a(90)
   b.premultiply(90)
   doAssert(a == b)
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_demultiply()
@@ -292,7 +292,7 @@ proc test_gray8() =
   var d = a.gray8_gradient(c, 0.3)
   var e = b.gradient(c, 0.3)
   doAssert(d == e)
-  
+
   a = init_gray8_b(rgba, 0.7)
   b = initGray8(rgba, 0.7)
   a.gray8_add(c, 90)
@@ -300,21 +300,21 @@ proc test_gray8() =
   doAssert(a == b)
 
 proc test_gray16() =
-  var 
+  var
     rgba = initRgba(0.1,0.2,0.3,0.4)
     rgba8 = initRgba8(rgba)
     a = init_gray16_a(rgba)
     b = initGray16(rgba)
   doAssert(a == b)
-    
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   doAssert(a == b)
-  
+
   a = init_gray16_c(rgba8)
   b = initGray16(rgba8)
   doAssert(a == b)
-  
+
   a = init_gray16_d(rgba8, 100)
   b = initGray16(rgba8, 100)
   doAssert(a == b)
@@ -322,31 +322,31 @@ proc test_gray16() =
   a.gray16_clear()
   b.clear()
   doAssert(a == b)
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_transparent()
   b.transparent()
   doAssert(a == b)
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_opacity(0.8)
   b.opacity(0.8)
   doAssert(a.gray16_get_opacity() == b.opacity())
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_premultiply()
   b.premultiply()
   doAssert(a == b)
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_premultiply_a(90)
   b.premultiply(90)
   doAssert(a == b)
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_demultiply()
@@ -359,13 +359,13 @@ proc test_gray16() =
   var d = a.gray16_gradient(c, 0.3)
   var e = b.gradient(c, 0.3)
   doAssert(d == e)
-  
+
   a = init_gray16_b(rgba, 0.7)
   b = initGray16(rgba, 0.7)
   a.gray16_add(c, 90)
   b.add(c, 90)
   doAssert(a == b)
-  
+
 test_rgba()
 test_rgba8()
 test_rgba16()

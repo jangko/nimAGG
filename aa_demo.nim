@@ -1,6 +1,14 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_u
 import agg_renderer_scanline, agg_pixfmt_rgb, agg_color_rgba
-import agg_gamma_functions, agg_renderer_base, nimBMP
+import agg_gamma_functions, agg_renderer_base, agg_path_storage
+import agg_conv_stroke, agg_math_stroke, nimBMP
+
+{.passC: "-I./agg-2.5/include".}
+{.compile: "test_aa.cpp".}
+{.compile: "test_aa2.cpp".}
+{.passL: "-lstdc++".}
+
+proc test_aa(): cstring {.importc.}
 
 type
   Square = object
@@ -38,7 +46,7 @@ proc initRendererEnlarged[Renderer](ren: Renderer, size: float64): RendererEnlar
 
 proc setColor[Renderer](self: var RendererEnlarge[Renderer], c: Rgba8) =
   self.color = c
-  
+
 proc prepare[Renderer](self: RendererEnlarge[Renderer]) = discard
 
 proc render[Renderer, Scanline](self: var RendererEnlarge[Renderer], sl: var Scanline) =
@@ -67,10 +75,10 @@ const
   frameWidth = 600
   frameHeight = 400
   pixWidth = 3
-  
+
 type
   ValueType = uint8
-  
+
 proc onDraw() =
   var
     mx: array[3, float64]
@@ -87,52 +95,54 @@ proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    pf     = initPixFmtBgr24(rbuf)
+    pf     = initPixFmtRgb24(rbuf)
     ren    = initRendererBase(pf)
     sl     = initScanlineU8()
     ras    = newRasterizerScanlineAA()
-    
+
   let sizeMul = 32.float64
   ras.setGamma(initGammaPower(1.0))
   var renEn = initRendererEnlarged(ren, sizeMul)
-  
+
   var bkg = initRgba(1,1,1)
   ren.clear(initRgba8(bkg))
-  
+
   ras.reset()
   ras.moveToD(mx[0]/sizeMul, my[0]/sizeMul)
   ras.lineToD(mx[1]/sizeMul, my[1]/sizeMul)
   ras.lineToD(mx[2]/sizeMul, my[2]/sizeMul)
   renEn.setColor(initRgba8(0,0,0, 255))
   renderScanlines(ras, sl, renEn)
-  
-  saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)
 
-#[
-        agg::render_scanlines_aa_solid(ras, sl, ren, agg::rgba8(0,0,0));
+  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,0,0))
 
-        ras.gamma(agg::gamma_none());
+  ras.setGamma(initGammaNone())
 
-        agg::path_storage ps;
-        agg::conv_stroke<agg::path_storage> pg(ps);
-        pg.width(2.0);
+  var ps = newPathStorage()
+  var pg = initConvStroke(ps)
+  pg.width(5.0)
+  #pg.lineCap(roundCap)
 
-        ps.remove_all();
-        ps.move_to(m_x[0], m_y[0]);
-        ps.line_to(m_x[1], m_y[1]);
-        ras.add_path(pg);
-        agg::render_scanlines_aa_solid(ras, sl, ren, agg::rgba8(0,150,160, 200));
-
-        ps.remove_all();
-        ps.move_to(m_x[1], m_y[1]);
-        ps.line_to(m_x[2], m_y[2]);
-        ras.add_path(pg);
-        agg::render_scanlines_aa_solid(ras, sl, ren, agg::rgba8(0,150,160, 200));
-
-        ps.remove_all();
-        ps.move_to(m_x[2], m_y[2]);
-        ps.line_to(m_x[0], m_y[0]);
-        ras.add_path(pg);
-        agg::render_scanlines_aa_solid(ras, sl, ren, agg::rgba8(0,150,160, 200));]#
+  ps.removeAll()
+  ps.moveTo(mx[0], my[0])
+  ps.lineTo(mx[1], my[1])
+  ras.addPath(pg)
     
+  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 255))
+   
+  #echo "---"
+  #var kol = test_aa()
+  ps.removeAll();
+  ps.moveTo(mx[1], my[1])
+  ps.lineTo(mx[2], my[2])
+  ras.addPath(pg)
+  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 255))
+
+  ps.removeAll()
+  ps.moveTo(mx[2], my[2])
+  ps.lineTo(mx[0], my[0])
+  ras.addPath(pg)
+  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 100))
+ 
+  saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)  
 onDraw()

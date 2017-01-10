@@ -27,7 +27,7 @@ proc initGray8*(c: Gray8, a: uint): Gray8 =
   result.a = a.uint8
 
 proc initGray8*(c: Gray8): Gray8 = c
-  
+
 proc initGray8*(c: Rgba): Gray8 =
   const baseMask = getBaseMask(Gray8).float64
   type ValueType = getValueType(Gray8)
@@ -217,7 +217,7 @@ proc initGray16*(c: Gray16, a: uint): Gray16 =
   result.a = a.ValueType
 
 proc initGray16*(c: Gray16): Gray16 = c
-  
+
 proc initGray16*(c: Rgba): Gray16 =
   type ValueType = getValueType(Gray16)
   const baseMask = getBaseMask(Gray16).float64

@@ -235,7 +235,7 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
     x.cells = newSeqOfCap[ptr T](v)
     x.start = start
     inc(start, v)
-  
+
   # Fill the cell pointer array sorted by Y
   blockPtr = self.cells[0].addr
   nb = self.numCells shr cellBlockShift
@@ -255,7 +255,7 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
   cellPtr = blockPtr[]
   i = self.numCells and cellBlockMask
   while i != 0:
-    #var currY = self.sortedY[cellPtr.y - self.minY]    
+    #var currY = self.sortedY[cellPtr.y - self.minY]
     #self.sortedCells[currY.start + currY.num] = cellPtr
     #inc currY.num
     self.sortedY[cellPtr.y - self.minY].cells.add cellPtr
@@ -265,7 +265,7 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
   # Finally arrange the X-arrays
   for x in mitems(self.sortedY):
     #let currY = self.sortedY[i]
-    if x.num != 0: 
+    if x.num != 0:
       x.cells.sort(proc(a, b: ptr T): int = cmp(a.x, b.x))
      # qsortCells(self.sortedCells[0].addr + currY.start, currY.num)
 
@@ -369,7 +369,7 @@ proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
 proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
   const
     dxLimit = 16384 shl polySubpixelShift
-  
+
   let dx = x2 - x1
   if(dx >= dxLimit) or (dx <= -dxLimit):
     let cx = (x1 + x2) shr 1

@@ -66,7 +66,7 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
   template construct*(x: typedesc[name]): untyped = `init name`()
   template getCoordType*(x: typedesc[name]): typedesc = CoordType
   template getConvType*(x: typedesc[name]): typedesc = Conv
-  
+
   proc resetClipping*(self: var name) =
     self.clipping = false
 
@@ -82,7 +82,7 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
 
   proc lineClipY*[Rasterizer](self: var name, ras: Rasterizer,
     x1, y1, x2, y2: CoordType, cf1, cf2: uint) {.inline.} =
-    
+
     let
       f1 = cf1 and 10
       f2 = cf2 and 10
@@ -128,14 +128,14 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
           self.y1 = y2
           self.f1 = f2
           return
-    
-      var 
+
+      var
         x1 = self.x1
         y1 = self.y1
         f1 = self.f1
         y3, y4: CoordType
         f3, f4: uint
-    
+
       case (((f1 and 5) shl 1) or (f2 and 5))
       of 0: # Visible by X
         self.lineClipY(ras, x1, y1, x2, y2, f1, f2)
@@ -181,13 +181,13 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
         self.lineClipY(ras, self.clipBox.x1, y1, self.clipBox.x1, y2, f1, f2)
       else:
         doAssert(false, "clipping error")
-        
+
       self.f1 = f2
     else:
-      ras.line(Conv.xi(self.x1), Conv.yi(self.y1), Conv.xi(x2), Conv.yi(y2)) 
+      ras.line(Conv.xi(self.x1), Conv.yi(self.y1), Conv.xi(x2), Conv.yi(y2))
     self.x1 = x2
     self.y1 = y2
-            
+
 rasterizerSlClip(RasConvInt, RasterizerSlClipInt, int)
 rasterizerSlClip(RasConvIntSat, RasterizerSlClipIntSat, int)
 rasterizerSlClip(RasConvInt3x, RasterizerSlClipInt3x, int)

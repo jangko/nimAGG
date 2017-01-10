@@ -45,7 +45,7 @@ type
     startY: CoordType
     status: StatusE
     scanY: int
-  
+
   RasterizerScanlineAA* = RasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]
 
 proc newRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
@@ -176,13 +176,14 @@ proc edgeD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x
   self.clipper.lineTo(self.outline, Conv.upscale(x2), Conv.upscale(y2))
   self.status = statusMoveTo
 
-proc addPath*[ClipT, CoordT, VertexSource](self: RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0'u) =
+proc addPath*[ClipT, CoordT, VertexSource](self: RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0) =
   var x, y: float64
   vs.rewind(pathId)
   if self.outline.sorted(): self.reset()
 
   var cmd = vs.vertex(x, y)
   while not isStop(cmd):
+    #echo x.formatFloat(ffDecimal, 3), " ", y.formatFloat(ffDecimal, 3), " ", cmd
     self.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 
@@ -216,10 +217,10 @@ proc navigateScanline*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]
 
   self.scanY = y
   result = true
-  
+
 proc calculateAlpha*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; area: int): int {.inline.} =
   var cover = sar(area, (polySubpixelShift*2 + 1 - aaShift))
-  
+
   if cover < 0: cover = -cover
   if self.fillingRule == fillEvenOdd:
     cover = cover and aaMask2
@@ -227,7 +228,7 @@ proc calculateAlpha*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; 
       cover = aaScale2 - cover
 
   if cover > aaMask: cover = aaMask
-  
+
   result = self.gamma[cover]
 
 proc sweepScanline*[ClipT, CoordT, Scanline](self: RasterizerScanlineAA1[ClipT, CoordT]; sl: var Scanline): bool =
@@ -278,7 +279,7 @@ proc sweepScanline*[ClipT, CoordT, Scanline](self: RasterizerScanlineAA1[ClipT, 
   sl.finalize(self.scanY)
   inc self.scanY
   result = true
-  
+
 proc hitTest*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; tx, ty: int): bool =
   if not self.navigateScanline(ty): return false
   var sl = initScanlineHitTest(tx)

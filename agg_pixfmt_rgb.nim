@@ -269,10 +269,10 @@ proc copyVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenB
 proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, length: int, c: ColorT, cover: uint8) =
 
-  type 
+  type
     CalcType = getCalcType(ColorT)
     OrderType = getOrderType(Blender)
-    
+
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
@@ -297,10 +297,10 @@ proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
 proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, length: int, c: ColorT, cover: uint8) =
 
-  type 
+  type
     CalcType = getCalcType(ColorT)
     OrderType = getOrderType(Blender)
-    
+
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
@@ -328,10 +328,10 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
 proc blendSolidHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, length: int, c: ColorT, covers: ptr uint8) =
 
-  type 
+  type
     CalcType = getCalcType(ColorT)
     OrderType = getOrderType(Blender)
-    
+
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
@@ -355,10 +355,10 @@ proc blendSolidHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
 proc blendSolidVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, length: int, c: ColorT, covers: ptr uint8) =
 
-  type 
+  type
     CalcType = getCalcType(ColorT)
     OrderType = getOrderType(Blender)
-    
+
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
@@ -559,13 +559,13 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
 
 proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   pixf: PixFmt, x1, y1, x2, y2: int): bool =
-  
+
   var r = initRectBase[int](x1, y1, x2, y2)
   let c = initRectBase[int](0, 0, pixf.width()-1, pixf.height()-1)
-  
+
   if r.clip(c):
     let stride = pixf.stride()
-    self.rbuf.attach(pixf.pixPtr(r.x1, 
+    self.rbuf.attach(pixf.pixPtr(r.x1,
       if stride < 0: r.y2 else: r.y1),
       (r.x2 - r.x1) + 1, (r.y2 - r.y1) + 1, stride)
     return true

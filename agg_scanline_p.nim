@@ -10,7 +10,7 @@ type
     x*: int32
     len*: int32
     covers*: ptr uint8
-    
+
   ScanlineP8* = object
     lastX: int
     y: int
@@ -18,7 +18,7 @@ type
     coverPtr: ptr uint8
     spans: seq[Span16P8]
     curSpan: ptr Span16P8
-  
+
   Scanline32P8* = object
     maxLen: uint
     lastX: int
@@ -26,7 +26,7 @@ type
     covers: seq[uint8]
     coverPtr: ptr uint8
     spans: seq[Span32P8]
-    
+
 proc initScanlineP8*(): ScanlineP8 =
   result.lastX = 0x7FFFFFF0
   result.covers = @[]
@@ -39,15 +39,15 @@ proc reset*(self: var ScanlineP8, minX, maxX: int) =
   if maxLen > self.spans.len:
     self.spans.setLen(maxLen)
     self.covers.setLen(maxLen)
-    
+
   self.lastX    = 0x7FFFFFF0
   self.coverPtr = self.covers[0].addr
   self.curSpan  = self.spans[0].addr
   self.curSpan.len = 0
-    
+
 proc addCell*(self: var ScanlineP8, x: int, cover: uint) =
   self.coverPtr[] = cover.uint8
-  
+
   if (x == self.lastX+1) and self.curSpan.len > 0:
     inc self.curSpan.len
   else:
@@ -55,10 +55,10 @@ proc addCell*(self: var ScanlineP8, x: int, cover: uint) =
     self.curSpan.covers = self.coverPtr
     self.curSpan.x = int16(x)
     self.curSpan.len = 1
-    
+
   self.lastX = x
   inc self.coverPtr
-    
+
 proc addCells*(self: var ScanlineP8, x: int, len: int, covers: ptr uint8) =
   copyMem(self.coverPtr, covers, len * sizeof(uint8))
   if (x == self.lastX+1) and self.curSpan.len > 0:
@@ -71,10 +71,10 @@ proc addCells*(self: var ScanlineP8, x: int, len: int, covers: ptr uint8) =
 
   inc(self.coverPtr, len)
   self.lastX = x + len - 1
-    
+
 proc addSpan*(self: var ScanlineP8, x, len: int, cover: uint) =
-  if (x == self.lastX+1) and 
-    (self.curSpan.len < 0) and 
+  if (x == self.lastX+1) and
+    (self.curSpan.len < 0) and
     (cover == self.curSpan.covers[]):
     dec(self.curSpan.len, int16(len))
   else:
@@ -85,7 +85,7 @@ proc addSpan*(self: var ScanlineP8, x, len: int, cover: uint) =
     self.curSpan.x      = int16(x)
     self.curSpan.len    = int16(-len)
   self.lastX = x + len - 1
-    
+
 proc finalize*(self: var ScanlineP8, y: int) =
   self.y = y
 
@@ -97,7 +97,7 @@ proc resetSpans*(self: var ScanlineP8) =
 
 proc getY*(self: ScanlineP8): int = self.y
 proc numSpans*(self: var ScanlineP8): int = self.curSpan - self.spans[0].unsafeAddr
-  
+
 proc begin*(self: var ScanlineP8): ptr Span16P8 = self.spans[1].addr
 
 #[
@@ -145,9 +145,9 @@ proc add_cells(int x, unsigned len, const cover_type* covers)
     self.lastX = x + len - 1;
 
 proc add_span(int x, unsigned len, unsigned cover)
-    if(x == self.lastX+1 and 
+    if(x == self.lastX+1 and
        self.spans.size() and
-       self.spans.last().len < 0 and 
+       self.spans.last().len < 0 and
        cover == *self.spans.last().covers)
     {
         self.spans.last().len -= coord_type(len);
@@ -159,8 +159,8 @@ proc add_span(int x, unsigned len, unsigned cover)
     }
     self.lastX = x + len - 1;
 
-proc finalize(int y) 
-    m_y = y; 
+proc finalize(int y)
+    m_y = y;
 
 proc reset_spans()
     self.lastX    = 0x7FFFFFF0;

@@ -52,7 +52,7 @@ const rgb16 = [
   ("rgb24","gray16",3,2 ),
   ("bgr24","gray16",3,2 )
   ]
-  
+
 const test_width = 100
 
 echo "#include <agg_basics.h>"
@@ -87,7 +87,7 @@ echo "  printf(\"  var dst: array[test_width, uint8]\\n\");"
 echo "  printf(\"\\n\");"
 echo "  printf(\"  for i in 0.. <test_width:\\n\");"
 echo "  printf(\"    src[i] = i.uint8\\n\");"
-  
+
 proc output(src_color, dst_color: string, src_width, dst_width, dst_width_long: int) =
   echo "  width = ", min(src_width, dst_width), ";"
   echo "  agg::color_conv_row(dst, src, width, agg::color_conv_", src_color, "_to_", dst_color, "());"
@@ -115,7 +115,7 @@ for i in 0.. <rgb16.len:
   let dst_width = test_width div rgb16[i][3]
   let dst_width_long = dst_width * rgb16[i][3]
   output(src_color, dst_color, src_width, dst_width, dst_width_long)
-      
+
 echo "  printf(\"test_color_conv_rgb8()\\n\");"
 echo "}"
 

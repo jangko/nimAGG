@@ -5,7 +5,7 @@ type
     x*: int16
     len*: int16
     covers*: ptr uint8
-        
+
   ScanlineU8* = object
     minX: int
     lastX: int
@@ -20,13 +20,13 @@ proc initScanlineU8*(): ScanlineU8 =
   result.curSpan = nil
   result.covers = @[]
   result.spans = @[]
-    
+
 proc reset*(self: var ScanlineU8, minX, maxX: int) =
   let maxLen = maxX - minX + 2
   if maxLen > self.spans.len:
     self.spans.setLen(maxLen)
     self.covers.setLen(maxLen)
-    
+
   self.lastX   = 0x7FFFFFF0
   self.minX    = minX
   self.curSpan = self.spans[0].addr
@@ -41,7 +41,7 @@ proc addCell*(self: var ScanlineU8, x: int, cover: uint) =
     self.curSpan.x      = int16(x + self.minX)
     self.curSpan.len    = 1
     self.curSpan.covers = self.covers[x].addr
-    
+
   self.lastX = x
 
 proc addCells*(self: var ScanlineU8, x: int, len: int, covers: ptr uint8) =
@@ -54,7 +54,7 @@ proc addCells*(self: var ScanlineU8, x: int, len: int, covers: ptr uint8) =
     self.curSpan.x      = int16(x + self.minX)
     self.curSpan.len    = int16(len)
     self.curSpan.covers = self.covers[x].addr
-    
+
   self.lastX = x + len - 1
 
 proc addSpan*(self: var ScanlineU8, x: int, len: int, cover: uint) =
@@ -67,7 +67,7 @@ proc addSpan*(self: var ScanlineU8, x: int, len: int, cover: uint) =
     self.curSpan.x      = int16(x + self.minX)
     self.curSpan.len    = int16(len)
     self.curSpan.covers = self.covers[x].addr
-    
+
   self.lastX = x + len - 1
 
 proc finalize*(self: var ScanlineU8, y: int) =
