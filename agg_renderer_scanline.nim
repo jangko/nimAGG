@@ -1,6 +1,6 @@
 import agg_basics, agg_renderer_base, strutils
 
-proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: Scanline,
+proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
   ren: BaseRenderer, color: ColorT) =
 
   let y = sl.getY()
@@ -51,3 +51,40 @@ proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: Rasterizer, sl: var S
     ren.prepare()
     while ras.sweepScanline(sl):
       ren.render(sl)
+
+proc renderAllPaths*[Rasterizer, Scanline, Renderer, VertexSource, ColorT](ras: Rasterizer, sl: var Scanline,
+  ren: var Renderer, vs: var VertexSource, col: openArray[ColorT], pathId: openArray[int], numPaths: int) =
+
+  mixin reset, addPath
+  
+  for i in 0.. <numPaths:
+    ras.reset()
+    ras.addPath(vs, pathId[i])
+    ren.color(col[i])
+    renderScanlines(ras, sl, ren)
+    
+type
+  RendererScanlineAASolid*[BaseRenderer, ColorT] = object
+    ren: BaseRenderer
+    mColor: ColorT
+
+proc initRendererSAAS[B,C](ren: var B): RendererScanlineAASolid[B, C] =
+  result.ren = ren
+
+proc initRendererScanlineAASolid*[BaseRenderer](ren: var BaseRenderer): auto =
+  result = initRendererSAAS[BaseRenderer, getColorType(BaseRenderer)](ren)
+
+proc attach*[B, C](self: var RendererScanlineAASolid[B, C], ren: var B) =
+  self.ren = ren
+
+proc color*[B,C](self: var RendererScanlineAASolid[B, C], c: C) =
+  self.mColor = c
+  
+proc color*[B,C](self: RendererScanlineAASolid[B, C]): C =
+  result = self.mColor
+
+proc prepare*[B,C](self: RendererScanlineAASolid[B, C]) = discard
+
+proc render*[B,C, Scanline](self: RendererScanlineAASolid[B, C], sl: var Scanline) =
+  renderScanlineAASolid(sl, self.ren, self.color)
+        

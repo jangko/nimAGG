@@ -68,6 +68,9 @@ proc boundingXmax*[PixFmt](self: RendererBase[PixFmt]): int = self.clipBox.x2
 proc boundingYmax*[PixFmt](self: RendererBase[PixFmt]): int = self.clipBox.y2
 
 proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
+  when getColorType(PixFmt) isnot ColorT:
+    var c = construct(getColorType(PixFmt), c)
+  
   if self.width() != 0:
     for y in 0.. <self.height():
       self.ren.copyHline(0, y, self.width(), c)

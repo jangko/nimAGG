@@ -2,7 +2,7 @@ import math, agg_basics
 
 type
   TransAffine* = object
-    sx, shy, shx, sy, tx, ty: float64
+    sx*, shy*, shx*, sy*, tx*, ty*: float64
     
 proc initTransAffine*(v0, v1, v2, v3, v4, v5: float64): TransAffine =
   result.sx = v0
@@ -11,6 +11,9 @@ proc initTransAffine*(v0, v1, v2, v3, v4, v5: float64): TransAffine =
   result.sy = v3
   result.tx = v4
   result.ty = v5
+
+proc initTransAffine*(): TransAffine =
+  result = initTransAffine(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
         
 proc multiply*(a: var TransAffine, m: TransAffine) =
   var 
@@ -28,10 +31,10 @@ proc multiply*(a: var TransAffine, m: TransAffine) =
 proc `*=`*(a: var TransAffine, m: TransAffine) =
   a.multiply(m)
 
-proc transform*(a: var TransAffine, x, y: ptr float64) {.inline.} =
-  let tmp = x[]
-  x[] = tmp * a.sx + y[] * a.shx + a.tx
-  y[] = tmp * a.shy + y[] * a.sy  + a.ty
+proc transform*(a: var TransAffine, x, y: var float64) {.inline.} =
+  let tmp = x
+  x = tmp * a.sx + y * a.shx + a.tx
+  y = tmp * a.shy + y * a.sy  + a.ty
     
 proc transAffineTranslation*(x, y: float64): TransAffine =
   result = initTransAffine(1.0, 0.0, 0.0, 1.0, x, y)

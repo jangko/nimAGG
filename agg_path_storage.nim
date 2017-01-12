@@ -1,4 +1,4 @@
-import agg_basics, agg_math, agg_bezier_arc
+import agg_basics, agg_math, agg_bezier_arc, strutils
 
 type
   VertexStorage* = ref object
@@ -122,6 +122,8 @@ type
     vertices: VC
     iter: int
 
+  PathStorage* = PathBase[VertexStorage]
+  
 proc newPathBase*[VC](vertices: VC): PathBase[VC] =
   new(result)
   result.vertices = vertices
@@ -418,13 +420,12 @@ proc perceivePolygonOrientation*[VC](self: PathBase[VC], start, stop: int): uint
   let np = stop - start
   var
     area = 0.0'f64
-
+    x1, y1, x2, y2: float64
 
   for i in 0.. <np:
-    var x1, y1, x2, y2: float64
-    self.vertices.vertex(start + i,            x1, y1)
-    self.vertices.vertex(start + (i + 1) mod np, x2, y2)
-    inc(area, x1 * y2 - y1 * x2)
+    discard self.vertices.vertex(start + i,            x1, y1)
+    discard self.vertices.vertex(start + (i + 1) mod np, x2, y2)
+    area += x1 * y2 - y1 * x2
 
   result = if area < 0.0: pathFlagsCw else: pathFlagsCcw
 
@@ -494,11 +495,12 @@ proc arrangePolygonOrientation*[VC](self: PathBase[VC], start: int, orientation:
     if self.perceivePolygonOrientation(start, stop) != orientation:
       # Invert polygon, set orientation flag, and skip all end_poly
       self.invertPolygon(start, stop)
-      var cmd: uint
-      while stop < len and isEndPoly(cmd):
-        self.vertices.modifyCommand(stop, setOrientation(cmd, orientation))
-        inc stop
-        cmd = self.vertices.command(stop)
+      if stop < len:
+        var cmd = self.vertices.command(stop)
+        while stop < len and isEndPoly(cmd):
+          self.vertices.modifyCommand(stop, setOrientation(cmd, orientation))
+          inc stop
+          cmd = self.vertices.command(stop)
 
   result = stop
 
@@ -508,8 +510,8 @@ proc arrangeOrientations*[VC](self: PathBase[VC], start: int, orientation: uint)
   if orientation != pathFlagsNone:
     let len = self.vertices.totalVertices()
     while start < len:
-      start = arrangePolygonOrientation(start, orientation)
-      if isStop(self.vertices.command(start)):
+      start = self.arrangePolygonOrientation(start, orientation)      
+      if start < len and isStop(self.vertices.command(start)):
         inc start
         break
 
@@ -560,3 +562,11 @@ proc translateAllPaths*[VC](self: PathBase[VC], dx, dy: float64) =
       inc(x, dx)
       inc(y, dy)
       self.vertices.modifyVertex(idx, x, y)
+      
+proc print*[VC](self: PathBase[VC]) =
+  let numVer = self.vertices.totalVertices()
+  var x, y: float64
+  for i in 0.. <numVer:
+    let cmd = self.vertices.vertex(i, x, y)
+    echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
+    

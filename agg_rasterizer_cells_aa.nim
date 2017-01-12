@@ -1,4 +1,4 @@
-import agg_basics, algorithm
+import agg_basics, algorithm, strutils
 
 const
   cellBlockShift = 12
@@ -267,29 +267,32 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
     #let currY = self.sortedY[i]
     if x.num != 0:
       x.cells.sort(proc(a, b: ptr T): int = cmp(a.x, b.x))
+    else:
+      x.cells.add nil
      # qsortCells(self.sortedCells[0].addr + currY.start, currY.num)
 
-  self.sortedY[self.maxY - self.minY].cells.add nil
+  #self.sortedY[self.maxY - self.minY].cells.add nil
   self.sorted = true
 
 proc totalCells*[T](self: RasterizerCellsAA[T]): int =
   result = self.numCells
 
 proc scanlineNumCells*[T](self: RasterizerCellsAA[T], y: int): int =
-  #echo y, " ", $(y - self.minY), " ", self.sortedY.len
   result = self.sortedY[y - self.minY].num
 
 proc scanlineCells*[T](self: RasterizerCellsAA[T], y: int): ptr ptr T =
   #result = self.sortedCells[self.sortedY[y - self.minY].start].addr
+  #echo y, " ", self.minY
   result = self.sortedY[y - self.minY].cells[0].addr
 
 proc sorted*[T](self: RasterizerCellsAA[T]): bool =
   result = self.sorted
 
 proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
+  #echo "$1 $2 $3 $4 $5" % [$ey, $x1, $y1, $x2, $y2]
   var
-    ex1 = x1 shr polySubpixelShift
-    ex2 = x2 shr polySubpixelShift
+    ex1 = sar(x1, polySubpixelShift)
+    ex2 = sar(x2, polySubpixelShift)
     fx1 = x1 and polySubpixelMask
     fx2 = x2 and polySubpixelMask
 
@@ -372,17 +375,17 @@ proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
 
   let dx = x2 - x1
   if(dx >= dxLimit) or (dx <= -dxLimit):
-    let cx = (x1 + x2) shr 1
-    let cy = (y1 + y2) shr 1
+    let cx = sar((x1 + x2), 1)
+    let cy = sar((y1 + y2), 1)
     self.line(x1, y1, cx, cy)
     self.line(cx, cy, x2, y2)
 
   var
     dy = y2 - y1
-    ex1 = x1 shr polySubpixelShift
-    ex2 = x2 shr polySubpixelShift
-    ey1 = y1 shr polySubpixelShift
-    ey2 = y2 shr polySubpixelShift
+    ex1 = sar(x1, polySubpixelShift)
+    ex2 = sar(x2, polySubpixelShift)
+    ey1 = sar(y1, polySubpixelShift)
+    ey2 = sar(y2, polySubpixelShift)
     fy1 = y1 and polySubpixelMask
     fy2 = y2 and polySubpixelMask
 
@@ -412,7 +415,7 @@ proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
   incr  = 1
   if dx == 0:
     var
-      ex = x1 shr polySubpixelShift
+      ex = sar(x1, polySubpixelShift)
       two_fx = (x1 - (ex shl polySubpixelShift)) shl 1
       area: int
 
@@ -467,7 +470,7 @@ proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
   self.renderHline(ey1, x1, fy1, xFrom, first)
 
   inc(ey1, incr)
-  self.setCurrCell(xFrom shr polySubpixelShift, ey1)
+  self.setCurrCell(sar(xFrom, polySubpixelShift), ey1)
 
   if ey1 != ey2:
     p     = polySubpixelScale * dx
@@ -492,7 +495,7 @@ proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
       xFrom = xTo
 
       inc(ey1, incr)
-      self.setCurrCell(xFrom shr polySubpixelShift, ey1)
+      self.setCurrCell(sar(xFrom, polySubpixelShift), ey1)
 
   self.renderHline(ey1, xFrom, polySubpixelScale - first, x2, fy2)
 

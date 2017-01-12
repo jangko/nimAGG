@@ -189,7 +189,7 @@ proc init*(self: var BezierArcSvg, x0, y0, rx, ry, angle: float64, largeArcFlag,
   mtx *= transAffineTranslation(cx, cy)
   
   for i in countup(2, self.arc.numVertices()-2, 2):
-    mtx.transform(self.arc.vertices() + i, self.arc.vertices() + i + 1)
+    mtx.transform((self.arc.vertices() + i)[], (self.arc.vertices() + i + 1)[])
   
   # We must make sure that the starting and ending points
   # exactly coincide with the initial (x0,y0) and (x2,y2)

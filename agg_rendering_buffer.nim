@@ -92,8 +92,7 @@ proc clear*[T](self: RowAccessor[T], value: T) =
       p[] = value
       inc p
 
-
-proc attach*[T](self: RowPtrCache, buf: ptr T, width, height: uint, stride: int) =
+proc attach*[T](self: RowPtrCache[T], buf: ptr T, width, height: uint, stride: int) =
   self.buf = buf
   self.width = width
   self.height = height

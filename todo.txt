@@ -1,9 +1,16 @@
+alpha_mask_u8
+
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
+  clip_liang_barsky
+  scanline_u
 
 translate ok:
+  parse_lion.cpp
+  conv_transform
+  bounding_rect
   bezier_arc
   conv_stroke
   conv_adaptor_vcgen

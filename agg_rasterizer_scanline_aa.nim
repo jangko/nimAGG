@@ -179,11 +179,10 @@ proc edgeD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x
 proc addPath*[ClipT, CoordT, VertexSource](self: RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0) =
   var x, y: float64
   vs.rewind(pathId)
+  
   if self.outline.sorted(): self.reset()
-
   var cmd = vs.vertex(x, y)
   while not isStop(cmd):
-    #echo x.formatFloat(ffDecimal, 3), " ", y.formatFloat(ffDecimal, 3), " ", cmd
     self.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 

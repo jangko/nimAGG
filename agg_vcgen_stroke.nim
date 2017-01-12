@@ -69,7 +69,6 @@ proc removeAll*(self: VcgenStroke) =
   self.mStatus = initial
 
 proc addVertex*(self: VcgenStroke, x, y: float64, cmd: uint) =
-  #echo x, " ", y, " ", cmd
   self.mStatus = initial
   if isMoveTo(cmd):
     self.mSrcVertices.modifyLast(initVertexDist(x, y))
@@ -172,7 +171,6 @@ proc vertex*(self: VcgenStroke, x, y: var float64): uint =
         inc(self.mOutVertex)
         x = c.x
         y = c.y
-        #echo "s ", x.formatFloat(ffDecimal, 3), " ", y.formatFloat(ffDecimal, 3), " ", cmd
         return cmd
     of endPoly1:
       self.mStatus = self.mPrevStatus
