@@ -63,11 +63,11 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
   proc getGamma*(self: nameT): float64 =
     result = self.gamma
 
-  proc dir*(self: nameT, v: LoResT): HiResT =
+  proc dir*(self: nameT, v: uint): HiResT =
     result = self.dirGamma[v.int]
 
-  proc inv*(self: nameT, v: HiResT): LoResT =
+  proc inv*(self: nameT, v: uint): LoResT =
     result = self.invGamma[v.int]
-
+ 
 gamma_lut(GammaLut8, uint8, uint8, 8, 8)
 gamma_lut(GammaLut16, uint16, uint16, 16, 16)

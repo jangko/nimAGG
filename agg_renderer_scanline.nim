@@ -77,8 +77,11 @@ proc initRendererScanlineAASolid*[BaseRenderer](ren: var BaseRenderer): auto =
 proc attach*[B, C](self: var RendererScanlineAASolid[B, C], ren: var B) =
   self.ren = ren
 
-proc color*[B,C](self: var RendererScanlineAASolid[B, C], c: C) =
-  self.mColor = c
+proc color*[B,C,CT](self: var RendererScanlineAASolid[B, C], c: CT) =
+  when C isnot CT:
+    self.mColor = construct(C, c)
+  else:
+    self.mColor = c
   
 proc color*[B,C](self: RendererScanlineAASolid[B, C]): C =
   result = self.mColor

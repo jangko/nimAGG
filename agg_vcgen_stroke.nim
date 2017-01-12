@@ -128,11 +128,13 @@ proc vertex*(self: VcgenStroke, x, y: var float64): uint =
           self.mPrevStatus = closeFirst
           self.mStatus = endPoly1
           exit = true
+          #continue
       else:
         if self.mSrcVertex >= self.mSrcVertices.size() - 1:
           self.mStatus = cap2
           exit = true
-
+          #continue
+      
       if not exit:
         self.mStroker.calcJoin(self.mOutVertices,
                             self.mSrcVertices.prev(self.mSrcVertex),

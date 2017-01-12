@@ -65,9 +65,16 @@ proc close*[T](self: var VertexSequence[T], closed: bool) =
       if self.vert[len-1].cmp(self.vert[0]): break
       self.vert.removeLast()
 
-proc curr*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx]
-proc next*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx + 1]
-proc prev*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx - 1]
+proc curr*[T](self: var VertexSequence[T], idx: int): var T = 
+  self.vert[idx]
+  
+proc next*[T](self: var VertexSequence[T], idx: int): var T = 
+  self.vert[(idx + 1) mod self.vert.len]
+  
+proc prev*[T](self: var VertexSequence[T], idx: int): var T = 
+  let size = self.vert.len
+  self.vert[(idx + size - 1) mod size]
+
 proc `[]`*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx]
 proc size*[T](self: VertexSequence[T]): int = self.vert.len
 proc removeLast*[T](self: var VertexSequence[T]) = self.vert.removeLast()

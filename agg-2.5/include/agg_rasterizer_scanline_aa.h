@@ -204,6 +204,7 @@ namespace agg
             if(m_outline.sorted()) reset();
             while(!is_stop(cmd = vs.vertex(&x, &y)))
             {
+                printf("%3.3f %3.3f %d\n", x, y , cmd);
                 add_vertex(x, y, cmd);
             }
         }
