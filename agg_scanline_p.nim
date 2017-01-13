@@ -100,74 +100,66 @@ proc numSpans*(self: var ScanlineP8): int = self.curSpan - self.spans[0].unsafeA
 
 proc begin*(self: var ScanlineP8): ptr Span16P8 = self.spans[1].addr
 
-#[
-scanline32_p8() :
-    self.maxLen(0),
-    self.lastX(0x7FFFFFF0),
-    self.covers(),
-    self.coverPtr(0)
+proc initScanline32P8*(): Scanline32P8 =
+  result.maxLen = 0
+  result.lastX = 0x7FFFFFF0
+  result.covers = @[]
+  result.coverPtr = nil
+  result.spans = @[]
 
-proc reset(int min_x, int max_x)
-{
-    unsigned max_len = max_x - min_x + 3;
-    if(max_len > self.covers.size())
-    {
-        self.covers.resize(max_len);
-    }
-    self.lastX    = 0x7FFFFFF0;
-    self.coverPtr = &self.covers[0];
-    self.spans.remove_all();
+proc reset*(self: var Scanline32P8, minX, maxX: int) =
+  let maxLen = maxX - minX + 3
+  if maxLen > self.covers.len:
+    self.covers.setLen(maxLen)
 
-proc add_cell(int x, unsigned cover)
-    *self.coverPtr = cover_type(cover);
-    if(x == self.lastX+1 and self.spans.size() and self.spans.last().len > 0)
-    {
-        self.spans.last().len++;
-    }
-    else
-    {
-        self.spans.add(span(coord_type(x), 1, self.coverPtr));
-    }
-    self.lastX = x;
-    self.coverPtr++;
+  self.lastX    = 0x7FFFFFF0
+  self.coverPtr = self.covers[0].addr
+  self.spans.setLen(0)
 
-proc add_cells(int x, unsigned len, const cover_type* covers)
-    memcpy(self.coverPtr, covers, len * sizeof(cover_type));
-    if(x == self.lastX+1 and self.spans.size() and self.spans.last().len > 0)
-    {
-        self.spans.last().len += coord_type(len);
-    }
-    else
-    {
-        self.spans.add(span(coord_type(x), coord_type(len), self.coverPtr));
-    }
-    self.coverPtr += len;
-    self.lastX = x + len - 1;
+proc last(x: var seq[Span32P8]): var Span32P8 =
+  result = x[x.len-1]
 
-proc add_span(int x, unsigned len, unsigned cover)
-    if(x == self.lastX+1 and
-       self.spans.size() and
-       self.spans.last().len < 0 and
-       cover == *self.spans.last().covers)
-    {
-        self.spans.last().len -= coord_type(len);
-    }
-    else
-    {
-        *self.coverPtr = cover_type(cover);
-        self.spans.add(span(coord_type(x), -coord_type(len), self.coverPtr++));
-    }
-    self.lastX = x + len - 1;
+proc addCell*(self: var Scanline32P8, x: int, cover: uint) =
+  self.coverPtr[] = cover.uint8
+  if x == self.lastX+1 and self.spans.len != 0 and self.spans.last().len > 0:
+    inc self.spans.last().len
+  else:
+    self.spans.add(Span32P8(x: x.int32, len: 1, covers: self.coverPtr))
 
-proc finalize(int y)
-    m_y = y;
+  self.lastX = x
+  inc self.coverPtr
 
-proc reset_spans()
-    self.lastX    = 0x7FFFFFF0;
-    self.coverPtr = &self.covers[0];
-    self.spans.remove_all();
+proc addCells*(self: var Scanline32P8, x: int, len: int, covers: ptr uint8) =
+  copyMem(self.coverPtr, covers, len * sizeof(uint8))
+  if x == self.lastX+1 and self.spans.len != 0 and self.spans.last().len > 0:
+    inc self.spans.last().len
+  else:
+    self.spans.add(Span32P8(x: x.int32, len: int32(len), covers: self.coverPtr))
 
-int            y()         const { return m_y; }
-unsigned       nuself.spans() const { return self.spans.size(); }
-const_iterator begin()     const { return const_iterator(self.spans); }
-]#
+  inc(self.coverPtr, len)
+  self.lastX = x + len - 1
+
+proc addSpan*(self: var Scanline32P8, x: int, len: int, cover: uint) =
+  if x == self.lastX+1 and
+    self.spans.len != 0 and
+    self.spans.last().len > 0 and
+    cover == self.spans.last().covers[]:
+    self.spans.last().len -= int32(len)
+  else:
+    self.coverPtr[] = uint8(cover)
+    self.spans.add(Span32P8(x: x.int32, len: -int32(len), covers: self.coverPtr))
+    inc self.coverPtr
+
+  self.lastX = x + len - 1
+
+proc finalize*(self: var Scanline32P8, y: int) =
+  self.y = y
+
+proc resetSpans*(self: var Scanline32P8) =
+  self.lastX    = 0x7FFFFFF0
+  self.coverPtr = self.covers[0].addr
+  self.spans.setLen(0)
+
+proc getY*(self: Scanline32P8): int = self.y
+proc numSpans*(self: Scanline32P8): int = self.spans.len
+proc begin*(self: var Scanline32P8): ptr Span32P8 = self.spans[0].addr

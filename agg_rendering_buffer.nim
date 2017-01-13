@@ -15,8 +15,12 @@ type
     height: uint     # Height in pixels
     stride: int      # Number of bytes per row. Can be < 0
 
+  Row[T] = object
+    x1, x2: int
+    data: seq[T]
+    
   DynaRow*[T] = ref object
-    rows: seq[RowInfo[T]]
+    rows: seq[Row[T]]
     width: int
     height: int
     byteWidth: int
@@ -166,27 +170,13 @@ proc clear*[T](self: RowPtrCache[T], value: T) =
       p[] = value
       inc p
 
-proc init*[T](self: DynaRow[T], width, height, byteWidth: int) =
-  for i in 0.. <self.height:
-    dealloc(self.rows[i].data)
-
-  if (width and height) != 0:
-    self.width  = width
-    self.height = height
-    self.byteWidth = byteWidth
-    self.rows.setLen(height)
-    zeroMem(self.rows[0].addr, sizeof(RowInfo[T]) * height)
-
-proc finalizer[T](self: DynaRow[T]) =
-  self.init(0, 0, 0)
-
 proc newDynaRow*[T](width, height, byteWidth: int): DynaRow[T] =
-  new(result, finalizer[T])
-  result.rows = newSeq[RowInfo[T]](height)
+  new(result)
+  result.rows = newSeq[Row[T]](height)
   result.width = width
   result.height = height
   result.byteWidth = byteWidth
-  zeroMem(result.rows[0].addr, sizeof(RowInfo[T]) * height)
+  zeroMem(result.rows[0].addr, sizeof(Row[T]) * height)
 
 proc width*[T](self: DynaRow[T]): int = self.width
 proc height*[T](self: DynaRow[T]): int = self.height
@@ -200,16 +190,17 @@ proc rowPtr*[T](self: DynaRow[T], x, y, len: int): ptr T =
     if x  < r.x1: r.x1 = x
     if x2 > r.x2: r.x2 = x2
   else:
-    r.data = cast[ptr T](alloc0(self.byteWidth))
+    r.data = newSeq[T](self.byteWidth)
     r.x1  = x
     r.x2  = x2
-  result = r.data
+  result = r.data[0].addr
 
 proc rowPtr*[T](self: DynaRow[T], y: int): ptr T =
   result = self.rowPtr(0, y, self.width)
 
-proc row*[T](self: DynaRow[T], y: int): auto =
-  result = self.rows[y]
+proc row*[T](self: DynaRow[T], y: int): RowInfo[T] =
+  var r = self.rows[y].addr
+  result = RowInfo(x1:r.x1, x2:r.x2, data: r.data[0].addr)
 
 proc copyFrom*[T](self, src: DynaRow[T]) =
   let

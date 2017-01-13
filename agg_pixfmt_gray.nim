@@ -1,5 +1,7 @@
 import agg_basics, agg_rendering_buffer, agg_color_gray
 
+{.experimental.}
+
 type
   BlenderGray*[ColorT] = object
   BlenderGrayPre*[ColorT] = object

@@ -1,28 +1,32 @@
 alpha_mask_u8
+dda_line
+scanline_bin
+ellipse_bresenham
+renderer_primitive
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
   clip_liang_barsky
-  scanline_u
 
 translate ok:
-  parse_lion.cpp
-  conv_transform
-  bounding_rect
+  scanline_u
+  scanline_p
+  -parse_lion.cpp
+  -conv_transform
+  -bounding_rect
   bezier_arc
-  conv_stroke
-  conv_adaptor_vcgen
-  vcgen_stroke
-  math_stroke
-  vertex_sequence
-  renderer_scanline_p
-  ellipse
-  renderer_base
-  rasterizer_scanline_aa
-  rasterizer_cells_aa
-  rasterizer_sl_clip
+  -conv_stroke
+  -conv_adaptor_vcgen
+  -vcgen_stroke
+  -math_stroke
+  -vertex_sequence  
+  -ellipse
+  -renderer_base
+  -rasterizer_scanline_aa
+  -rasterizer_cells_aa
+  -rasterizer_sl_clip
 
 test pending:
   pixfmt_rgb:

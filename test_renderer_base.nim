@@ -13,7 +13,7 @@ proc testRendererBase[ColorT]() =
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pixf = initPixFmtRgb24(rbuf)
-    ren = initRendererRase(pixf)
+    ren = initRendererBase(pixf)
 
   var px = ren.pixel(10, 10)
 

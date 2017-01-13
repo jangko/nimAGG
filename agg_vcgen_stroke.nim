@@ -38,7 +38,7 @@ proc newVcgenStroke*(): VcgenStroke =
   result.mStatus = initial
   result.mSrcVertex = 0
   result.mOutVertex = 0
-  
+
 template construct*(x: typedesc[VcgenStroke]): untyped = newVcgenStroke()
 
 proc lineCap*(self: VcgenStroke, lc: LineCap) = self.mStroker.lineCap(lc)
@@ -93,7 +93,7 @@ proc vertex*(self: VcgenStroke, x, y: var float64): uint =
 
   while not isStop(cmd):
     case self.mStatus
-    of initial: 
+    of initial:
       self.rewind(0)
       self.mStatus = ready
     of ready:
@@ -122,30 +122,26 @@ proc vertex*(self: VcgenStroke, x, y: var float64): uint =
       self.mStatus = outVertices
       self.mOutVertex = 0
     of outline1:
-      var exit = false
       if self.mClosed != 0:
         if self.mSrcVertex >= self.mSrcVertices.size():
           self.mPrevStatus = closeFirst
           self.mStatus = endPoly1
-          exit = true
-          #continue
+          continue
       else:
         if self.mSrcVertex >= self.mSrcVertices.size() - 1:
           self.mStatus = cap2
-          exit = true
-          #continue
-      
-      if not exit:
-        self.mStroker.calcJoin(self.mOutVertices,
-                            self.mSrcVertices.prev(self.mSrcVertex),
-                            self.mSrcVertices.curr(self.mSrcVertex),
-                            self.mSrcVertices.next(self.mSrcVertex),
-                            self.mSrcVertices.prev(self.mSrcVertex).dist,
-                            self.mSrcVertices.curr(self.mSrcVertex).dist)
-        inc(self.mSrcVertex)
-        self.mPrevStatus = self.mStatus
-        self.mStatus = outVertices
-        self.mOutVertex = 0
+          continue
+
+      self.mStroker.calcJoin(self.mOutVertices,
+                          self.mSrcVertices.prev(self.mSrcVertex),
+                          self.mSrcVertices.curr(self.mSrcVertex),
+                          self.mSrcVertices.next(self.mSrcVertex),
+                          self.mSrcVertices.prev(self.mSrcVertex).dist,
+                          self.mSrcVertices.curr(self.mSrcVertex).dist)
+      inc(self.mSrcVertex)
+      self.mPrevStatus = self.mStatus
+      self.mStatus = outVertices
+      self.mOutVertex = 0
 
     of closeFirst:
       self.mStatus = outline2
