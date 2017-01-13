@@ -20,7 +20,7 @@ proc draw_black_frame[T](ren: var  T) =
 proc main() =
   var buffer = newString(frame_width * frame_height * 3)
   for i in 0.. <buffer.len: buffer[i] = 255.chr
-  var rbuf = newRenderingBuffer(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
+  var rbuf = initRenderingBuffer(cast[ptr uint8](buffer[0].addr), frame_width, frame_height, frame_width * 3)
   var pixf = initPixFmtRgb24(rbuf)
 
   let h = pixf.height() div 2

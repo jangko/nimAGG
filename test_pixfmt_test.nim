@@ -216,8 +216,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
     discard pixf.pixPtr(1, 1)
 
-genTest(test1, PixFmtRgb24, Rgba8, pixf_rgb24, lut8, newRenderingBuffer)
-genTest(test2, PixFmtRgb48, Rgba16, pixf_rgb48, lut16, newRenderingBuffer)
+genTest(test1, PixFmtRgb24, Rgba8, pixf_rgb24, lut8, initRenderingBuffer)
+genTest(test2, PixFmtRgb48, Rgba16, pixf_rgb48, lut16, initRenderingBuffer)
 
 testtest1()
 testtest2()
@@ -358,8 +358,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
     discard pixf.pixPtr(1, 1)
 
-genTestGray(test5, PixFmtGray8, Gray8, lut8, newRenderingBuffer)
-genTestGray(test6, PixFmtGray16, Gray16, lut16, newRenderingBuffer)
+genTestGray(test5, PixFmtGray8, Gray8, lut8, initRenderingBuffer)
+genTestGray(test6, PixFmtGray16, Gray16, lut16, initRenderingBuffer)
 
 testtest5()
 testtest6()
@@ -373,10 +373,10 @@ proc testRenderingBuffer[ColorT]() =
   var
     buf1 = newString(frameWidth * frameHeight * pixWidth)
     buf2 = newString(frameWidth * frameHeight * pixWidth)
-    rbuf1 = newRenderingBuffer(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbuf2 = newRenderingBuffer(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc1 = newRenderingBufferCached(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc2 = newRenderingBufferCached(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf1 = initRenderingBuffer(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf2 = initRenderingBuffer(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbufc1 = initRenderingBufferCached(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbufc2 = initRenderingBufferCached(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
 
   for i in 0.. <buf1.len:
     buf1[i] = 0.chr
@@ -394,8 +394,8 @@ proc testRenderingBuffer[ColorT]() =
 
   var
     byteWidth = sizeof(ColorT) * 3
-    dn1 = newDynaRow[ValueType](100, 120, byteWidth)
-    dn2 = newDynaRow[ValueType](100, 120, byteWidth)
+    dn1 = initDynaRow[ValueType](100, 120, byteWidth)
+    dn2 = initDynaRow[ValueType](100, 120, byteWidth)
 
   for i in 0.. <dn1.height():
     zeroMem(dn1.rowPtr(i), byteWidth)

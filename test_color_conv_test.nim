@@ -45,8 +45,8 @@ template test_rendering_buffer(renbuf, tester: untyped) =
         echo "clear failed"
         break
 
-test_rendering_buffer(newRenderingBuffer, test_renbuf1)
-test_rendering_buffer(newRenderingBufferCached, test_renbuf2)
+test_rendering_buffer(initRenderingBuffer, test_renbuf1)
+test_rendering_buffer(initRenderingBufferCached, test_renbuf2)
 
 test_renbuf1()
 test_renbuf2()

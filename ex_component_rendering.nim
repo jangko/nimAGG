@@ -25,7 +25,7 @@ type
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pf  = initPixFmtBgr24(rbuf)
     pfr = initPixfmtGray8bgr24r(rbuf)
     pfg = initPixfmtGray8bgr24g(rbuf)
@@ -34,7 +34,7 @@ proc onDraw() =
     rbr = initRendererBase(pfr)
     rbg = initRendererBase(pfg)
     rbb = initRendererBase(pfb)
-    ras = newRasterizerScanlineAA()
+    ras = initRasterizerScanlineAA()
     sl = initScanlineP8()
 
   var bkg = initRgba(1,1,1)

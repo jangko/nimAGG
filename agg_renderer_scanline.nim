@@ -19,7 +19,7 @@ proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
     if numSpans == 0: break
     inc span
 
-proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: Rasterizer,
+proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: var Rasterizer,
   sl: var Scanline, ren: BaseRenderer, color: ColorT) =
   mixin reset
 
@@ -44,7 +44,7 @@ proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: Ra
         if numSpans == 0: break
         inc span
 
-proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: Rasterizer, sl: var Scanline, ren: var Renderer) =
+proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: var Rasterizer, sl: var Scanline, ren: var Renderer) =
   mixin reset
   if ras.rewindScanlines():
     sl.reset(ras.minX(), ras.maxX())
@@ -52,7 +52,7 @@ proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: Rasterizer, sl: var S
     while ras.sweepScanline(sl):
       ren.render(sl)
 
-proc renderAllPaths*[Rasterizer, Scanline, Renderer, VertexSource, ColorT](ras: Rasterizer, sl: var Scanline,
+proc renderAllPaths*[Rasterizer, Scanline, Renderer, VertexSource, ColorT](ras: var Rasterizer, sl: var Scanline,
   ren: var Renderer, vs: var VertexSource, col: openArray[ColorT], pathId: openArray[int], numPaths: int) =
 
   mixin reset, addPath

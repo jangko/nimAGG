@@ -30,11 +30,11 @@ base_dy = (y2 - y1) / 2.0
 
 var
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
   pf     = initPixFmtRgb24(rbuf)
   rb     = initRendererBase(pf)
   sl     = initScanlineU8()
-  ras    = newRasterizerScanlineAA()
+  ras    = initRasterizerScanlineAA()
   ren    = initRendererScanlineAASolid(rb)
   mtx    = initTransAffine()
   

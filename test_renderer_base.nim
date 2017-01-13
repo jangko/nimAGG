@@ -11,7 +11,7 @@ proc testRendererBase[ColorT]() =
     pixWidth = sizeof(ValueType) * 3
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pixf = initPixFmtRgb24(rbuf)
     ren = initRendererBase(pixf)
 

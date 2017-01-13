@@ -2,28 +2,28 @@ import agg_basics, agg_rendering_buffer, agg_pixfmt_rgb, strutils
 
 type
   RendererBase*[PixFmt] = object
-    ren: PixFmt
+    ren: ptr PixFmt
     clipBox: RectI
 
 template getColorType*[PixFmt](x: typedesc[RendererBase[PixFmt]]): typedesc = getColorType(PixFmt.type)
 
-proc initRendererBase*[PixFmt](ren: PixFmt): RendererBase[PixFmt] =
-  result.ren = ren
+proc initRendererBase*[PixFmt](ren: var PixFmt): RendererBase[PixFmt] =
+  result.ren = ren.addr
   result.clipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
 
-proc attach*[PixFmt](self: var RendererBase[PixFmt], ren: PixFmt) =
-  self.ren = ren
+proc attach*[PixFmt](self: var RendererBase[PixFmt], ren: var PixFmt) =
+  self.ren = ren.addr
   self.clipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
 
 proc getRen*[PixFmt](self: RendererBase[PixFmt]): PixFmt = self.ren
 
-proc width*[PixFmt](self: RendererBase[PixFmt]): int = self.ren.width()
-proc height*[PixFmt](self: RendererBase[PixFmt]): int = self.ren.height()
+proc width*[PixFmt](self: RendererBase[PixFmt]): int = self.ren[].width()
+proc height*[PixFmt](self: RendererBase[PixFmt]): int = self.ren[].height()
 
 proc isClipBox*[PixFmt](self: var RendererBase[PixFmt], x1, y1, x2, y2: int): bool =
   var cb = initRectI(x1, y1, x2, y2)
   cb.normalize()
-  if cb.clip(initRectI(0, 0, width() - 1, height() - 1)):
+  if cb.clip(initRectI(0, 0, self.width() - 1, self.height() - 1)):
     self.clipBox = cb
     return true
 
@@ -37,8 +37,8 @@ proc resetClipping*[PixFmt](self: var RendererBase[PixFmt], visibility: bool) =
   if visibility:
     self.clipBox.x1 = 0
     self.clipBox.y1 = 0
-    self.clipBox.x2 = width() - 1
-    self.clipBox.y2 = height() - 1
+    self.clipBox.x2 = self.width() - 1
+    self.clipBox.y2 = self.height() - 1
   else:
     self.clipBox.x1 = 1
     self.clipBox.y1 = 1
@@ -73,18 +73,18 @@ proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
   
   if self.width() != 0:
     for y in 0.. <self.height():
-      self.ren.copyHline(0, y, self.width(), c)
+      self.ren[].copyHline(0, y, self.width(), c)
 
 proc copyPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: ColorT) =
   if self.inbox(x, y):
-    self.ren.copyPixel(x, y, c)
+    self.ren[].copyPixel(x, y, c)
 
 proc blendPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: ColorT, cover: CoverType) =
   if self.inbox(x, y):
-    self.ren.blendPixel(x, y, c, cover)
+    self.ren[].blendPixel(x, y, c, cover)
 
 proc pixel*[PixFmt](self: var RendererBase[PixFmt], x, y: int): auto =
-  result = if self.inbox(x, y): self.ren.pixel(x, y) else: getColorType(PixFmt).noColor()
+  result = if self.inbox(x, y): self.ren[].pixel(x, y) else: getColorType(PixFmt).noColor()
 
 proc copyHLine*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: ColorT) =
   var
@@ -100,7 +100,7 @@ proc copyHLine*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: C
   if x1 < self.xmin(): x1 = self.xmin()
   if x2 > self.xmax(): x2 = self.xmax()
 
-  self.ren.copyHLine(x1, y, x2 - x1 + 1, c)
+  self.ren[].copyHLine(x1, y, x2 - x1 + 1, c)
 
 
 proc copyVLine*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: ColorT) =
@@ -117,7 +117,7 @@ proc copyVLine*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: C
   if y1 < self.ymin(): y1 = self.ymin()
   if y2 > self.ymax(): y2 = self.ymax()
 
-  self.ren.copyVLine(x, y1, y2 - y1 + 1, c)
+  self.ren[].copyVLine(x, y1, y2 - y1 + 1, c)
 
 proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: ColorT, cover: CoverType) =
   var
@@ -133,7 +133,7 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
   if x1 < self.xmin(): x1 = self.xmin()
   if x2 > self.xmax(): x2 = self.xmax()
 
-  self.ren.blendHline(x1, y, x2 - x1 + 1, c, cover)
+  self.ren[].blendHline(x1, y, x2 - x1 + 1, c, cover)
 
 proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: ColorT, cover: CoverType) =
   var
@@ -149,21 +149,21 @@ proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: 
   if y1 < self.ymin(): y1 = self.ymin()
   if y2 > self.ymax(): y2 = self.ymax()
 
-  self.ren.blendVline(x, y1, y2 - y1 + 1, c, cover)
+  self.ren[].blendVline(x, y1, y2 - y1 + 1, c, cover)
 
 proc copyBar*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT) =
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()
   if rc.clip(self.getClipBox()):
     for y in rc.y1..rc.y2:
-      self.ren.copyHLine(rc.x1, y, rc.x2 - rc.x1 + 1, c)
+      self.ren[].copyHLine(rc.x1, y, rc.x2 - rc.x1 + 1, c)
 
 proc blendBar*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT, cover: CoverType) =
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()
   if rc.clip(self.getClipBox()):
     for y in rc.y1..rc.y2:
-      self.ren.blendHline(rc.x1, y, rc.x2 - rc.x1 + 1, c, cover)
+      self.ren[].blendHline(rc.x1, y, rc.x2 - rc.x1 + 1, c, cover)
 
 proc blendSolidHSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int, c: ColorT, covers: ptr CoverType) =
   if y > self.ymax(): return
@@ -184,7 +184,7 @@ proc blendSolidHSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
     len = self.xmax() - x + 1
     if len <= 0: return
 
-  self.ren.blendSolidHSpan(x, y, len, c, covers)
+  self.ren[].blendSolidHSpan(x, y, len, c, covers)
 
 proc blendSolidVSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int, c: ColorT, covers: ptr CoverType) =
   if x > self.xmax(): return
@@ -204,7 +204,7 @@ proc blendSolidVSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
     len = self.ymax() - y + 1
     if len <= 0: return
 
-  self.ren.blendSolidVSpan(x, y, len, c, covers)
+  self.ren[].blendSolidVSpan(x, y, len, c, covers)
 
 proc copyColorHspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int, colors: ptr ColorT) =
   if y > self.ymax(): return
@@ -225,7 +225,7 @@ proc copyColorHspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int,
     len = self.xmax() - x + 1
     if len <= 0: return
 
-  self.ren.copyColorHspan(x, y, len, colors)
+  self.ren[].copyColorHspan(x, y, len, colors)
 
 proc copyColorVspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int, colors: ptr ColorT) =
   if x > self.xmax(): return
@@ -246,7 +246,7 @@ proc copyColorVspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int,
     len = self.ymax() - y + 1;
     if len <= 0: return
 
-  self.ren.copyColorVspan(x, y, len, colors)
+  self.ren[].copyColorVspan(x, y, len, colors)
 
 proc blendColorHspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int,
   colors: ptr ColorT, covers: ptr CoverType, cover: CoverType = coverFull) =
@@ -271,7 +271,7 @@ proc blendColorHspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
     len = self.xmax() - x + 1;
     if len <= 0: return
 
-  self.ren.blendColorHspan(x, y, len, colors, covers, cover)
+  self.ren[].blendColorHspan(x, y, len, colors, covers, cover)
 
 proc blendColorVspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int,
   colors: ptr ColorT, covers: ptr CoverType, cover: CoverType = coverFull) =
@@ -296,7 +296,7 @@ proc blendColorVspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
     len = ymax() - y + 1
     if len <= 0: return
 
-  self.ren.blendColorVspan(x, y, len, colors, covers, cover)
+  self.ren[].blendColorVspan(x, y, len, colors, covers, cover)
 
 proc clipRectArea*[PixFmt](self: RendererBase[PixFmt], dst, src: var RectI, wsrc, hsrc: int): RectI =
   var
@@ -360,7 +360,7 @@ proc copyFrom*[PixFmt, RenBuf](self: RendererBase[PixFmt], src: RenBuf, rectSrcP
       incy = -1
 
     while rc.y2 > 0:
-      self.ren.copyFrom(src, rdst.x1, rdst.y1, rsrc.x1, rsrc.y1, rc.x2)
+      self.ren[].copyFrom(src, rdst.x1, rdst.y1, rsrc.x1, rsrc.y1, rc.x2)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
       dec rc.y2
@@ -403,7 +403,7 @@ proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: RendererBase[PixFmt], src:
           if x1src + len-1 > rw.x2:
             len -= x1src + len - rw.x2 - 1
           if len > 0:
-            self.ren.blendFrom(src, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
+            self.ren[].blendFrom(src, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
       inc rc.y2
@@ -446,7 +446,7 @@ proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: RendererBase[
           if x1src + len-1 > rw.x2:
             len -= x1src + len - rw.x2 - 1
           if len > 0:
-            self.ren.blendFromColor(src, color, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
+            self.ren[].blendFromColor(src, color, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
       inc rc.y2
@@ -489,7 +489,7 @@ proc blendFromLut*[PixFmt, SrcPixelFormatRenderer, ColorT](self: RendererBase[Pi
           if x1src + len-1 > rw.x2:
             len -= x1src + len - rw.x2 - 1
           if len > 0:
-            self.ren.blendFromLut(src, colorLut, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
+            self.ren[].blendFromLut(src, colorLut, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
       inc rc.y2

@@ -34,11 +34,11 @@ var
   mx, my: array[2, float64] 
   gamma  = newGammaLut8(mGamma)
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
   pixf   = initPixFmt(rbuf, gamma)
   rb     = initRendererBase(pixf)
   ren    = initRendererScanlineAASolid(rb)
-  ras    = newRasterizerScanlineAA()
+  ras    = initRasterizerScanlineAA()
   sl     = initScanlineP8()
   e: Ellipse
   

@@ -17,8 +17,8 @@ type
 proc initSquare(size: float64): Square =
   result.size = size
 
-proc draw[Rasterizer, Scanline, Renderer, ColorT](self: Square, ras : Rasterizer,
-  sl: var Scanline, ren: Renderer, color: ColorT, x, y: float64) =
+proc draw[Rasterizer, Scanline, Renderer, ColorT](self: Square, ras : var Rasterizer,
+  sl: var Scanline, ren: var Renderer, color: ColorT, x, y: float64) =
   ras.reset()
   let size = self.size
   ras.moveToD(x*size,      y*size)
@@ -32,17 +32,17 @@ type
   RendererEnlarge[Renderer] = object
     ras: RasterizerScanlineAA
     sl: ScanlineU8
-    ren: Renderer
+    ren: ptr Renderer
     square: Square
     color: Rgba8
     size: float64
 
-proc initRendererEnlarged[Renderer](ren: Renderer, size: float64): RendererEnlarge[Renderer] =
-  result.ren = ren
+proc initRendererEnlarged[Renderer](ren: var Renderer, size: float64): RendererEnlarge[Renderer] =
+  result.ren = ren.addr
   result.square = initSquare(size)
   result.size = size
   result.sl = initScanlineU8()
-  result.ras = newRasterizerScanlineAA()
+  result.ras = initRasterizerScanlineAA()
 
 proc setColor[Renderer](self: var RendererEnlarge[Renderer], c: Rgba8) =
   self.color = c
@@ -64,7 +64,7 @@ proc render[Renderer, Scanline](self: var RendererEnlarge[Renderer], sl: var Sca
     doWhile numPix != 0:
       let a = (covers[].uint32 * uint32(self.color.a)) shr 8
       inc covers
-      self.square.draw(self.ras, self.sl, self.ren,
+      self.square.draw(self.ras, self.sl, self.ren[],
         initRgba8(self.color.r, self.color.g, self.color.b, a), x.float64, y.float64)
       inc x
       dec numPix
@@ -94,11 +94,11 @@ proc onDraw() =
 
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = newRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     ren    = initRendererBase(pf)
     sl     = initScanlineU8()
-    ras    = newRasterizerScanlineAA()
+    ras    = initRasterizerScanlineAA()
 
   let sizeMul = 32.float64
   ras.setGamma(initGammaPower(1.0))

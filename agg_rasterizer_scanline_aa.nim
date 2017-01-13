@@ -35,7 +35,7 @@ type
    statusLineTo
    statusClosed
 
-  RasterizerScanlineAA1*[ClipType, CoordType] = ref object
+  RasterizerScanlineAA1*[ClipType, CoordType] = object
     outline: RasterizerCellsAA[CellAA]
     clipper: ClipType
     gamma: array[aaScale, int]
@@ -48,8 +48,7 @@ type
 
   RasterizerScanlineAA* = RasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]
 
-proc newRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
-  new(result)
+proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
   result.fillingRule = fillNonZero
@@ -59,12 +58,11 @@ proc newRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[Cli
   result.status = statusInitial
   for i in 0.. <aaScale: result.gamma[i] = i
 
-proc setGamma*[ClipType, CoordType, GammaF](self: RasterizerScanlineAA1[ClipType, CoordType], gamma: GammaF) =
+proc setGamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipType, CoordType], gamma: GammaF) =
   for i in 0.. <aaScale:
     self.gamma[i] = uround(gamma.getGammaValue(i.float64 / aaMask) * aaMask)
 
-proc newRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =
-  new(result)
+proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
   result.fillingRule = fillNonZero
@@ -74,47 +72,47 @@ proc newRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: Gamma
   result.status = statusInitial
   result.setGamma(gammaFunction)
 
-template newRasterizerScanlineAA*(ClipType: typedesc): untyped =
-  newRasterizerScanlineAA1[ClipType, getCoordType(ClipType)]()
+template initRasterizerScanlineAA*(ClipType: typedesc): untyped =
+  initRasterizerScanlineAA1[ClipType, getCoordType(ClipType)]()
 
-template newRasterizerScanlineAA*(): untyped =
-  newRasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]()
+template initRasterizerScanlineAA*(): untyped =
+  initRasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]()
 
-template newRasterizerScanlineAA*(ClipType: typedesc, gamma: typed): untyped =
-  newRasterizerScanlineAA2[ClipType, getCoordType(ClipType), gamma.type](gamma)
+template initRasterizerScanlineAA*(ClipType: typedesc, gamma: typed): untyped =
+  initRasterizerScanlineAA2[ClipType, getCoordType(ClipType), gamma.type](gamma)
 
-proc newRasterizerScanlineAA*[T](gamma: T): auto =
-  newRasterizerScanlineAA2[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt), T](gamma)
+proc initRasterizerScanlineAA*[T](gamma: T): auto =
+  initRasterizerScanlineAA2[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt), T](gamma)
 
-proc reset*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]) =
+proc reset*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   self.outline.reset()
   self.status = statusInitial
 
-proc resetClipping*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]) =
+proc resetClipping*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   self.reset()
   self.clipper.resetClipping()
 
-proc clipBox*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
+proc clipBox*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
   template Conv: untyped = getConvType(ClipT)
   self.reset()
   self.clipper.clipBox(Conv.upscale(x1), Conv.upscale(y1),
                        Conv.upscale(x2), Conv.upscale(y2))
 
-proc setFillingRule*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; fillingRule: FillingRule) =
+proc setFillingRule*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; fillingRule: FillingRule) =
   self.fillingRule = fillingRule
 
-proc autoClose*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; flag: bool) =
+proc autoClose*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; flag: bool) =
   self.autoClose = flag
 
-proc applyGamma*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; cover: uint): uint =
+proc applyGamma*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; cover: uint): uint =
   result = self.gamma[cover]
 
-proc closePolygon*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]) =
+proc closePolygon*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   if self.status == statusLineTo:
     self.clipper.lineTo(self.outline, self.startX, self.startY)
     self.status = statusClosed
 
-proc moveTo*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
+proc moveTo*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
   template Conv: untyped = getConvType(ClipT)
 
   if self.outline.sorted(): self.reset()
@@ -126,13 +124,13 @@ proc moveTo*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: in
   self.clipper.moveTo(self.startX, self.startY)
   self.status = statusMoveTo
 
-proc lineTo*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
+proc lineTo*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
   template Conv: untyped = getConvType(ClipT)
 
   self.clipper.lineTo(self.outline, Conv.downscale(x), Conv.downscale(y))
   self.status = statusLineTo
 
-proc moveToD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
+proc moveToD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
   template Conv: untyped = getConvType(ClipT)
 
   if self.outline.sorted(): self.reset()
@@ -144,13 +142,13 @@ proc moveToD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: f
   self.clipper.moveTo(self.startX, self.startY)
   self.status = statusMoveTo
 
-proc lineToD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
+proc lineToD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
   template Conv: untyped = getConvType(ClipT)
 
   self.clipper.lineTo(self.outline, Conv.upscale(x), Conv.upscale(y))
   self.status = statusLineTo
 
-proc addVertex*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64, cmd: uint) =
+proc addVertex*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64, cmd: uint) =
   if isMoveTo(cmd):
     self.moveToD(x, y)
   elif isVertex(cmd):
@@ -158,7 +156,7 @@ proc addVertex*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x, y:
   elif isClose(cmd):
     self.closePolygon()
 
-proc edge*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: int) =
+proc edge*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: int) =
   template Conv: untyped = getConvType(ClipT)
 
   if self.outline.sorted(): self.reset()
@@ -167,7 +165,7 @@ proc edge*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2
   self.clipper.lineTo(self.outline, Conv.downscale(x2), Conv.downscale(y2))
   self.status = statusMoveTo
 
-proc edgeD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
+proc edgeD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
   template Conv: untyped = getConvType(ClipT)
 
   if self.outline.sorted(): self.reset()
@@ -176,7 +174,7 @@ proc edgeD*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x
   self.clipper.lineTo(self.outline, Conv.upscale(x2), Conv.upscale(y2))
   self.status = statusMoveTo
 
-proc addPath*[ClipT, CoordT, VertexSource](self: RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0) =
+proc addPath*[ClipT, CoordT, VertexSource](self: var RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0) =
   var x, y: float64
   vs.rewind(pathId)
   
@@ -187,16 +185,16 @@ proc addPath*[ClipT, CoordT, VertexSource](self: RasterizerScanlineAA1[ClipT, Co
     self.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 
-proc minX*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMinX()
-proc minY*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMinY()
-proc maxX*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMaxX()
-proc maxY*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMaxY()
+proc minX*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMinX()
+proc minY*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMinY()
+proc maxX*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMaxX()
+proc maxY*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]): int = self.outline.getMaxY()
 
-proc sort*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]) =
+proc sort*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   if self.autoClose: self.closePolygon()
   self.outline.sortCells()
 
-proc rewindScanlines*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): bool =
+proc rewindScanlines*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]): bool =
   if self.autoClose: self.closePolygon()
   self.outline.sortCells()
 
@@ -206,7 +204,7 @@ proc rewindScanlines*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT])
   self.scanY = self.outline.getMinY()
   result = true
 
-proc navigateScanline*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; y: int): bool =
+proc navigateScanline*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; y: int): bool =
   if self.autoClose: self.closePolygon()
   self.outline.sortCells()
 
@@ -218,7 +216,7 @@ proc navigateScanline*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]
   self.scanY = y
   result = true
 
-proc calculateAlpha*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; area: int): int {.inline.} =
+proc calculateAlpha*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; area: int): int {.inline.} =
   var cover = sar(area, (polySubpixelShift*2 + 1 - aaShift))
 
   if cover < 0: cover = -cover
@@ -231,7 +229,7 @@ proc calculateAlpha*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; 
 
   result = self.gamma[cover]
 
-proc sweepScanline*[ClipT, CoordT, Scanline](self: RasterizerScanlineAA1[ClipT, CoordT]; sl: var Scanline): bool =
+proc sweepScanline*[ClipT, CoordT, Scanline](self: var RasterizerScanlineAA1[ClipT, CoordT]; sl: var Scanline): bool =
   mixin resetSpans, addCell, addSpan, numSpans, finalize
 
   while true:
@@ -280,7 +278,7 @@ proc sweepScanline*[ClipT, CoordT, Scanline](self: RasterizerScanlineAA1[ClipT, 
   inc self.scanY
   result = true
 
-proc hitTest*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]; tx, ty: int): bool =
+proc hitTest*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; tx, ty: int): bool =
   if not self.navigateScanline(ty): return false
   var sl = initScanlineHitTest(tx)
 
