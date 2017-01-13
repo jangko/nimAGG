@@ -20,7 +20,7 @@ type
 var 
   colors: array[100, Rgba8]
   pathIdx: array[100, int]
-  path = newPathStorage()
+  path = initPathStorage()
   numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
   x1, x2, y1, y2, base_dx, base_dy: float64
 

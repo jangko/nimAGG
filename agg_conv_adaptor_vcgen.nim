@@ -15,34 +15,36 @@ type
     accumulate
     generate
 
-  ConvAdaptorVcgen*[VertexSource, Generator, Markers] = ref object
-    mSource: VertexSource
+  ConvAdaptorVcgen*[VertexSource, Generator, Markers] = object of RootObj
+    mSource: ptr VertexSource
     mGenerator: Generator
     mMarkers: Markers
     mStatus: Status
     mLastCmd: uint
     mStartX, mStartY: float64
+    
+proc init*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], source: var V) =
+  self.mSource = source.addr
+  self.mStatus = initial
+  self.mGenerator = construct(G)
+ 
+proc initConvAdaptorVcgen*[V,G,M](source: var V): ConvAdaptorVcGen[V,G,M] =
+  result.init(source)
 
-proc newConvAdaptorVcgen*[V,G,M](source: V): ConvAdaptorVcGen[V,G,M] =
-  new(result)
-  result.mSource = source
-  result.mStatus = initial
-  result.mGenerator = construct(G)
+proc attach*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], source: var V) =
+  self.mSource = source.addr
 
-proc attach*[V,G,M](self: ConvAdaptorVcGen[V,G,M], source: V) =
-  self.mSource = source
-
-proc generator*[V,G,M](self: ConvAdaptorVcGen[V,G,M]): G =
+proc generator*[V,G,M](self: var ConvAdaptorVcGen[V,G,M]): var G =
   result = self.mGenerator
 
-proc markers*[V,G,M](self: ConvAdaptorVcGen[V,G,M]): var M =
+proc markers*[V,G,M](self: var ConvAdaptorVcGen[V,G,M]): var M =
   result = self.mMarker
 
-proc rewind*[V,G,M](self: ConvAdaptorVcGen[V,G,M], pathId: int)  =
-  self.mSource.rewind(pathId)
+proc rewind*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], pathId: int)  =
+  self.mSource[].rewind(pathId)
   self.mStatus = initial
 
-proc vertex*[V,G,M](self: ConvAdaptorVcGen[V,G,M], x, y: var float64): uint =
+proc vertex*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], x, y: var float64): uint =
   var
     cmd: uint = pathCmdStop
     done = false
@@ -51,7 +53,7 @@ proc vertex*[V,G,M](self: ConvAdaptorVcGen[V,G,M], x, y: var float64): uint =
     case self.mStatus
     of initial:
       self.mMarkers.removeAll()
-      self.mLastCmd = self.mSource.vertex(self.mStartX, self.mStartY)
+      self.mLastCmd = self.mSource[].vertex(self.mStartX, self.mStartY)
       self.mStatus = accumulate
     of accumulate:
       if isStop(self.mLastCmd): return pathCmdStop
@@ -59,7 +61,7 @@ proc vertex*[V,G,M](self: ConvAdaptorVcGen[V,G,M], x, y: var float64): uint =
       self.mGenerator.addVertex(self.mStartX, self.mStartY, pathCmdMoveTo)
       self.mMarkers.addVertex(self.mStartX, self.mStartY, pathCmdMoveTo)
       while true:
-        cmd = self.mSource.vertex(x, y)
+        cmd = self.mSource[].vertex(x, y)
         if isVertex(cmd):
           self.mLastCmd = cmd
           if isMoveTo(cmd):

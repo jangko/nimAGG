@@ -1,7 +1,7 @@
-import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_u
+import agg_basics, agg_rendering_buffer, agg_scanline_u
 import agg_renderer_scanline, agg_pixfmt_rgb, agg_color_rgba
 import agg_gamma_functions, agg_renderer_base, agg_path_storage
-import agg_conv_stroke, agg_math_stroke, nimBMP
+import agg_conv_stroke, agg_math_stroke, agg_rasterizer_scanline_aa, nimBMP
 
 {.passC: "-I./agg-2.5/include".}
 {.compile: "test_aa.cpp".}
@@ -118,7 +118,7 @@ proc onDraw() =
 
   ras.setGamma(initGammaNone())
 
-  var ps = newPathStorage()
+  var ps = initPathStorage()
   var pg = initConvStroke(ps)
   pg.width(5.0)
   #pg.lineCap(roundCap)

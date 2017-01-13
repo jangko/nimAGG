@@ -19,7 +19,7 @@ type
     innerJag
     innerRound
 
-  MathStroke* = ref object
+  MathStroke* = object
     mWidth: float64
     mWidthAbs: float64
     mWidthEps: float64
@@ -31,8 +31,7 @@ type
     mLineJoin: LineJoin
     mInnerJoin: InnerJoin
 
-proc newMathStroke*(): MathStroke =
-  new(result)
+proc initMathStroke*(): MathStroke =
   result.mWidth = 0.5
   result.mWidthAbs = 0.5
   result.mWidthEps = 0.5/1024.0
@@ -44,15 +43,15 @@ proc newMathStroke*(): MathStroke =
   result.mLineJoin = miterJoin
   result.mInnerJoin = innerMiter
 
-proc lineCap*(self: MathStroke, lc: LineCap) = self.mLineCap = lc
-proc lineJoin*(self: MathStroke, lj: LineJoin) = self.mLineJoin = lj
-proc innerJoin*(self: MathStroke, ij: InnerJoin) = self.mInnerJoin = ij
+proc lineCap*(self: var MathStroke, lc: LineCap) = self.mLineCap = lc
+proc lineJoin*(self: var MathStroke, lj: LineJoin) = self.mLineJoin = lj
+proc innerJoin*(self: var MathStroke, ij: InnerJoin) = self.mInnerJoin = ij
 
-proc lineCap*(self: MathStroke): LineCap = self.mLineCap
-proc lineJoin*(self: MathStroke): LineJoin = self.mLineJoin
-proc innerJoin*(self: MathStroke): InnerJoin = self.mInnerJoin
+proc lineCap*(self: var MathStroke): LineCap = self.mLineCap
+proc lineJoin*(self: var MathStroke): LineJoin = self.mLineJoin
+proc innerJoin*(self: var MathStroke): InnerJoin = self.mInnerJoin
 
-proc width*(self: MathStroke, w: float64) =
+proc width*(self: var MathStroke, w: float64) =
   self.mWidth = w * 0.5;
   if self.mWidth < 0:
     self.mWidthAbs  = -self.mWidth
@@ -63,21 +62,21 @@ proc width*(self: MathStroke, w: float64) =
 
   self.mWidthEps = self.mWidth / 1024.0
 
-proc miterLimit*(self: MathStroke, ml: float64) = self.mMiterLimit = ml
-proc miterLimitTheta*(self: MathStroke, t: float64) = self.mMiterLimit = 1.0 / sin(t * 0.5)
-proc innerMiterLimit*(self: MathStroke, ml: float64) = self.mInnerMiterLimit = ml
-proc approximationScale*(self: MathStroke, asc: float64) = self.mApproxScale = asc
+proc miterLimit*(self: var MathStroke, ml: float64) = self.mMiterLimit = ml
+proc miterLimitTheta*(self: var MathStroke, t: float64) = self.mMiterLimit = 1.0 / sin(t * 0.5)
+proc innerMiterLimit*(self: var MathStroke, ml: float64) = self.mInnerMiterLimit = ml
+proc approximationScale*(self: var MathStroke, asc: float64) = self.mApproxScale = asc
 
-proc width*(self: MathStroke): float64 = self.mWidth * 2.0
-proc miterLimit*(self: MathStroke): float64 = self.mMiterLimit
-proc innerMiterLimit*(self: MathStroke): float64 = self.mInnerMiterLimit
-proc approximationScale*(self: MathStroke): float64 = self.mApproxScale
+proc width*(self: var MathStroke): float64 = self.mWidth * 2.0
+proc miterLimit*(self: var MathStroke): float64 = self.mMiterLimit
+proc innerMiterLimit*(self: var MathStroke): float64 = self.mInnerMiterLimit
+proc approximationScale*(self: var MathStroke): float64 = self.mApproxScale
 
 proc addVertex[VertexConsumer](vc: var VertexConsumer, x, y: float64) {.inline.} =
   type CoordType = getValueType(VertexConsumer)
   vc.add(CoordType(x: x, y: y))
 
-proc calcArc[VertexConsumer](self: MathStroke, vc: var VertexConsumer, x, y, dx1, dy1, dx2, dy2: float64) =
+proc calcArc[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, x, y, dx1, dy1, dx2, dy2: float64) =
   var
     a1 = arctan2(dy1 * self.mWidthSign, dx1 * self.mWidthSign)
     a2 = arctan2(dy2 * self.mWidthSign, dx2 * self.mWidthSign)
@@ -106,7 +105,7 @@ proc calcArc[VertexConsumer](self: MathStroke, vc: var VertexConsumer, x, y, dx1
 
   vc.addVertex(x + dx2, y + dy2)
 
-proc calcMiter[VertexConsumer](self: MathStroke, vc: var VertexConsumer,
+proc calcMiter[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
   v0, v1, v2: VertexDist; dx1,dy1, dx2,dy2: float64; lj: LineJoin; mLimit, dBevel: float64) =
 
   var
@@ -178,7 +177,7 @@ proc calcMiter[VertexConsumer](self: MathStroke, vc: var VertexConsumer,
         vc.addVertex(x1 + (xi - x1) * di, y1 + (yi - y1) * di)
         vc.addVertex(x2 + (xi - x2) * di, y2 + (yi - y2) * di)
 
-proc calcCap*[VertexConsumer](self: MathStroke, vc: var VertexConsumer, v0, v1: VertexDist, len: float64) =
+proc calcCap*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, v0, v1: VertexDist, len: float64) =
   vc.removeAll()
 
   var
@@ -220,7 +219,7 @@ proc calcCap*[VertexConsumer](self: MathStroke, vc: var VertexConsumer, v0, v1: 
         
     vc.addVertex(v0.x + dx1, v0.y - dy1)
 
-proc calcJoin*[VertexConsumer](self: MathStroke, vc: var VertexConsumer,
+proc calcJoin*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
   v0, v1, v2: VertexDist; len1, len2: float64) =
 
   var

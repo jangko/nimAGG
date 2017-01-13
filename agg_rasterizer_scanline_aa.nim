@@ -175,6 +175,7 @@ proc edgeD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y
   self.status = statusMoveTo
 
 proc addPath*[ClipT, CoordT, VertexSource](self: var RasterizerScanlineAA1[ClipT, CoordT]; vs: var VertexSource, pathId = 0) =
+  mixin rewind, vertex
   var x, y: float64
   vs.rewind(pathId)
   

@@ -118,120 +118,119 @@ proc vertex*[T](self: PolyPlainAdaptor[T], x, y: var T): uint =
 # See also: vertex_source concept
 
 type
-  PathBase*[VC] = ref object
+  PathBase*[VC] = object
     vertices: VC
     iter: int
 
   PathStorage* = PathBase[VertexStorage]
   
-proc newPathBase*[VC](vertices: VC): PathBase[VC] =
-  new(result)
+proc initPathBase*[VC](vertices: VC): PathBase[VC] =
   result.vertices = vertices
   result.iter = 0
 
-proc newPathStorage*(): auto =
-  result = newPathBase(newVertexStorage())
+proc initPathStorage*(): auto =
+  result = initPathBase(newVertexStorage())
 
-proc removeAll*[VC](self: PathBase[VC]) =
+proc removeAll*[VC](self: var PathBase[VC]) =
   self.vertices.removeAll()
   self.iter = 0
 
-proc freeAll*[VC](self: PathBase[VC]) =
+proc freeAll*[VC](self: var PathBase[VC]) =
   self.vertices.freeAll()
   self.iter = 0
 
-proc relToAbs*[VC](self: PathBase[VC], x, y: var float64) =
+proc relToAbs*[VC](self: var PathBase[VC], x, y: var float64) =
   if self.vertices.totalVertices() != 0:
     var x2, y2: float64
     if isVertex(self.vertices.lastVertex(x2, y2)):
       inc(x, x2)
       inc(y, y2)
 
-proc lastX*[VC](self: PathBase[VC]): float64 {.inline.} =
+proc lastX*[VC](self: var PathBase[VC]): float64 {.inline.} =
   result = self.vertices.lastX()
 
-proc lastY*[VC](self: PathBase[VC]): float64 {.inline.} =
+proc lastY*[VC](self: var PathBase[VC]): float64 {.inline.} =
   result = self.vertices.lastY()
 
-proc endPoly*[VC](self: PathBase[VC], flags = pathFlagsClose) {.inline.} =
+proc endPoly*[VC](self: var PathBase[VC], flags = pathFlagsClose) {.inline.} =
   if isVertex(self.vertices.lastCommand()):
     self.vertices.addVertex(0.0, 0.0, pathCmdEndPoly or flags)
 
-proc closePolygon*[VC](self: PathBase[VC], flags = pathFlagsNone) {.inline.} =
+proc closePolygon*[VC](self: var PathBase[VC], flags = pathFlagsNone) {.inline.} =
   self.endPoly(pathFlagsClose or flags)
 
-proc totalVertices*[VC](self: PathBase[VC]): int {.inline.} =
+proc totalVertices*[VC](self: var PathBase[VC]): int {.inline.} =
   result = self.vertices.totalVertices()
 
-proc lastVertex*[VC](self: PathBase[VC], x, y: var float64): uint {.inline.} =
+proc lastVertex*[VC](self: var PathBase[VC], x, y: var float64): uint {.inline.} =
   result = self.vertices.lastVertex(x, y)
 
-proc prevVertex*[VC](self: PathBase[VC], x, y: var float64): uint {.inline.} =
+proc prevVertex*[VC](self: var PathBase[VC], x, y: var float64): uint {.inline.} =
   result = self.vertices.prevVertex(x, y)
 
-proc vertex*[VC](self: PathBase[VC], idx: int, x, y: var float64): uint {.inline.} =
+proc vertex*[VC](self: var PathBase[VC], idx: int, x, y: var float64): uint {.inline.} =
   result = self.vertices.vertex(idx, x, y)
 
 proc command*[VC](self: PathBase[VC], idx: int): uint {.inline.} =
   result = self.vertices.command(idx)
 
-proc modifyVertex*[VC](self: PathBase[VC], idx: int, x: float64, y: float64) =
+proc modifyVertex*[VC](self: var PathBase[VC], idx: int, x: float64, y: float64) =
   self.vertices.modifyVertex(idx, x, y)
 
-proc modifyVertex*[VC](self: PathBase[VC], idx: int, x: float64, y: float64, cmd: uint) =
+proc modifyVertex*[VC](self: var PathBase[VC], idx: int, x: float64, y: float64, cmd: uint) =
   self.vertices.modifyVertex(idx, x, y, cmd)
 
-proc modifyCommand*[VC](self: PathBase[VC], idx: int, cmd: uint) =
+proc modifyCommand*[VC](self: var PathBase[VC], idx: int, cmd: uint) =
   self.vertices.modifyCommand(idx, cmd)
 
-proc rewind*[VC](self: PathBase[VC], pathId: int) {.inline.} =
+proc rewind*[VC](self: var PathBase[VC], pathId: int) {.inline.} =
   self.iter = pathId
 
-proc vertex*[VC](self: PathBase[VC], x, y: var float64): uint {.inline.} =
+proc vertex*[VC](self: var PathBase[VC], x, y: var float64): uint {.inline.} =
   if self.iter >= self.vertices.totalVertices(): return pathCmdStop
   result = self.vertices.vertex(self.iter, x, y)
   inc self.iter
 
-proc startNewPath*[VC](self: PathBase[VC]): int {.inline.} =
+proc startNewPath*[VC](self: var PathBase[VC]): int {.inline.} =
   if not isStop(self.vertices.lastCommand()):
     self.vertices.addVertex(0.0, 0.0, pathCmdStop)
   result = self.vertices.totalVertices()
 
-proc moveTo*[VC](self: PathBase[VC], x: float64, y: float64) {.inline.} =
+proc moveTo*[VC](self: var PathBase[VC], x: float64, y: float64) {.inline.} =
   self.vertices.addVertex(x, y, pathCmdMoveTo)
 
-proc moveRel*[VC](self: PathBase[VC], dx, dy: float64) {.inline.} =
+proc moveRel*[VC](self: var PathBase[VC], dx, dy: float64) {.inline.} =
   self.relToAbs(dx, dy)
   self.vertices.addVertex(dx, dy, pathCmdMoveTo)
 
-proc lineTo*[VC](self: PathBase[VC], x: float64, y: float64) {.inline.} =
+proc lineTo*[VC](self: var PathBase[VC], x: float64, y: float64) {.inline.} =
   self.vertices.addVertex(x, y, pathCmdLineTo)
 
-proc lineRel*[VC](self: PathBase[VC], dx, dy: float64) {.inline.} =
+proc lineRel*[VC](self: var PathBase[VC], dx, dy: float64) {.inline.} =
   self.relToAbs(dx, dy)
   self.vertices.addVertex(dx, dy, pathCmdLineTo)
 
-proc hlineTo*[VC](self: PathBase[VC], x: float64) {.inline.} =
+proc hlineTo*[VC](self: var PathBase[VC], x: float64) {.inline.} =
   self.vertices.addVertex(x, self.lastY(), pathCmdLineTo)
 
-proc hlineRel*[VC](self: PathBase[VC], dx: float64) {.inline.} =
+proc hlineRel*[VC](self: var PathBase[VC], dx: float64) {.inline.} =
   var
     dx = dx
     dy: float64 = 0
   self.relToAbs(dx, dy)
   self.vertices.addVertex(dx, dy, pathCmdLineTo)
 
-proc vlineTo*[VC](self: PathBase[VC], y: float64) {.inline.} =
+proc vlineTo*[VC](self: var PathBase[VC], y: float64) {.inline.} =
   self.vertices.addVertex(self.lastX(), y, pathCmdLineTo)
 
-proc vlineRel*[VC](self: PathBase[VC], dy: float64) {.inline.} =
+proc vlineRel*[VC](self: var PathBase[VC], dy: float64) {.inline.} =
   var
     dy = dy
     dx: float64 = 0
   self.relToAbs(dx, dy)
   self.vertices.addVertex(dx, dy, pathCmdLineTo)
 
-proc concatPath*[VC, VertexSource](self: PathBase[VC], vs: VertexSource, pathId = 0) =
+proc concatPath*[VC, VertexSource](self: var PathBase[VC], vs: VertexSource, pathId = 0) =
   var x, y: float64
 
   vs.rewind(pathId)
@@ -241,7 +240,7 @@ proc concatPath*[VC, VertexSource](self: PathBase[VC], vs: VertexSource, pathId 
     self.vertices.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 
-proc joinPath*[VC, VertexSource](self: PathBase[VC], vs: VertexSource, pathId = 0) =
+proc joinPath*[VC, VertexSource](self: var PathBase[VC], vs: VertexSource, pathId = 0) =
   var x, y: float64
 
   vs.rewind(pathId)
@@ -267,15 +266,15 @@ proc joinPath*[VC, VertexSource](self: PathBase[VC], vs: VertexSource, pathId = 
       self.vertices.addVertex(x, y, if isMoveTo(cmd): pathCmdLineTo else: cmd)
       cmd = vs.vertex(x, y)
 
-proc concatPoly*[VC, T](self: PathBase[VC], data: ptr T, numPoints: int, closed: bool) =
+proc concatPoly*[VC, T](self: var PathBase[VC], data: ptr T, numPoints: int, closed: bool) =
   var poly = initPolyPlainAdaptor(data, numPoints, closed)
   self.concatPath(poly)
 
-proc joinPoly*[VC, T](self: PathBase[VC], data: ptr T, numPoints: int, closed: bool) =
+proc joinPoly*[VC, T](self: var PathBase[VC], data: ptr T, numPoints: int, closed: bool) =
   var poly = initPolyPlainAdaptor(data, numPoints, closed)
   self.joinPath(poly)
 
-proc transform*[VC, Trans](self: PathBase[VC], trans: Trans, pathId = 0) =
+proc transform*[VC, Trans](self: var PathBase[VC], trans: Trans, pathId = 0) =
   let numVer = self.vertices.totalVertices()
   var pathId = pathId
   while pathId < numVer:
@@ -287,7 +286,7 @@ proc transform*[VC, Trans](self: PathBase[VC], trans: Trans, pathId = 0) =
       self.vertices.modifyVertex(pathId, x, y)
     inc pathId
 
-proc transformAllPaths*[VC, Trans](self: PathBase[VC], trans: Trans) =
+proc transformAllPaths*[VC, Trans](self: var PathBase[VC], trans: Trans) =
   let numVer = self.vertices.totalVertices()
   for idx in 0.. <numVer:
     var x, y: float64
@@ -295,7 +294,7 @@ proc transformAllPaths*[VC, Trans](self: PathBase[VC], trans: Trans) =
       trans.transform(x, y)
       self.vertices.modifyVertex(idx, x, y)
 
-proc arcTo*[VC](self: PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepFlag: bool, x, y: float64) =
+proc arcTo*[VC](self: var PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepFlag: bool, x, y: float64) =
   if self.vertices.totalVertices() and isVertex(self.vertices.lastCommand()):
     const epsilon = 1e-30
     var
@@ -325,15 +324,15 @@ proc arcTo*[VC](self: PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepF
   else:
     self.moveTo(x, y)
 
-proc arcRel*[VC](self: PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepFlag: bool, dx, dy: float64) =
+proc arcRel*[VC](self: var PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepFlag: bool, dx, dy: float64) =
   self.relToAbs(dx, dy)
   self.arcTo(rx, ry, angle, largeArcFlag, sweepFlag, dx, dy)
 
-proc curve3*[VC](self: PathBase[VC], xCtrl, yCtrl, xTo, yTo: float64) =
+proc curve3*[VC](self: var PathBase[VC], xCtrl, yCtrl, xTo, yTo: float64) =
   self.vertices.addVertex(xCtrl, yCtrl, pathCmdCurve3)
   self.vertices.addVertex(xTo,   yTo,   pathCmdCurve3)
 
-proc curve3Rel*[VC](self: PathBase[VC], dxCtrl, dyCtrl, dxTo, dyTo: float64) =
+proc curve3Rel*[VC](self: var PathBase[VC], dxCtrl, dyCtrl, dxTo, dyTo: float64) =
   var
     dxCtrl = dxCtrl
     dyCtrl = dyCtrl
@@ -345,7 +344,7 @@ proc curve3Rel*[VC](self: PathBase[VC], dxCtrl, dyCtrl, dxTo, dyTo: float64) =
   self.vertices.addVertex(dxCtrl, dyCtrl, pathCmdCurve3)
   self.vertices.addVertex(dxTo,   dyTo,   pathCmdCurve3)
 
-proc curve3*[VC](self: PathBase[VC], xTo, yTo: float64) =
+proc curve3*[VC](self: var PathBase[VC], xTo, yTo: float64) =
   var x0, y0: float64
 
   if isVertex(self.vertices.lastVertex(x0, y0)):
@@ -361,19 +360,19 @@ proc curve3*[VC](self: PathBase[VC], xTo, yTo: float64) =
       yCtrl = y0
     self.curve3(xCtrl, yCtrl, xTo, yTo)
 
-proc curve3Rel*[VC](self: PathBase[VC], dxTo, dyTo: float64) =
+proc curve3Rel*[VC](self: var PathBase[VC], dxTo, dyTo: float64) =
   var
     dxTo = dxTo
     dyTo = dyTo
   self.relToAbs(dxTo, dyTo)
   self.curve3(dxTo, dyTo)
 
-proc curve4*[VC](self: PathBase[VC], xCtrl1, yCtrl1, xCtrl2, yCtrl2, xTo, yTo: float64) =
+proc curve4*[VC](self: var PathBase[VC], xCtrl1, yCtrl1, xCtrl2, yCtrl2, xTo, yTo: float64) =
   self.vertices.addVertex(xCtrl1, yCtrl1, pathCmdCurve4)
   self.vertices.addVertex(xCtrl2, yCtrl2, pathCmdCurve4)
   self.vertices.addVertex(xTo,    yTo,    pathCmdCurve4)
 
-proc curve4Rel*[VC](self: PathBase[VC], dxCtrl1, dyCtrl1, dxCtrl2, dyCtrl2, dxTo, dyTo: float64) =
+proc curve4Rel*[VC](self: var PathBase[VC], dxCtrl1, dyCtrl1, dxCtrl2, dyCtrl2, dxTo, dyTo: float64) =
   var
     dxCtrl1 = dxCtrl1
     dyCtrl1 = dyCtrl1
@@ -389,7 +388,7 @@ proc curve4Rel*[VC](self: PathBase[VC], dxCtrl1, dyCtrl1, dxCtrl2, dyCtrl2, dxTo
   self.vertices.addVertex(dxCtrl2, dyCtrl2, pathCmdCurve4)
   self.vertices.addVertex(dxTo,    dyTo,    pathCmdCurve4)
 
-proc curve4*[VC](self: PathBase[VC], xCtrl2, yCtrl2, xTo, yTo: float64) =
+proc curve4*[VC](self: var PathBase[VC], xCtrl2, yCtrl2, xTo, yTo: float64) =
   var x0, y0: float64
 
   if isVertex(self.lastVertex(x0, y0)):
@@ -405,7 +404,7 @@ proc curve4*[VC](self: PathBase[VC], xCtrl2, yCtrl2, xTo, yTo: float64) =
 
     self.curve4(xCtrl1, yCtrl1, xCtrl2, yCtrl2, xTo, yTo)
 
-proc curve4Rel*[VC](self: PathBase[VC], dxCtrl2, dyCtrl2, dxTo, dyTo: float64) =
+proc curve4Rel*[VC](self: var PathBase[VC], dxCtrl2, dyCtrl2, dxTo, dyTo: float64) =
   var
     dxCtrl2 = dxCtrl2
     dyCtrl2 = dyCtrl2
@@ -416,7 +415,7 @@ proc curve4Rel*[VC](self: PathBase[VC], dxCtrl2, dyCtrl2, dxTo, dyTo: float64) =
   self.relToAbs(dxTo, dyTo)
   self.curve4(dxCtrl2, dyCtrl2, dxTo, dyTo)
 
-proc perceivePolygonOrientation*[VC](self: PathBase[VC], start, stop: int): uint =
+proc perceivePolygonOrientation*[VC](self: var PathBase[VC], start, stop: int): uint =
   let np = stop - start
   var
     area = 0.0'f64
@@ -429,7 +428,7 @@ proc perceivePolygonOrientation*[VC](self: PathBase[VC], start, stop: int): uint
 
   result = if area < 0.0: pathFlagsCw else: pathFlagsCcw
 
-proc invertPolygon*[VC](self: PathBase[VC], start, stop: int) =
+proc invertPolygon*[VC](self: var PathBase[VC], start, stop: int) =
   var
     tmpCmd = self.vertices.command(start)
     stop = stop
@@ -450,7 +449,7 @@ proc invertPolygon*[VC](self: PathBase[VC], start, stop: int) =
     inc start
     dec stop
 
-proc invertPolygon*[VC](self: PathBase[VC], start: int) =
+proc invertPolygon*[VC](self: var PathBase[VC], start: int) =
   let len = self.vertices.totalVertices()
   var start = start
 
@@ -471,7 +470,7 @@ proc invertPolygon*[VC](self: PathBase[VC], start: int) =
 
   self.invertPolygon(start, stop)
 
-proc arrangePolygonOrientation*[VC](self: PathBase[VC], start: int, orientation: uint): int =
+proc arrangePolygonOrientation*[VC](self: var PathBase[VC], start: int, orientation: uint): int =
   if orientation == pathFlagsNone: return start
   let len = self.vertices.totalVertices()
 
@@ -504,7 +503,7 @@ proc arrangePolygonOrientation*[VC](self: PathBase[VC], start: int, orientation:
 
   result = stop
 
-proc arrangeOrientations*[VC](self: PathBase[VC], start: int, orientation: uint): int =
+proc arrangeOrientations*[VC](self: var PathBase[VC], start: int, orientation: uint): int =
   var start = start
 
   if orientation != pathFlagsNone:
@@ -517,14 +516,14 @@ proc arrangeOrientations*[VC](self: PathBase[VC], start: int, orientation: uint)
 
   result = start
 
-proc arrangeOrientationsAllPaths*[VC](self: PathBase[VC], orientation: uint) =
+proc arrangeOrientationsAllPaths*[VC](self: var PathBase[VC], orientation: uint) =
   if orientation != pathFlagsNone:
     let len = self.vertices.totalVertices()
     var start = 0
     while start < len:
       start = self.arrangeOrientations(start, orientation)
 
-proc flipX*[VC](self: PathBase[VC], x1, x2: float64) =
+proc flipX*[VC](self: var PathBase[VC], x1, x2: float64) =
   var x, y: float64
   let len = self.vertices.totalVertices()
   for i in 0.. <len:
@@ -532,7 +531,7 @@ proc flipX*[VC](self: PathBase[VC], x1, x2: float64) =
     if isVertex(cmd):
       self.vertices.modifyVertex(i, x2 - x + x1, y)
 
-proc flip_y*[VC](self: PathBase[VC], y1, y2: float64) =
+proc flip_y*[VC](self: var PathBase[VC], y1, y2: float64) =
   var x, y: float64
   let len = self.vertices.totalVertices()
   for i in 0.. <len:
@@ -540,7 +539,7 @@ proc flip_y*[VC](self: PathBase[VC], y1, y2: float64) =
     if isVertex(cmd):
       self.vertices.modifyVertex(i, x, y2 - y + y1)
 
-proc translate*[VC](self: PathBase[VC], dx, dy: float64, pathId: int) =
+proc translate*[VC](self: var PathBase[VC], dx, dy: float64, pathId: int) =
   let numVer = self.vertices.totalVertices()
   var pathId = pathId
   while pathId < numVer:
@@ -554,7 +553,7 @@ proc translate*[VC](self: PathBase[VC], dx, dy: float64, pathId: int) =
       self.vertices.modifyVertex(pathId, x, y)
     inc pathId
 
-proc translateAllPaths*[VC](self: PathBase[VC], dx, dy: float64) =
+proc translateAllPaths*[VC](self: var PathBase[VC], dx, dy: float64) =
   let numVer = self.vertices.totalVertices()
   for idx in 0.. <numVer:
     var x, y: float64
@@ -563,7 +562,7 @@ proc translateAllPaths*[VC](self: PathBase[VC], dx, dy: float64) =
       inc(y, dy)
       self.vertices.modifyVertex(idx, x, y)
       
-proc print*[VC](self: PathBase[VC]) =
+proc print*[VC](self: var PathBase[VC]) =
   let numVer = self.vertices.totalVertices()
   var x, y: float64
   for i in 0.. <numVer:

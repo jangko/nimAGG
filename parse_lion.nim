@@ -146,7 +146,7 @@ M 157,342 L 156,349 L 150,356 L 157,353 L 163,346 L 162,342 L 157,342 L 157,342 
 M 99,265 L 96,284 L 92,299 L 73,339 L 73,333 L 87,300 L 99,265 L 99,265 L 99,265
 """
 
-proc parseLion*(path: PathStorage, colors: ptr Rgba8, pathIdx: ptr int): int =
+proc parseLion*(path: var PathStorage, colors: ptr Rgba8, pathIdx: ptr int): int =
   # Parse the lion and then detect its bounding
   # box and arrange polygons orientations (make all polygons
   # oriented clockwise or counterclockwise)

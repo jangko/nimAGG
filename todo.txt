@@ -1,7 +1,5 @@
 alpha_mask_u8
-dda_line
-renderer_primitive
-rasterizer_outline
+gsv_text
 
 incomplete:
   path_storage
@@ -10,6 +8,11 @@ incomplete:
   clip_liang_barsky
 
 translate ok:
+  make_gb_poly
+  make_arrows
+  dda_line
+  renderer_primitive
+  rasterizer_outline
   scanline_bin
   ellipse_bresenham
   scanline_u

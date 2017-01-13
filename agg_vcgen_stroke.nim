@@ -17,7 +17,7 @@ type
   CoordStorage = PodBVector[PointD]
   VertexStorage = VertexSequence[VertexDist]
 
-  VcgenStroke* = ref object
+  VcgenStroke* = object
     mStroker: MathStroke
     mSrcVertices: VertexStorage
     mOutVertices: CoordStorage
@@ -28,9 +28,8 @@ type
     mSrcVertex: int
     mOutVertex: int
 
-proc newVcgenStroke*(): VcgenStroke =
-  new(result)
-  result.mStroker = newMathStroke()
+proc initVcgenStroke*(): VcgenStroke =
+  result.mStroker = initMathStroke()
   result.mSrcVertices = initVertexSequence[VertexDist]()
   result.mOutVertices = initPodBVector[PointD]()
   result.mShorten = 0.0
@@ -39,36 +38,36 @@ proc newVcgenStroke*(): VcgenStroke =
   result.mSrcVertex = 0
   result.mOutVertex = 0
 
-template construct*(x: typedesc[VcgenStroke]): untyped = newVcgenStroke()
+template construct*(x: typedesc[VcgenStroke]): untyped = initVcgenStroke()
 
-proc lineCap*(self: VcgenStroke, lc: LineCap) = self.mStroker.lineCap(lc)
-proc lineJoin*(self: VcgenStroke, lj: LineJoin) = self.mStroker.lineJoin(lj)
-proc innerJoin*(self: VcgenStroke, ij: InnerJoin) = self.mStroker.innerJoin(ij)
+proc lineCap*(self: var VcgenStroke, lc: LineCap) = self.mStroker.lineCap(lc)
+proc lineJoin*(self: var VcgenStroke, lj: LineJoin) = self.mStroker.lineJoin(lj)
+proc innerJoin*(self: var VcgenStroke, ij: InnerJoin) = self.mStroker.innerJoin(ij)
 
-proc lineCap*(self: VcgenStroke): LineCap = self.mStroker.lineCap
-proc lineJoin*(self: VcgenStroke): LineJoin = self.mStroker.lineJoin
-proc innerJoin*(self: VcgenStroke): InnerJoin = self.mStroker.innerJoin
+proc lineCap*(self: var VcgenStroke): LineCap = self.mStroker.lineCap
+proc lineJoin*(self: var VcgenStroke): LineJoin = self.mStroker.lineJoin
+proc innerJoin*(self: var VcgenStroke): InnerJoin = self.mStroker.innerJoin
 
-proc width*(self: VcgenStroke, w: float64) = self.mStroker.width(w)
-proc miterLimit*(self: VcgenStroke, ml: float64) = self.mStroker.miterLimit(ml)
-proc miterLimitTheta*(self: VcgenStroke, t: float64) = self.mStroker.miterLimitTheta(t)
-proc innerMiterLimit*(self: VcgenStroke, ml: float64) = self.mStroker.innerMiterLimit(ml)
-proc approximationCcale*(self: VcgenStroke, asc: float64) = self.mStroker.approximationScale(asc)
+proc width*(self: var VcgenStroke, w: float64) = self.mStroker.width(w)
+proc miterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.miterLimit(ml)
+proc miterLimitTheta*(self: var VcgenStroke, t: float64) = self.mStroker.miterLimitTheta(t)
+proc innerMiterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.innerMiterLimit(ml)
+proc approximationCcale*(self: var VcgenStroke, asc: float64) = self.mStroker.approximationScale(asc)
 
-proc width*(self: VcgenStroke): float64 = self.mStroker.width()
-proc miterLimit*(self: VcgenStroke): float64 = self.mStroker.miterLimit()
-proc innerMiterLimit*(self: VcgenStroke): float64 = self.mStroker.innerMiterLimit()
-proc approximationScale*(self: VcgenStroke): float64 = self.mStroker.approximationScale()
+proc width*(self: var VcgenStroke): float64 = self.mStroker.width()
+proc miterLimit*(self: var VcgenStroke): float64 = self.mStroker.miterLimit()
+proc innerMiterLimit*(self: var VcgenStroke): float64 = self.mStroker.innerMiterLimit()
+proc approximationScale*(self: var VcgenStroke): float64 = self.mStroker.approximationScale()
 
-proc shorten*(self: VcgenStroke, s: float64) = self.mShorten = s
-proc shorten*(self: VcgenStroke): float64 = self.mShorten
+proc shorten*(self: var VcgenStroke, s: float64) = self.mShorten = s
+proc shorten*(self: var VcgenStroke): float64 = self.mShorten
 
-proc removeAll*(self: VcgenStroke) =
+proc removeAll*(self: var VcgenStroke) =
   self.mSrcVertices.removeAll()
   self.mClosed = 0
   self.mStatus = initial
 
-proc addVertex*(self: VcgenStroke, x, y: float64, cmd: uint) =
+proc addVertex*(self: var VcgenStroke, x, y: float64, cmd: uint) =
   self.mStatus = initial
   if isMoveTo(cmd):
     self.mSrcVertices.modifyLast(initVertexDist(x, y))
@@ -78,7 +77,7 @@ proc addVertex*(self: VcgenStroke, x, y: float64, cmd: uint) =
    else:
      self.mClosed = getCloseFlag(cmd)
 
-proc rewind*(self: VcgenStroke, pathId: int) =
+proc rewind*(self: var VcgenStroke, pathId: int) =
   if self.mStatus == initial:
     self.mSrcVertices.close(self.mClosed != 0)
     shortenPath(self.mSrcVertices, self.mShorten, self.mClosed)
@@ -88,7 +87,7 @@ proc rewind*(self: VcgenStroke, pathId: int) =
   self.mSrcVertex = 0
   self.mOutVertex = 0
 
-proc vertex*(self: VcgenStroke, x, y: var float64): uint =
+proc vertex*(self: var VcgenStroke, x, y: var float64): uint =
   var cmd: uint = pathCmdLineTo
 
   while not isStop(cmd):
