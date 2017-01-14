@@ -1,5 +1,6 @@
 conv_curve
 curve
+alpha_mask3
 
 incomplete:
   path_storage
@@ -8,19 +9,19 @@ incomplete:
   clip_liang_barsky
 
 translate ok:
-  gsv_text
-  pixfmt_amask_adaptor
-  alpha_mask_u8
+  -gsv_text
+  -pixfmt_amask_adaptor
+  -alpha_mask_u8
   span_allocator
-  make_gb_poly
-  make_arrows
+  -make_gb_poly
+  -make_arrows
   dda_line
   renderer_primitive
   rasterizer_outline
   scanline_bin
   ellipse_bresenham
-  scanline_u
-  scanline_p
+  -scanline_u
+  -scanline_p
   -parse_lion.cpp
   -conv_transform
   -bounding_rect

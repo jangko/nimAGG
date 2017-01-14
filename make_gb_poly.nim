@@ -1863,8 +1863,8 @@ const poly2 = [
 
 proc loadPoly(ps: var PathStorage, p: openArray[float64]) =
   ps.moveTo(p[0], p[1])
-  let len = p.len div 2
-  for i in countup(1, len, 2):
+  let len = p.len
+  for i in countup(2, len-1, 2):
     ps.lineTo(p[i], p[i+1])
   ps.closePolygon()
 

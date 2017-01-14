@@ -4,15 +4,15 @@ type
   RowAccessor*[T] = object
     buf: ptr T    # Pointer to rendering buffer
     start: ptr T  # Pointer to first pixel depending on stride
-    width: uint   # Width in pixels
-    height: uint  # Height in pixels
+    width: int   # Width in pixels
+    height: int  # Height in pixels
     stride: int   # Number of bytes per row. Can be < 0
 
   RowPtrCache*[T] = object
     buf: ptr T       # Pointer to rendering buffer
     rows: seq[ptr T] # Pointers to each row of the buffer
-    width: uint      # Width in pixels
-    height: uint     # Height in pixels
+    width: int      # Width in pixels
+    height: int     # Height in pixels
     stride: int      # Number of bytes per row. Can be < 0
 
   Row[T] = object
@@ -30,7 +30,7 @@ type
   RenderingBuffer16* = RowAccessor[uint16]
   RenderingBufferCached16* = RowPtrCache[uint16]
 
-proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: uint, stride: int) =
+proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: int, stride: int) =
   self.buf = buf
   self.start = buf
   self.width = width
@@ -39,7 +39,7 @@ proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: uint, strid
   if stride < 0:
     self.start = self.buf - int(height - 1) * stride
 
-proc initRowAccessor*[T](buf: ptr T, width, height: uint, stride: int): RowAccessor[T] =
+proc initRowAccessor*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
   result.buf = nil
   result.start = nil
   result.width = 0
@@ -47,14 +47,14 @@ proc initRowAccessor*[T](buf: ptr T, width, height: uint, stride: int): RowAcces
   result.stride = 0
   result.attach(buf, width, height, stride)
 
-proc initRenderingBuffer*[T](buf: ptr T, width, height: uint, stride: int): RowAccessor[T] =
+proc initRenderingBuffer*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
   result = initRowAccessor[T](buf, width, height, stride)
 
 proc width*[T](self: var RowAccessor[T]): int {.inline.} =
-  result = self.width.int
+  result = self.width
 
 proc height*[T](self: var RowAccessor[T]): int {.inline.} =
-  result = self.height.int
+  result = self.height
 
 proc getBuf*[T](self: var RowAccessor[T]): ptr T {.inline.} =
   result = self.buf
@@ -112,7 +112,7 @@ proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: uint, strid
     self.rows[i] = cast[ptr T](p)
     inc(p, stride)
 
-proc initRowPtrCache*[T](buf: ptr T, width, height: uint, stride: int): RowPtrCache[T] =
+proc initRowPtrCache*[T](buf: ptr T, width, height: int, stride: int): RowPtrCache[T] =
   result.buf = nil
   result.rows = newSeq[ptr T](height.int)
   result.width = 0
@@ -120,14 +120,14 @@ proc initRowPtrCache*[T](buf: ptr T, width, height: uint, stride: int): RowPtrCa
   result.stride = 0
   result.attach(buf, width, height, stride)
 
-proc initRenderingBufferCached*[T](buf: ptr T, width, height: uint, stride: int): RowPtrCache[T] =
+proc initRenderingBufferCached*[T](buf: ptr T, width, height: int, stride: int): RowPtrCache[T] =
   result = initRowPtrCache[T](buf, width, height, stride)
 
 proc width*[T](self: var RowPtrCache[T]): int {.inline.} =
-  result = self.width.int
+  result = self.width
 
 proc height*[T](self: var RowPtrCache[T]): int {.inline.} =
-  result = self.height.int
+  result = self.height
 
 proc getBuf*[T](self: var RowPtrCache[T]): ptr T {.inline.} =
   result = self.buf

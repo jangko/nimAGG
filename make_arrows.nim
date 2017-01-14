@@ -1,5 +1,41 @@
-import agg_path_storage
+import agg_path_storage, agg_basics, math
 
+type
+  Spiral* = object
+    mX, mY, mR1, mR2, mStep, mStartAngle: float64
+    mAngle, mCurrR, mDa, mDr: float64
+    mStart: bool
+    
+proc initSpiral*(x, y, r1, r2, step: float64, startAngle=0.0): Spiral =
+  result.mX = x
+  result.mY = y 
+  result.mR1 = r1
+  result.mR2 = r2 
+  result.mStep = step
+  result.mStartAngle = startAngle
+  result.mAngle = startAngle
+  result.mDa = deg2rad(4.0)
+  result.mDr = result.mStep / 90.0
+
+proc rewind*(self: var Spiral, pathId: int) =
+  self.mAngle = self.mStartAngle
+  self.mCurrR = self.mR1
+  self.mStart = true
+
+proc vertex*(self: var Spiral, x, y: var float64): uint =
+  if self.mCurrR > self.mR2: return pathCmdStop
+
+  x = self.mX + cos(self.mAngle) * self.mCurrR
+  y = self.mY + sin(self.mAngle) * self.mCurrR
+  self.mCurrR += self.mDr
+  self.mAngle += self.mDa
+  
+  if self.mStart:
+    self.mStart = false
+    return pathCmdMoveTo
+    
+  return pathCmdLineTo
+  
 proc makeArrows*(ps: var PathStorage) =
   ps.removeAll()
   

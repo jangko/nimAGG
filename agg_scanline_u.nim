@@ -15,7 +15,7 @@ type
     curSpan: ptr Span16U8
 
   ScanlineU8Am*[AlphaMask] = object of ScanlineU8
-    alphaMask: var AlphaMask
+    alphaMask: ptr AlphaMask
 
   Span32U8* = object
     x*: int32
@@ -105,9 +105,9 @@ proc begin*(self: var ScanlineU8): auto = self.spans[1].addr
 
 proc initScanlineU8Am*[AlphaMask](am: var AlphaMask): ScanlineU8Am[AlphaMask] =
   ScanlineU8(result).init()
-  result.alphaMask = am
+  result.alphaMask = am.addr
 
-proc finalize*[AlphaMask](self: ScanlineU8Am[AlphaMask], spanY: int) =
+proc finalize*[AlphaMask](self: var ScanlineU8Am[AlphaMask], spanY: int) =
   ScanlineU8(self).finalize(spanY)
   if self.alphaMask != nil:
     var
@@ -115,7 +115,7 @@ proc finalize*[AlphaMask](self: ScanlineU8Am[AlphaMask], spanY: int) =
       count = self.numSpans()
 
     doWhile count != 0:
-      self.alphaMask.combineHspan(span.x, self.getY(), span.covers, span.len)
+      self.alphaMask[].combineHspan(span.x, self.getY(), span.covers, span.len)
       inc span
       dec count
 

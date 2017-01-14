@@ -1,4 +1,5 @@
-import agg_basics, strutils, agg_trans_affine, agg_conv_transform, agg_conv_stroke, agg_math_stroke
+import agg_basics, strutils, agg_trans_affine, agg_conv_transform
+import agg_conv_stroke, agg_math_stroke, agg_bounding_rect
 
 var gsv_default_font = [
   0x40'u8,0x00,0x6c,0x0f,0x15,0x00,0x0e,0x00,0xf9,0xff,
@@ -477,12 +478,12 @@ type
     mW, mH: float64
 
 proc value(p: ptr uint8): uint16 =
-  when system.cpuEndian == bigEndian:
+  #when system.cpuEndian == bigEndian:
     result = p[1].uint16 shl 8
     result = result or p[0].uint16
-  else:
-    result = p[0].uint16 shl 8
-    result = result or p[1].uint16
+  #else:
+    #result = p[0].uint16 shl 8
+    #result = result or p[1].uint16
 
 proc initGsvText*(): GsvText =
   result.mX = 0.0
@@ -506,7 +507,7 @@ proc font*(self: var GsvText, font: pointer) =
   self.mFont = font
   if self.mFont == nil: self.mFont = self.mLoadedFont[0].addr
 
-proc size*(self: var GsvText, height, width: float64) =
+proc size*(self: var GsvText, height: float64, width = 0.0'f64) =
   self.mHeight = height
   self.mWidth  = width
 
@@ -550,7 +551,7 @@ proc rewind*(self: var GsvText, pathId: int) =
 proc vertex*(self: var GsvText, x, y: var float64): uint =
   var
     idx: int
-    yc, yf: int
+    yc, yf: int8
     dx, dy: int
 
   while true:
@@ -576,7 +577,7 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
       idx = idx shl 1
       self.mBGlyph = self.mGlyphs + value(self.mIndices + idx).int
       self.mEGlyph = self.mGlyphs + value(self.mIndices + idx + 2).int
-      self.mStatus = startGlyph
+      self.mStatus = startGlyph      
     of startGlyph:
       x = self.mX
       y = self.mY
@@ -587,11 +588,11 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
         self.mStatus = nextChar
         self.mX += self.mSpace
         continue
-
-      dx = int(self.mBglyph[])
+      
+      dx = cast[int8](self.mBglyph[]).int
       inc self.mBglyph
-      yc = self.mBglyph[].int
-      yf = yc and 0x80
+      yc = cast[int8](self.mBglyph[])
+      yf = yc and 0x80'i8
       inc self.mBglyph
 
       yc = yc shl 1
@@ -602,13 +603,16 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
       self.mY += float64(dy) * self.mH
       x = self.mX
       y = self.mY
-
       return if yf != 0: pathCmdMoveTo else: pathCmdLineTo
     else:
       discard
   result = pathCmdStop
 
-
+proc textWidth*(self: var GsvText): float64 =
+  var x1, y1, x2, y2: float64
+  discard self.boundingRectSingle(0, x1, y1, x2, y2)
+  result = x2 - x1
+    
 type
   GsvTextOutline*[Transformer] = object
     poly: ConvStroke[GsvText, NullMarkers]

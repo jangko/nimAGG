@@ -178,11 +178,11 @@ proc addPath*[ClipT, CoordT, VertexSource](self: var RasterizerScanlineAA1[ClipT
   mixin rewind, vertex
   var x, y: float64
   vs.rewind(pathId)
-  
+
   if self.outline.sorted(): self.reset()
   var cmd = vs.vertex(x, y)
   while not isStop(cmd):
-    #echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
+    #if print: echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
     self.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 

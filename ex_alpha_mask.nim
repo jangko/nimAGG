@@ -1,7 +1,7 @@
-import agg_basics, agg_rendering_buffer, agg_color_rgba
+import agg_basics, agg_rendering_buffer, agg_color_rgba, agg_color_gray
 import agg_path_storage, agg_conv_transform, agg_bounding_rect, agg_renderer_scanline
-import agg_pixfmt_rgb, agg_pixfmt_gray, agg_scanline_u, agg_renderer_base, agg_trans_affine
-import parse_lion, nimBMP, agg_rasterizer_scanline_aa
+import agg_pixfmt_rgb, agg_pixfmt_gray, agg_scanline_u, agg_scanline_p, agg_renderer_base, agg_trans_affine
+import parse_lion, nimBMP, agg_rasterizer_scanline_aa, agg_alpha_mask_u8, agg_ellipse, random
 
 {.passC: "-I./agg-2.5/include".}
 {.compile: "parse_lion2.cpp".}
@@ -27,18 +27,42 @@ var
 discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
 base_dx = (x2 - x1) / 2.0
 base_dy = (y2 - y1) / 2.0
+   
+var
+  alphaBuf  = newString(frameWidth * frameHeight)
+  alphaRbuf = initRenderingBuffer(cast[ptr ValueType](alphaBuf[0].addr), frameWidth, frameHeight, frameWidth)
+  alphaMask = initAlphaMaskGray8(alphaRbuf)
+  ras       = initRasterizerScanlineAA()
+  
+proc generateAlphaMask(cx, cy: int) =
+  var
+    pixf = initPixfmtGray8(alphaRbuf)
+    rb   = initRendererBase(pixf)
+    ren  = initRendererScanlineAASolid(rb)
+    sl   = initScanlineP8()
+    ell  = initEllipse()
+
+  rb.clear(initGray8(0))
+  randomize()
+  for i in 0.. <10:
+    ell.init(random(cx.float64), random(cy.float64), 
+      random(100.0) + 20.0, random(100.0) + 20.0, 100)
+
+    ras.addPath(ell)
+    ren.color(initGray8(random(0xFF).uint, random(0xFF).uint))
+    renderScanlines(ras, sl, ren)
+
+generateAlphaMask(frameWidth, frameHeight)
 
 var
   buffer = newString(frameWidth * frameHeight * pixWidth)
   rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
   pf     = initPixFmtRgb24(rbuf)
   rb     = initRendererBase(pf)
-  sl     = initScanlineU8()
-  ras    = initRasterizerScanlineAA()
+  sl     = initScanlineU8Am(alphaMask)  
   ren    = initRendererScanlineAASolid(rb)
   mtx    = initTransAffine()
   
-#var bkg = initRgba(1,1,1)
 rb.clear(initRgba(1,1,1))
   
 mtx *= transAffineTranslation(-base_dx, -base_dy)
