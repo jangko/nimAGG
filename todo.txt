@@ -1,5 +1,5 @@
-alpha_mask_u8
-gsv_text
+conv_curve
+curve
 
 incomplete:
   path_storage
@@ -8,6 +8,10 @@ incomplete:
   clip_liang_barsky
 
 translate ok:
+  gsv_text
+  pixfmt_amask_adaptor
+  alpha_mask_u8
+  span_allocator
   make_gb_poly
   make_arrows
   dda_line

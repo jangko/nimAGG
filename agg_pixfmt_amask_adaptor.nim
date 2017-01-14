@@ -1,0 +1,129 @@
+import agg_basics, agg_rendering_buffer, agg_alpha_mask_u8
+
+type
+  PixfmtAmaskAdaptor*[PixFmt, Amask] = object
+    pixf: ptr PixFmt
+    mask: ptr Amask
+    span: seq[CoverType]
+  
+const
+  spanExtraTail = 256
+
+proc reallocSpan[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], len: int) =
+  if len > self.span.len:
+    self.span.setLen(len + spanExtraTail)
+  
+proc initSpan[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], len: int) =
+  self.reallocSpan(len)
+  setMem(self.span[0].addr, Amask.coverFull, len * sizeof(CoverType))
+
+proc initSpan[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], len: int, covers: ptr CoverType) =
+  self.reallocSpan(len)
+  copyMem(self.span[0].addr, covers, len * sizeof(CoverType))
+
+proc initPixfmtAmaskAdaptor*[PixFmt, Amask](pixf: var PixFmt, mask: var Amask): PixfmtAmaskAdaptor[PixFmt, Amask] =
+  result.pixf = pixf.addr
+  result.mask = mask.addr
+  result.span = @[]
+  
+proc attachPixfmt*[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], pixf: var PixFmt) =      
+  self.pixf = pixf.addr
+  
+proc attachAlphaMask*[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], mask: var Amask) = 
+  self.mask = mask.addr
+
+proc attachPixfmt*[PixFmt, Amask, PixFmt2](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  pixf: var PixFmt2, x1, y1, x2, y2: int): bool =
+  result = self.pixf[].attach(pixf, x1, y1, x2, y2)
+
+proc width*[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask]): int = self.pixf[].width()
+proc height*[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask]): int = self.pixf[].height()
+
+proc pixel*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], x, y: int): ColorT =
+  result = self.pixf[].pixel(x, y)
+
+proc copyPixel*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], x, y: int, c: ColorT) =
+  self.pixf[].blendPixel(x, y, c, self.mask[].pixel(x, y))
+
+proc blendPixel*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], x, y: int, c: ColorT, cover: CoverType) =
+  self.pixf[].blendPixel(x, y, c, self.mask[].combine_pixel(x, y, cover))
+
+proc copyHline*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], x, y, len: int, c: ColorT) =
+  self.reallocSpan(len)
+  self.mask[].fillHspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidHspan(x, y, len, c, self.span[0].addr)
+
+proc blendHline*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, c: ColorT, cover: CoverType) =
+  self.initSpan(len)
+  self.mask[].combineHspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidHspan(x, y, len, c, self.span[0].addr)
+
+proc copyVline*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, c: ColorT) =
+  self.reallocSpan(len)
+  self.mask[].fillVspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidVspan(x, y, len, c, self.span[0].addr)
+
+proc blendVline*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, c: ColorT, cover: CoverType) =
+  self.initSpan(len)
+  self.mask[].combineVspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidVspan(x, y, len, c, self.span[0].addr)
+
+proc copyFrom*[PixFmt, Amask](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  src: RenderingBuffer, xdst, ydst, xsrc, ysrc: int, len: int) =
+  self.pixf[].copyFrom(src, xdst, ydst, xsrc, ysrc, len)
+
+proc blendSolidHspan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, c: ColorT, covers: ptr CoverType) =
+  self.initSpan(len, covers)
+  self.mask[].combineHspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidHspan(x, y, len, c, self.span[0].addr)
+
+proc blendSolidVspan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, c: ColorT, covers: ptr CoverType) =
+  self.initSpan(len, covers)
+  self.mask[].combineVspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendSolidVspan(x, y, len, c, self.span[0].addr)
+
+proc copyColorHspan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT) =
+  self.reallocSpan(len)
+  self.mask[].fillHspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendColorHSpan(x, y, len, colors, self.span[0].addr, Amask.coverFull)
+
+proc copyColorVspan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT) =
+  self.reallocSpan(len)
+  self.mask[].fillVspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendColorVSpan(x, y, len, colors, self.span[0].addr, Amask.coverFull)
+
+proc blendColorHSpan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT, covers: ptr CoverType, cover: CoverType) =
+  if covers != nil: 
+    self.initSpan(len, covers)
+    self.mask[].combineHspan(x, y, self.span[0].addr, len)
+  else:
+    self.reallocSpan(len)
+    self.mask[].fillHspan(x, y, self.span[0].addr, len)
+    
+  self.pixf[].blendColorHSpan(x, y, len, colors, self.span[0].addr, cover)
+
+proc blendColorHSpan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT, covers: ptr CoverType) {.inline.} =
+  self.blendColorHSpan(x, y, len, colors, covers, Amask.coverFull)
+  
+proc blendColorVSpan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT, covers: ptr CoverType, cover: CoverType) =
+  if covers != nil: 
+    self.initSpan(len, covers)
+    self.mask[].combineVspan(x, y, self.span[0].addr, len)
+  else:
+    self.reallocSpan(len)
+    self.mask[].fillVspan(x, y, self.span[0].addr, len)
+  self.pixf[].blendColorVSpan(x, y, len, colors, self.span[0].addr, cover)
+  
+proc blendColorVSpan*[PixFmt, Amask, ColorT](self: var PixfmtAmaskAdaptor[PixFmt, Amask], 
+  x, y: int, len: int, colors: ptr ColorT, covers: ptr CoverType) {.inline.} =
+  self.blendColorVSpan(x, y, len, colors, covers, Amask.coverFull)
