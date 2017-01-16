@@ -1,7 +1,3 @@
-conv_curve
-curve
-alpha_mask3
-
 incomplete:
   path_storage
   renderer_scanline
@@ -9,6 +5,8 @@ incomplete:
   clip_liang_barsky
 
 translate ok:
+  conv_curve
+  curve
   -gsv_text
   -pixfmt_amask_adaptor
   -alpha_mask_u8

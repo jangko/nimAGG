@@ -21,3 +21,8 @@ proc calcIntersection*(ax, ay, bx, by, cx, cy, dx, dy: float64; x, y: var float6
 
 proc crossProduct*(x1, y1, x2, y2, x, y: float64): float64 {.inline.} =
   result = (x - x2) * (y2 - y1) - (y - y2) * (x2 - x1)
+  
+proc calcSqDistance*(x1, y1, x2, y2: float64): float64  {.inline.} =
+  let dx = x2-x1
+  let dy = y2-y1
+  result = dx * dx + dy * dy
