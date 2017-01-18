@@ -105,7 +105,7 @@ proc vertex*(self: var RoundedRect, x, y: var float64): uint =
       self.arc.rewind(0)
       inc self.status
     of 7:
-      cmd = self.arc.vertex(x, y);
+      cmd = self.arc.vertex(x, y)
       if isStop(cmd): 
         inc self.status
       else: return pathCmdLineTo

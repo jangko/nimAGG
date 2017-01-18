@@ -26,3 +26,18 @@ proc calcSqDistance*(x1, y1, x2, y2: float64): float64  {.inline.} =
   let dx = x2-x1
   let dy = y2-y1
   result = dx * dx + dy * dy
+  
+proc calcPolygonArea*[Storage](st: var Storage): float64 =
+  var
+    sum = 0.0
+    x  = st[0].x
+    y  = st[0].y
+    xs = x
+    ys = y
+ 
+  for i in 1.. <st.size:
+    let v = st[i].addr
+    sum += x * v.y - y * v.x
+    x = v.x
+    y = v.y
+  result = (sum + x * ys - y * xs) * 0.5

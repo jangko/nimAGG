@@ -47,9 +47,9 @@ proc lineCap*(self: var MathStroke, lc: LineCap) = self.mLineCap = lc
 proc lineJoin*(self: var MathStroke, lj: LineJoin) = self.mLineJoin = lj
 proc innerJoin*(self: var MathStroke, ij: InnerJoin) = self.mInnerJoin = ij
 
-proc lineCap*(self: var MathStroke): LineCap = self.mLineCap
-proc lineJoin*(self: var MathStroke): LineJoin = self.mLineJoin
-proc innerJoin*(self: var MathStroke): InnerJoin = self.mInnerJoin
+proc lineCap*(self: MathStroke): LineCap = self.mLineCap
+proc lineJoin*(self: MathStroke): LineJoin = self.mLineJoin
+proc innerJoin*(self: MathStroke): InnerJoin = self.mInnerJoin
 
 proc width*(self: var MathStroke, w: float64) =
   self.mWidth = w * 0.5;
@@ -67,10 +67,10 @@ proc miterLimitTheta*(self: var MathStroke, t: float64) = self.mMiterLimit = 1.0
 proc innerMiterLimit*(self: var MathStroke, ml: float64) = self.mInnerMiterLimit = ml
 proc approximationScale*(self: var MathStroke, asc: float64) = self.mApproxScale = asc
 
-proc width*(self: var MathStroke): float64 = self.mWidth * 2.0
-proc miterLimit*(self: var MathStroke): float64 = self.mMiterLimit
-proc innerMiterLimit*(self: var MathStroke): float64 = self.mInnerMiterLimit
-proc approximationScale*(self: var MathStroke): float64 = self.mApproxScale
+proc width*(self: MathStroke): float64 = self.mWidth * 2.0
+proc miterLimit*(self: MathStroke): float64 = self.mMiterLimit
+proc innerMiterLimit*(self: MathStroke): float64 = self.mInnerMiterLimit
+proc approximationScale*(self: MathStroke): float64 = self.mApproxScale
 
 proc addVertex[VertexConsumer](vc: var VertexConsumer, x, y: float64) {.inline.} =
   type CoordType = getValueType(VertexConsumer)
@@ -142,7 +142,7 @@ proc calcMiter[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
     let y2 = v1.y - dy1
     if (crossProduct(v0.x, v0.y, v1.x, v1.y, x2, y2) < 0.0) ==
       (crossProduct(v1.x, v1.y, v2.x, v2.y, x2, y2) < 0.0):
-       # This case means that the next segment continues
+       # This of means that the next segment continues
        # the previous one (straight line)
        vc.addVertex(v1.x + dx1, v1.y - dy1)
        miterLimitExceeded = false
@@ -273,7 +273,7 @@ proc calcJoin*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
 
     if (self.mLineJoin == roundJoin) or (self.mLineJoin == bevelJoin):
       # This is an optimization that reduces the number of points
-      # in cases of almost collinear segments. If there's no
+      # in ofs of almost collinear segments. If there's no
       # visible difference between bevel and miter joins we'd rather
       # use miter join because it adds only one point instead of two.
       #

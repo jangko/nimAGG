@@ -202,7 +202,7 @@ proc recursiveBezier(self: var Curve3Div, x1, y1, x2, y2, x3, y3: float64, level
     da: float64
 
   if d > curveCollinearityEpsilon:
-    # Regular case
+    # Regular of
     if d * d <= self.mDistanceToleranceSquare * (dx*dx + dy*dy):
       # If the curvature doesn't exceed the distance_tolerance value
       # we tend to finish subdivisions.
@@ -220,14 +220,14 @@ proc recursiveBezier(self: var Curve3Div, x1, y1, x2, y2, x3, y3: float64, level
         self.mPoints.add(PointD(x: x123, y: y123))
         return
   else:
-    # Collinear case
+    # Collinear of
     da = dx*dx + dy*dy
     if da == 0:
       d = calcSqdistance(x1, y1, x2, y2)
     else:
       d = ((x2 - x1)*dx + (y2 - y1)*dy) / da
       if d > 0 and d < 1:
-        # Simple collinear case, 1---2---3
+        # Simple collinear of, 1---2---3
         # We can leave just two endpoints
         return
 
@@ -583,7 +583,7 @@ proc recursiveBezier(self: var Curve4Div, x1, y1, x2, y2, x3, y3, x4, y4: float6
       da2 = y3 - y1
       d3  = k * (da1*dx + da2*dy)
       if d2 > 0 and d2 < 1 and d3 > 0 and d3 < 1:
-        # Simple collinear case, 1---2---3---4
+        # Simple collinear of, 1---2---3---4
         # We can leave just two endpoints
         return
 
@@ -648,7 +648,7 @@ proc recursiveBezier(self: var Curve4Div, x1, y1, x2, y2, x3, y3, x4, y4: float6
           self.mPoints.add(PointD(x: x2, y: y2))
           return
   of 3:
-    # Regular case
+    # Regular of
     #-----------------
     if (d2 + d3)*(d2 + d3) <= self.mDistanceToleranceSquare * (dx*dx + dy*dy):
       # If the curvature doesn't exceed the distance_tolerance value

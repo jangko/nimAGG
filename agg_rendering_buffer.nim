@@ -95,7 +95,7 @@ proc clear*[T](self: var RowAccessor[T], value: T) =
       p[] = value
       inc p
 
-proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: uint, stride: int) =
+proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: int, stride: int) =
   self.buf = buf
   self.width = width
   self.height = height

@@ -1,4 +1,4 @@
-proc colorConv*[RenBuf, T](dst, src: RenBuf, copyRow: T) =
+proc colorConv*[RenBuf, T](dst, src: var RenBuf, copyRow: T) =
   let
     width  = min(src.width(), dst.width())
     height = min(src.height(), dst.height())

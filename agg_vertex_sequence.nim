@@ -20,8 +20,11 @@ proc cmp*(self: var VertexDist, val: VertexDist): bool =
 
 type
   # Same as the above but with additional "command" value
-  VertexDistCmd = object of VertexDist
-    cmd: uint
+  VertexDistCmd* = object of VertexDist
+    cmd*: uint
+
+proc cmp*(self: var VertexDistCmd, val: VertexDistCmd): bool =
+  result = cmp(self.VertexDist, val.VertexDist)
 
 proc initVertexDistCmd*(x, y: float64, cmd: uint): VertexDistCmd =
   result.x = x

@@ -336,7 +336,7 @@ proc readPixelsRLE4(bmp: BMP, s: Stream) =
       if s.atEnd(): break
       statusByte = s.readChar.ord
 
-      case statusByte:
+      case statusByte
       of RLE_ENDOFLINE:
         bits = 0
         inc scanLine

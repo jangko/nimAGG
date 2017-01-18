@@ -132,7 +132,7 @@ proc onDraw() =
    
   #echo "---"
   #var kol = test_aa()
-  ps.removeAll();
+  ps.removeAll()
   ps.moveTo(mx[1], my[1])
   ps.lineTo(mx[2], my[2])
   ras.addPath(pg)

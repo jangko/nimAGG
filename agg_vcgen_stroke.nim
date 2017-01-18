@@ -44,9 +44,9 @@ proc lineCap*(self: var VcgenStroke, lc: LineCap) = self.mStroker.lineCap(lc)
 proc lineJoin*(self: var VcgenStroke, lj: LineJoin) = self.mStroker.lineJoin(lj)
 proc innerJoin*(self: var VcgenStroke, ij: InnerJoin) = self.mStroker.innerJoin(ij)
 
-proc lineCap*(self: var VcgenStroke): LineCap = self.mStroker.lineCap
-proc lineJoin*(self: var VcgenStroke): LineJoin = self.mStroker.lineJoin
-proc innerJoin*(self: var VcgenStroke): InnerJoin = self.mStroker.innerJoin
+proc lineCap*(self: VcgenStroke): LineCap = self.mStroker.lineCap
+proc lineJoin*(self: VcgenStroke): LineJoin = self.mStroker.lineJoin
+proc innerJoin*(self: VcgenStroke): InnerJoin = self.mStroker.innerJoin
 
 proc width*(self: var VcgenStroke, w: float64) = self.mStroker.width(w)
 proc miterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.miterLimit(ml)
@@ -54,13 +54,13 @@ proc miterLimitTheta*(self: var VcgenStroke, t: float64) = self.mStroker.miterLi
 proc innerMiterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.innerMiterLimit(ml)
 proc approximationCcale*(self: var VcgenStroke, asc: float64) = self.mStroker.approximationScale(asc)
 
-proc width*(self: var VcgenStroke): float64 = self.mStroker.width()
-proc miterLimit*(self: var VcgenStroke): float64 = self.mStroker.miterLimit()
-proc innerMiterLimit*(self: var VcgenStroke): float64 = self.mStroker.innerMiterLimit()
-proc approximationScale*(self: var VcgenStroke): float64 = self.mStroker.approximationScale()
+proc width*(self: VcgenStroke): float64 = self.mStroker.width()
+proc miterLimit*(self: VcgenStroke): float64 = self.mStroker.miterLimit()
+proc innerMiterLimit*(self: VcgenStroke): float64 = self.mStroker.innerMiterLimit()
+proc approximationScale*(self: VcgenStroke): float64 = self.mStroker.approximationScale()
 
 proc shorten*(self: var VcgenStroke, s: float64) = self.mShorten = s
-proc shorten*(self: var VcgenStroke): float64 = self.mShorten
+proc shorten*(self: VcgenStroke): float64 = self.mShorten
 
 proc removeAll*(self: var VcgenStroke) =
   self.mSrcVertices.removeAll()

@@ -70,6 +70,21 @@ type
   VertexF* = VertexBase[float32]
   VertexD* = VertexBase[float64]
 
+proc modifyLast*(x: var seq[PointD], val: PointD) =
+  x[x.len-1] = val
+
+proc prev*(x: var seq[PointD], idx: int): var PointD = 
+  let size = x.len
+  x[(idx + size - 1) mod size]
+ 
+proc next*(x: var seq[PointD], idx: int): var PointD = 
+  x[(idx + 1) mod x.len]
+  
+proc removeAll*(x: var seq[PointD]) =
+  x.setLen(0)
+  
+template getValueType*(x: typedesc[seq[PointD]]): typedesc = PointD
+
 proc iround*(v: float64): int {.inline.} =
   result = if v < 0.0: (v - 0.5).int else: (v + 0.5).int
 
@@ -123,9 +138,9 @@ proc initRectBase*[T](x1, y1, x2, y2: T): RectBase[T] =
   result.x2 = x2
   result.y2 = y2
 
-template initRectI*(x1, y1, x2, y2: untyped) = initRectBase[int](x1, y1, x2, y2)
-template initRectF*(x1, y1, x2, y2: untyped) = initRectBase[float32](x1, y1, x2, y2)
-template initRectD*(x1, y1, x2, y2: untyped) = initRectBase[float64](x1, y1, x2, y2)
+template initRectI*(x1, y1, x2, y2: untyped): untyped = initRectBase[int](x1, y1, x2, y2)
+template initRectF*(x1, y1, x2, y2: untyped): untyped = initRectBase[float32](x1, y1, x2, y2)
+template initRectD*(x1, y1, x2, y2: untyped): untyped = initRectBase[float64](x1, y1, x2, y2)
 
 proc normalize*[T](r: var RectBase[T]) =
   if r.x1 > r.x2: swap(r.x1, r.x2)

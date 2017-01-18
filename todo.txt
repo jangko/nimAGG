@@ -1,10 +1,37 @@
+bitset_iterator
+conv_unclose_polygon
+conv_concat
+path_length
+span_solid
+rasterizer_outline
+vcgen_vertex_sequence
+vcgen_markers_term
+conv_shorten_path
+conv_close_polygon
+vpgen_segmentator
+conv_adaptor_vpgen
+conv_segmentator
+bspline
+vcgen_bspline
+conv_bspline
+vcgen_contour
+conv_contour
+vcgen_dash
+conv_dash
+vpgen_clip_polyline
+conv_clip_polyline
+vpgen_clip_polygon
+conv_clip_polygon
+vcgen_smooth_poly1
+conv_smooth_poly1
+
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
-  clip_liang_barsky
-
+  
 translate ok:
+  clip_liang_barsky
   conv_curve
   curve
   -gsv_text
