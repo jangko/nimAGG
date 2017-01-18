@@ -47,7 +47,7 @@ proc getGammaValue*(g: GammaLinear, x: float64): float64 =
   if x > g.mEnd: return 1.0
   result = (x - g.mStart) / (g.mEnd - g.mStart)
 
-proc initGammaLinear(s = 0.0'f64, e = 1.0'f64): GammaLinear =
+proc initGammaLinear*(s = 0.0'f64, e = 1.0'f64): GammaLinear =
   result.mStart = s
   result.mEnd = e
 

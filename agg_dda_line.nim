@@ -111,7 +111,7 @@ proc adjustBackward*(self: var Dda2LineInterpolator) =
 proc getMod*(self: Dda2LineInterpolator): int = self.mMod
 proc getRem*(self: Dda2LineInterpolator): int = self.mRem
 proc getLft*(self: Dda2LineInterpolator): int = self.mLft
-proc getY*(self: Dda2LineInterpolator): int = self.mY
+proc y*(self: Dda2LineInterpolator): int = self.mY
 
 
 const
@@ -151,7 +151,7 @@ proc vstep*(self: var LineBresenhamInterpolator) =
 
 proc x1*(self: LineBresenhamInterpolator): int = self.x1Lr
 proc y1*(self: LineBresenhamInterpolator): int = self.y1Lr
-proc x2*(self: LineBresenhamInterpolator): int = LineBresenhamInterpolator.lineLr(self.interpolator.getY())
-proc y2*(self: LineBresenhamInterpolator): int = LineBresenhamInterpolator.lineLr(self.interpolator.getY())
-proc x2Hr*(self: LineBresenhamInterpolator): int = self.interpolator.getY()
-proc y2Hr*(self: LineBresenhamInterpolator): int = self.interpolator.getY()
+proc x2*(self: LineBresenhamInterpolator): int = LineBresenhamInterpolator.lineLr(self.interpolator.y())
+proc y2*(self: LineBresenhamInterpolator): int = LineBresenhamInterpolator.lineLr(self.interpolator.y())
+proc x2Hr*(self: LineBresenhamInterpolator): int = self.interpolator.y()
+proc y2Hr*(self: LineBresenhamInterpolator): int = self.interpolator.y()

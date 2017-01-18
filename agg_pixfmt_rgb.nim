@@ -613,7 +613,7 @@ proc initPixFmtRgb48Pre*(rbuf: var RenderingBuffer16): PixfmtRgb48Pre =
 proc initPixFmtBgr48Pre*(rbuf: var RenderingBuffer16): PixfmtBgr48Pre =
   result.rbuf = rbuf.addr
 
-template PixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
+template pixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
   type
     `name blender`* = BlenderRgbGamma[Rgba8, OrderRgb, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
@@ -622,7 +622,7 @@ template PixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
     result.rbuf = rbuf.addr
     result.blender.setGamma(gamma)
 
-template PixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
+template pixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
   type
     `name blender`* = BlenderRgbGamma[Rgba8, OrderBgr, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
@@ -631,7 +631,7 @@ template PixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
     result.rbuf = rbuf.addr
     result.blender.setGamma(gamma)
 
-template PixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
+template pixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
   type
     `name blender`* = BlenderRgbGamma[Rgba16, OrderRgb, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]
@@ -640,7 +640,7 @@ template PixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
     result.rbuf = rbuf.addr
     result.blender.setGamma(gamma)
 
-template PixfmtBgr48Gamma*(name: untyped, Gamma: typedesc) =
+template pixfmtBgr48Gamma*(name: untyped, Gamma: typedesc) =
   type
     `name blender`* = BlenderRgbGamma[Rgba16, OrderBgr, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]

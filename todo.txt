@@ -24,6 +24,10 @@ vpgen_clip_polygon
 conv_clip_polygon
 vcgen_smooth_poly1
 conv_smooth_poly1
+span_gouraud
+span_gouraud_rgba
+span_interpolator_linear
+span_gradient
 
 incomplete:
   path_storage

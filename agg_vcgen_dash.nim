@@ -35,6 +35,8 @@ proc initVcgenDash*(): VcgenDash =
   result.mStatus = initial
   result.mSrcVertex = 0
         
+template construct*(x: typedesc[VcgenDash]): untyped = initVcgenDash()
+
 proc calcDashStart(self: var VcgenDash, ds: float64) =
   var ds = ds
   self.mCurrDash = 0
@@ -71,7 +73,7 @@ proc shorten*(self: var VcgenDash, s: float64)= self.mShorten = s
 proc shorten*(self: VcgenDash): float64 = self.mShorten
 
 # Vertex Generator Interface
-proc removeAll(self: var VcgenDash) =
+proc removeAll*(self: var VcgenDash) =
   self.mStatus = initial
   self.mSrcVertices.removeAll()
   self.mClosed = 0

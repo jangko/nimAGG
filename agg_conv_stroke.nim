@@ -1,6 +1,6 @@
 import agg_basics, agg_conv_adaptor_vcgen, agg_vcgen_stroke, agg_math_stroke
 
-export agg_conv_adaptor_vcgen
+export agg_conv_adaptor_vcgen, agg_math_stroke
 
 type
   ConvStroke*[VertexSource, Markers] = object of ConvAdaptorVcgen[VertexSource, VcgenStroke, Markers]
@@ -31,5 +31,5 @@ proc approximationScale*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).
 proc shorten*[V,M](self: var ConvStroke[V,M], s: float64) = base[V,M](self).shorten(s)
 proc shorten*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).shorten()
 
-proc rewind*[V,M](self: var ConvStroke[V,M], pathId: int) = base[V,M](self).rewind(pathId)
-proc vertex*[V,M](self: var ConvStroke[V,M], x, y: var float64): uint = base[V,M](self).vertex(x, y)
+proc rewind*[V,M](self: var ConvStroke[V,M], pathId: int) {.inline.} = base[V,M](self).rewind(pathId)
+proc vertex*[V,M](self: var ConvStroke[V,M], x, y: var float64): uint {.inline.} = base[V,M](self).vertex(x, y)

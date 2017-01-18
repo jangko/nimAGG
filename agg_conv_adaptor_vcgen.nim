@@ -24,6 +24,7 @@ type
     mStartX, mStartY: float64
     
 proc init*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], source: var V) =
+  mixin construct
   self.mSource = source.addr
   self.mStatus = initial
   self.mGenerator = construct(G)
@@ -41,6 +42,7 @@ proc markers*[V,G,M](self: var ConvAdaptorVcGen[V,G,M]): var M =
   result = self.mMarker
 
 proc rewind*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], pathId: int)  =
+  mixin rewind
   self.mSource[].rewind(pathId)
   self.mStatus = initial
 

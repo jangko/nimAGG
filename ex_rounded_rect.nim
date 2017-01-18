@@ -19,7 +19,7 @@ const
   frameHeight = 400
   pixWidth = 3
   
-PixfmtRgb24Gamma(PixFmt, GammaLut8)
+pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 const
   mGamma = 1.8

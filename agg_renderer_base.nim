@@ -271,6 +271,7 @@ proc blendColorHspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
     len = len
     colors = colors
     covers = covers
+    x = x
 
   if x < self.xmin():
     let d = self.xmin() - x

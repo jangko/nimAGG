@@ -1,4 +1,4 @@
-import math
+import math, agg_basics
 
 # Coinciding points maximal distance (Epsilon)
 const
@@ -41,3 +41,40 @@ proc calcPolygonArea*[Storage](st: var Storage): float64 =
     x = v.x
     y = v.y
   result = (sum + x * ys - y * xs) * 0.5
+  
+proc calcOrthogonal(thickness, x1, y1, x2, y2: float64, x, y: var float64) =
+  var
+    dx = x2 - x1
+    dy = y2 - y1
+    d = sqrt(dx*dx + dy*dy)
+    
+  x =  thickness * dy / d
+  y = -thickness * dx / d
+
+proc dilateTriangle*(x1, y1, x2, y2, x3, y3: float64, x, y: ptr float64, d: float64) {.inline.} =
+  var
+    dx1=0.0
+    dy1=0.0 
+    dx2=0.0
+    dy2=0.0 
+    dx3=0.0
+    dy3=0.0 
+    loc = crossProduct(x1, y1, x2, y2, x3, y3)
+    d = d
+    x = x
+    y = y
+    
+  if abs(loc) > intersectionEpsilon:
+    if crossProduct(x1, y1, x2, y2, x3, y3) > 0.0:
+      d = -d
+    calcOrthogonal(d, x1, y1, x2, y2, dx1, dy1)
+    calcOrthogonal(d, x2, y2, x3, y3, dx2, dy2)
+    calcOrthogonal(d, x3, y3, x1, y1, dx3, dy3)
+
+  x[] = x1 + dx1; y[] = y1 + dy1; inc x; inc y
+  x[] = x2 + dx1; y[] = y2 + dy1; inc x; inc y
+  x[] = x2 + dx2; y[] = y2 + dy2; inc x; inc y
+  x[] = x3 + dx2; y[] = y3 + dy2; inc x; inc y
+  x[] = x3 + dx3; y[] = y3 + dy3; inc x; inc y
+  x[] = x1 + dx3; y[] = y1 + dy3; inc x; inc y
+
