@@ -28,6 +28,9 @@ span_gouraud
 span_gouraud_rgba
 span_interpolator_linear
 span_gradient
+renderer_mclip
+line_aa_basics
+span_converter
 
 incomplete:
   path_storage
