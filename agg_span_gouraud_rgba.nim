@@ -1,5 +1,7 @@
 import agg_basics, agg_color_rgba, agg_dda_line, agg_span_gouraud, agg_math
 
+export agg_span_gouraud
+
 type
   RgbaCalc = object
     mX1, mY1, mDx, m1Dy: float64
@@ -22,14 +24,14 @@ proc init[CoordT](self: var RgbaCalc, c1, c2: CoordT) =
   self.mDx  = c2.x - c1.x
   let dy = c2.y - c1.y
   self.m1Dy = if dy < 1e-5: 1e5 else: 1.0 / dy
-  self.mR1  = c1.color.r
-  self.mG1  = c1.color.g
-  self.mB1  = c1.color.b
-  self.mA1  = c1.color.a
-  self.mDr  = c2.color.r - self.mR1
-  self.mDg  = c2.color.g - self.mG1
-  self.mDb  = c2.color.b - self.mB1
-  self.mDa  = c2.color.a - self.mA1
+  self.mR1  = c1.color.r.int
+  self.mG1  = c1.color.g.int
+  self.mB1  = c1.color.b.int
+  self.mA1  = c1.color.a.int
+  self.mDr  = c2.color.r.int - self.mR1
+  self.mDg  = c2.color.g.int - self.mG1
+  self.mDb  = c2.color.b.int - self.mB1
+  self.mDa  = c2.color.a.int - self.mA1
 
 proc calc(self: var RgbaCalc, y: float64) =
   var k = (y - self.mY1) * self.m1Dy
@@ -41,19 +43,28 @@ proc calc(self: var RgbaCalc, y: float64) =
   self.mA = self.mA1 + iround(self.mDa.float64 * k)
   self.mX = iround((self.mX1 + self.mDx * k) * subPixelScale)
 
+proc initSpanGouraudRgba*[ColorT](): SpanGouraudRgba[ColorT] = discard
 
 proc initSpanGouraudRgba*[ColorT](c1, c2, c3: ColorT,
   x1, y1, x2, y2, x3, y3: float64, d = 0'f64): SpanGouraudRgba[ColorT] =
   SpanGouraud[ColorT](result).init(c1, c2, c3, x1, y1, x2, y2, x3, y3, d)
+  
+proc colors*[ColorT, ColorB](self: var SpanGouraudRgba[ColorT], c1, c2, c3: ColorB) =
+  when ColorT isnot ColorB:
+    var c1 = construct(ColorT, c1)
+    var c2 = construct(ColorT, c2)
+    var c3 = construct(ColorT, c3)
+    SpanGouraud[ColorT](self).colors(c1, c2, c3)
+  else:
+    SpanGouraud[ColorT](self).colors(c1, c2, c3)
+
+proc triangle*[ColorT](self: var SpanGouraudRgba[ColorT], x1, y1, x2, y2, x3, y3, d: float64) = 
+  SpanGouraud[ColorT](self).triangle(x1, y1, x2, y2, x3, y3, d)
 
 proc prepare*[ColorT](self: var SpanGouraudRgba[ColorT]) =
-  type
-    base = SpanGouraud[ColorT]
-    CoordType = getCoordType(SpanGouraud[ColorT])
-
-  var coord: array[3, CoordType]
-  base(self).arrangeVertices(coord)
-
+  type base = SpanGouraud[ColorT]
+  
+  let coord = base(self).arrangeVertices()
   self.mY2 = int(coord[1].y)
 
   self.mSwap = crossProduct(coord[0].x, coord[0].y,
@@ -68,17 +79,19 @@ ddaLineInterpolator(DdaLine, 14)
 
 proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y, len: int) =
   type ValueType = getValueType(ColorT)
-  self.mRgba1.calc(y) #(self.mRgba1.self.m1Dy > 2: self.mRgba1.self.mY1 : y)
+  self.mRgba1.calc(y.float64) #(self.mRgba1.self.m1Dy > 2: self.mRgba1.self.mY1 : y)
   var
     pc1 = self.mRgba1.addr
     pc2 = self.mRgba2.addr
+    span = span
+    len = len
 
   if y <= self.mY2:
     # Bottom part of the triangle (first subtriangle)
-    self.mRgba2.calc(y + self.mRgba2.self.m1Dy)
+    self.mRgba2.calc(y.float64 + self.mRgba2.m1Dy)
   else:
     # Upper part (second subtriangle)
-    self.mRgba3.calc(y - self.mRgba3.self.m1Dy)
+    self.mRgba3.calc(y.float64 - self.mRgba3.m1Dy)
     pc2 = self.mRgba3.addr
 
   if self.mSwap:
@@ -88,20 +101,20 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
 
   # Get the horizontal length with subpixel accuracy
   # and protect it from division by zero
-  var nlen = abs(pc2.self.mX - pc1.self.mX)
+  var nlen = abs(pc2.mX - pc1.mX)
   if nlen <= 0: nlen = 1
 
   var
-    r = initDdaLine(pc1.self.mR, pc2.self.mR, nlen)
-    g = initDdaLine(pc1.self.mG, pc2.self.mG, nlen)
-    b = initDdaLine(pc1.self.mB, pc2.self.mB, nlen)
-    a = initDdaLine(pc1.self.mA, pc2.self.mA, nlen)
+    r = initDdaLine(pc1.mR, pc2.mR, nlen)
+    g = initDdaLine(pc1.mG, pc2.mG, nlen)
+    b = initDdaLine(pc1.mB, pc2.mB, nlen)
+    a = initDdaLine(pc1.mA, pc2.mA, nlen)
 
   # Calculate the starting point of the gradient with subpixel
   # accuracy and correct (roll back) the interpolators.
   # This operation will also clip the beginning of the span
   # if necessary.
-  let start = pc1.self.mX - (x shl subPixelShift)
+  var start = pc1.mX - (x shl subPixelShift)
   r    -= start
   g    -= start
   b    -= start

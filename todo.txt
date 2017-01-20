@@ -38,23 +38,24 @@ translate ok:
   clip_liang_barsky
   conv_curve
   curve
-  -gsv_text
-  -pixfmt_amask_adaptor
-  -alpha_mask_u8
   span_allocator
-  -make_gb_poly
-  -make_arrows
   dda_line
   renderer_primitive
   rasterizer_outline
   scanline_bin
   ellipse_bresenham
+  bezier_arc
+  
+  -gsv_text
+  -pixfmt_amask_adaptor
+  -alpha_mask_u8
+  -make_gb_poly
+  -make_arrows
   -scanline_u
   -scanline_p
   -parse_lion.cpp
   -conv_transform
   -bounding_rect
-  bezier_arc
   -conv_stroke
   -conv_adaptor_vcgen
   -vcgen_stroke

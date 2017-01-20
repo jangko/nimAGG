@@ -22,8 +22,8 @@ template ddaLineInterpolator*(name: untyped, FractionShift: int, Yshift: int = 0
   proc `-=`*(self: var name, n: int) =
     self.mDy -= self.mInc * n
 
-  proc getY*(self: name): int =  self.mY + sar(self.mDy, (FractionShift-YShift))
-  proc getDy*(self: name): int = self.mDy
+  proc y*(self: name): int =  self.mY + sar(self.mDy, (FractionShift-YShift))
+  proc dy*(self: name): int = self.mDy
 
     
 type
@@ -36,7 +36,6 @@ type
     len: int
     mInc: int
     interpolator: Dda2LineInterpolator
-
 
 # Forward-adjusted line
 proc initDda2LineInterpolator*(y1, y2, count: int): Dda2LineInterpolator =

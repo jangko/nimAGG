@@ -24,7 +24,7 @@ template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift
   proc begin(self: var name, x, y: float64, len: int) =
     const subPixelScale = getSubPixelScale(name)
     var
-      tx = y
+      tx = x
       ty = y
 
     self.mTrans[].transform(tx, ty)
@@ -40,7 +40,7 @@ template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift
       y2 = iround(ty * subPixelScale)
 
     self.mLiX = initDda2LineInterpolator(x1, x2, len)
-    self.mLiY = initdda2LineInterpolator(y1, y2, len)
+    self.mLiY = initDda2LineInterpolator(y1, y2, len)
 
   proc resynchronize*(self: var name, xee, yee: float64, len: int) =
     const subPixelScale = getSubPixelScale(name)

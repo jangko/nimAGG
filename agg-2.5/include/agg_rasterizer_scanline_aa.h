@@ -204,7 +204,6 @@ namespace agg
             if(m_outline.sorted()) reset();
             while(!is_stop(cmd = vs.vertex(&x, &y)))
             {
-                printf("%3.3f %3.3f %d\n", x, y , cmd);
                 add_vertex(x, y, cmd);
             }
         }
@@ -273,7 +272,6 @@ namespace agg
                         alpha = calculate_alpha((cover << (poly_subpixel_shift + 1)) - area);
                         if(alpha)
                         {
-                            //printf("%d %d\n", x, alpha);
                             sl.add_cell(x, alpha);
                         }
                         x++;
@@ -284,7 +282,6 @@ namespace agg
                         alpha = calculate_alpha(cover << (poly_subpixel_shift + 1));
                         if(alpha)
                         {
-                            //printf("%d %d %d\n", x, cur_cell->x - x, alpha);
                             sl.add_span(x, cur_cell->x - x, alpha);
                         }
                     }

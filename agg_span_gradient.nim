@@ -52,7 +52,7 @@ template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: t
     
     doWhile len != 0:
       self.mInterpolator[].coordinates(x, y)
-      var d = self.mGradientF[].calculate(x shr downScaleShift, y shr downScaleShift, self.mD2)
+      var d = self.mGradientF[].calculate(sar(x, downScaleShift), sar(y, downScaleShift), self.mD2)
       d = ((d - self.mD1) * self.mColorF[].len) div dd
       if d < 0: d = 0
       if d >= self.mColorF[].len: d = self.mColorF[].len - 1

@@ -2,8 +2,8 @@ import agg_basics, agg_math
 
 type
   CoordType[ColorT] = object
-    x, y: float64
-    color: ColorT
+    x*, y*: float64
+    color*: ColorT
 
   SpanGouraud*[ColorT] = object of RootObj
     mCoord: array[3, CoordType[ColorT]]
@@ -11,8 +11,6 @@ type
     mCmd: array[8, uint]
     mVertex: int
     
-template getCoordType*[ColorT](x: typedesc[SpanGouraud[ColorT]]): typedesc = CoordType[ColorT]
-
 proc init*[ColorT](self: var SpanGouraud[ColorT]) =
   self.mVertex(0)
   self.mCmd[0] = pathCmdStop
@@ -20,14 +18,17 @@ proc init*[ColorT](self: var SpanGouraud[ColorT]) =
 proc initSpanGouraud*[ColorT](): SpanGouraud[ColorT] =
   result.init()
 
-proc colors[ColorT](self: var SpanGouraud[ColorT], c1, c2, c3: ColorT)
-proc triangle[ColorT](self: var SpanGouraud[ColorT], x1, y1, x2, y2, x3, y3, d: float64)
+proc colors*[ColorT](self: var SpanGouraud[ColorT], c1, c2, c3: ColorT)
+proc triangle*[ColorT](self: var SpanGouraud[ColorT], x1, y1, x2, y2, x3, y3, d: float64)
+
+proc init*[ColorT](self: var SpanGouraud[ColorT], c1, c2, c3: ColorT; x1, y1, x2, y2, x3, y3, d: float64) =
+  self.mVertex = 0
+  self.colors(c1, c2, c3)
+  self.triangle(x1, y1, x2, y2, x3, y3, d)
 
 proc initSpanGouraud*[ColorT](c1, c2, c3: ColorT; x1, y1, x2, y2, x3, y3, d: float64): SpanGouraud[ColorT] =
-  result.mVertex(0)
-  result.colors(c1, c2, c3)
-  result.triangle(x1, y1, x2, y2, x3, y3, d)
-
+  result.init(c1, c2, c3, x1, y1, x2, y2, x3, y3, d)
+  
 proc colors[ColorT](self: var SpanGouraud[ColorT], c1, c2, c3: ColorT) =
   self.mCoord[0].color = c1
   self.mCoord[1].color = c2
@@ -58,15 +59,15 @@ proc triangle[ColorT](self: var SpanGouraud[ColorT], x1, y1, x2, y2, x3, y3, d: 
                    self.mCoord[2].x, self.mCoord[2].y,
                    self.mX[0].addr, self.mY[0].addr, d)
     
-    calcIntersection(self.mX[4], self.mY[4], self.mX[5], self.mY[5],
+    discard calcIntersection(self.mX[4], self.mY[4], self.mX[5], self.mY[5],
                      self.mX[0], self.mY[0], self.mX[1], self.mY[1],
                      self.mCoord[0].x, self.mCoord[0].y)
     
-    calcIntersection(self.mX[0], self.mY[0], self.mX[1], self.mY[1],
+    discard calcIntersection(self.mX[0], self.mY[0], self.mX[1], self.mY[1],
                      self.mX[2], self.mY[2], self.mX[3], self.mY[3],
                      self.mCoord[1].x, self.mCoord[1].y)
     
-    calcIntersection(self.mX[2], self.mY[2], self.mX[3], self.mY[3],
+    discard calcIntersection(self.mX[2], self.mY[2], self.mX[3], self.mY[3],
                      self.mX[4], self.mY[4], self.mX[5], self.mY[5],
                      self.mCoord[2].x, self.mCoord[2].y)
                      
@@ -85,17 +86,17 @@ proc vertex*[ColorT](self: var SpanGouraud[ColorT], x, y: var float64): uint =
   result = self.mCmd[self.mVertex]
   inc self.mVertex
 
-proc arrangeVertices*[ColorT](self: var SpanGouraud[ColorT], coord: ptr CoordType) =
-  coord[0] = self.mCoord[0]
-  coord[1] = self.mCoord[1]
-  coord[2] = self.mCoord[2]
+proc arrangeVertices*[ColorT](self: var SpanGouraud[ColorT]): array[3, CoordType[ColorT]] =
+  result[0] = self.mCoord[0]
+  result[1] = self.mCoord[1]
+  result[2] = self.mCoord[2]
   
   if self.mCoord[0].y > self.mCoord[2].y:
-    coord[0] = self.mCoord[2] 
-    coord[2] = self.mCoord[0]
+    result[0] = self.mCoord[2] 
+    result[2] = self.mCoord[0]
   
-  if coord[0].y > coord[1].y:
-    swap(coord[1], coord[0])
+  if result[0].y > result[1].y:
+    swap(result[1], result[0])
     
-  if coord[1].y > coord[2].y:
-    swap(coord[2], coord[1])
+  if result[1].y > result[2].y:
+    swap(result[2], result[1])

@@ -27,7 +27,15 @@ proc multiply*(a: var TransAffine, m: TransAffine) =
   a.sx  = t0
   a.shx = t2
   a.tx  = t4
-
+  
+proc reset*(a: var TransAffine) =
+  a.sx = 1.0
+  a.sy = 1.0
+  a.shy = 0.0
+  a.shx = 0.0
+  a.tx = 0.0
+  a.ty = 0.0
+    
 proc `*=`*(a: var TransAffine, m: TransAffine) =
   a.multiply(m)
   
