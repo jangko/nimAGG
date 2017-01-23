@@ -34,6 +34,9 @@ span_converter
 conv_adaptor_marker
 span_gouraud_gray
 span_gradient_alpha
+span_pattern_rgba
+span_pattern_gray
+span_pattern_rgb
 
 incomplete:
   path_storage
