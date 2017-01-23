@@ -33,6 +33,7 @@ line_aa_basics
 span_converter
 conv_adaptor_marker
 span_gouraud_gray
+span_gradient_alpha
 
 incomplete:
   path_storage

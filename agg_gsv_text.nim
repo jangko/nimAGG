@@ -1,6 +1,8 @@
 import agg_basics, strutils, agg_trans_affine, agg_conv_transform
 import agg_conv_stroke, agg_math_stroke, agg_bounding_rect
 
+export agg_conv_stroke
+
 var gsv_default_font = [
   0x40'u8,0x00,0x6c,0x0f,0x15,0x00,0x0e,0x00,0xf9,0xff,
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -619,7 +621,7 @@ type
     trans: ConvTransform[ConvStroke[GsvText, NullMarkers], Transformer]
 
 proc initGsvTextOutline*[T](text: var GsvText, trans: var T): GsvTextOutline[T] =
-  result.poly = initConvStroke[GsvText, NullMarkers](text)
+  result.poly = initConvStroke[GsvText](text)
   result.trans = initConvTransform(result.poly, trans)
 
 proc width*[T](self: var GsvTextOutline[T], w: float64)  =

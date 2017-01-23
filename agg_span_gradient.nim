@@ -1,9 +1,9 @@
 import agg_basics, agg_math, math
 
 const
-  gradientSubpixelShift = 4
-  gradientSubpixelScale = 1 shl gradientSubpixelShift
-  gradientSubpixelMask  = gradientSubpixelScale - 1
+  gradientSubpixelShift* = 4
+  gradientSubpixelScale* = 1 shl gradientSubpixelShift
+  gradientSubpixelMask*  = gradientSubpixelScale - 1
 
 template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: typed) =
   type

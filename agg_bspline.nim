@@ -15,6 +15,7 @@ proc initBspline*(): BSpline =
   result.mNum = 0
   result.mX = nil
   result.mY = nil
+  result.mAm = @[]
   result.mLastIdx = -1
 
 proc initBspline*(num: int): BSpline =
@@ -22,6 +23,7 @@ proc initBspline*(num: int): BSpline =
   result.mNum = 0
   result.mX = nil
   result.mY = nil
+  result.mAm = @[]
   result.mLastIdx = -1
   result.init(num)
     
@@ -30,6 +32,7 @@ proc initBspline*(num: int, x, y: ptr float64): BSpline =
   result.mNum = 0 
   result.mX = nil
   result.mY = nil
+  result.mAm = @[]
   result.mLastIdx = -1
   result.init(num, x, y)
 
