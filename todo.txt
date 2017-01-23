@@ -31,6 +31,8 @@ span_gradient
 renderer_mclip
 line_aa_basics
 span_converter
+conv_adaptor_marker
+span_gouraud_gray
 
 incomplete:
   path_storage

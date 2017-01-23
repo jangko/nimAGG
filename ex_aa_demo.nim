@@ -101,7 +101,7 @@ proc onDraw() =
     ras    = initRasterizerScanlineAA()
 
   let sizeMul = 32.float64
-  ras.setGamma(initGammaPower(1.0))
+  ras.gamma(initGammaPower(1.0))
   var renEn = initRendererEnlarged(ren, sizeMul)
 
   var bkg = initRgba(1,1,1)
@@ -116,7 +116,7 @@ proc onDraw() =
 
   renderScanlinesAASolid(ras, sl, ren, initRgba8(0,0,0))
 
-  ras.setGamma(initGammaNone())
+  ras.gamma(initGammaNone())
 
   var ps = initPathStorage()
   var pg = initConvStroke(ps)

@@ -1,9 +1,9 @@
 import agg_basics, math
 
-template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResShift: int) =
+template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResShift: int) =
   type
     nameT* = ref object
-      gamma: float64
+      mGamma: float64
       dirGamma: seq[HiResT]
       invGamma: seq[LoResT]
 
@@ -23,7 +23,7 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
       hiResShift = getHiResShift(nameT)
 
     new(result)
-    result.gamma = 1.0
+    result.mGamma = 1.0
     result.dirGamma = newSeq[HiResT](gammaSize)
     result.invGamma = newSeq[LoResT](hiResSize)
 
@@ -33,17 +33,17 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
     for i in 0.. <hiResSize:
       result.invGamma[i] = LoResT(i shr (hiResShift - gammaShift))
 
-  proc setGamma*(self: var nameT, g: float64) =
+  proc gamma*(self: var nameT, g: float64) =
     const
       gammaSize = getGammaSize(nameT)
       gammaMask = getGammaMask(nameT).float64
       hiResSize = getHiResSize(nameT)
       hiResMask = getHiResMask(nameT).float64
 
-    self.gamma = g
+    self.mGamma = g
 
     for i in 0.. <gammaSize:
-      self.dirGamma[i] = uround(math.pow(i.float64 / gammaMask, self.gamma) * hiResMask).HiResT
+      self.dirGamma[i] = uround(math.pow(i.float64 / gammaMask, self.mGamma) * hiResMask).HiResT
 
     let inv_g = 1.0 / g
     for i in 0.. <hiResSize:
@@ -55,13 +55,13 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
       hiResSize  = getHiResSize(nameT)
 
     new(result)
-    result.gamma = 1.0
+    result.mGamma = 1.0
     result.dirGamma = newSeq[HiResT](gammaSize)
     result.invGamma = newSeq[LoResT](hiResSize)
-    result.setGamma(g)
+    result.gamma(g)
 
-  proc getGamma*(self: nameT): float64 =
-    result = self.gamma
+  proc gamma*(self: nameT): float64 =
+    result = self.mGamma
 
   proc dir*(self: nameT, v: uint): HiResT =
     result = self.dirGamma[v.int]
@@ -69,5 +69,5 @@ template gamma_lut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResS
   proc inv*(self: nameT, v: uint): LoResT =
     result = self.invGamma[v.int]
  
-gamma_lut(GammaLut8, uint8, uint8, 8, 8)
-gamma_lut(GammaLut16, uint16, uint16, 16, 16)
+gammaLut(GammaLut8, uint8, uint8, 8, 8)
+gammaLut(GammaLut16, uint16, uint16, 16, 16)

@@ -91,7 +91,7 @@ proc prepare*[B,C](self: RendererScanlineAASolid[B, C]) = discard
 proc render*[B,C, Scanline](self: RendererScanlineAASolid[B, C], sl: var Scanline) =
   renderScanlineAASolid(sl, self.ren, self.color)
 
-proc renderScanlineAA[Scanline, BaseRenderer, SpanAllocator, SpanGenerator](sl: var Scanline,
+proc renderScanlineAA*[Scanline, BaseRenderer, SpanAllocator, SpanGenerator](sl: var Scanline,
   ren: var BaseRenderer, alloc: var SpanAllocator, spanGen: var SpanGenerator) =
 
   let y = sl.getY()
@@ -135,3 +135,13 @@ proc prepare*[BR,SA,SG](self: var RendererScanlineAA[BR,SA,SG]) =
 
 proc render*[BR,SA,SG,Scanline](self: var RendererScanlineAA[BR,SA,SG], sl: var Scanline) =
   renderScanlineAA(sl, self.mRen[], self.mAlloc[], self.mSpanGen[])
+
+proc renderScanlinesAA*[Rasterizer, Scanline, BaseRenderer, SpanAllocator, SpanGenerator](ras: var Rasterizer, 
+  sl: var Scanline, ren: var BaseRenderer, alloc: var SpanAllocator, spanGen: var SpanGenerator) =
+  mixin reset
+  if ras.rewindScanlines():
+    sl.reset(ras.minX(), ras.maxX())
+    spanGen.prepare()
+    while ras.sweepScanline(sl):
+      renderScanlineAA(sl, ren, alloc, spanGen)
+            

@@ -78,7 +78,6 @@ proc prepare*[ColorT](self: var SpanGouraudRgba[ColorT]) =
 ddaLineInterpolator(DdaLine, 14)
 
 proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y, len: int) =
-  type ValueType = getValueType(ColorT)
   self.mRgba1.calc(y.float64) #(self.mRgba1.self.m1Dy > 2: self.mRgba1.self.mY1 : y)
   var
     pc1 = self.mRgba1.addr
@@ -123,6 +122,7 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
 
   var vr, vg, vb, va: int
   const lim = getBaseMask(ColorT)
+  type ValueType = getValueType(ColorT)
 
   # Beginning part of the span. Since we rolled back the
   # interpolators, the color values may have overflow.

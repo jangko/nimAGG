@@ -38,7 +38,7 @@ type
   RasterizerScanlineAA1*[ClipType, CoordType] = object
     outline: RasterizerCellsAA[CellAA]
     clipper: ClipType
-    gamma: array[aaScale, int]
+    mGamma: array[aaScale, int]
     fillingRule: FillingRule
     autoClose: bool
     startX: CoordType
@@ -56,11 +56,11 @@ proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[Cl
   result.startX = 0
   result.startY = 0
   result.status = statusInitial
-  for i in 0.. <aaScale: result.gamma[i] = i
+  for i in 0.. <aaScale: result.mGamma[i] = i
 
-proc setGamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipType, CoordType], gamma: GammaF) =
+proc gamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipType, CoordType], gamma: GammaF) =
   for i in 0.. <aaScale:
-    self.gamma[i] = uround(gamma.getGammaValue(i.float64 / aaMask) * aaMask)
+    self.mGamma[i] = uround(gamma.getGammaValue(i.float64 / aaMask) * aaMask)
 
 proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
@@ -70,7 +70,7 @@ proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: Gamm
   result.startX = 0
   result.startY = 0
   result.status = statusInitial
-  result.setGamma(gammaFunction)
+  result.gamma(gammaFunction)
 
 template initRasterizerScanlineAA*(ClipType: typedesc): untyped =
   initRasterizerScanlineAA1[ClipType, getCoordType(ClipType)]()
@@ -105,7 +105,7 @@ proc autoClose*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; f
   self.autoClose = flag
 
 proc applyGamma*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; cover: uint): uint =
-  result = self.gamma[cover]
+  result = self.mGamma[cover]
 
 proc closePolygon*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   if self.status == statusLineTo:
@@ -228,7 +228,7 @@ proc calculateAlpha*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, Coord
 
   if cover > aaMask: cover = aaMask
 
-  result = self.gamma[cover]
+  result = self.mGamma[cover]
 
 proc sweepScanline*[ClipT, CoordT, Scanline](self: var RasterizerScanlineAA1[ClipT, CoordT]; sl: var Scanline): bool =
   mixin resetSpans, addCell, addSpan, numSpans, finalize

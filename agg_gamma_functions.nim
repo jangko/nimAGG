@@ -8,19 +8,19 @@ proc getGammaValue*(g: GammaNone, x: float64): float64 = x
 
 type
   GammaPower* = object
-    gamma: float64
+    mGamma: float64
 
 proc getGammaValue*(g: GammaPower, x: float64): float64 =
-  result = math.pow(x, g.gamma)
+  result = math.pow(x, g.mGamma)
 
 proc initGammaPower*(g = 1.0'f64): GammaPower =
-  result.gamma = g
+  result.mGamma = g
 
-proc setGamma*(g: var GammaPower, gamma: float64) =
-  g.gamma = gamma
+proc gamma*(g: var GammaPower, gamma: float64) =
+  g.mGamma = gamma
 
-proc getGamma*(g: GammaPower): float64 =
-  result = g.gamma
+proc gamma*(g: GammaPower): float64 =
+  result = g.mGamma
 
 type
   GammaThreshold* = object

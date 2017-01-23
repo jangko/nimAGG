@@ -8,8 +8,8 @@ type
 template getColorType*[PixFmt](x: typedesc[RendererBase[PixFmt]]): typedesc = getColorType(PixFmt.type)
 
 proc initRendererBase*[PixFmt](ren: var PixFmt): RendererBase[PixFmt] =
-  result.ren = ren.addr
-  result.clipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
+  result.mRen = ren.addr
+  result.mClipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
 
 proc attach*[PixFmt](self: var RendererBase[PixFmt], ren: var PixFmt) =
   self.mRen = ren.addr
