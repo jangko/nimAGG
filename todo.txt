@@ -37,6 +37,7 @@ span_gradient_alpha
 span_pattern_rgba
 span_pattern_gray
 span_pattern_rgb
+conv_marker
 
 incomplete:
   path_storage
