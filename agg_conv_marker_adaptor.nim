@@ -6,6 +6,6 @@ type
 
 proc initConvMarkerAdaptor*[V, M](vs: var V): ConvMarkerAdaptor[V, M] =
   base[V,M](result).init(vs)
-   
+
 proc shorten*[V, M](self: var ConvMarkerAdaptor[V, M], s: float64) = base[V,M](self).generator().shorten(s)
 proc shorten*[V, M](self: ConvMarkerAdaptor[V, M]): float64 = base[V,M](self).generator().shorten()

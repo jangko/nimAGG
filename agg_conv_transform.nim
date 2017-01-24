@@ -8,7 +8,7 @@ type
 proc initConvTransform*[V, T](vs: var V, tr: var T): ConvTransform[V,T] =
   result.source = vs.addr
   result.trans = tr.addr
-  
+
 proc attach*[V,T](self: ConvTransform[V,T], source: var V) =
   self.source = source.addr
 
@@ -22,6 +22,6 @@ proc vertex*[V,T](self: var ConvTransform[V,T], x, y: var float64): uint =
   if isVertex(cmd):
     self.trans[].transform(x, y)
   result = cmd
-  
+
 proc transformer*[V,T](self: ConvTransform[V,T], tr: var T) =
   self.trans = tr.addr

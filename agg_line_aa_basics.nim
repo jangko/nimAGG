@@ -15,7 +15,7 @@ proc lineMr*(x: int): int {.inline.} =
   result = sar(x, (lineSubpixelShift - lineMrSubPixelShift))
 
 proc lineHr*(x: int): int {.inline.} =
-  result = x shl (lineSubpixelShift - lineMrSubPixelShift) 
+  result = x shl (lineSubpixelShift - lineMrSubPixelShift)
 
 proc lineDblHr*(x: int): int {.inline.} =
   result = x shl lineSubpixelShift
@@ -23,7 +23,7 @@ proc lineDblHr*(x: int): int {.inline.} =
 type
   LineCoord = object
   LineCoordSat = object
-  
+
 proc conv*(z: typedesc[LineCoord], x: float64): int {.inline.} =
   result = iround(x * lineSubpixelScale)
 
@@ -39,10 +39,10 @@ type
 const
   s_orthogonal_quadrant = [ 0'u,0,1,1,3,3,2,2 ]
   s_diagonal_quadrant   = [ 0'u,1,2,1,0,3,2,3 ]
-    
+
 proc initLineParameters*(): LineParameters =
   discard
-  
+
 proc initLineParameters*(x1, y1, x2, y2, len: int): LineParameters =
   result.x1 = x1
   result.y1 = y1
@@ -92,7 +92,7 @@ proc bisectrix*(self, l1, l2: var LineParameters, x, y: var int) =
     k = float64(l2.len) / float64(l1.len)
     tx = float64(l2.x2) - float64(l2.x1 - l1.x1) * k
     ty = float64(l2.y2) - float64(l2.y1 - l1.y1) * k
-  
+
   #All bisectrices must be on the right of the line
   #If the next point is on the left (l1 => l2.2)
   #then the bisectix should be rotated by 180 degrees.
@@ -100,7 +100,7 @@ proc bisectrix*(self, l1, l2: var LineParameters, x, y: var int) =
      float64(l2.y2 - l2.y1) * float64(l2.x1 - l1.x1) + 100.0:
      tx -= (tx - float64(l2.x1)) * 2.0
      ty -= (ty - float64(l2.y1)) * 2.0
-    
+
   # Check if the bisectrix is too short
   var
     dx = tx - float64(l2.x1)
@@ -114,14 +114,14 @@ proc bisectrix*(self, l1, l2: var LineParameters, x, y: var int) =
   y = iround(ty)
 
 proc fixDegenerateBisectrixStart*(self, lp: var LineParameters, x, y: var int) {.inline.} =
-  let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) - 
+  let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:
     x = lp.x1 + (lp.y2 - lp.y1)
     y = lp.y1 - (lp.x2 - lp.x1)
 
 proc fixDegenerateBisectrixEnd*(self, lp: var LineParameters, x, y: var int) {.inline.} =
-  let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) - 
+  let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:
     x = lp.x2 + (lp.y2 - lp.y1)

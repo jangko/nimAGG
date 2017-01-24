@@ -13,13 +13,13 @@ proc initConvDash*[VS](vs: var VS): auto =
   result = initConvDash1[VS, NullMarkers](vs)
 
 proc removeAllDashes*[VS, M](self: var ConvDash[VS, M]) =
-  base[VS,M](self).generator().removeAllDashes() 
+  base[VS,M](self).generator().removeAllDashes()
 
 proc addDash*[VS, M](self: var ConvDash[VS, M], dashLen, gapLen: float64) =
-  base[VS,M](self).generator().addDash(dashLen, gapLen) 
+  base[VS,M](self).generator().addDash(dashLen, gapLen)
 
 proc dashStart*[VS, M](self: var ConvDash[VS, M], ds: float64) =
-  base[VS,M](self).generator().dashStart(ds) 
+  base[VS,M](self).generator().dashStart(ds)
 
 proc shorten*[VS, M](self: var ConvDash[VS, M], s: float64) = base[VS,M](self).generator().shorten(s)
 proc shorten*[VS, M](self: ConvDash[VS, M]): float64 = base[VS,M](self).generator().shorten()

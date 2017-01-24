@@ -127,9 +127,9 @@ proc onDraw() =
   ps.moveTo(mx[0], my[0])
   ps.lineTo(mx[1], my[1])
   ras.addPath(pg)
-    
+
   renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 255))
-   
+
   #echo "---"
   #var kol = test_aa()
   ps.removeAll()
@@ -143,6 +143,6 @@ proc onDraw() =
   ps.lineTo(mx[0], my[0])
   ras.addPath(pg)
   renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 100))
- 
-  saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)  
+
+  saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)
 onDraw()

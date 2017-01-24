@@ -579,7 +579,7 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
       idx = idx shl 1
       self.mBGlyph = self.mGlyphs + value(self.mIndices + idx).int
       self.mEGlyph = self.mGlyphs + value(self.mIndices + idx + 2).int
-      self.mStatus = startGlyph      
+      self.mStatus = startGlyph
     of startGlyph:
       x = self.mX
       y = self.mY
@@ -590,7 +590,7 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
         self.mStatus = nextChar
         self.mX += self.mSpace
         continue
-      
+
       dx = cast[int8](self.mBglyph[]).int
       inc self.mBglyph
       yc = cast[int8](self.mBglyph[])
@@ -614,7 +614,7 @@ proc textWidth*(self: var GsvText): float64 =
   var x1, y1, x2, y2: float64
   discard self.boundingRectSingle(0, x1, y1, x2, y2)
   result = x2 - x1
-    
+
 type
   GsvTextOutline*[Transformer] = object
     poly: ConvStroke[GsvText, NullMarkers]

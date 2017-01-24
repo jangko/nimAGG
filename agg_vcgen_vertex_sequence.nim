@@ -14,7 +14,7 @@ proc initVcgenVertexSequence*(): VcgenVertexSequence =
   result.mShorten = 0.0
   result.mReady = false
   result.mSrcVertices = initVertexSequence[VertexDistCmd]()
-  
+
 template construct*(x: typedesc[VcgenVertexSequence]): untyped = initVcgenVertexSequence()
 
 proc shorten*(self: var VcgenVertexSequence, s: float64) = self.mShorten = s

@@ -73,7 +73,7 @@ proc copyPixel*[PixFmt, ColorT](self: var RendererMclip[PixFmt], x, y: int, c: C
     if self.mRen.inbox(x, y):
       self.mRen.ren().copyPixel(x, y, c)
       break
-      
+
 proc blendPixel*[PixFmt, ColorT](self: var RendererMclip[PixFmt], x, y: int, c: ColorT, cover: CoverType) =
   self.firstClipBox()
   doWhile self.nextCipBox():
@@ -147,7 +147,7 @@ proc copyFrom*[PixFmt](self: var RendererMclip[PixFmt], src: var RenderingBuffer
   doWhile self.nextCipBox():
     self.mRen.copyFrom(src, rc, xTo, yTo)
 
-proc blendFrom*[PixFmt,SrcPixelFormatRenderer](self: var RendererMclip[PixFmt], src: var SrcPixelFormatRenderer, 
+proc blendFrom*[PixFmt,SrcPixelFormatRenderer](self: var RendererMclip[PixFmt], src: var SrcPixelFormatRenderer,
   rectSrcPtr: ptr RectI = nil, dx = 0, dy = 0, cover: CoverType = coverFull) =
   self.firstClipBox()
   doWhile self.nextCipBox():

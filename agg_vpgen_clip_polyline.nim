@@ -9,7 +9,7 @@ type
     mNumVertices: int
     mVertex: int
     mMoveTo: bool
-    
+
 proc initVpgenClipPolyline*(): VpgenClipPolyline =
   result.mClipBox = initRectD(0, 0, 1, 1)
   result.mX1 = 0
@@ -17,7 +17,7 @@ proc initVpgenClipPolyline*(): VpgenClipPolyline =
   result.mNumVertices = 0
   result.mVertex = 0
   result.mMoveTo = false
-  
+
 template construct*(x: typedesc[VpgenClipPolyline]): untyped = initVpgenClipPolyline()
 
 proc clipBox*(self: var VpgenClipPolyline, x1, y1, x2, y2: float64) =
@@ -26,7 +26,7 @@ proc clipBox*(self: var VpgenClipPolyline, x1, y1, x2, y2: float64) =
   self.mClipBox.x2 = x2
   self.mClipBox.y2 = y2
   self.mClipBox.normalize()
-  
+
 proc x1*(self: VpgenClipPolyline): float64 = self.mClipBox.x1
 proc y1*(self: VpgenClipPolyline): float64 = self.mClipBox.y1
 proc x2*(self: VpgenClipPolyline): float64 = self.mClipBox.x2
@@ -39,20 +39,20 @@ proc reset*(self: var VpgenClipPolyline) =
   self.mVertex = 0
   self.mNumVertices = 0
   self.mMoveTo = false
-        
+
 proc moveTo*(self: var VpgenClipPolyline, x, y: float64) =
   self.mVertex = 0
   self.mNumVertices = 0
   self.mX1 = x
   self.mY1 = y
   self.mMoveTo = true
-  
+
 proc lineTo*(self: var VpgenClipPolyline, x, y: float64) =
   var
     x2 = x
     y2 = y
     flags = clipLineSegment(self.mX1, self.mY1, x2, y2, self.mClipBox)
-  
+
   self.mVertex = 0
   self.mNumVertices = 0
   if (flags and 4) == 0:
@@ -66,10 +66,10 @@ proc lineTo*(self: var VpgenClipPolyline, x, y: float64) =
     self.mCmd[self.mNumVertices] = pathCmdLineTo
     inc self.mNumVertices
     self.mMoveTo = (flags and 2) != 0
-    
+
   self.mX1 = x
   self.mY1 = y
-  
+
 proc vertex*(self: var VpgenClipPolyline, x, y: var float64): uint =
   if self.mVertex < self.mNumVertices:
     x = self.mX[self.mVertex]
@@ -77,5 +77,5 @@ proc vertex*(self: var VpgenClipPolyline, x, y: var float64): uint =
     result = self.mCmd[self.mVertex]
     inc self.mVertex
     return result
-  
+
   result = pathCmdStop

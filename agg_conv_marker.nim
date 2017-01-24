@@ -29,7 +29,7 @@ proc rewind*[ML,MS](self: var ConvMarker[ML, MS], pathId: int) =
   self.mNumMarkers = 1
 
 proc vertex*[ML,MS](self: var ConvMarker[ML, MS], x, y: var float64): uint =
-  var 
+  var
     cmd: uint = pathCmdMoveTo
     x1, y1, x2, y2: float64
 
@@ -39,7 +39,7 @@ proc vertex*[ML,MS](self: var ConvMarker[ML, MS], x, y: var float64): uint =
       if self.mNumMarkers == 0:
         cmd = pathCmdStop
         break
-      
+
       self.mMarkerLocator[].rewind(self.mMarker)
       inc self.mMarker
       self.mNumMarkers = 0
@@ -58,7 +58,7 @@ proc vertex*[ML,MS](self: var ConvMarker[ML, MS], x, y: var float64): uint =
       self.mMtx *= transAffineRotation(arctan2(y2 - y1, x2 - x1))
       self.mMtx *= transAffineTranslation(x1, y1)
       self.mMarkerShapes[].rewind(self.mMarker - 1)
-      self.mStatus = polygon    
+      self.mStatus = polygon
     of polygon:
       cmd = self.mMarkerShapes[].vertex(x, y)
       if isStop(cmd):
@@ -70,7 +70,7 @@ proc vertex*[ML,MS](self: var ConvMarker[ML, MS], x, y: var float64): uint =
     of stop:
       cmd = pathCmdStop
       break
-    
+
   result = cmd
 
 

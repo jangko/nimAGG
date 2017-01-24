@@ -29,22 +29,22 @@ type
      mLastX, mLastY: float64
      mCurve3: C3
      mCurve4: C4
-     
+
    ConvCurve*[VS] = ConvCurve1[VS, Curve3, Curve4]
-   
+
 proc init*[VS, C3, C4](self: var ConvCurve1[VS, C3, C4], source: var VS) =
   self.mSource = source.addr
   self.mLastX = 0.0
   self.mLastY = 0.0
   self.mCurve3 = construct(C3)
   self.mCurve4 = construct(C4)
-  
+
 proc initConvCurve1*[VS, C3, C4](source: var VS): ConvCurve1[VS, C3, C4] =
   init[VS, C3, C4](result, source)
 
 proc initConvCurve*[VS](source: var VS): ConvCurve[VS] =
   result = initConvCurve1[VS, Curve3, Curve4](source)
-  
+
 proc attach*[VS, C3, C4](self: var ConvCurve1[VS, C3, C4], source: var VS) =
   self.mSource = source.addr
 

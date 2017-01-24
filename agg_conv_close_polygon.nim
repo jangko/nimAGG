@@ -8,10 +8,10 @@ type
     mY: array[2, float64]
     mVertex: int
     mLineTo: bool
-    
+
 proc initConvClosePolygon*[VertexSource](vs: var VertexSource): ConvClosePolygon =
   result.mSource = vs.addr
-  
+
 proc attach*[VertexSource](self: var ConvClosePolygon, source: var VertexSource) =
   self.mSource = source.addr
 
@@ -20,7 +20,7 @@ proc rewind*[VertexSource](self: var ConvClosePolygon, pathId: int) =
   self.mVertex = 2
   self.mLineTo = false
 
-proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint = 
+proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint =
   var cmd: uint = pathCmdStop
   while true:
     if self.mVertex < 2:
@@ -29,12 +29,12 @@ proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint 
       cmd = self.mCmd[self.mVertex]
       inc self.mVertex
       break
-    
+
     cmd = self.mSource[].vertex(x, y)
     if isEndPoly(cmd):
       cmd = cmd or pathFlagsClose
       break
-    
+
     if isStop(cmd):
       if self.mLineTo:
         self.mCmd[0]  = pathCmdEndPoly or pathFlagsClose
@@ -43,7 +43,7 @@ proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint 
         self.mLineTo = false
         continue
       break
-    
+
     if isMoveTo(cmd):
       if self.mLineTo:
         self.mX[0]    = 0.0
@@ -55,11 +55,11 @@ proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint 
         self.mVertex  = 0
         self.mLineTo = false
         continue
-    
+
     if isVertex(cmd):
       self.mLineTo = true
       break
-    
+
   result = cmd
 
 

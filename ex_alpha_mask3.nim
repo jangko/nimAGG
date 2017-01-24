@@ -245,13 +245,13 @@ proc renderGBArrow() =
   performRendering(trans_arrows)
 
 proc renderSpiralAndGlyph() =
-  var 
+  var
     sp = initSpiral(mx, my, 10, 150, 30, 0.0)
     stroke = initConvStroke(sp)
     glyph = initPathStorage()
-    
+
   stroke.width(15.0)
-    
+
   glyph.moveTo(28.47, 6.45)
   glyph.curve3(21.58, 1.12, 19.82, 0.29)
   glyph.curve3(17.19, -0.93, 14.21, -0.93)
@@ -286,7 +286,7 @@ proc renderSpiralAndGlyph() =
   glyph.curve3(31.35, -0.88, 29.93, 0.78)
   glyph.curve3(28.52, 2.44, 28.47, 6.45)
   glyph.closePolygon()
-  
+
   glyph.moveTo(28.47, 9.62)
   glyph.lineTo(28.47, 26.66)
   glyph.curve3(21.09, 23.73, 18.95, 22.51)
@@ -296,30 +296,30 @@ proc renderSpiralAndGlyph() =
   glyph.curve3(15.97, 4.74, 18.70, 4.74)
   glyph.curve3(22.41, 4.74, 28.47, 9.62)
   glyph.closePolygon()
-  
+
   var
     mtx = initTransAffine()
-    
+
   mtx *= transAffineScaling(4.0)
   mtx *= transAffineTranslation(220, 200)
-  
+
   var
     trans = initConvTransform(glyph, mtx)
     curve = initConvCurve(trans)
-  
+
   ras.reset()
   ras.addPath(stroke)
   ren.color(initRgba(0, 0, 0, 0.1))
   renderScanlines(ras, sl, ren)
-  
+
   ras.reset()
   ras.addPath(curve)
   ren.color(initRgba(0, 0.6, 0, 0.1))
   renderScanlines(ras, sl, ren)
-  
+
   generateAlphaMask(stroke)
   performRendering(curve)
-                
+
 rb.clear(initRgba(1,1,1))
 #renderGBSpiral()
 #renderSimplePaths()

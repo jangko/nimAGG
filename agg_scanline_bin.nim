@@ -28,7 +28,7 @@ proc reset*(self: var ScanlineBin, minX, maxX: int) =
   let maxLen = maxX - minX + 3
   if maxLen > self.spans.len:
     self.spans.setLen(maxLen)
-  
+
   self.lastX   = 0x7FFFFFF0
   self.curSpan = self.spans[0].addr
 
@@ -72,14 +72,14 @@ proc initScanline32bin*(): Scanline32Bin =
   result.lastX = 0x7FFFFFF0
   result.spans = @[]
 
-proc reset*(self: var Scanline32Bin, minX, maxX: int) = 
+proc reset*(self: var Scanline32Bin, minX, maxX: int) =
   self.lastX = 0x7FFFFFF0
   self.spans.setLen(0)
 
 proc last(x: var seq[SpanBin32]): var SpanBin32 =
   result = x[x.len-1]
 
-proc addCell*(self: var Scanline32Bin, x: int, cover: uint) = 
+proc addCell*(self: var Scanline32Bin, x: int, cover: uint) =
   if x == self.lastX+1:
     inc self.spans.last().len
   else:

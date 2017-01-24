@@ -136,7 +136,7 @@ proc prepare*[BR,SA,SG](self: var RendererScanlineAA[BR,SA,SG]) =
 proc render*[BR,SA,SG,Scanline](self: var RendererScanlineAA[BR,SA,SG], sl: var Scanline) =
   renderScanlineAA(sl, self.mRen[], self.mAlloc[], self.mSpanGen[])
 
-proc renderScanlinesAA*[Rasterizer, Scanline, BaseRenderer, SpanAllocator, SpanGenerator](ras: var Rasterizer, 
+proc renderScanlinesAA*[Rasterizer, Scanline, BaseRenderer, SpanAllocator, SpanGenerator](ras: var Rasterizer,
   sl: var Scanline, ren: var BaseRenderer, alloc: var SpanAllocator, spanGen: var SpanGenerator) =
   mixin reset
   if ras.rewindScanlines():
@@ -144,4 +144,3 @@ proc renderScanlinesAA*[Rasterizer, Scanline, BaseRenderer, SpanAllocator, SpanG
     spanGen.prepare()
     while ras.sweepScanline(sl):
       renderScanlineAA(sl, ren, alloc, spanGen)
-            

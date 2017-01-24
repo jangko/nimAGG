@@ -123,7 +123,7 @@ type
     iter: int
 
   PathStorage* = PathBase[VertexStorage]
-  
+
 proc initPathBase*[VC](vertices: VC): PathBase[VC] =
   result.vertices = vertices
   result.iter = 0
@@ -509,7 +509,7 @@ proc arrangeOrientations*[VC](self: var PathBase[VC], start: int, orientation: u
   if orientation != pathFlagsNone:
     let len = self.vertices.totalVertices()
     while start < len:
-      start = self.arrangePolygonOrientation(start, orientation)      
+      start = self.arrangePolygonOrientation(start, orientation)
       if start < len and isStop(self.vertices.command(start)):
         inc start
         break
@@ -561,11 +561,10 @@ proc translateAllPaths*[VC](self: var PathBase[VC], dx, dy: float64) =
       inc(x, dx)
       inc(y, dy)
       self.vertices.modifyVertex(idx, x, y)
-      
+
 proc print*[VC](self: var PathBase[VC]) =
   let numVer = self.vertices.totalVertices()
   var x, y: float64
   for i in 0.. <numVer:
     let cmd = self.vertices.vertex(i, x, y)
     echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
-    

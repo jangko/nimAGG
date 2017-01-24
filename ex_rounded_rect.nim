@@ -18,7 +18,7 @@ const
   frameWidth = 600
   frameHeight = 400
   pixWidth = 3
-  
+
 pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 const
@@ -26,12 +26,12 @@ const
   mWhiteOnBlack = false
   mOffset = 1.25
   mRadius = 25.0
-  
+
 type
-  ValueType = uint8  
-  
+  ValueType = uint8
+
 var
-  mx, my: array[2, float64] 
+  mx, my: array[2, float64]
   gamma  = newGammaLut8(mGamma)
   buffer = newString(frameWidth * frameHeight * pixWidth)
   rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
@@ -41,9 +41,9 @@ var
   ras    = initRasterizerScanlineAA()
   sl     = initScanlineP8()
   e: Ellipse
-  
+
 rb.clear(if mWhiteOnBlack: initRgba(0,0,0) else: initRgba(1,1,1))
-  
+
 mx[0] = 100
 my[0] = 100
 mx[1] = 500
@@ -73,5 +73,5 @@ p.width(1.0)
 ras.addPath(p)
 ren.color(if mWhiteOnBlack: initRgba(1,1,1) else: initRgba(0,0,0))
 renderScanlines(ras, sl, ren)
-        
+
 saveBMP24("rounded_rect.bmp", buffer, frameWidth, frameHeight)

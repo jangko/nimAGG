@@ -6,15 +6,15 @@ type
     angle, start, stop, scale, da: float64
     ccw, initialized: bool
     pathCmd: uint
-        
+
 proc normalize(self: var Arc, a1, a2: float64, ccw: bool) =
   let ra = (abs(self.rx) + abs(self.ry)) / 2
   self.da = arccos(ra / (ra + 0.125 / self.scale)) * 2
-  
-  var   
+
+  var
     a1 = a1
     a2 = a2
-    
+
   if ccw:
     while a2 < a1: a2 += pi * 2.0
   else:
@@ -29,12 +29,12 @@ proc normalize(self: var Arc, a1, a2: float64, ccw: bool) =
 proc initArc*(): Arc =
   result.scale = 1.0
   result.initialized = false
-  
+
 proc initArc*(x, y, rx, ry, a1, a2: float64, ccw: bool): Arc =
   result.x = x
-  result.y = y 
+  result.y = y
   result.rx = rx
-  result.ry = ry 
+  result.ry = ry
   result.scale = 1.0
   result.normalize(a1, a2, ccw)
 

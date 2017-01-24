@@ -22,13 +22,13 @@ type
     mStatus: Status
     mLastCmd: uint
     mStartX, mStartY: float64
-    
+
 proc init*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], source: var V) =
   mixin construct
   self.mSource = source.addr
   self.mStatus = initial
   self.mGenerator = construct(G)
- 
+
 proc initConvAdaptorVcgen*[V,G,M](source: var V): ConvAdaptorVcGen[V,G,M] =
   result.init(source)
 

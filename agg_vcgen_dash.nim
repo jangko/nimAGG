@@ -2,14 +2,14 @@ import agg_basics, agg_vertex_sequence, agg_shorten_path
 
 const
   maxDashes = 32
-  
+
 type
   Status = enum
     initial
     ready
     polyline
     stop
-    
+
   VcgenDash* = object
     mDashes: array[maxDashes, float64]
     mTotalDashLen: float64
@@ -22,7 +22,7 @@ type
     mClosed: uint
     mStatus: Status
     mSrcVertex: int
-    
+
 proc initVcgenDash*(): VcgenDash =
   result.mTotalDashLen = 0.0
   result.mNumDashes = 0
@@ -34,7 +34,7 @@ proc initVcgenDash*(): VcgenDash =
   result.mClosed = 0
   result.mStatus = initial
   result.mSrcVertex = 0
-        
+
 template construct*(x: typedesc[VcgenDash]): untyped = initVcgenDash()
 
 proc calcDashStart(self: var VcgenDash, ds: float64) =
@@ -56,7 +56,7 @@ proc removeAllDashes*(self: var VcgenDash) =
   self.mNumDashes = 0
   self.mCurrDashStart = 0.0
   self.mCurrDash = 0
-  
+
 proc addDash*(self: var VcgenDash, dashLen, gapLen: float64) =
   if self.mNumDashes < maxDashes:
     self.mTotalDashLen += dashLen + gapLen
@@ -64,11 +64,11 @@ proc addDash*(self: var VcgenDash, dashLen, gapLen: float64) =
     inc self.mNumDashes
     self.mDashes[self.mNumDashes] = gapLen
     inc self.mNumDashes
-        
+
 proc dashStart*(self: var VcgenDash, ds: float64) =
   self.mDashStart = ds
   self.calcDashStart(abs(ds))
-        
+
 proc shorten*(self: var VcgenDash, s: float64)= self.mShorten = s
 proc shorten*(self: VcgenDash): float64 = self.mShorten
 
@@ -77,7 +77,7 @@ proc removeAll*(self: var VcgenDash) =
   self.mStatus = initial
   self.mSrcVertices.removeAll()
   self.mClosed = 0
-  
+
 proc addVertex*(self: var VcgenDash, x, y: float64, cmd: uint) =
   self.mStatus = initial
   if isMoveTo(cmd):
@@ -87,7 +87,7 @@ proc addVertex*(self: var VcgenDash, x, y: float64, cmd: uint) =
       self.mSrcVertices.add(VertexDist(x: x, y: y))
     else:
       self.mClosed = getCloseFlag(cmd)
-      
+
 # Vertex Source Interface
 proc rewind*(self: var VcgenDash, pathId: int) =
   if self.mStatus == initial:
@@ -95,7 +95,7 @@ proc rewind*(self: var VcgenDash, pathId: int) =
     shortenPath(self.mSrcVertices, self.mShorten, self.mClosed)
   self.mStatus = ready
   self.mSrcVertex = 0
-        
+
 proc vertex*(self: var VcgenDash, x, y: var float64): uint =
   var cmd: uint = pathCmdMoveTo
   while not isStop(cmd):
@@ -107,7 +107,7 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
         if self.mNumDashes < 2 or self.mSrcVertices.size() < 2:
           cmd = pathCmdStop
           continue
-          
+
         self.mStatus = polyline
         self.mSrcVertex = 1
         self.mV1 = self.mSrcVertices[0].addr
@@ -120,7 +120,7 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
     of polyline:
       let dashRest = self.mDashes[self.mCurrDash] - self.mCurrDashStart
       var cmd: uint = if (self.mCurrDash and 1) != 0: pathCmdMoveTo else: pathCmdLineTo
-      
+
       if self.mCurrRest > dashRest:
         self.mCurrRest -= dashRest
         inc self.mCurrDash
@@ -145,13 +145,13 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
           if self.mSrcVertex >= self.mSrcVertices.size():
             self.mStatus = stop
           else:
-            self.mV2 = self.mSrcVertices[self.mSrcVertex].addr      
+            self.mV2 = self.mSrcVertices[self.mSrcVertex].addr
       return cmd
     of stop:
       cmd = pathCmdStop
     else:
       discard
-    
+
   result = pathCmdStop
 
 

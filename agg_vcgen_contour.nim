@@ -8,7 +8,7 @@ type
     outVertices
     endPoly
     stop
-    
+
   VcgenContour* = object
     mStroker: MathStroke
     mWidth: float64
@@ -43,7 +43,7 @@ proc innerJoin*(self: VcgenContour): InnerJoin = self.mStroker.innerJoin()
 proc width*(self: var VcgenContour, w: float64) =
   self.mWidth = w
   self.mStroker.width(w)
-  
+
 proc miterLimit*(self: var VcgenContour, ml: float64) = self.mStroker.miterLimit(ml)
 proc miterLimitTheta*(self: var VcgenContour, t: float64) = self.mStroker.miterLimitTheta(t)
 proc innerMiterLimit*(self: var VcgenContour, ml: float64) = self.mStroker.innerMiterLimit(ml)
@@ -63,7 +63,7 @@ proc removeAll*(self: var VcgenContour) =
   self.mClosed = 0
   self.mOrientation = 0
   self.mStatus = initial
-  
+
 proc addVertex*(self: var VcgenContour, x, y: float64, cmd: uint) =
   self.mStatus = initial
   if isMoveTo(cmd):
@@ -76,24 +76,24 @@ proc addVertex*(self: var VcgenContour, x, y: float64, cmd: uint) =
         self.mClosed = getCloseFlag(cmd)
         if self.mOrientation == pathFlagsNone:
           self.mOrientation = getOrientation(cmd)
-        
+
 # Vertex Source Interface
 proc rewind*(self: var VcgenContour, pathId: int) =
   if self.mStatus == initial:
     self.mSrcVertices.close(true)
     if self.mAutoDetect:
       if not isOriented(self.mOrientation):
-        if calcPolygonArea(self.mSrcVertices) > 0.0: 
-          self.mOrientation = pathFlagsCcw 
-        else: 
+        if calcPolygonArea(self.mSrcVertices) > 0.0:
+          self.mOrientation = pathFlagsCcw
+        else:
           self.mOrientation = pathFlagsCw
-                            
+
     if isOriented(self.mOrientation):
       self.mStroker.width(if isCcw(self.mOrientation): self.mWidth else: -self.mWidth)
 
   self.mStatus = ready
   self.mSrcVertex = 0
-  
+
 proc vertex*(self: var VcgenContour, x, y: var float64): uint =
   var cmd: uint = pathCmdLineTo
   while not isStop(cmd):
@@ -105,25 +105,25 @@ proc vertex*(self: var VcgenContour, x, y: var float64): uint =
       if self.mSrcVertices.size() < 2 + int(self.mClosed != 0):
         cmd = pathCmdStop
         continue
-  
+
       self.mStatus = outline
       cmd = pathCmdMoveTo
       self.mSrcVertex = 0
-      self.mOutVertex = 0    
+      self.mOutVertex = 0
     of outline:
       if self.mSrcVertex >= self.mSrcVertices.size():
         self.mStatus = endPoly
         continue
 
-      self.mStroker.calcJoin(self.mOutVertices, 
-                          self.mSrcVertices.prev(self.mSrcVertex), 
-                          self.mSrcVertices.curr(self.mSrcVertex), 
-                          self.mSrcVertices.next(self.mSrcVertex), 
+      self.mStroker.calcJoin(self.mOutVertices,
+                          self.mSrcVertices.prev(self.mSrcVertex),
+                          self.mSrcVertices.curr(self.mSrcVertex),
+                          self.mSrcVertices.next(self.mSrcVertex),
                           self.mSrcVertices.prev(self.mSrcVertex).dist,
                           self.mSrcVertices.curr(self.mSrcVertex).dist)
       inc self.mSrcVertex
       self.mStatus = outVertices
-      self.mOutVertex = 0      
+      self.mOutVertex = 0
     of outVertices:
       if self.mOutVertex >= self.mOutVertices.len:
         self.mStatus = outline
@@ -136,7 +136,7 @@ proc vertex*(self: var VcgenContour, x, y: var float64): uint =
     of endPoly:
       if self.mClosed == 0: return pathCmdStop
       self.mStatus = stop
-      return pathCmdEndPoly or pathFlagsClose or pathFlagsCcw    
+      return pathCmdEndPoly or pathFlagsClose or pathFlagsCcw
     of stop:
       return pathCmdStop
     else:

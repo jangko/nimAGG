@@ -133,7 +133,7 @@ proc reset*(self: var Scanline32U8, minX, maxX: int) =
   let maxLen = maxX - minX + 2
   if maxLen > self.covers.len:
     self.covers.setLen(maxLen)
-    
+
   self.lastX = 0x7FFFFFF0
   self.minX  = minX
   self.spans.setLen(0)
@@ -149,28 +149,28 @@ proc addCell*(self: var Scanline32U8, x: int, cover: uint) =
   else:
     self.spans.add(Span32U8(x: int32(x + self.minX), len: 1, covers: self.covers[x].addr))
   self.lastX = x
-  
+
 proc addCells*(self: var Scanline32U8, x, len: int, covers: ptr uint8) =
   var x = x - self.minX
   copyMem(self.covers[x].addr, covers, len * sizeof(uint8))
-  
+
   if x == self.lastX+1:
     inc(self.spans.last().len, int32(len))
   else:
     self.spans.add(Span32U8(x: int32(x + self.minX), len: int32(len), covers: self.covers[x].addr))
-  
+
   self.lastX = x + len - 1
 
 proc addSpan*(self: var Scanline32U8, x, len: int, cover: uint) =
   var x = x - self.minX
   setMem(self.covers[x].addr, cover, len)
-  
+
   if x == self.lastX+1:
     inc(self.spans.last().len, int32(len))
   else:
     self.spans.add(Span32U8(x: int32(x + self.minX), len: int32(len), covers: self.covers[x].addr))
   self.lastX = x + len - 1
-  
+
 proc finalize*(self: var Scanline32U8, y: int) =
   self.y = y
 

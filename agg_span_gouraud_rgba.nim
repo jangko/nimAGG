@@ -48,7 +48,7 @@ proc initSpanGouraudRgba*[ColorT](): SpanGouraudRgba[ColorT] = discard
 proc initSpanGouraudRgba*[ColorT](c1, c2, c3: ColorT,
   x1, y1, x2, y2, x3, y3: float64, d = 0'f64): SpanGouraudRgba[ColorT] =
   SpanGouraud[ColorT](result).init(c1, c2, c3, x1, y1, x2, y2, x3, y3, d)
-  
+
 proc colors*[ColorT, ColorB](self: var SpanGouraudRgba[ColorT], c1, c2, c3: ColorB) =
   when ColorT isnot ColorB:
     var c1 = construct(ColorT, c1)
@@ -58,12 +58,12 @@ proc colors*[ColorT, ColorB](self: var SpanGouraudRgba[ColorT], c1, c2, c3: Colo
   else:
     SpanGouraud[ColorT](self).colors(c1, c2, c3)
 
-proc triangle*[ColorT](self: var SpanGouraudRgba[ColorT], x1, y1, x2, y2, x3, y3, d: float64) = 
+proc triangle*[ColorT](self: var SpanGouraudRgba[ColorT], x1, y1, x2, y2, x3, y3, d: float64) =
   SpanGouraud[ColorT](self).triangle(x1, y1, x2, y2, x3, y3, d)
 
 proc prepare*[ColorT](self: var SpanGouraudRgba[ColorT]) =
   type base = SpanGouraud[ColorT]
-  
+
   let coord = base(self).arrangeVertices()
   self.mY2 = int(coord[1].y)
 

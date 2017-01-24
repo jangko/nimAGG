@@ -4,7 +4,7 @@ template ddaLineInterpolator*(name: untyped, FractionShift: int, Yshift: int = 0
   type
     name* = object
       mY, mInc, mDy: int
-        
+
   proc `init name`*(y1, y2, count: int): name =
     result.mY = y1
     result.mInc = ((y2 - y1) shl FractionShift) div count
@@ -25,7 +25,7 @@ template ddaLineInterpolator*(name: untyped, FractionShift: int, Yshift: int = 0
   proc y*(self: name): int =  self.mY + sar(self.mDy, (FractionShift-YShift))
   proc dy*(self: name): int = self.mDy
 
-    
+
 type
   Dda2LineInterpolator* = object
     mCnt, mLft, mRem, mMod, mY: int

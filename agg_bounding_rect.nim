@@ -2,16 +2,16 @@ import agg_basics
 
 proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: openArray[T];
   start, num: int; x1, y1, x2, y2: var CoordT): bool =
-    
+
   x1 = CoordT(1)
   y1 = CoordT(1)
   x2 = CoordT(0)
   y2 = CoordT(0)
-  
-  var 
+
+  var
     first = true
     x, y: float64
-    
+
   for i in 0.. <num:
     vs.rewind(gi[start + i])
     var cmd = vs.vertex(x, y)
@@ -30,9 +30,9 @@ proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: openArray[
           if  CoordT(y) > y2: y2 = CoordT(y)
       cmd = vs.vertex(x, y)
   result = x1 <= x2 and y1 <= y2
-  
-   
-proc boundingRectSingle*[VertexSource, CoordT](vs: var VertexSource, pathId: int; 
+
+
+proc boundingRectSingle*[VertexSource, CoordT](vs: var VertexSource, pathId: int;
   x1, y1, x2, y2: var CoordT): bool =
 
   var
@@ -60,5 +60,5 @@ proc boundingRectSingle*[VertexSource, CoordT](vs: var VertexSource, pathId: int
         if CoordT(x) > x2: x2 = CoordT(x)
         if CoordT(y) > y2: y2 = CoordT(y)
     cmd = vs.vertex(x, y)
-    
+
   result = x1 <= x2 and y1 <= y2

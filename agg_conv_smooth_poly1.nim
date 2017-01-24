@@ -6,7 +6,7 @@ type
 
 proc initConvSmoothPoly1*[VS](vs: var VS): ConvSmoothPoly1[VS] =
   base[VS](result).init(vs)
-    
+
 proc smoothValue*[VS](self: var ConvSmoothPoly1[VS], v: float64) = base[VS](self).generator().smoothValue(v)
 proc smoothValue*[VS](self: ConvSmoothPoly1[VS]): float64 = base[VS](self).generator().smoothValue()
 

@@ -18,7 +18,7 @@ type
   Row[T] = object
     x1, x2: int
     data: seq[T]
-    
+
   DynaRow*[T] = object
     rows: seq[Row[T]]
     width: int

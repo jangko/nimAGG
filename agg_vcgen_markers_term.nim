@@ -21,7 +21,7 @@ proc removeAll*(self: var VcgenMarkersTerm) =
 
 proc modifyLast(x: var seq[CoordType], val: CoordType) =
   x[x.len-1] = val
-  
+
 proc addVertex*(self: var VcgenMarkersTerm, x, y: float64, cmd: uint) =
   if isMoveTo(cmd):
     if (self.mMarkers.len and 1) != 0:

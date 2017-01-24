@@ -73,16 +73,16 @@ type
 proc modifyLast*(x: var seq[PointD], val: PointD) =
   x[x.len-1] = val
 
-proc prev*(x: var seq[PointD], idx: int): var PointD = 
+proc prev*(x: var seq[PointD], idx: int): var PointD =
   let size = x.len
   x[(idx + size - 1) mod size]
- 
-proc next*(x: var seq[PointD], idx: int): var PointD = 
+
+proc next*(x: var seq[PointD], idx: int): var PointD =
   x[(idx + 1) mod x.len]
-  
+
 proc removeAll*(x: var seq[PointD]) =
   x.setLen(0)
-  
+
 template getValueType*(x: typedesc[seq[PointD]]): typedesc = PointD
 
 proc iround*(v: float64): int {.inline.} =

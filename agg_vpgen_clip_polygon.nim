@@ -9,11 +9,11 @@ type
     mNumVertices: int
     mVertex: int
     mCmd: uint
-    
+
 proc initVpgenClipPolygon*(): VpgenClipPolygon =
   result.mClipBox = initRectD(0, 0, 1, 1)
   result.mX1 = 0
-  result.mY1 = 0 
+  result.mY1 = 0
   result.mClipFlags = 0
   result.mNumVertices = 0
   result.mVertex = 0
@@ -22,7 +22,7 @@ proc initVpgenClipPolygon*(): VpgenClipPolygon =
 template construct*(x: typedesc[VpgenClipPolygon]): untyped = initVpgenClipPolygon()
 
 #------------------------------------------------------------------------
-# Determine the clipping code of the vertex according to the 
+# Determine the clipping code of the vertex according to the
 # Cyrus-Beck line clipping algorithm
 #
 #        |        |
@@ -38,18 +38,18 @@ template construct*(x: typedesc[VpgenClipPolygon]): untyped = initVpgenClipPolyg
 #        |        |
 #  clip_box.x1  clip_box.x2
 #
-# 
+#
 proc clippingFlags(self: var VpgenClipPolygon, x, y: float64): uint =
   if x < self.mClipBox.x1:
     if y > self.mClipBox.y2: return 6
     if y < self.mClipBox.y1: return 12
     return 4
-  
+
   if x > self.mClipBox.x2:
     if y > self.mClipBox.y2: return 3
     if y < self.mClipBox.y1: return 9
     return 1
-  
+
   if y > self.mClipBox.y2: return 2
   if y < self.mClipBox.y1: return 8
   result = 0
@@ -72,7 +72,7 @@ proc autoUnclose*(x: typedesc[VpgenClipPolygon]): bool = false
 proc reset*(self: var VpgenClipPolygon) =
   self.mVertex = 0
   self.mNumVertices = 0
-        
+
 proc moveTo*(self: var VpgenClipPolygon, x, y: float64) =
   self.mVertex = 0
   self.mNumVertices = 0
@@ -85,25 +85,25 @@ proc moveTo*(self: var VpgenClipPolygon, x, y: float64) =
   self.mX1  = x
   self.mY1  = y
   self.mCmd = pathCmdMoveTo
-        
+
 proc lineTo*(self: var VpgenClipPolygon, x, y: float64) =
   self.mVertex = 0
   self.mNumVertices = 0
   let flags = self.clippingFlags(x, y)
-  
+
   if self.mClipFlags == flags:
     if flags == 0:
       self.mX[0] = x
       self.mY[0] = y
       self.mNumVertices = 1
   else:
-    self.mNumVertices = clipLiangBarsky(self.mX1, self.mY1, 
+    self.mNumVertices = clipLiangBarsky(self.mX1, self.mY1,
       x, y, self.mClipBox, self.mX[0].addr, self.mY[0].addr)
-  
+
   self.mClipFlags = flags
   self.mX1 = x
   self.mY1 = y
-        
+
 proc vertex*(self: var VpgenClipPolygon, x, y: var float64): uint =
   if self.mVertex < self.mNumVertices:
     x = self.mX[self.mVertex]
@@ -112,6 +112,6 @@ proc vertex*(self: var VpgenClipPolygon, x, y: var float64): uint =
     var cmd = self.mCmd
     self.mCmd = pathCmdLineTo
     return cmd
-    
+
   result = pathCmdStop
-        
+

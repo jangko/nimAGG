@@ -5,13 +5,13 @@ type
     mSrc: ptr Source
     mOffsetX: int
     mOffsetY: int
-    
-    
+
+
 proc initSpanPatternRgba*[Source](src: var Source, offsetX, offsetY: int): SpanPatternRgba[Source] =
   result.mSrc = src.addr
   result.mOffsetX = offsetX
   result.mOffsetY = offsetY
-    
+
 proc attach*[Source](self: var SpanPatternRgba[Source], v: var Source) = self.mSrc = v.addr
 proc source*[Source](self: SpanPatternRgba[Source]): var Source = self.mSrc[]
 
@@ -31,7 +31,7 @@ proc generate*[Source, ColorT](self: var SpanPatternRgba[Source], span: ptr Colo
     x = x
     y = y
     len = len
-    
+
   x += self.mOffsetX
   y += self.mOffsetY
   var p = cast[ptr ValueType](self.mSrc[].span(x, y, len))

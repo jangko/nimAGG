@@ -216,7 +216,7 @@ proc calcCap*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, v0, 
       for i in 0.. <n:
         vc.addVertex(v0.x + cos(a1) * self.mWidth, v0.y + sin(a1) * self.mWidth)
         a1 -= da
-        
+
     vc.addVertex(v0.x + dx1, v0.y - dy1)
 
 proc calcJoin*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
@@ -258,7 +258,7 @@ proc calcJoin*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer,
           self.calcArc(vc, v1.x, v1.y, dx2, -dy2, dx1, -dy1)
           vc.addVertex(v1.x,       v1.y      )
           vc.addVertex(v1.x + dx2, v1.y - dy2)
-  
+
     else: # inner_bevel
       vc.addVertex(v1.x + dx1, v1.y - dy1)
       vc.addVertex(v1.x + dx2, v1.y - dy2)

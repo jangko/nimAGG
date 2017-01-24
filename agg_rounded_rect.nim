@@ -59,18 +59,18 @@ proc normalizeRadius*(self: var RoundedRect) =
     self.rx1 *= k; self.ry1 *= k; self.rx2 *= k; self.ry2 *= k
     self.rx3 *= k; self.ry3 *= k; self.rx4 *= k; self.ry4 *= k
 
-proc approximationScale*(self: var RoundedRect, s: float64) = 
+proc approximationScale*(self: var RoundedRect, s: float64) =
   self.arc.approximationScale(s)
-  
-proc approximationScale*(self: RoundedRect): float64 = 
+
+proc approximationScale*(self: RoundedRect): float64 =
   result = self.arc.approximationScale()
-        
+
 proc rewind*(self: var RoundedRect, pathId: int) =
   self.status = 0
 
 proc vertex*(self: var RoundedRect, x, y: var float64): uint =
   var cmd: uint = pathCmdStop
-  
+
   while true:
     case self.status
     of 0:
@@ -79,7 +79,7 @@ proc vertex*(self: var RoundedRect, x, y: var float64): uint =
       inc self.status
     of 1:
       cmd = self.arc.vertex(x, y)
-      if isStop(cmd): 
+      if isStop(cmd):
         inc self.status
       else: return cmd
     of 2:
@@ -88,7 +88,7 @@ proc vertex*(self: var RoundedRect, x, y: var float64): uint =
       inc self.status
     of 3:
       cmd = self.arc.vertex(x, y)
-      if isStop(cmd): 
+      if isStop(cmd):
         inc self.status
       else: return pathCmdLineTo
     of 4:
@@ -97,7 +97,7 @@ proc vertex*(self: var RoundedRect, x, y: var float64): uint =
       inc self.status
     of 5:
       cmd = self.arc.vertex(x, y)
-      if isStop(cmd): 
+      if isStop(cmd):
         inc self.status
       else: return pathCmdLineTo
     of 6:
@@ -106,7 +106,7 @@ proc vertex*(self: var RoundedRect, x, y: var float64): uint =
       inc self.status
     of 7:
       cmd = self.arc.vertex(x, y)
-      if isStop(cmd): 
+      if isStop(cmd):
         inc self.status
       else: return pathCmdLineTo
     of 8:

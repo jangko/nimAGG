@@ -1,18 +1,18 @@
 import agg_basics
 
-type 
+type
   SpanInterpolatorAdaptor*[Interpolator, Distortion] = object of Interpolator
     mDistortion: ptr Distortion
-    
+
 proc initSpanInterpolatorAdaptor*[I,D](): SpanInterpolatorAdaptor[I,D] =
   discard
-  
-proc initSpanInterpolatorAdaptor*[I,D,TransType](trans: var TransType, 
+
+proc initSpanInterpolatorAdaptor*[I,D,TransType](trans: var TransType,
   dist: var D): SpanInterpolatorAdaptor[I,D] =
   I(result).init(trans)
   self.mDistortion = dist.addr
 
-proc initSpanInterpolatorAdaptor*[I,D,TransType](trans: var TransType, 
+proc initSpanInterpolatorAdaptor*[I,D,TransType](trans: var TransType,
   dist: var D, x, y: float64, len: int): SpanInterpolatorAdaptor[I,D] =
   I(result).init(trans, x, y, len)
   self.mDistortion = dist.addr

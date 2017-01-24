@@ -21,14 +21,14 @@ const
 
 type
   ValueType = uint8
-  
+
 type
   SimpleVertexSource = object
     mNumVertices: int
     mCount: int
     mX, mY: array[8, float64]
     mCmd: array[8, uint]
-    
+
   DashedLine[Ras, Ren, Scanline] = object
     mRas: ptr Ras
     mRen: ptr Ren
@@ -81,7 +81,7 @@ proc vertex*(self: var SimpleVertexSource, x, y: var float64): uint =
   y = self.mY[self.mCount]
   result = self.mCmd[self.mCount]
   inc self.mCount
-    
+
 proc initDashedLine[Ras, Ren, Scanline](ras: var Ras, ren: var Ren, sl: var Scanline): DashedLine[Ras, Ren, Scanline] =
   result.mRas = ras.addr
   result.mRen = ren.addr
@@ -104,15 +104,15 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
     self.mStroke.width(line_width)
     self.mStroke.lineCap(roundCap)
     self.mRas[].addPath(self.mStroke)
-    
+
   renderScanlines(self.mRas[], self.mSl[], self.mRen[])
 
 pixfmtRgb24Gamma(PixFmt, GammaLut8)
- 
+
 type
   ColorType = Rgba8#getColorType(PixFmt)
   ColorArrayType = seq[ColorType]
-  
+
 spanGradient(SpanGradient, ColorType, SpanInterpolatorLinear, GradientX, ColorArrayType)
 
 proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffine, gradient_d2 = 100.0) =
@@ -125,28 +125,28 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
   mtx *= transAffineTranslation(x1 + 0.5, y1 + 0.5)
   mtx.invert()
 
-# A simple function to form the gradient color array 
+# A simple function to form the gradient color array
 # consisting of 3 colors, "begin", "middle", "end"
 proc fill_color_array[ColorT](arr: var seq[ColorType], start, stop: ColorT) =
-  var 
+  var
     start = construct(getColorType(PixFmt), start)
     stop = construct(getColorType(PixFmt), stop)
-  
+
   for i in 0.. <256:
     arr[i] = start.gradient(stop, i.float64 / 255.0)
 
 proc print_color(arr: seq[Rgba8]) =
   for x in arr:
     echo "$1 $2 $3 $4" % [$x.r, $x.g, $x.b, $x.a]
-    
+
 proc print(mtx: TransAffine) =
-  echo "$1 $2 $3 $4 $5 $6" % [mtx.sx.formatFloat(ffDecimal, 3), 
-    mtx.shy.formatFloat(ffDecimal, 3), 
-    mtx.shx.formatFloat(ffDecimal, 3), 
-    mtx.sy.formatFloat(ffDecimal, 3), 
-    mtx.tx.formatFloat(ffDecimal, 3), 
+  echo "$1 $2 $3 $4 $5 $6" % [mtx.sx.formatFloat(ffDecimal, 3),
+    mtx.shy.formatFloat(ffDecimal, 3),
+    mtx.shx.formatFloat(ffDecimal, 3),
+    mtx.sy.formatFloat(ffDecimal, 3),
+    mtx.tx.formatFloat(ffDecimal, 3),
     mtx.ty.formatFloat(ffDecimal, 3)]
-  
+
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
@@ -157,19 +157,19 @@ proc onDraw() =
     renSl  = initRendererScanlineAASolid(renBase)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
-  
+
   renBase.clear(initRgba(0,0,0))
-  var 
+  var
     dash = initDashedLine(ras, renSl, sl)
     cx = frameWidth.float64 / 2.0
     cy = frameHeight.float64 / 2.0
-  
+
   renSl.color(initRgba(1.0, 1.0, 1.0, 0.2))
   for i in countdown(180, 0):
     let n = 2.0 * pi * i.float64 / 180.0
     dash.draw(cx + min(cx, cy) * sin(n), cy + min(cx, cy) * cos(n),
      cx, cy, 1.0, if i < 90: i.float64 else: 0.0)
-  
+
   var
     gradientF = initGradientX()
     gradientMtx = initTransAffine()
@@ -179,41 +179,41 @@ proc onDraw() =
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
     renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
     dashGradient = initDashedLine(ras, renGradient, sl)
-                    
+
   var
     x1, y1, x2, y2: float64
-    
+
   for ii in 1..20:
     let i = ii.float64
     renSl.color(initRgba(1,1,1))
-    
+
     # integral point sizes 1..20
-    var ell = initEllipse(20 + i * (i + 1) + 0.5, 
+    var ell = initEllipse(20 + i * (i + 1) + 0.5,
                      20.5, i / 2.0, i / 2.0, 8 + ii)
     ras.reset()
     ras.addPath(ell)
     renderScanlines(ras, sl, renSl)
-    
+
     # fractional point sizes 0..2
-    ell.init(18 + i * 4 + 0.5, 33 + 0.5, 
+    ell.init(18 + i * 4 + 0.5, 33 + 0.5,
             i/20.0, i/20.0, 8)
     ras.reset()
     ras.addPath(ell)
     renderScanlines(ras, sl, renSl)
-  
-  
+
+
     # fractional point positioning
-    ell.init(18 + i * 4 + (i-1) / 10.0 + 0.5, 
-            27 + (i - 1) / 10.0 + 0.5, 
+    ell.init(18 + i * 4 + (i-1) / 10.0 + 0.5,
+            27 + (i - 1) / 10.0 + 0.5,
             0.5, 0.5, 8)
     ras.reset()
     ras.addPath(ell)
     renderScanlines(ras, sl, renSl)
-    
+
     # integral line widths 1..20
     fill_color_array(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
     #gradientColors.print_color()
-    
+
     x1 = 20 + i* (i + 1)
     y1 = 40.5
     x2 = 20 + i * (i + 1) + (i - 1) * 4
@@ -221,7 +221,7 @@ proc onDraw() =
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     #gradientMtx.print()
     dashGradient.draw(x1, y1, x2, y2, i, 0)
-    
+
     fill_color_array(gradientColors, initRgba(1,0,0), initRgba(0,0,1))
 
     # fractional line lengths H (red/blue)
@@ -231,8 +231,8 @@ proc onDraw() =
     y2 = 107
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 1.0, 0)
-    
-    
+
+
     # fractional line lengths V (red/blue)
     x1 = 18 + i * 4
     y1 = 112.5
@@ -240,7 +240,7 @@ proc onDraw() =
     y2 = 112.5 + i / 6.66666667
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 1.0, 0)
-    
+
     # fractional line positioning (red)
     fill_color_array(gradientColors, initRgba(1,0,0), initRgba(1,1,1))
     x1 = 21.5
@@ -249,8 +249,8 @@ proc onDraw() =
     y2 = 120 + (i - 1) * 3.1
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 1.0, 0)
-    
-    
+
+
     # fractional line width 2..0 (green)
     fill_color_array(gradientColors, initRgba(0,1,0), initRgba(1,1,1))
     x1 = 52.5
@@ -259,7 +259,7 @@ proc onDraw() =
     y2 = 118 + i * 3
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 2.0 - (i - 1) / 10.0, 0)
-    
+
     # stippled fractional width 2..0 (blue)
     fill_color_array(gradientColors, initRgba(0,0,1), initRgba(1,1,1))
     x1 = 83.5
@@ -268,27 +268,27 @@ proc onDraw() =
     y2 = 119 + i * 3
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 2.0 - (i - 1) / 10.0, 3.0)
-        
+
   #triangles
-  let 
+  let
     width = frameWidth.float64
     height = frameHeight.float64
-  
+
   for ii in 1..13:
     let i = ii.float64
     fill_color_array(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
-    calc_linear_gradient_transform(width  - 150, 
+    calc_linear_gradient_transform(width  - 150,
                                    height - 20 - i * (i + 1.5),
-                                   width  - 20,  
+                                   width  - 20,
                                    height - 20 - i * (i + 1),
                                    gradientMtx)
-                                   
+
     ras.reset()
     ras.moveToD(width - 150, height - 20 - i * (i + 1.5))
     ras.lineToD(width - 20,  height - 20 - i * (i + 1))
     ras.lineToD(width - 20,  height - 20 - i * (i + 2))
     renderScanlines(ras, sl, renGradient)
-        
+
   saveBMP24("aa_test.bmp", buffer, frameWidth, frameHeight)
 
 proc drawRandom() =
@@ -302,13 +302,13 @@ proc drawRandom() =
     renSl  = initRendererScanlineAASolid(renBase)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
-    
+
   renBase.clear(initRgba(0,0,0))
-  
+
   let
     w = frameWidth.float64
     h = frameHeight.float64
-  
+
   var startTime = cpuTime()
   for i in 0..20000:
     let r = random(20.0) + 1.0
@@ -317,7 +317,7 @@ proc drawRandom() =
     ras.addPath(ell)
     renderScanlines(ras, sl, renSl)
     renSl.color(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)))
-    
+
   let t1 = cpuTime() - startTime
   var
     gradientF = initGradientX()
@@ -328,30 +328,30 @@ proc drawRandom() =
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
     renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
     dashGradient = initDashedLine(ras, renGradient, sl)
-                    
+
   var
     x1, y1, x2, y2, x3, y3: float64
-    
+
   startTime = cpuTime()
   for i in 0..2000:
     x1 = random(w)
     y1 = random(h)
     x2 = x1 + random(w * 0.5) - w * 0.25
     y2 = y1 + random(h * 0.5) - h * 0.25
-  
-    fill_color_array(gradientColors, 
-                     initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)), 
+
+    fill_color_array(gradientColors,
+                     initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)),
                      initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
-                    
+
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 10.0, 0)
-    
+
   let t2 = cpuTime() - startTime
-  
+
   var
     spanGouraud = initSpanGouraudRgba[ColorType]()
     renGouraud  = initRendererScanlineAA(renBase, spanAllocator, spanGouraud)
-  
+
   startTime = cpuTime()
   for i in 0..2000:
     x1 = random(w)
@@ -360,20 +360,20 @@ proc drawRandom() =
     y2 = y1 + random(h * 0.4) - h * 0.2
     x3 = x1 + random(w * 0.4) - w * 0.2
     y3 = y1 + random(h * 0.4) - h * 0.2
-  
+
     spanGouraud.colors(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)),
                         initRgba(random(1.0), random(1.0), random(1.0), random(1.0)),
                         initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
     spanGouraud.triangle(x1, y1, x2, y2, x3, y3, 0.0)
     ras.addPath(spanGouraud)
     renderScanlines(ras, sl, renGouraud)
-  
+
   let t3 = cpuTime() - startTime
-  
-  echo "Points=$1K/sec, Lines=$2K/sec, Triangles=$3K/sec" % [formatFloat(20000.0/t1/1000, ffDecimal, 3), 
+
+  echo "Points=$1K/sec, Lines=$2K/sec, Triangles=$3K/sec" % [formatFloat(20000.0/t1/1000, ffDecimal, 3),
     formatFloat(2000.0/t2/1000, ffDecimal, 3), formatFloat(2000.0/t3/1000, ffDecimal, 3)]
-    
+
   saveBMP24("aa_test2.bmp", buffer, frameWidth, frameHeight)
-  
+
 drawRandom()
 #onDraw()

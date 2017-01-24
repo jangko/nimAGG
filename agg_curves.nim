@@ -712,7 +712,7 @@ proc initCurve3*(x1, y1, x2, y2, x3, y3: float64): Curve3 =
   result.mCurveInc = initCurve3Inc()
   result.mCurveDiv = initCurve3Div()
   result.init(x1, y1, x2, y2, x3, y3)
-  
+
 template construct*(x: typedesc[Curve3]): untyped = initCurve3()
 
 proc reset*(self: var Curve3) =
@@ -766,7 +766,7 @@ type
     mCurveInc: Curve4Inc
     mCurveDiv: Curve4Div
     mApproximationMethod: CurveApproximationMethod
-    
+
 proc init*(self: var Curve4, x1, y1, x2, y2, x3, y3, x4, y4: float64)
 
 proc initCurve4*(): Curve4 =
@@ -785,7 +785,7 @@ proc initCurve4*(cp: Curve4Points): Curve4 =
   result.mCurveInc = initCurve4Inc()
   result.mCurveDiv = initCurve4Div()
   result.init(cp[0], cp[1], cp[2], cp[3], cp[4], cp[5], cp[6], cp[7])
-  
+
 template construct*(x: typedesc[Curve4]): untyped = initCurve4()
 
 proc reset*(self: var Curve4) =

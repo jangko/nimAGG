@@ -14,10 +14,10 @@ template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: t
       mD1, mD2: int
 
   template getDownscaleShift*(x: typedesc[name]): int = (getSubPixelShift(Interpolator) - gradientSubpixelShift)
-    
+
   proc `init name`*(inter: var Interpolator, gradientF: var GradientF,
     colorF: var ColorF, d1, d2: float64): name =
-    
+
     result.mInterpolator = inter.addr
     result.mGradientF = gradientF.addr
     result.mColorF = colorF.addr
@@ -40,16 +40,16 @@ template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: t
 
   proc generate*(self: var name, spanx: ptr ColorT, xx, yy, lenx: int) =
     const downScaleShift = getDownscaleShift(name)
-    var 
+    var
       dd = self.mD2 - self.mD1
       x = xx
       y = yy
       span = spanx
       len = lenx
-      
+
     if dd < 1: dd = 1
     self.mInterpolator[].begin(x.float64+0.5, y.float64+0.5, len)
-    
+
     doWhile len != 0:
       self.mInterpolator[].coordinates(x, y)
       var d = self.mGradientF[].calculate(sar(x, downScaleShift), sar(y, downScaleShift), self.mD2)
@@ -61,21 +61,21 @@ template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: t
       inc self.mInterpolator[]
       dec len
 
-#[    
+#[
 
 
 
-[ColorT> 
+[ColorT>
 struct gradient_linear_color
     typedef ColorT ColorT;
 
     gradient_linear_color() {}
-    gradient_linear_color(c: ColorT1, c: ColorT2, 
+    gradient_linear_color(c: ColorT1, c: ColorT2,
                           unsigned size = 256) :
         m_c1(c1), m_c2(c2), m_size(size) {}
 
     unsigned size(): float64 = m_size
-    ColorT operator [] (unsigned v) const 
+    ColorT operator [] (unsigned v) const
     {
         return m_c1.gradient(m_c2, double(v) / double(m_size - 1))
     }
@@ -118,18 +118,18 @@ class gradient_radial_d
 
 class gradient_radial_focus
     #---------------------------------------------------------------------
-    gradient_radial_focus() : 
-        m_r(100 * gradientSubpixelScale), 
-        m_fx(0), 
+    gradient_radial_focus() :
+        m_r(100 * gradientSubpixelScale),
+        m_fx(0),
         m_fy(0)
     {
         update_values()
     }
 
     #---------------------------------------------------------------------
-    gradient_radial_focus(double r, double fx, double fy) : 
-        m_r (iround(r  * gradientSubpixelScale)), 
-        m_fx(iround(fx * gradientSubpixelScale)), 
+    gradient_radial_focus(double r, double fx, double fy) :
+        m_r (iround(r  * gradientSubpixelScale)),
+        m_fx(iround(fx * gradientSubpixelScale)),
         m_fy(iround(fy * gradientSubpixelScale))
     {
         update_values()
@@ -195,7 +195,7 @@ proc update_values()
 
 type
   GradientX* = object
-  
+
 proc initGradientX*(): GradientX = discard
 proc calculate*(self: GradientX, x, y, d: int): int = x
 
@@ -204,33 +204,33 @@ class gradient_y
     static int calculate(int, int y, int) { return y
 
 class gradient_diamond
-    static AGG_INLINE int calculate(x, y: int, int) 
-    { 
+    static AGG_INLINE int calculate(x, y: int, int)
+    {
         int ax = abs(x)
         int ay = abs(y)
-        return ax > ay ? ax : ay; 
+        return ax > ay ? ax : ay;
     }
 
 class gradient_xy
-    static AGG_INLINE int calculate(x, y: int, int d) 
-    { 
-        return abs(x) * abs(y) / d; 
+    static AGG_INLINE int calculate(x, y: int, int d)
+    {
+        return abs(x) * abs(y) / d;
     }
 
 class gradient_sqrt_xy
-    static AGG_INLINE int calculate(x, y: int, int) 
-    { 
-        return fast_sqrt(abs(x) * abs(y)) 
+    static AGG_INLINE int calculate(x, y: int, int)
+    {
+        return fast_sqrt(abs(x) * abs(y))
     }
 
 class gradient_conic
-    static AGG_INLINE int calculate(x, y: int, int d) 
-    { 
+    static AGG_INLINE int calculate(x, y: int, int d)
+    {
         return uround(abs(atan2(double(y), double(x))) * double(d) / pi)
     }
 
 [GradientF> class gradient_repeat_adaptor
-    gradient_repeat_adaptor(const GradientF& gradient) : 
+    gradient_repeat_adaptor(const GradientF& gradient) :
         m_gradient(&gradient) {}
 
     AGG_INLINE int calculate(x, y: int, int d) const
@@ -246,7 +246,7 @@ private:
 [GradientF> class gradient_reflect_adaptor
 
 const GradientF* m_gradient;
-    gradient_reflect_adaptor(const GradientF& gradient) : 
+    gradient_reflect_adaptor(const GradientF& gradient) :
         m_gradient(&gradient) {}
 
     AGG_INLINE int calculate(x, y: int, int d) const

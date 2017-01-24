@@ -5,27 +5,27 @@ proc oneComponentMaskU8*(p: ptr uint8): uint = p[]
 template rgbToGrayMaskU8(R,G,B: int, name: untyped) =
   proc name(p: ptr uint8): uint =
     result = (p[R].uint*77 + p[G].uint*150 + p[B].uint*29) shr 8
-        
+
 template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneComponentMaskU8) =
   type
     name* = object
       rbuf: ptr RenderingBuffer
-      
+
   template coverShift*(x: typedesc[name]): uint = 8
   template coverNone* (x: typedesc[name]): uint = 0
   template coverFull* (x: typedesc[name]): uint = 255
-  
+
   proc `init name`*(rbuf: var RenderingBuffer): name =
     result.rbuf = rbuf.addr
 
   proc attach*(self: var name, rbuf: var RenderingBuffer) =
     self.rbuf = rbuf.addr
-  
+
   proc pixel*(self: var name, x, y: int): CoverType =
     if x >= 0 and y >= 0 and x < self.rbuf[].width() and y < self.rbuf[].height():
       result = MaskF(self.rbuf[].rowPtr(y) + x * Step + Offset).CoverType
     result = 0
-    
+
   proc combinePixel*(self: var name, x, y: int, val: CoverType): CoverType =
     if x >= 0 and y >= 0 and x < self.rbuf[].width() and y < self.rbuf[].height():
       result = ((name.coverFull + val.uint * MaskF(self.rbuf[].rowPtr(y) + x * Step + Offset)) shr name.coverShift).CoverType
@@ -38,11 +38,11 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       count = numPix
       covers = dst
       x = xx
-    
+
     if y < 0 or y > ymax:
       setMem(dst, 0, numPix * sizeof(CoverType))
       return
-    
+
     if x < 0:
       count += x
       if count <= 0:
@@ -51,7 +51,7 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       setMem(covers, 0, -x * sizeof(CoverType))
       covers -= x
       x = 0
-    
+
     if x + count > xmax:
       var rest = x + count - xmax - 1
       count -= rest
@@ -59,7 +59,7 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
         setMem(dst, 0, numPix * sizeof(CoverType))
         return
       setMem(covers + count, 0, rest * sizeof(CoverType))
-    
+
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
       covers[] = CoverType(MaskF(mask))
@@ -74,11 +74,11 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       count = numPix
       covers = dst
       x = xx
-    
+
     if y < 0 or y > ymax:
       setMem(dst, 0, numPix * sizeof(CoverType))
       return
-    
+
     if x < 0:
       count += x
       if count <= 0:
@@ -87,7 +87,7 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       setMem(covers, 0, -x * sizeof(CoverType))
       covers -= x
       x = 0
-    
+
     if x + count > xmax:
       var rest = x + count - xmax - 1
       count -= rest
@@ -95,14 +95,14 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
         setMem(dst, 0, numPix * sizeof(CoverType))
         return
       setMem(covers + count, 0, rest * sizeof(CoverType))
-    
+
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
       covers[] = CoverType((name.coverFull + covers[].uint * MaskF(mask)) shr name.coverShift)
       inc covers
       inc(mask, Step)
       dec count
-    
+
   proc fillVspan*(self: var name, x, yy: int, dst: ptr CoverType, numPix: int) =
     var
       xmax = self.rbuf[].width() - 1
@@ -110,11 +110,11 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       count = numPix
       covers = dst
       y = yy
-    
+
     if x < 0 or x > xmax:
       setMem(dst, 0, numPix * sizeof(CoverType))
       return
-    
+
     if y < 0:
      count += y
      if count <= 0:
@@ -123,22 +123,22 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
      setMem(covers, 0, -y * sizeof(CoverType))
      covers -= y
      y = 0
-    
+
     if y + count > ymax:
      var rest = y + count - ymax - 1
      count -= rest
-     if count <= 0: 
+     if count <= 0:
        setMem(dst, 0, numPix * sizeof(CoverType))
        return
      setMem(covers + count, 0, rest * sizeof(CoverType))
-    
+
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
       covers[] = CoverType(MaskF(mask))
       inc covers
       mask += self.rbuf[].stride()
       dec count
-    
+
   proc combine_vspan*(self: var name, x, yy: int, dst: ptr CoverType, numPix: int) =
     var
       xmax = self.rbuf[].width() - 1
@@ -146,11 +146,11 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       count = numPix
       covers = dst
       y = yy
-    
+
     if x < 0 or x > xmax:
       setMem(dst, 0, numPix * sizeof(CoverType))
       return
-    
+
     if y < 0:
       count += y
       if count <= 0:
@@ -159,22 +159,22 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       setMem(covers, 0, -y * sizeof(CoverType))
       covers -= y
       y = 0
-    
+
     if y + count > ymax:
       var rest = y + count - ymax - 1
       count -= rest
-      if count <= 0: 
+      if count <= 0:
         setMem(dst, 0, numPix * sizeof(CoverType))
         return
       setMem(covers + count, 0, rest * sizeof(CoverType))
-    
+
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset;
     doWhile count != 0:
       covers[] = CoverType((name.coverFull + covers[].uint * MaskF(mask)) shr name.coverShift)
       inc covers
       mask += self.rbuf[].stride()
       dec count
-    
+
 alphaMaskU8(1, 0, AlphaMaskGray8)
 alphaMaskU8(3, 0, AlphaMaskRgb24r)
 alphaMaskU8(3, 1, AlphaMaskRgb24g)
@@ -218,11 +218,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
   type
     name* = object
       rbuf: ptr RenderingBuffer
-      
+
   template coverShift*(x: typedesc[name]): uint = 8
   template coverNone* (x: typedesc[name]): uint = 0
   template coverFull* (x: typedesc[name]): uint = 255
-  
+
   proc `init name`*(rbuf: var RenderingBuffer): name =
     result.rbuf = rbuf.addr
 
@@ -236,11 +236,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
     result = CoverType((name.coverFull + val.uint * MaskF(self.rbuf[].rowPtr(y) + x * Step + Offset)) shr name.coverShift)
 
   proc fillHspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
-    var 
+    var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
       numPix = numPixx
       dst = dstx
-      
+
     doWhile numPix != 0:
       dst[] = CoverType(MaskF(mask))
       inc dst
@@ -248,11 +248,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       dec numPix
 
   proc combineHspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
-    var 
+    var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
       dst = dstx
       numPix = numPixx
-      
+
     doWhile numPix != 0:
       dst[] = CoverType((name.coverFull + dst[].uint * MaskF(mask)) shr name.coverShift)
       inc dst
@@ -260,11 +260,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       dec numPix
 
   proc fillVspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
-    var 
+    var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
       dst = dstx
       numPix = numPixx
-      
+
     doWhile numPix != 0:
       dst[] = CoverType(MaskF(mask))
       inc dst
@@ -272,11 +272,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       dec numPix
 
   proc combineVspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
-    var 
+    var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
       dst = dstx
       numPix = numPixx
-    
+
     doWhile numPix != 0:
       dst[] = CoverType((name.coverFull + dst[].uint * MaskF(mask)) shr name.coverShift)
       inc dst
