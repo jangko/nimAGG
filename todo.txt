@@ -38,6 +38,8 @@ span_pattern_rgba
 span_pattern_gray
 span_pattern_rgb
 conv_marker
+image_accessors
+agg_pixfmt_transposer
 
 incomplete:
   path_storage

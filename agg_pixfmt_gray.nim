@@ -59,6 +59,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       rbuf: ptr RenBuf
 
   template getColorType*(x: typedesc[name]): typedesc = getColorType(Blender)
+  template getPixWidth* (x: typedesc[name]): int = getPixWidth(Blender)
 
   proc copyOrBlendPix[ColorT, ValueT](x: typedesc[name], p: ptr ValueT, c: ColorT, cover: uint) {.inline.} =
     type CalcType = getCalcType(ColorT)

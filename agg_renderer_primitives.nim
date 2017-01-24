@@ -37,13 +37,12 @@ proc rectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
   self.ren[].blendHline(x1+1, y2,   x2,   self.mLineColor, coverFull)
   self.ren[].blendVline(x1,   y1+1, y2,   self.mLineColor, coverFull)
 
-proc solid_rectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
+proc solidRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
   self.ren[].blendBar(x1, y1, x2, y2, self.mFillColor, coverFull)
 
-proc outlined_rectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
+proc outlinedRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
   rectangle(x1, y1, x2, y2)
   self.ren[].blendBar(x1+1, y1+1, x2-1, y2-1, self.mFillColor, coverFull)
-
 
 proc ellipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   var
@@ -82,7 +81,7 @@ proc solidEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
 
   self.ren[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
 
-proc outlined_ellipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
+proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   var
     ei = initEllipseBresenhamInterpolator(rx, ry)
     dx = 0
