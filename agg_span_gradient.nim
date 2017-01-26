@@ -175,8 +175,8 @@ proc update_values()
         double d = (m_r2 - (m_fx2 + m_fy2))
         if d == 0:
         {
-            if m_fx) { if m_fx < 0) ++m_fx; else --m_fx
-            if m_fy) { if m_fy < 0) ++m_fy; else --m_fy
+            if m_fx) = if m_fx < 0) ++m_fx; else --m_fx
+            if m_fy) = if m_fy < 0) ++m_fy; else --m_fy
             m_fx2 = double(m_fx) * double(m_fx)
             m_fy2 = double(m_fy) * double(m_fy)
             d = (m_r2 - (m_fx2 + m_fy2))
@@ -201,7 +201,7 @@ proc calculate*(self: GradientX, x, y, d: int): int = x
 
 #[
 class gradient_y
-    static int calculate(int, int y, int) { return y
+    static int calculate(int, int y, int) = return y
 
 class gradient_diamond
     static AGG_INLINE int calculate(x, y: int, int)

@@ -21,8 +21,8 @@ proc lineDblHr*(x: int): int {.inline.} =
   result = x shl lineSubpixelShift
 
 type
-  LineCoord = object
-  LineCoordSat = object
+  LineCoord* = object
+  LineCoordSat* = object
 
 proc conv*(z: typedesc[LineCoord], x: float64): int {.inline.} =
   result = iround(x * lineSubpixelScale)
@@ -32,13 +32,13 @@ proc conv*(z: typedesc[LineCoordSat], x: float64): int {.inline.} =
 
 type
   LineParameters* = object
-    x1, y1, x2, y2, dx, dy, sx, sy: int
-    vertical: bool
-    inc, len, octant: int
+    x1*, y1*, x2*, y2*, dx*, dy*, sx*, sy*: int
+    vertical*: bool
+    inc*, len*, octant*: int
 
 const
   s_orthogonal_quadrant = [ 0'u,0,1,1,3,3,2,2 ]
-  s_diagonal_quadrant   = [ 0'u,1,2,1,0,3,2,3 ]
+  s_diagonalQuadrant   = [ 0'u,1,2,1,0,3,2,3 ]
 
 proc initLineParameters*(): LineParameters =
   discard
@@ -58,13 +58,13 @@ proc initLineParameters*(x1, y1, x2, y2, len: int): LineParameters =
   result.octant = (result.sy and 4) or (result.sx and 2) or int(result.vertical)
 
 proc orthogonalQuadrant*(self: LineParameters): uint = s_orthogonal_quadrant[self.octant]
-proc diagonalQuadrant*(self: LineParameters): uint = s_diagonal_quadrant[self.octant]
+proc diagonalQuadrant*(self: LineParameters): uint = s_diagonalQuadrant[self.octant]
 
 proc sameOrthogonalQuadrant*(self, lp: LineParameters): bool =
   result = s_orthogonal_quadrant[self.octant] == s_orthogonal_quadrant[lp.octant]
 
 proc sameDiagonalQuadrant*(self, lp: LineParameters): bool =
-  result = s_diagonal_quadrant[self.octant] == s_diagonal_quadrant[lp.octant]
+  result = s_diagonalQuadrant[self.octant] == s_diagonalQuadrant[lp.octant]
 
 proc divide*(self, lp1, lp2: var LineParameters) =
   let

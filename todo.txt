@@ -27,7 +27,6 @@ conv_smooth_poly1
 span_gouraud
 span_gouraud_rgba
 span_interpolator_linear
-span_gradient
 renderer_mclip
 line_aa_basics
 span_converter
@@ -39,12 +38,15 @@ span_pattern_gray
 span_pattern_rgb
 conv_marker
 image_accessors
-agg_pixfmt_transposer
+pixfmt_transposer
+rasterizer_outline_aa
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
+  span_gradient
+  renderer_outline_aa
   
 translate ok:
   clip_liang_barsky
