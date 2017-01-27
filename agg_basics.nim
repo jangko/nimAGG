@@ -18,6 +18,9 @@ template `-`*[T](p: ptr T, off: int): ptr T =
 template `-=`*[T](p: ptr T, off: int) =
   p = p - off
 
+template dec*[T](p: ptr T) =
+  p = p - 1
+  
 template `[]`*[T](p: ptr T, off: int): T =
   (p + off)[]
 

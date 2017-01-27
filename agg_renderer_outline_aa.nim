@@ -1,6 +1,6 @@
+import agg_basics
 import agg_math, agg_line_aa_basics, agg_dda_line, agg_ellipse_bresenham
 import agg_renderer_base, agg_gamma_functions, agg_clip_liang_barsky
-import agg_basics
 
 type
   DistanceInterpolator0* = object
@@ -382,12 +382,12 @@ type
 
 proc initLineInterpolatorAA0*[Renderer](ren: var Renderer, lp: var LineParameters): LineInterpolatorAA0[Renderer] =
   LineInterpolatorAAbase[Renderer](result).init(ren, lp)
-  
+
   result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, lp.x1 and (not lineSubpixelMask), lp.y1 and (not lineSubpixelMask))
   result.mLi.adjustForward()
-    
+
 proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
-  type 
+  type
     base = LineInterpolatorAAbase[Renderer]
   var
     dist, dy: int
@@ -405,23 +405,23 @@ proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
     inc p1
     inc dy
     dist = base(self).mDist[dy] - s1
-  
+
   dy = 1
   dist = base(self).mDist[dy] + s1
   while dist <= base(self).mWidth:
     dec p0
-    p0[] = CoverType(base(self).mRen[].cover(dist))    
+    p0[] = CoverType(base(self).mRen[].cover(dist))
     inc dy
     dist = base(self).mDist[dy] + s1
-  
+
   base(self).mRen[].blendSolidVspan(base(self).mX,
                                   base(self).mY - dy + 1,
                                   p1 - p0, p0)
   inc base(self).mStep
   result = base(self).mStep < base(self).mCount
-  
+
 proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
-  type 
+  type
     base = LineInterpolatorAAbase[Renderer]
 
   var
@@ -439,533 +439,477 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
     p1[] = CoverType(base(self).mRen[].cover(dist))
     inc p1
     inc dx
+    dist = base(self).mDist[dx] - s1
 
   dx = 1
   dist = base(self).mDist[dx] + s1
   while base <= base(self).mWidth:
     dec p0
-    p0[] = CoverType(base(self).mRen[].cover(dist))    
+    p0[] = CoverType(base(self).mRen[].cover(dist))
     inc dx
+    dist = base(self).mDist[dx] + s1
 
   base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
                                     base(self).mY,
                                     (p1 - p0), p0)
-  inc base(self).mStep         
+  inc base(self).mStep
   result = base(self).mStep < base(self).mCount
 
 
 type
   LineInterpolatorAA1*[Renderer] = object of LineInterpolatorAAbase[Renderer]
     mDi: DistanceInterpolator2
-    
-#[
-line_interpolator_aa1(ren: var Renderer, lp: var LineParameters, sx, sy: int) :
-    LineInterpolatorAABase[Renderer](ren, lp),
-    self.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy,
-         lp.x1 and not(lineSubpixelMask, lp.y1 and not(lineSubpixelMask)
-{
-    int dist1_start;
-    int dist2_start;
 
-    int npix = 1;
+proc initLineInterpolatorAA1*[R](ren: var R, lp: var LineParameters, sx, sy: int): LineInterpolatorAA1[R] =
+  type base = LineInterpolatorAAbase[R]
 
-    if lp.vertical)
-    {
-        do
-        {
-            --base(self).mLi;
-            base(self).mY -= lp.inc;
-            base(self).mX = (base(self).mLp[].x1 + base(self).mLi.y()) shr lineSubpixelShift;
+  base(result)(ren, lp)
+  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy,
+    lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask))
 
-            if lp.inc > 0) self.mDi.decY(base(self).mX - base(self).mOldX)
-            else           self.mDi.incY(base(self).mX - base(self).mOldX)
+  var
+    dist1_start, dist2_start: int
+    npix = 1
 
-            base(self).mOldX = base(self).mX;
+  if lp.vertical:
+    doWhile base(result).mStep >= -base(result).mMaxExtent:
+      dec base(result).mLi
+      base(result).mY -= lp.inc
+      base(result).mX = (base(result).mLp[].x1 + base(result).mLi.y()) shr lineSubpixelShift
 
-            dist1_start = dist2_start = self.mDi.distStart()
+      if lp.inc > 0: result.mDi.decY(base(result).mX - base(result).mOldX)
+      else:          result.mDi.incY(base(result).mX - base(result).mOldX)
 
-            int dx = 0;
-            if dist1_start < 0) inc npix
-            do
-            {
-                dist1_start += self.mDi.dyStart()
-                dist2_start -= self.mDi.dyStart()
-                if dist1_start < 0) inc npix
-                if dist2_start < 0) inc npix
-                inc dx
-            }
-            while base(self).mDist[dx] <= base(self).mWidth)
-            dec base(self).mStep
-            if npix == 0: break;
-            npix = 0;
-        }
-        while base(self).mStep >= -base(self).mMaxExtent)
-    }
-    else:
-    {
-        do
-        {
-            --base(self).mLi;
-            base(self).mX -= lp.inc;
-            base(self).mY = (base(self).mLp[].y1 + base(self).mLi.y()) shr lineSubpixelShift;
+      base(result).mOldX = base(result).mX
 
-            if lp.inc > 0) self.mDi.decX(base(self).mY - base(self).mOldY)
-            else           self.mDi.incX(base(self).mY - base(self).mOldY)
+      dist1_start = result.mDi.distStart()
+      dist2_start = dist1_start
 
-            base(self).mOldY = base(self).mY;
-
-            dist1_start = dist2_start = self.mDi.distStart()
-
-            int dy = 0;
-            if dist1_start < 0) inc npix
-            do
-            {
-                dist1_start -= self.mDi.dxStart()
-                dist2_start += self.mDi.dxStart()
-                if dist1_start < 0) inc npix
-                if dist2_start < 0) inc npix
-                inc dy
-            }
-            while base(self).mDist[dy] <= base(self).mWidth)
-            dec base(self).mStep
-            if npix == 0: break;
-            npix = 0;
-        }
-        while base(self).mStep >= -base(self).mMaxExtent)
-    }
-    base(self).mLi.adjustForward()
-
-bool stepHor()
-{
-    int distStart;
-    int dist;
-    int dy;
-    int s1 = base(self).stepHorBase(self.mDi)
-
-    distStart = self.mDi.distStart()
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
-
-    *p1 = 0;
-    if distStart <= 0)
-    {
-        *p1 = CoverType((self).mRen[].cover(s1)
-    }
-    inc p1
-
-    dy = 1;
-    while (dist = base(self).mDist[dy] - s1) <= base(self).mWidth)
-    {
-        distStart -= self.mDi.dxStart()
-        *p1 = 0;
-        if distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-        }
-        inc p1
-        inc dy
-    }
-
-    dy = 1;
-    distStart = self.mDi.distStart()
-    while (dist = base(self).mDist[dy] + s1) <= base(self).mWidth)
-    {
-        distStart += self.mDi.dxStart()
-        *--p0 = 0;
-        if distStart <= 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-        }
-        inc dy
-    }
-
-    base(self).mRen[].blendSolidVspan(base(self).mX,
-                                       base(self).mY - dy + 1,
-                                       p1 - p0,
-                                       p0)
-    return ++base(self).mStep < base(self).mCount;
-
-bool stepVer()
-{
-    int distStart;
-    int dist;
-    int dx;
-    int s1 = base(self).stepVerBase(self.mDi)
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
-
-    distStart = self.mDi.distStart()
-
-    *p1 = 0;
-    if distStart <= 0)
-    {
-        *p1 = CoverType((self).mRen[].cover(s1)
-    }
-    inc p1
-
-    dx = 1;
-    while (dist = base(self).mDist[dx] - s1) <= base(self).mWidth)
-    {
-        distStart += self.mDi.dyStart()
-        *p1 = 0;
-        if distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-        }
-        inc p1
+      var dx = 0
+      if dist1_start < 0: inc npix
+      doWhile base(result).mDist[dx] <= base(result).mWidth:
+        dist1_start += result.mDi.dyStart()
+        dist2_start -= result.mDi.dyStart()
+        if dist1_start < 0: inc npix
+        if dist2_start < 0: inc npix
         inc dx
-    }
 
-    dx = 1;
+      dec base(result).mStep
+      if npix == 0: break
+      npix = 0
+  else:
+    doWhile base(result).mStep >= -base(result).mMaxExtent:
+      dec base(result).mLi
+      base(result).mX -= lp.inc
+      base(result).mY = (base(result).mLp[].y1 + base(result).mLi.y()) shr lineSubpixelShift
+
+      if lp.inc > 0: result.mDi.decX(base(result).mY - base(result).mOldY)
+      else:          result.mDi.incX(base(result).mY - base(result).mOldY)
+
+      base(result).mOldY = base(result).mY
+
+      dist1_start = result.mDi.distStart()
+      dist2_start = dist1_start
+
+      var dy = 0
+      if dist1_start < 0: inc npix
+      doWhile base(result).mDist[dy] <= base(result).mWidth:
+        dist1_start -= result.mDi.dxStart()
+        dist2_start += result.mDi.dxStart()
+        if dist1_start < 0: inc npix
+        if dist2_start < 0: inc npix
+        inc dy
+
+      dec base(result).mStep
+      if npix == 0: break
+      npix = 0
+
+  base(result).mLi.adjustForward()
+
+proc stepHor*[R](self: var LineInterpolatorAA1[R]): bool =
+  type base = LineInterpolatorAAbase[R]
+  var
+    dist, dy: int
+    s1 = base(self).stepHorBase(self.mDi)
     distStart = self.mDi.distStart()
-    while (dist = base(self).mDist[dx] + s1) <= base(self).mWidth)
-    {
-        distStart -= self.mDi.dyStart()
-        *--p0 = 0;
-        if distStart <= 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-        }
-        inc dx
-    }
-    base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
-                                       base(self).mY,
-                                       p1 - p0,
-                                       p0)
-    return ++base(self).mStep < base(self).mCount;
-}
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
 
-]#
+  p1[] = 0
+  if distStart <= 0:
+    p1[] = CoverType((self).mRen[].cover(s1))
+  inc p1
+
+  dy = 1
+  dist = base(self).mDist[dy] - s1
+  while dist <= base(self).mWidth:
+    distStart -= self.mDi.dxStart()
+    p1[] = 0
+    if distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+    inc p1
+    inc dy
+    dist = base(self).mDist[dy] - s1
+
+  dy = 1
+  distStart = self.mDi.distStart()
+  dist = base(self).mDist[dy] + s1
+  while dist <= base(self).mWidth:
+    distStart += self.mDi.dxStart()
+    dec p0
+    p0[] = 0
+    if distStart <= 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+    inc dy
+    dist = base(self).mDist[dy] + s1
+
+  base(self).mRen[].blendSolidVspan(base(self).mX,
+                                    base(self).mY - dy + 1,
+                                    p1 - p0,
+                                    p0)
+
+  inc base(self).mStep
+  result = base(self).mStep < base(self).mCount
+
+proc stepVer*[R](self: var LineInterpolatorAA1[R]): bool =
+  type
+    base = LineInterpolatorAABase[R]
+
+  var
+    dist, dx: int
+    s1 = base(self).stepVerBase(self.mDi)
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
+    distStart = self.mDi.distStart()
+
+  p1[] = 0
+  if distStart <= 0:
+    p1[] = CoverType((self).mRen[].cover(s1))
+  inc p1
+
+  dx = 1
+  dist = base(self).mDist[dx] - s1
+  while dist <= base(self).mWidth:
+    distStart += self.mDi.dyStart()
+    p1[] = 0
+    if distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+    inc p1
+    inc dx
+    dist = base(self).mDist[dx] - s1
+
+  dx = 1
+  distStart = self.mDi.distStart()
+  dist = base(self).mDist[dx] + s1
+  while dist <= base(self).mWidth:
+    distStart -= self.mDi.dyStart()
+    dec p0
+    p0[] = 0
+    if distStart <= 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+    inc dx
+    dist = base(self).mDist[dx] + s1
+
+  base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
+                                    base(self).mY,
+                                    p1 - p0,
+                                    p0)
+  inc base(self).mStep
+  result = base(self).mStep < base(self).mCount
 
 type
   LineInterpolatorAA2*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator2
 
-proc initLineInterpolatorAA2*[Renderer](ren: var Renderer, 
+proc initLineInterpolatorAA2*[Renderer](ren: var Renderer,
   lp: var LineParameters, ex, ey: int): LineInterpolatorAA2[Renderer] =
-  type 
+  type
     base = LineInterpolatorAABase[Renderer]
-    
+
   base(result).init(ren, lp)
   result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, ex, ey,
     lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask), 0)
   base(result).mLi.adjustForward()
   base(result).mStep -= base(result).mMaxExtent
 
-#[
-bool stepHor()
-{
-    int distEnd;
-    int dist;
-    int dy;
-    int s1 = base(self).stepHorBase(self.mDi)
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
+proc stepHor*[R](self: var LineInterpolatorAA2[R]): bool =
+  type
+    base = LineInterpolatorAABase[R]
 
-    distEnd = self.mDi.distEnd()
+  var
+    distEnd, dist, dy: int
+    s1 = base(self).stepHorBase(self.mDi)
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
 
-    int npix = 0;
-    *p1 = 0;
-    if distEnd > 0)
-    {
-        *p1 = CoverType((self).mRen[].cover(s1)
-        inc npix
-    }
+  distEnd = self.mDi.distEnd()
+  var npix = 0
+  p1[] = 0
+  if distEnd > 0:
+    p1[] = CoverType((self).mRen[].cover(s1))
+    inc npix
+  inc p1
+
+  dy = 1
+  dist = base(self).mDist[dy] - s1
+  while dist <= base(self).mWidth:
+    distEnd -= self.mDi.dxEnd()
+    p1[] = 0
+    if distEnd > 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+      inc npix
     inc p1
+    inc dy
+    dist = base(self).mDist[dy] - s1
 
-    dy = 1;
-    while (dist = base(self).mDist[dy] - s1) <= base(self).mWidth)
-    {
-        distEnd -= self.mDi.dxEnd()
-        *p1 = 0;
-        if distEnd > 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc p1
-        inc dy
-    }
+  dy = 1
+  distEnd = self.mDi.distEnd()
+  dist = base(self).mDist[dy] + s1
+  while dist <= base(self).mWidth:
+    distEnd += self.mDi.dxEnd()
+    dec p0
+    p0[] = 0
+    if distEnd > 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc dy
+    dist = base(self).mDist[dy] + s1
 
-    dy = 1;
+  base(self).mRen[].blendSolidVspan(base(self).mX,
+                                    base(self).mY - dy + 1,
+                                    p1 - p0,
+                                    p0)
+  inc base(self).mStep
+  result = npix != 0 and base(self).mStep < base(self).mCount
+
+proc stepVer*[R](self: var LineInterpolatorAA2[R]): bool =
+  type
+    base = LineInterpolatorAABase[R]
+    
+  var
+    dist, dx: int
+    s1 = base(self).stepVerBase(self.mDi)
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
     distEnd = self.mDi.distEnd()
-    while (dist = base(self).mDist[dy] + s1) <= base(self).mWidth)
-    {
-        distEnd += self.mDi.dxEnd()
-        *--p0 = 0;
-        if distEnd > 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc dy
-    }
-    base(self).mRen[].blendSolidVspan(base(self).mX,
-                                       base(self).mY - dy + 1,
-                                       p1 - p0,
-                                       p0)
-    return npix and ++base(self).mStep < base(self).mCount;
-}
+    npix = 0
+    
+  p1[] = 0
+  if distEnd > 0:
+    p1[] = CoverType((self).mRen[].cover(s1))
+    inc npix
+  inc p1
 
-bool stepVer()
-{
-    int distEnd;
-    int dist;
-    int dx;
-    int s1 = base(self).stepVerBase(self.mDi)
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
-
-    distEnd = self.mDi.distEnd()
-
-    int npix = 0;
-    *p1 = 0;
-    if distEnd > 0)
-    {
-        *p1 = CoverType((self).mRen[].cover(s1)
-        inc npix
-    }
+  dx = 1
+  dist = base(self).mDist[dx] - s1
+  while dist <= base(self).mWidth:
+    distEnd += self.mDi.dyEnd()
+    p1[] = 0
+    if distEnd > 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+      inc npix
     inc p1
+    inc dx
+    dist = base(self).mDist[dx] - s1
 
-    dx = 1;
-    while (dist = base(self).mDist[dx] - s1) <= base(self).mWidth)
-    {
-        distEnd += self.mDi.dyEnd()
-        *p1 = 0;
-        if distEnd > 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc p1
-        inc dx
-    }
+  dx = 1
+  distEnd = self.mDi.distEnd()
+  dist = base(self).mDist[dx] + s1
+  while dist <= base(self).mWidth:
+    distEnd -= self.mDi.dyEnd()
+    dec p0
+    p0[] = 0
+    if distEnd > 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc dx
+    dist = base(self).mDist[dx] + s1
 
-    dx = 1;
-    distEnd = self.mDi.distEnd()
-    while (dist = base(self).mDist[dx] + s1) <= base(self).mWidth)
-    {
-        distEnd -= self.mDi.dyEnd()
-        *--p0 = 0;
-        if distEnd > 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc dx
-    }
-    base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
-                                       base(self).mY,
-                                       p1 - p0,
-                                       p0)
-    return npix and ++base(self).mStep < base(self).mCount;
-}
-]#
+  base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
+                                    base(self).mY,
+                                    p1 - p0,
+                                    p0)
+                                    
+  inc base(self).mStep
+  result = npix != 0 and base(self).mStep < base(self).mCount
 
 type
   LineInterpolatorAA3*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator3
-
-#[
-line_interpolator_aa3(ren: var Renderer, lp: var LineParameters,
-                      sx, sy, ex, ey: int) :
-    LineInterpolatorAABase[Renderer](ren, lp),
-    self.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
-         lp.x1 and not(lineSubpixelMask, lp.y1 and not(lineSubpixelMask)
-{
-    int dist1_start;
-    int dist2_start;
-    int npix = 1;
-    if lp.vertical)
-    {
-        do
-        {
-            --base(self).mLi;
-            base(self).mY -= lp.inc;
-            base(self).mX = (base(self).mLp[].x1 + base(self).mLi.y()) shr lineSubpixelShift;
-
-            if lp.inc > 0) self.mDi.decY(base(self).mX - base(self).mOldX)
-            else           self.mDi.incY(base(self).mX - base(self).mOldX)
-
-            base(self).mOldX = base(self).mX;
-
-            dist1_start = dist2_start = self.mDi.distStart()
-
-            int dx = 0;
-            if dist1_start < 0) inc npix
-            do
-            {
-                dist1_start += self.mDi.dyStart()
-                dist2_start -= self.mDi.dyStart()
-                if dist1_start < 0) inc npix
-                if dist2_start < 0) inc npix
-                inc dx
-            }
-            while base(self).mDist[dx] <= base(self).mWidth)
-            if npix == 0: break;
-            npix = 0;
-        }
-        while --base(self).mStep >= -base(self).mMaxExtent)
-    }
-    else:
-    {
-        do
-        {
-            --base(self).mLi;
-            base(self).mX -= lp.inc;
-            base(self).mY = (base(self).mLp[].y1 + base(self).mLi.y()) shr lineSubpixelShift;
-
-            if lp.inc > 0) self.mDi.decX(base(self).mY - base(self).mOldY)
-            else           self.mDi.incX(base(self).mY - base(self).mOldY)
-
-            base(self).mOldY = base(self).mY;
-
-            dist1_start = dist2_start = self.mDi.distStart()
-
-            int dy = 0;
-            if dist1_start < 0) inc npix
-            do
-            {
-                dist1_start -= self.mDi.dxStart()
-                dist2_start += self.mDi.dxStart()
-                if dist1_start < 0) inc npix
-                if dist2_start < 0) inc npix
-                inc dy
-            }
-            while base(self).mDist[dy] <= base(self).mWidth)
-            if npix == 0: break;
-            npix = 0;
-        }
-        while --base(self).mStep >= -base(self).mMaxExtent)
-    }
-    base(self).mLi.adjustForward()
-    base(self).mStep -= base(self).mMaxExtent;
-}
-
-bool stepHor()
-{
-    int distStart;
-    int distEnd;
-    int dist;
-    int dy;
-    int s1 = base(self).stepHorBase(self.mDi)
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
-
-    distStart = self.mDi.distStart()
-    distEnd   = self.mDi.distEnd()
-
-    int npix = 0;
-    *p1 = 0;
-    if distEnd > 0)
-    {
-        if distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(s1)
-        }
-        inc npix
-    }
-    inc p1
-
-    dy = 1;
-    while (dist = base(self).mDist[dy] - s1) <= base(self).mWidth)
-    {
-        distStart -= self.mDi.dxStart()
-        distEnd   -= self.mDi.dxEnd()
-        *p1 = 0;
-        if distEnd > 0 and distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc p1
-        inc dy
-    }
-
-    dy = 1;
-    distStart = self.mDi.distStart()
-    distEnd   = self.mDi.distEnd()
-    while (dist = base(self).mDist[dy] + s1) <= base(self).mWidth)
-    {
-        distStart += self.mDi.dxStart()
-        distEnd   += self.mDi.dxEnd()
-        *--p0 = 0;
-        if distEnd > 0 and distStart <= 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc dy
-    }
-    base(self).mRen[].blendSolidVspan(base(self).mX,
-                                       base(self).mY - dy + 1,
-                                       p1 - p0,
-                                       p0)
-    return npix and ++base(self).mStep < base(self).mCount;
-}
-
-bool stepVer()
-{
-    int distStart;
-    int distEnd;
-    int dist;
-    int dx;
-    int s1 = base(self).stepVerBase(self.mDi)
-    CoverType* p0 = base(self).mCovers + base(self).maxHalfWidth + 2;
-    CoverType* p1 = p0;
-
-    distStart = self.mDi.distStart()
-    distEnd   = self.mDi.distEnd()
-
-    int npix = 0;
-    *p1 = 0;
-    if distEnd > 0)
-    {
-        if distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(s1)
-        }
-        inc npix
-    }
-    inc p1
-
-    dx = 1;
-    while (dist = base(self).mDist[dx] - s1) <= base(self).mWidth)
-    {
-        distStart += self.mDi.dyStart()
-        distEnd   += self.mDi.dyEnd()
-        *p1 = 0;
-        if distEnd > 0 and distStart <= 0)
-        {
-            *p1 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc p1
+    
+proc initLineInterpolatorA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex, ey: int): LineInterpolatorAA3[R] =
+  type base = LineInterpolatorAABase[R]
+  base(result).init(ren, lp)
+  
+  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
+      lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask))
+  
+  var
+    dist1_start, dist2_start: int
+    npix = 1
+    
+  if lp.vertical:
+    dec base(result).mStep
+    doWhile base(result).mStep >= -base(result).mMaxExtent:
+      dec base(result).mLi
+      base(result).mY -= lp.inc
+      base(result).mX = (base(result).mLp[].x1 + base(result).mLi.y()) shr lineSubpixelShift
+      
+      if lp.inc > 0: result.mDi.decY(base(result).mX - base(result).mOldX)
+      else:          result.mDi.incY(base(result).mX - base(result).mOldX)
+      
+      base(result).mOldX = base(result).mX
+      
+      dist2_start = result.mDi.distStart()
+      dist1_start = dist2_start
+           
+      var dx = 0
+      if dist1_start < 0: inc npix
+      doWhile base(result).mDist[dx] <= base(result).mWidth:
+        dist1_start += result.mDi.dyStart()
+        dist2_start -= result.mDi.dyStart()
+        if dist1_start < 0: inc npix
+        if dist2_start < 0: inc npix
         inc dx
-    }
 
-    dx = 1;
+      if npix == 0: break
+      npix = 0
+      dec base(result).mStep
+  else:
+    dec base(result).mStep
+    doWhile base(result).mStep >= -base(result).mMaxExtent:
+      dec base(result).mLi
+      base(result).mX -= lp.inc
+      base(result).mY = (base(result).mLp[].y1 + base(result).mLi.y()) shr lineSubpixelShift
+      
+      if lp.inc > 0: result.mDi.decX(base(result).mY - base(result).mOldY)
+      else:          result.mDi.incX(base(result).mY - base(result).mOldY)
+      
+      base(result).mOldY = base(result).mY
+      
+      dist2_start = result.mDi.distStart()
+      dist1_start = dist2_start
+      
+      var dy = 0
+      if dist1_start < 0: inc npix
+      doWhile base(result).mDist[dy] <= base(result).mWidth:
+        dist1_start -= result.mDi.dxStart()
+        dist2_start += result.mDi.dxStart()
+        if dist1_start < 0: inc npix
+        if dist2_start < 0: inc npix
+        inc dy
+
+      if npix == 0: break
+      npix = 0      
+      dec base(result).mStep    
+    
+  base(result).mLi.adjustForward()
+  base(result).mStep -= base(result).mMaxExtent;
+
+proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
+  type base = LineInterpolatorAABase[R]
+  var
+    dist, dy : int
+    s1 = base(self).stepHorBase(self.mDi)
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
-    while (dist = base(self).mDist[dx] + s1) <= base(self).mWidth)
-    {
-        distStart -= self.mDi.dyStart()
-        distEnd   -= self.mDi.dyEnd()
-        *--p0 = 0;
-        if distEnd > 0 and distStart <= 0)
-        {
-            *p0 = CoverType((self).mRen[].cover(dist)
-            inc npix
-        }
-        inc dx
-    }
-    base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
-                                       base(self).mY,
-                                       p1 - p0,
-                                       p0)
-    return npix and ++base(self).mStep < base(self).mCount;
-}
-]#
+    npix = 0
+    
+  p1[] = 0
+  if distEnd > 0:
+    if distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(s1))
+    inc npix
+  inc p1
+  
+  dy = 1
+  dist = base(self).mDist[dy] - s1
+  while dist <= base(self).mWidth:
+    distStart -= self.mDi.dxStart()
+    distEnd   -= self.mDi.dxEnd()
+    p1[] = 0
+    if distEnd > 0 and distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc p1
+    inc dy
+    dist = base(self).mDist[dy] - s1
+  
+  dy = 1
+  distStart = self.mDi.distStart()
+  distEnd   = self.mDi.distEnd()
+  dist = base(self).mDist[dy] + s1
+  while dist <= base(self).mWidth:
+    distStart += self.mDi.dxStart()
+    distEnd   += self.mDi.dxEnd()
+    dec p0
+    p0[] = 0
+    if distEnd > 0 and distStart <= 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc dy
+    dist = base(self).mDist[dy] + s1
+
+  base(self).mRen[].blendSolidVspan(base(self).mX,
+                                    base(self).mY - dy + 1,
+                                    p1 - p0,
+                                    p0)
+  inc base(self).mStep
+  return npix != 0 and base(self).mStep  < base(self).mCount
+
+proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
+  type base = LineInterpolatorAABase[R]
+  var
+    dist, dy : int
+    s1 = base(self).stepVerBase(self.mDi)
+    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p1 = p0
+    distStart = self.mDi.distStart()
+    distEnd   = self.mDi.distEnd()
+    npix = 0
+    
+  p1[] = 0
+  if distEnd > 0:
+    if distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(s1))
+    inc npix
+  inc p1
+  
+  dx = 1
+  dist = base(self).mDist[dx] - s1
+  while dist <= base(self).mWidth:
+    distStart += self.mDi.dyStart()
+    distEnd   += self.mDi.dyEnd()
+    p1[] = 0
+    if distEnd > 0 and distStart <= 0:
+      p1[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc p1
+    inc dx
+    dist = base(self).mDist[dx] - s1
+  
+  dx = 1
+  distStart = self.mDi.distStart()
+  distEnd   = self.mDi.distEnd()
+  dist = base(self).mDist[dx] + s1
+  while dist <= base(self).mWidth:
+    distStart -= self.mDi.dyStart()
+    distEnd   -= self.mDi.dyEnd()
+    dec p0
+    p0[] = 0
+    if distEnd > 0 and distStart <= 0:
+      p0[] = CoverType((self).mRen[].cover(dist))
+      inc npix
+    inc dx
+    
+  base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
+                                    base(self).mY,
+                                    p1 - p0,
+                                    p0)
+  inc base(self).mStep
+  result = npix != 0 and base(self).mStep < base(self).mCount
 
 const
   subPixelShift = lineSubpixelShift
@@ -977,61 +921,126 @@ const
   aaMask  = aaScale - 1
 
 type
-  LineProfileAA * = object
+  LineProfileAA* = object
     mProfile: seq[uint8]
     mGamma: array[aaScale, uint8]
-    mSubpixelWidth: int
+    msubPixelWidth: int
     mMinWidth: float64
     mSmootherWidth: float64
- 
-#[
-line_profile_aa() :
-    self.mSubpixelWidth(0),
-    self.mMinWidth(1.0),
-    self.self.mSmootherWidth(1.0)
-{
-    int i;
-    for(i = 0; i < aaScale; i++) self.mGamma[i] = (ValueType)i;
-}
 
-#---------------------------------------------------------------------
-[GammaF>
-line_profile_aa(float64 w, const GammaF& gamma_function) :
-    self.mSubpixelWidth(0),
-    self.mMinWidth(1.0),
-    self.self.mSmootherWidth(1.0)
-{
-    gamma(gamma_function)
-    width(w)
-}
+proc width*(self: var LineProfileAA, w: float64)
 
-proc min_width(float64 w) = self.mMinWidth = w
-proc smoother_width(float64 w) = self.self.mSmootherWidth = w
+proc gamma*[GammaF](self: var LineProfileAA, gammaF: var GammaF) =
+  for i in 0.. <aaScale:
+    self.mGamma[i] = uround(gammaF(float64(i) / aaMask) * aaMask).uint8
 
-[GammaF> void gamma(const GammaF& gamma_function)
-{
-    int i;
-    for(i = 0; i < aaScale; i++)
-    {
-        self.mGamma[i] = ValueType(
-            uround(gamma_function(float64(i) / aaMask) * aaMask))
-    }
-}
+proc initLineProfileAA*(): LineProfileAA =
+  result.msubPixelWidth = 0
+  result.mMinWidth = 1.0
+  result.mSmootherWidth = 1.0
+  for i in 0.. <aaScale: result.mGamma[i] = i.uint8
 
-proc width(float64 w)
+proc initLineProfileAA*[GammaF](w: float64, gammaF: var GammaF): LineProfileAA =
+  result.msubPixelWidth = 0
+  result.mMinWidth = 1.0
+  result.mSmootherWidth = 1.0
+  result.gamma(gammaF)
+  result.width(w)
 
-unsigned profile_size(): float64 = self.mProfile.len }
-int subpixel_width(): float64 = self.mSubpixelWidth
+proc minWidth*(self: var LineProfileAA, w: float64) =
+  self.mMinWidth = w
 
-float64 min_width(): float64 = self.mMinWidth
-float64 smoother_width(): float64 = self.self.mSmootherWidth
+proc smootherWidth*(self: var LineProfileAA, w: float64) =
+  self.mSmootherWidth = w
 
-ValueType value(int dist) const
-    return self.mProfile[dist + subPixelScale*2];
+proc profileSize*(self: LineProfileAA): int =
+  self.mProfile.len
 
-ValueType* profile(float64 w)
-proc set(float64 center_width, float64 smoother_width)
-]#
+proc subPixelWidth*(self: LineProfileAA): int =
+  self.msubPixelWidth
+
+proc minWidth*(self: LineProfileAA): float64 =
+  self.mMinWidth
+
+proc smootherWidth*(self: LineProfileAA): float64 =
+  self.mSmootherWidth
+
+proc value*(self: var LineProfileAA, dist: int): uint8 =
+  self.mProfile[dist + subPixelScale*2]
+
+proc profile*(self: var LineProfileAA, w: float64): ptr uint8 =
+  self.msubPixelWidth = uround(w * subPixelScale)
+  let size = self.msubPixelWidth + subPixelScale * 6
+  if size > self.mProfile.len:
+    self.mProfile.setLen(size)
+  result = self.mProfile[0].addr
+
+proc set*(self: var LineProfileAA, centerWidth, smootherWidth: float64) =
+  var
+    baseVal = 1.0
+    centerWidth = centerWidth
+    smootherWidth = smootherWidth
+
+  if centerWidth == 0.0:   centerWidth = 1.0 / subPixelScale
+  if smootherWidth == 0.0: smootherWidth = 1.0 / subPixelScale
+
+  var width = centerWidth + smootherWidth
+  if width < self.mMinWidth:
+    let k = width / self.mMinWidth
+    baseVal *= k
+    centerWidth = centerWidth / k
+    smootherWidth = smootherWidth / k
+
+  var
+    ch = self.profile(centerWidth + smootherWidth)
+    subPixelCenterWidth = (centerWidth * subPixelScale).int
+    subPixelSmootherWidth = (smootherWidth * subPixelScale).int
+    chCenter   = ch + subPixelScale*2
+    chSmoother = chCenter + subPixelCenterWidth
+    val = self.mGamma[(baseVal * aaMask).int]
+
+  ch = chCenter
+  for i in 0.. <subPixelCenterWidth:
+    ch[] = val.uint8
+    inc ch
+
+  for i in 0.. <subPixelSmootherWidth:
+    let idx = int((baseVal - baseVal * (float64(i) / subPixelSmootherWidth.float64)) * aaMask)
+    chSmoother[] = self.mGamma[idx]
+    inc chSmoother
+
+  let nSmoother = self.profileSize() -
+                   subPixelSmootherWidth -
+                   subPixelCenterWidth -
+                   subPixelScale*2
+
+  val = self.mGamma[0]
+  for i in 0.. < nSmoother:
+    chSmoother[] = val.uint8
+    inc chSmoother
+
+  ch = chCenter
+  for i in 0.. <subPixelScale*2:
+    dec ch
+    ch[] = chCenter[]
+    inc chCenter
+
+proc width(self: var LineProfileAA, w: float64) =
+  var w = w
+  if w < 0.0: w = 0.0
+
+  if w < self.mSmootherWidth: w += w
+  else:                       w += self.mSmootherWidth
+
+  w *= 0.5
+
+  w -= self.mSmootherWidth
+  var s = self.mSmootherWidth
+  if w < 0.0:
+    s += w
+    w = 0.0
+
+  self.set(w, s)
 
 type
   RendererOutlineAA*[BaseRenderer, ColorT] = object
@@ -1040,53 +1049,55 @@ type
     mColor: ColorT
     mClipBox: RectI
     mClipping: bool
-    
-#[   
-    typedef BaseRenderer base_ren_type;
-    typedef renderer_outline_aa<base_ren_type> self_type;
-    typedef typename base_ren_type::ColorT ColorT;
 
-    renderer_outline_aa(base_ren_type& ren, const line_profile_aa& prof) :
-        self.mRen(&ren),
-        self.mProfile(&prof),
-        self.mClipBox(0,0,0,0),
-        self.mClipping(false)
+proc initRendererOutlineAA*[R,C](ren: var R, prof: var LineProfileAA): RendererOutlineAA[R,C] =
+  result.mRen = ren.addr
+  result.mProfile = prof.addr
+  result.mClipBox = initRectI(0,0,0,0)
+  result.mClipping = false
 
-proc attach(base_ren_type& ren) = self.mRen = &ren
+proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) = 
+  self.mRen = ren.addr
 
-proc color(c: ColorT) = self.mColor = c
-  c: ColorTolor(): float64 = self.mColor
+proc color*[R,ColorT](self: var RendererOutlineAA[R,ColorT], c: ColorT) = 
+  self.mColor = c
+  
+proc Color*[R,C](self: RendererOutlineAA[R,C]): C = 
+  self.mColor
 
-proc profile(const line_profile_aa& prof) = self.mProfile = &prof
-const line_profile_aa& profile(): float64 = *self.mProfile
-line_profile_aa& profile() = return *self.mProfile
+proc profile*[R,C](self: var RendererOutlineAA[R,C], prof: var LineProfileAA) = 
+  self.mProfile = prof.addr
+  
+proc profile*[R,C](self: RendererOutlineAA[R,C]): var LineProfileAA = self.mProfile[]
+proc subPixelWidth*[R,C](self: RendererOutlineAA[R,C]): int = self.mProfile[].subPixelWidth()
 
-int subpixel_width(): float64 = self.mProfile->subpixel_width()
-
-proc resetClipping() = self.mClipping = false
-proc clipBox(x1, y1, x2, y2: float64)
-  self.mClipBox.x1 = line_coord_sat::conv(x1)
-  self.mClipBox.y1 = line_coord_sat::conv(y1)
-  self.mClipBox.x2 = line_coord_sat::conv(x2)
-  self.mClipBox.y2 = line_coord_sat::conv(y2)
+proc resetClipping*[R,C](self: var RendererOutlineAA[R,C]) = 
+  self.mClipping = false
+  
+proc clipBox*[R,C](self: var RendererOutlineAA[R,C], x1, y1, x2, y2: float64) =
+  self.mClipBox.x1 = LineCoordSat.conv(x1)
+  self.mClipBox.y1 = LineCoordSat.conv(y1)
+  self.mClipBox.x2 = LineCoordSat.conv(x2)
+  self.mClipBox.y2 = LineCoordSat.conv(y2)
   self.mClipping = true
 
-int cover(int d) const
-  return self.mProfile->value(d)
+proc cover*[R,C](self: var RendererOutlineAA[R,C], d: int): int =
+  self.mProfile[].value(d)
 
-proc blendSolidHspan(x, y, len: int, covers: ptr CoverType)
+proc blendSolidHspan*[R,C](self: var RendererOutlineAA[R,C],x, y, len: int, covers: ptr CoverType) =
   self.mRen[].blendSolidHspan(x, y, len, self.mColor, covers)
 
-proc blendSolidVspan(x, y, len: int, covers: ptr CoverType)
+proc blendSolidVspan*[R,C](self: var RendererOutlineAA[R,C],x, y, len: int, covers: ptr CoverType) =
   self.mRen[].blendSolidVspan(x, y, len, self.mColor, covers)
 
-static bool accurateJoinOnly() = return false
+proc accurateJoinOnly*[R,C](self: var RendererOutlineAA[R,C]): bool = false
 
+#[
 [Cmp>
-proc semidot_hline(Cmp cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int)
+proc semidot_hline*[R,C](Cmp cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int)
 
   cover: CoverTypes[line_interpolator_aa_base<self_type>::maxHalfWidth * 2 + 4];
-  CoverType* p0 = covers;
+  p0 = covers;
   CoverType* p1 = covers;
   int x = x1 shl lineSubpixelShift;
   int y = y1 shl lineSubpixelShift;
@@ -1101,7 +1112,7 @@ proc semidot_hline(Cmp cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int)
   do
   {
       int d = int(fast_sqrt(dx*dx + dy*dy))
-      *p1 = 0;
+      p1[] = 0
       if cmp(di.dist()) and d <= w)
       {
           *p1 = (CoverType)cover(d)
@@ -1119,7 +1130,7 @@ proc semidot_hline(Cmp cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int)
 
 
     [Cmp>
-proc semidot(Cmp cmp, xc1, yc1, xc2, yc2: int)
+proc semidot*[R,C](Cmp cmp, xc1, yc1, xc2, yc2: int)
   if self.mClipping and clipping_flags(xc1, yc1, self.mClipBox)) return;
 
   int r = ((subpixel_width() + lineSubpixelMask) shr lineSubpixelShift)
@@ -1150,12 +1161,12 @@ proc semidot(Cmp cmp, xc1, yc1, xc2, yc2: int)
   semidot_hline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
 
 
-proc pie_hline(xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int)
+proc pie_hline*[R,C](xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int)
 
   if self.mClipping and clipping_flags(xc, yc, self.mClipBox)) return;
 
   cover: CoverTypes[line_interpolator_aa_base<self_type>::maxHalfWidth * 2 + 4];
-  CoverType* p0 = covers;
+  p0 = covers;
   CoverType* p1 = covers;
   int x = xh1 shl lineSubpixelShift;
   int y = yh1 shl lineSubpixelShift;
@@ -1171,7 +1182,7 @@ proc pie_hline(xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int)
   do
   {
       int d = int(fast_sqrt(dx*dx + dy*dy))
-      *p1 = 0;
+      p1[] = 0
       if di.dist1() <= 0 and di.dist2() > 0 and d <= w)
       {
           *p1 = (CoverType)cover(d)
@@ -1188,7 +1199,7 @@ proc pie_hline(xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int)
 
 
 
-proc pie(int xc, int yc, x1, y1, x2, y2: int)
+proc pie*[R,C](int xc, int yc, x1, y1, x2, y2: int)
   int r = ((subpixel_width() + lineSubpixelMask) shr lineSubpixelShift)
   if r < 1) r = 1;
   ellipse_bresenhaself.mInterpolator ei(r, r)
@@ -1217,82 +1228,55 @@ proc pie(int xc, int yc, x1, y1, x2, y2: int)
   pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
 
 
-proc line0_no_clip(lp: var LineParameters)
+proc line0_no_clip*[R,C](lp: var LineParameters)
   if lp.len > lineMaxLength)
-  {
       line_parameters lp1, lp2;
       lp.divide(lp1, lp2)
       line0_no_clip(lp1)
       line0_no_clip(lp2)
       return;
-  }
 
   line_interpolator_aa0<self_type> li(*this, lp)
   if li.count())
-  {
       if li.vertical())
-      {
-          while li.stepVer())
-      }
+          while li.stepVer(): discard
       else:
-      {
-          while li.stepHor())
-      }
-  }
+          while li.stepHor(): discard
 
-
-proc line0(lp: var LineParameters)
+proc line0*[R,C](lp: var LineParameters)
   if self.mClipping)
-  {
-      int x1 = lp.x1;
-      int y1 = lp.y1;
-      int x2 = lp.x2;
-      int y2 = lp.y2;
-      unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
-      if (flags & 4) == 0:
-      {
-          if flags)
-          {
-              line_parameters lp2(x1, y1, x2, y2,
-                                uround(calcDistance(x1, y1, x2, y2)))
-              line0_no_clip(lp2)
-          }
-          else:
-          {
-              line0_no_clip(lp)
-          }
-      }
-  }
+    int x1 = lp.x1;
+    int y1 = lp.y1;
+    int x2 = lp.x2;
+    int y2 = lp.y2;
+    unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
+    if (flags & 4) == 0:
+      if flags)
+        line_parameters lp2(x1, y1, x2, y2,
+                          uround(calcDistance(x1, y1, x2, y2)))
+        line0_no_clip(lp2)
+      else:
+        line0_no_clip(lp)
   else:
-  {
-      line0_no_clip(lp)
-  }
+    line0_no_clip(lp)
 
-
-proc line1_no_clip(lp: var LineParameters, sx, sy: int)
-  if lp.len > lineMaxLength)
-  {
-      line_parameters lp1, lp2;
-      lp.divide(lp1, lp2)
-      line1_no_clip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1)
-      line1_no_clip(lp2, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
-      return;
-  }
+proc line1_no_clip*[R,C](lp: var LineParameters, sx, sy: int)
+  if lp.len > lineMaxLength)    
+    line_parameters lp1, lp2;
+    lp.divide(lp1, lp2)
+    line1_no_clip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1)
+    line1_no_clip(lp2, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
+    return;
+    
 
   fix_degenerate_bisectrix_start(lp, &sx, &sy)
   line_interpolator_aa1<self_type> li(*this, lp, sx, sy)
   if li.vertical())
-  {
-      while li.stepVer())
-  }
+    while li.stepVer(): discard
   else:
-  {
-      while li.stepHor())
-  }
+    while li.stepHor(): discard
 
-
-
-proc line1(lp: var LineParameters, sx, sy: int)
+proc line1*[R,C](lp: var LineParameters, sx, sy: int)
   if self.mClipping)
   {
       int x1 = lp.x1;
@@ -1333,29 +1317,22 @@ proc line1(lp: var LineParameters, sx, sy: int)
   }
 
 
-proc line2NoClip(lp: var LineParameters, ex, ey: int)
+proc line2NoClip*[R,C](lp: var LineParameters, ex, ey: int)
   if lp.len > lineMaxLength)
-  {
       line_parameters lp1, lp2;
       lp.divide(lp1, lp2)
       line2NoClip(lp1, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
       line2NoClip(lp2, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
       return;
-  }
 
   fix_degenerate_bisectrix_end(lp, &ex, &ey)
   line_interpolator_aa2<self_type> li(*this, lp, ex, ey)
   if li.vertical())
-  {
-      while li.stepVer())
-  }
+    while li.stepVer(): discard
   else:
-  {
-      while li.stepHor())
-  }
+    while li.stepHor(): discard
 
-
-proc line2(lp: var LineParameters, ex, ey: int)
+proc line2*[R,C](lp: var LineParameters, ex, ey: int)
   if self.mClipping)
   {
       int x1 = lp.x1;
@@ -1395,33 +1372,31 @@ proc line2(lp: var LineParameters, ex, ey: int)
       line2NoClip(lp, ex, ey)
   }
 
+proc line3NoClip*[R,C](lp: var LineParameters, sx, sy, ex, ey: int) =
+  if lp.len > lineMaxLength:
+    var
+      lp1, lp2: LineParameters
 
-proc line3NoClip(lp: var LineParameters, sx, sy, ex, ey: int)
-  if lp.len > lineMaxLength)
-  {
-      line_parameters lp1, lp2;
-      lp.divide(lp1, lp2)
-      int mx = lp1.x2 + (lp1.y2 - lp1.y1)
-      int my = lp1.y2 - (lp1.x2 - lp1.x1)
-      line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
-      line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
-      return;
-  }
+    lp.divide(lp1, lp2)
+    var
+      mx = lp1.x2 + (lp1.y2 - lp1.y1)
+      my = lp1.y2 - (lp1.x2 - lp1.x1)
 
-  fix_degenerate_bisectrix_start(lp, &sx, &sy)
-  fix_degenerate_bisectrix_end(lp, &ex, &ey)
+    line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
+    line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
+    return
+
+  fixDegenerateBisectrixStart(lp, sx, sy)
+  fixDegenerateBisectrixEnd(lp, ex, ey)
+
   line_interpolator_aa3<self_type> li(*this, lp, sx, sy, ex, ey)
-  if li.vertical())
-  {
-      while li.stepVer())
-  }
+
+  if li.vertical():
+    while li.stepVer(): discard
   else:
-  {
-      while li.stepHor())
-  }
+    while li.stepHor(): discard
 
-
-proc line3(lp: var LineParameters, sx, sy, ex, ey: int)
+proc line3*[R,C](lp: var LineParameters, sx, sy, ex, ey: int)
   if self.mClipping)
   {
       int x1 = lp.x1;
@@ -1470,8 +1445,5 @@ proc line3(lp: var LineParameters, sx, sy, ex, ey: int)
       }
   }
   else:
-  {
-      line3NoClip(lp, sx, sy, ex, ey)
-  }
-
+    line3NoClip(lp, sx, sy, ex, ey)
 ]#
