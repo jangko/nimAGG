@@ -455,12 +455,11 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
 
 
 type
-  LineInterpolatorAA1 = object of LineInterpolatorAAbase[Renderer]
+  LineInterpolatorAA1*[Renderer] = object of LineInterpolatorAAbase[Renderer]
     mDi: DistanceInterpolator2
     
 #[
-line_interpolator_aa1(ren: var Renderer, lp: var LineParameters,
-                      sx, sy: int) :
+line_interpolator_aa1(ren: var Renderer, lp: var LineParameters, sx, sy: int) :
     LineInterpolatorAABase[Renderer](ren, lp),
     self.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy,
          lp.x1 and not(lineSubpixelMask, lp.y1 and not(lineSubpixelMask)
@@ -636,22 +635,24 @@ bool stepVer()
     return ++base(self).mStep < base(self).mCount;
 }
 
+]#
 
-[Renderer> class line_interpolator_aa2 :
-object of LineInterpolatorAABase[Renderer]
-distance_interpolator2 self.mDi;
+type
+  LineInterpolatorAA2*[Renderer] = object of LineInterpolatorAABase[Renderer]
+    mDi: DistanceInterpolator2
 
-line_interpolator_aa2(ren: var Renderer, lp: var LineParameters,
-                      ex, ey: int) :
-    LineInterpolatorAABase[Renderer](ren, lp),
-    self.mDi(lp.x1, lp.y1, lp.x2, lp.y2, ex, ey,
-         lp.x1 and not(lineSubpixelMask, lp.y1 and not(lineSubpixelMask,
-         0)
-{
-    base(self).mLi.adjustForward()
-    base(self).mStep -= base(self).mMaxExtent;
-}
+proc initLineInterpolatorAA2*[Renderer](ren: var Renderer, 
+  lp: var LineParameters, ex, ey: int): LineInterpolatorAA2[Renderer] =
+  type 
+    base = LineInterpolatorAABase[Renderer]
+    
+  base(result).init(ren, lp)
+  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, ex, ey,
+    lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask), 0)
+  base(result).mLi.adjustForward()
+  base(result).mStep -= base(result).mMaxExtent
 
+#[
 bool stepHor()
 {
     int distEnd;
@@ -759,15 +760,13 @@ bool stepVer()
                                        p0)
     return npix and ++base(self).mStep < base(self).mCount;
 }
+]#
 
+type
+  LineInterpolatorAA3*[Renderer] = object of LineInterpolatorAABase[Renderer]
+    mDi: DistanceInterpolator3
 
-    
-
-[Renderer> class line_interpolator_aa3 :
-object of LineInterpolatorAABase[Renderer]
-distance_interpolator3 self.mDi;   
-
-
+#[
 line_interpolator_aa3(ren: var Renderer, lp: var LineParameters,
                       sx, sy, ex, ey: int) :
     LineInterpolatorAABase[Renderer](ren, lp),
@@ -966,106 +965,83 @@ bool stepVer()
                                        p0)
     return npix and ++base(self).mStep < base(self).mCount;
 }
+]#
 
+const
+  subPixelShift = lineSubpixelShift
+  subPixelScale = 1 shl subPixelShift
+  subPixelMask  = subPixelScale - 1
 
+  aaShift = 8
+  aaScale = 1 shl aaShift
+  aaMask  = aaScale - 1
 
-    
+type
+  LineProfileAA * = object
+    mProfile: seq[uint8]
+    mGamma: array[aaScale, uint8]
+    mSubpixelWidth: int
+    mMinWidth: float64
+    mSmootherWidth: float64
+ 
+#[
+line_profile_aa() :
+    self.mSubpixelWidth(0),
+    self.mMinWidth(1.0),
+    self.self.mSmootherWidth(1.0)
+{
+    int i;
+    for(i = 0; i < aaScale; i++) self.mGamma[i] = (ValueType)i;
+}
 
+#---------------------------------------------------------------------
+[GammaF>
+line_profile_aa(float64 w, const GammaF& gamma_function) :
+    self.mSubpixelWidth(0),
+    self.mMinWidth(1.0),
+    self.self.mSmootherWidth(1.0)
+{
+    gamma(gamma_function)
+    width(w)
+}
 
+proc min_width(float64 w) = self.mMinWidth = w
+proc smoother_width(float64 w) = self.self.mSmootherWidth = w
 
-
-class line_profile_aa
-
-    pod_array<ValueType> self.mProfile;
-    ValueType            m_gamma[aa_scale];
-    int                   m_subpixel_width;
-    float64                m_min_width;
-    float64                self.mSmoother_width;
-
-
-
-    typedef int8u ValueType;
-    enum subPixelScale_e
+[GammaF> void gamma(const GammaF& gamma_function)
+{
+    int i;
+    for(i = 0; i < aaScale; i++)
     {
-        subPixelShift = lineSubpixelShift,
-        subPixelScale = 1 shl subPixelShift,
-        subpixel_mask  = subPixelScale - 1
-    };
-
-    enum aa_scale_e
-    {
-        aa_shift = 8,
-        aa_scale = 1 shl aa_shift,
-        aa_mask  = aa_scale - 1
-    };
-
-    #---------------------------------------------------------------------
-    line_profile_aa() :
-        m_subpixel_width(0),
-        m_min_width(1.0),
-        self.mSmoother_width(1.0)
-    {
-        int i;
-        for(i = 0; i < aa_scale; i++) m_gamma[i] = (ValueType)i;
+        self.mGamma[i] = ValueType(
+            uround(gamma_function(float64(i) / aaMask) * aaMask))
     }
-
-    #---------------------------------------------------------------------
-    [GammaF>
-    line_profile_aa(float64 w, const GammaF& gamma_function) :
-        m_subpixel_width(0),
-        m_min_width(1.0),
-        self.mSmoother_width(1.0)
-    {
-        gamma(gamma_function)
-        width(w)
-    }
-
-    #---------------------------------------------------------------------
-proc min_width(float64 w) = m_min_width = w
-proc smoother_width(float64 w) = self.mSmoother_width = w
-
-    #---------------------------------------------------------------------
-    [GammaF> void gamma(const GammaF& gamma_function)
-    {
-        int i;
-        for(i = 0; i < aa_scale; i++)
-        {
-            m_gamma[i] = ValueType(
-                uround(gamma_function(float64(i) / aa_mask) * aa_mask))
-        }
-    }
+}
 
 proc width(float64 w)
 
-    unsigned profile_size(): float64 = self.mProfile.len }
-    int subpixel_width(): float64 = m_subpixel_width
+unsigned profile_size(): float64 = self.mProfile.len }
+int subpixel_width(): float64 = self.mSubpixelWidth
 
-    #---------------------------------------------------------------------
-    float64 min_width(): float64 = m_min_width
-    float64 smoother_width(): float64 = self.mSmoother_width
+float64 min_width(): float64 = self.mMinWidth
+float64 smoother_width(): float64 = self.self.mSmootherWidth
 
-    #---------------------------------------------------------------------
-    ValueType value(int dist) const
-    {
-        return self.mProfile[dist + subPixelScale*2];
-    }
+ValueType value(int dist) const
+    return self.mProfile[dist + subPixelScale*2];
 
-private:
-    line_profile_aa(const line_profile_aa&)
-    const line_profile_aa& operator = (const line_profile_aa&)
-
-    ValueType* profile(float64 w)
+ValueType* profile(float64 w)
 proc set(float64 center_width, float64 smoother_width)
+]#
 
-
-
-[BaseRenderer> class renderer_outline_aa
-    mRen: ptr Renderer
+type
+  RendererOutlineAA*[BaseRenderer, ColorT] = object
+    mRen: ptr BaseRenderer
     mProfile: ptr LineProfileAA
     mColor: ColorT
     mClipBox: RectI
     mClipping: bool
     
+#[   
     typedef BaseRenderer base_ren_type;
     typedef renderer_outline_aa<base_ren_type> self_type;
     typedef typename base_ren_type::ColorT ColorT;

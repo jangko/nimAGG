@@ -41,13 +41,13 @@ image_accessors
 pixfmt_transposer
 rasterizer_outline_aa
 span_gradient
+image_filters
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
   renderer_outline_aa
-  image_filters
   agg_math
   
 translate ok:
