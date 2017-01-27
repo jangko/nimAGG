@@ -40,13 +40,15 @@ conv_marker
 image_accessors
 pixfmt_transposer
 rasterizer_outline_aa
+span_gradient
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
-  span_gradient
   renderer_outline_aa
+  image_filters
+  agg_math
   
 translate ok:
   clip_liang_barsky

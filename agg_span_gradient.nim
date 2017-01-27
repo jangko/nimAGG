@@ -61,204 +61,162 @@ template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: t
       inc self.mInterpolator[]
       dec len
 
-#[
+
+type
+  GradientLinearColor*[ColorT] = object
+    mC1, mC2: ColorT
+    mSize: int
 
 
+proc initGradientLinearColor*[ColorT](c1, c2: ColorT, size = 256): GradientLinearColor[ColorT] =
+  result.mC1 = c1
+  result.mC2 = c2
+  result.mSize = size
 
-[ColorT>
-struct gradient_linear_color
-    typedef ColorT ColorT;
+proc size*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
 
-    gradient_linear_color() {}
-    gradient_linear_color(c: ColorT1, c: ColorT2,
-                          unsigned size = 256) :
-        m_c1(c1), m_c2(c2), m_size(size) {}
+proc `[]`*[ColorT](self: var GradientLinearColor[ColorT], v: int): ColorT =
+  self.mC1.gradient(self.mC2, v.float64 / float64(self.mSize - 1))
 
-    unsigned size(): float64 = m_size
-    ColorT operator [] (unsigned v) const
-    {
-        return m_c1.gradient(m_c2, double(v) / double(m_size - 1))
-    }
+proc colors*[ColorT](self: var GradientLinearColor[ColorT], c1, c2: ColorT, size = 256) =
+  self.mC1 = c1
+  self.mC2 = c2
+  self.mSize = size
 
-proc colors(c: ColorT1, c: ColorT2, unsigned size = 256)
-    {
-        m_c1 = c1;
-        m_c2 = c2;
-        m_size = size;
-    }
+type
+  GradientCircle* = object
 
-    ColorT m_c1;
-    ColorT m_c2;
-    unsigned m_size;
+# Actually the same as radial. Just for compatibility
+proc calculate*(self: GradientCircle, x, y, d: int): int {.inline.} =
+  fastSqrt(x*x + y*y)
 
+type
+  GradientRadial* = object
 
+proc calculate*(self: GradientRadial, x, y, d: int): int {.inline.} =
+  fastSqrt(x*x + y*y)
 
+type
+  GradientRadialD* = object
 
+proc calculate*(self: GradientRadialD, x, y, d: int): int {.inline.} =
+  uround(sqrt(float64(x)*float64(x) + float64(y)*float64(y)))
 
+type
+  GradientRadialFocus* = object
+    mR, mFx, mFy: int
+    mR2, mFx2, mFy2, mMul: float64
 
-class gradient_circle
-    # Actually the same as radial. Just for compatibility
-    static AGG_INLINE int calculate(x, y: int, int)
-    {
-        return int(fast_sqrt(x*x + y*y))
-    }
+proc updateValues(self: var GradientRadialFocus) =
+  # Calculate the invariant values. In of the focal center
+  # lies exactly on the gradient circle the divisor degenerates
+  # into zero. In this of we just move the focal center by
+  # one subpixel unit possibly in the direction to the origin (0,0)
+  # and calculate the values again.
+  self.mR2  = float64(self.mR)  * float64(self.mR)
+  self.mFx2 = float64(self.mFx) * float64(self.mFx)
+  self.mFy2 = float64(self.mFy) * float64(self.mFy)
+  var d = self.mR2 - (self.mFx2 + self.mFy2)
+  if d == 0:
+    if self.mFx != 0:
+      if self.mFx < 0: inc self.mFx else: dec self.mFx
+    if self.mFy != 0:
+      if self.mFy < 0: inc self.mFy else: dec self.mFy
+    self.mFx2 = float64(self.mFx) * float64(self.mFx)
+    self.mFy2 = float64(self.mFy) * float64(self.mFy)
+    d = self.mR2 - (self.mFx2 + self.mFy2)
 
+  self.mMul = float64(self.mR) / d
 
-class gradient_radial
-    static AGG_INLINE int calculate(x, y: int, int)
-    {
-        return int(fast_sqrt(x*x + y*y))
-    }
+proc initGradientRadialFocus*(): GradientRadialFocus =
+  result.mR  = 100 * gradientSubpixelScale
+  result.mFx = 0
+  result.mFy = 0
+  result.updateValues()
 
-class gradient_radial_d
-    static AGG_INLINE int calculate(x, y: int, int)
-    {
-        return uround(sqrt(double(x)*double(x) + double(y)*double(y)))
-    }
+proc initGradientRadialFocus*(r, fx, fy: float64): GradientRadialFocus =
+  result.mR  = iround(r  * gradientSubpixelScale)
+  result.mFx = iround(fx * gradientSubpixelScale)
+  result.mFy = iround(fy * gradientSubpixelScale)
+  result.updateValues()
 
-class gradient_radial_focus
-    #---------------------------------------------------------------------
-    gradient_radial_focus() :
-        m_r(100 * gradientSubpixelScale),
-        m_fx(0),
-        m_fy(0)
-    {
-        update_values()
-    }
+proc init*(self: var GradientRadialFocus, r, fx, fy: float64) =
+  self.mR  = iround(r  * gradientSubpixelScale)
+  self.mFx = iround(fx * gradientSubpixelScale)
+  self.mFy = iround(fy * gradientSubpixelScale)
+  self.updateValues()
 
-    #---------------------------------------------------------------------
-    gradient_radial_focus(double r, double fx, double fy) :
-        m_r (iround(r  * gradientSubpixelScale)),
-        m_fx(iround(fx * gradientSubpixelScale)),
-        m_fy(iround(fy * gradientSubpixelScale))
-    {
-        update_values()
-    }
+proc radius*(self: GradientRadialFocus): float64 = float64(self.mR)  / gradientSubpixelScale
+proc focusX*(self: GradientRadialFocus): float64 = float64(self.mFx) / gradientSubpixelScale
+proc focusY*(self: GradientRadialFocus): float64 = float64(self.mFy) / gradientSubpixelScale
 
-    #---------------------------------------------------------------------
-proc init(double r, double fx, double fy)
-    {
-        m_r  = iround(r  * gradientSubpixelScale)
-        m_fx = iround(fx * gradientSubpixelScale)
-        m_fy = iround(fy * gradientSubpixelScale)
-        update_values()
-    }
-
-    #---------------------------------------------------------------------
-    double radius()  const { return double(m_r)  / gradientSubpixelScale
-    double focus_x(): float64 = double(m_fx) / gradientSubpixelScale
-    double focus_y(): float64 = double(m_fy) / gradientSubpixelScale
-
-    #---------------------------------------------------------------------
-    int calculate(x, y: int, int) const
-    {
-        double dx = x - m_fx;
-        double dy = y - m_fy;
-        double d2 = dx * m_fy - dy * m_fx;
-        double d3 = m_r2 * (dx * dx + dy * dy) - d2 * d2;
-        return iround((dx * m_fx + dy * m_fy + sqrt(abs(d3))) * m_mul)
-    }
-
-private:
-    #---------------------------------------------------------------------
-proc update_values()
-    {
-        # Calculate the invariant values. In of the focal center
-        # lies exactly on the gradient circle the divisor degenerates
-        # into zero. In this of we just move the focal center by
-        # one subpixel unit possibly in the direction to the origin (0,0)
-        # and calculate the values again.
-        #-------------------------
-        m_r2  = double(m_r)  * double(m_r)
-        m_fx2 = double(m_fx) * double(m_fx)
-        m_fy2 = double(m_fy) * double(m_fy)
-        double d = (m_r2 - (m_fx2 + m_fy2))
-        if d == 0:
-        {
-            if m_fx) = if m_fx < 0) ++m_fx; else --m_fx
-            if m_fy) = if m_fy < 0) ++m_fy; else --m_fy
-            m_fx2 = double(m_fx) * double(m_fx)
-            m_fy2 = double(m_fy) * double(m_fy)
-            d = (m_r2 - (m_fx2 + m_fy2))
-        }
-        m_mul = m_r / d;
-    }
-
-    int    m_r;
-    int    m_fx;
-    int    m_fy;
-    double m_r2;
-    double m_fx2;
-    double m_fy2;
-    double m_mul;
-]#
+proc calculate*(self: var GradientRadialFocus, x, y, d: int): int =
+  var
+    fx = self.mFx.float64
+    fy = self.mFy.float64
+    dx = x.float64 - fx
+    dy = y.float64 - fy
+    d2 = dx * fy - dy * fx
+    d3 = self.mR2 * (dx * dx + dy * dy) - d2 * d2
+  iround((dx * fx + dy * fx + sqrt(abs(d3))) * self.mMul)
 
 type
   GradientX* = object
 
 proc initGradientX*(): GradientX = discard
-proc calculate*(self: GradientX, x, y, d: int): int = x
+proc calculate*(self: GradientX, x, y, d: int): int {.inline.} = x
 
-#[
-class gradient_y
-    static int calculate(int, int y, int) = return y
+type
+  GradientY* = object
 
-class gradient_diamond
-    static AGG_INLINE int calculate(x, y: int, int)
-    {
-        int ax = abs(x)
-        int ay = abs(y)
-        return ax > ay ? ax : ay;
-    }
+proc calculate*(self: GradientY, x, y, d: int): int {.inline.} = y
 
-class gradient_xy
-    static AGG_INLINE int calculate(x, y: int, int d)
-    {
-        return abs(x) * abs(y) / d;
-    }
+type
+  GradientDiamond* = object
 
-class gradient_sqrt_xy
-    static AGG_INLINE int calculate(x, y: int, int)
-    {
-        return fast_sqrt(abs(x) * abs(y))
-    }
+proc calculate*(self: GradientDiamond, x, y, d: int): int {.inline.} =
+  let ax = abs(x)
+  let ay = abs(y)
+  result = if ax > ay: ax else: ay
 
-class gradient_conic
-    static AGG_INLINE int calculate(x, y: int, int d)
-    {
-        return uround(abs(atan2(double(y), double(x))) * double(d) / pi)
-    }
+type
+  GradientXY* = object
 
-[GradientF> class gradient_repeat_adaptor
-    gradient_repeat_adaptor(const GradientF& gradient) :
-        m_gradient(&gradient) {}
+proc calculate*(self: GradientXY, x, y, d: int): int {.inline.} =
+  result = abs(x) * abs(y) div d
 
-    AGG_INLINE int calculate(x, y: int, int d) const
-    {
-        int ret = m_gradient->calculate(x, y, d) % d;
-        if ret < 0) ret += d;
-        return ret;
-    }
+type
+  GradientSqrtXY* = object
 
-private:
-    const GradientF* m_gradient;
+proc calculate*(self: GradientSqrtXY, x, y, d: int): int {.inline.} =
+  fastSqrt(abs(x) * abs(y))
 
-[GradientF> class gradient_reflect_adaptor
+type
+  GradientConic* = object
 
-const GradientF* m_gradient;
-    gradient_reflect_adaptor(const GradientF& gradient) :
-        m_gradient(&gradient) {}
+proc calculate*(self: GradientConic, x, y, d: int): int {.inline.} =
+  uround(abs(arctan2(float64(y), float64(x))) * float64(d) / pi)
 
-    AGG_INLINE int calculate(x, y: int, int d) const
-    {
-        int d2 = d shl 1;
-        int ret = m_gradient->calculate(x, y, d) % d2;
-        if ret <  0) ret += d2;
-        if ret >= d) ret  = d2 - ret;
-        return ret;
-    }
-]#
+type
+  GradientRepeatAdaptor*[GradientF] = object
+    mGradient: ptr GradientF
 
+proc initGradientRepeatAdaptor*[GradientF](gf: var GradientF): GradientRepeatAdaptor[GradientF] =
+  result.mGradient = gf.addr
 
+proc calculate*[GradientF](self: var GradientRepeatAdaptor[GradientF], x, y, d: int): int {.inline.} =
+  result = self.mGradient[].calculate(x, y, d) mod d
+  if result < 0: result += d
 
+type
+  GradientReflectAdaptor*[GradientF] = object
+    mGradient: ptr GradientF
 
+proc initGradientReflectAdaptor*[GradientF](gf: var GradientF): GradientReflectAdaptor[GradientF] =
+  result.mGradient = gf.addr
+
+proc calculate*[GradientF](self: var GradientReflectAdaptor[GradientF], x, y, d: int): int {.inline.} =
+  let d2 = d shl 1
+  result = self.mGradient[].calculate(x, y, d) mod d2
+  if result <  0: result += d2
+  if result >= d: result  = d2 - result
