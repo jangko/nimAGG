@@ -42,6 +42,9 @@ pixfmt_transposer
 rasterizer_outline_aa
 span_gradient
 image_filters
+span_image_filter
+trans_warp_magnifier
+span_interpolator_trans
 
 incomplete:
   path_storage
