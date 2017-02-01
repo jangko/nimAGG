@@ -55,7 +55,7 @@ proc inbox*[PixFmt](self: RendererBase[PixFmt], x, y: int): bool =
   result = x >= self.mClipBox.x1 and y >= self.mClipBox.y1 and
            x <= self.mClipBox.x2 and y <= self.mClipBox.y2
 
-proc clipBox*[PixFmt](self: RendererBase[PixFmt]): var RectI = self.mClipBox
+proc clipBox*[PixFmt](self: var RendererBase[PixFmt]): var RectI = self.mClipBox
 proc xmin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x1
 proc ymin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y1
 proc xmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x2
@@ -158,11 +158,14 @@ proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: 
 
   self.mRen[].blendVline(x, y1, y2 - y1 + 1, c, cover)
 
-proc copyBar*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT) =
+proc copyBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT) =
   mixin copyHline
+  when getColorType(PixFmt) isnot ColorT:
+    var c = construct(getColorType(PixFmt), c)
+    
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()
-  if rc.clip(self.getClipBox()):
+  if rc.clip(self.clipBox()):
     for y in rc.y1..rc.y2:
       self.mRen[].copyHLine(rc.x1, y, rc.x2 - rc.x1 + 1, c)
 
@@ -170,7 +173,7 @@ proc blendBar*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y1, x2, y2: int, 
   mixin blendHline
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()
-  if rc.clip(self.getClipBox()):
+  if rc.clip(self.clipBox()):
     for y in rc.y1..rc.y2:
       self.mRen[].blendHline(rc.x1, y, rc.x2 - rc.x1 + 1, c, cover)
 
@@ -315,7 +318,7 @@ proc blendColorVspan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
 proc clipRectArea*[PixFmt](self: RendererBase[PixFmt], dst, src: var RectI, wsrc, hsrc: int): RectI =
   var
     rc = initRectI(0,0,0,0)
-    cb = self.getClipBox()
+    cb = self.clipBox()
 
   inc cb.x2
   inc cb.y2

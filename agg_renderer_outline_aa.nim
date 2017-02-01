@@ -392,7 +392,7 @@ proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
   var
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -427,7 +427,7 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -532,7 +532,7 @@ proc stepHor*[R](self: var LineInterpolatorAA1[R]): bool =
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
     distStart = self.mDi.distStart()
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
 
   p1[] = 0
@@ -578,7 +578,7 @@ proc stepVer*[R](self: var LineInterpolatorAA1[R]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
 
@@ -639,7 +639,7 @@ proc stepHor*[R](self: var LineInterpolatorAA2[R]): bool =
   var
     distEnd, dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
 
   distEnd = self.mDi.distEnd()
@@ -689,7 +689,7 @@ proc stepVer*[R](self: var LineInterpolatorAA2[R]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
     distEnd = self.mDi.distEnd()
     npix = 0
@@ -737,11 +737,11 @@ type
   LineInterpolatorAA3*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator3
     
-proc initLineInterpolatorA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex, ey: int): LineInterpolatorAA3[R] =
+proc initLineInterpolatorAA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex, ey: int): LineInterpolatorAA3[R] =
   type base = LineInterpolatorAABase[R]
   base(result).init(ren, lp)
   
-  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
+  result.mDi = initDistanceInterpolator3(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
       lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask))
   
   var
@@ -811,7 +811,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
   var
     dist, dy : int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
@@ -864,7 +864,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
   var
     dist, dy : int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + base(self).maxHalfWidth + 2
+    p0 = base(self).mCovers + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
@@ -932,7 +932,7 @@ proc width*(self: var LineProfileAA, w: float64)
 
 proc gamma*[GammaF](self: var LineProfileAA, gammaF: var GammaF) =
   for i in 0.. <aaScale:
-    self.mGamma[i] = uround(gammaF(float64(i) / aaMask) * aaMask).uint8
+    self.mGamma[i] = uround(gammaF.getGammaValue(float64(i) / aaMask) * aaMask).uint8
 
 proc initLineProfileAA*(): LineProfileAA =
   result.msubPixelWidth = 0
@@ -1050,11 +1050,14 @@ type
     mClipBox: RectI
     mClipping: bool
 
-proc initRendererOutlineAA*[R,C](ren: var R, prof: var LineProfileAA): RendererOutlineAA[R,C] =
+proc init[R,C](ren: var R, prof: var LineProfileAA): RendererOutlineAA[R,C] =
   result.mRen = ren.addr
   result.mProfile = prof.addr
   result.mClipBox = initRectI(0,0,0,0)
   result.mClipping = false
+
+proc initRendererOutlineAA*[R](ren: var R, prof: var LineProfileAA): auto =
+  result = init[R, getColorType(R)](ren, prof)
 
 proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) = 
   self.mRen = ren.addr
@@ -1062,7 +1065,7 @@ proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) =
 proc color*[R,ColorT](self: var RendererOutlineAA[R,ColorT], c: ColorT) = 
   self.mColor = c
   
-proc Color*[R,C](self: RendererOutlineAA[R,C]): C = 
+proc color*[R,C](self: RendererOutlineAA[R,C]): C = 
   self.mColor
 
 proc profile*[R,C](self: var RendererOutlineAA[R,C], prof: var LineProfileAA) = 
@@ -1092,287 +1095,246 @@ proc blendSolidVspan*[R,C](self: var RendererOutlineAA[R,C],x, y, len: int, cove
 
 proc accurateJoinOnly*[R,C](self: var RendererOutlineAA[R,C]): bool = false
 
-#[
-[Cmp>
-proc semidot_hline*[R,C](Cmp cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int)
+proc semiDotHline*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int) =
+  var 
+    covers: array[maxHalfWidth * 2 + 4, CoverType]
+    p0 = covers
+    p1 = covers[0].addr
+    x = x1 shl lineSubpixelShift
+    y = y1 shl lineSubpixelShift
+    w = self.subPixelWidth()
+    di = initDistanceInterpolator0(xc1, yc1, xc2, yc2, x, y)
+  
+  x += lineSubpixelScale div 2
+  y += lineSubpixelScale div 2
 
-  cover: CoverTypes[line_interpolator_aa_base<self_type>::maxHalfWidth * 2 + 4];
-  p0 = covers;
-  CoverType* p1 = covers;
-  int x = x1 shl lineSubpixelShift;
-  int y = y1 shl lineSubpixelShift;
-  int w = subpixel_width()
-  distance_interpolator0 di(xc1, yc1, xc2, yc2, x, y)
-  x += lineSubpixelScale/2;
-  y += lineSubpixelScale/2;
-
-  int x0 = x1;
-  int dx = x - xc1;
-  int dy = y - yc1;
-  do
-  {
-      int d = int(fast_sqrt(dx*dx + dy*dy))
-      p1[] = 0
-      if cmp(di.dist()) and d <= w)
-      {
-          *p1 = (CoverType)cover(d)
-      }
-      inc p1
-      dx += lineSubpixelScale;
-      di.incX()
-  }
-  while ++x1 <= x2)
-  self.mRen[].blendSolidHspan(x0, y1,
-                          p1 - p0,
-                          color(),
-                          p0)
-
-
-
-    [Cmp>
-proc semidot*[R,C](Cmp cmp, xc1, yc1, xc2, yc2: int)
-  if self.mClipping and clipping_flags(xc1, yc1, self.mClipBox)) return;
-
-  int r = ((subpixel_width() + lineSubpixelMask) shr lineSubpixelShift)
-  if r < 1) r = 1;
-  ellipse_bresenhaself.mInterpolator ei(r, r)
-  int dx = 0;
-  int dy = -r;
-  int dy0 = dy;
-  int dx0 = dx;
-  int x = xc1 shr lineSubpixelShift;
-  int y = yc1 shr lineSubpixelShift;
-
-  do
-  {
-      dx += ei.dx()
-      dy += ei.dy()
-
-      if dy != dy0)
-      {
-          semidot_hline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
-          semidot_hline(cmp, xc1, yc1, xc2, yc2, x-dx0, y-dy0, x+dx0)
-      }
-      dx0 = dx;
-      dy0 = dy;
-      ++ei;
-  }
-  while dy < 0)
-  semidot_hline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
-
-
-proc pie_hline*[R,C](xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int)
-
-  if self.mClipping and clipping_flags(xc, yc, self.mClipBox)) return;
-
-  cover: CoverTypes[line_interpolator_aa_base<self_type>::maxHalfWidth * 2 + 4];
-  p0 = covers;
-  CoverType* p1 = covers;
-  int x = xh1 shl lineSubpixelShift;
-  int y = yh1 shl lineSubpixelShift;
-  int w = subpixel_width()
-
-  distance_interpolator00 di(xc, yc, xp1, yp1, xp2, yp2, x, y)
-  x += lineSubpixelScale/2;
-  y += lineSubpixelScale/2;
-
-  int xh0 = xh1;
-  int dx = x - xc;
-  int dy = y - yc;
-  do
-  {
-      int d = int(fast_sqrt(dx*dx + dy*dy))
-      p1[] = 0
-      if di.dist1() <= 0 and di.dist2() > 0 and d <= w)
-      {
-          *p1 = (CoverType)cover(d)
-      }
-      inc p1
-      dx += lineSubpixelScale;
-      di.incX()
-  }
-  while ++xh1 <= xh2)
-  self.mRen[].blendSolidHspan(xh0, yh1,
-                            p1 - p0,
-                            color(),
-                            p0)
-
-
-
-proc pie*[R,C](int xc, int yc, x1, y1, x2, y2: int)
-  int r = ((subpixel_width() + lineSubpixelMask) shr lineSubpixelShift)
-  if r < 1) r = 1;
-  ellipse_bresenhaself.mInterpolator ei(r, r)
-  int dx = 0;
-  int dy = -r;
-  int dy0 = dy;
-  int dx0 = dx;
-  int x = xc shr lineSubpixelShift;
-  int y = yc shr lineSubpixelShift;
-
-  do
-  {
-      dx += ei.dx()
-      dy += ei.dy()
-
-      if dy != dy0)
-      {
-          pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
-          pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y-dy0, x+dx0)
-      }
-      dx0 = dx;
-      dy0 = dy;
-      ++ei;
-  }
-  while dy < 0)
-  pie_hline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
-
-
-proc line0_no_clip*[R,C](lp: var LineParameters)
-  if lp.len > lineMaxLength)
-      line_parameters lp1, lp2;
-      lp.divide(lp1, lp2)
-      line0_no_clip(lp1)
-      line0_no_clip(lp2)
-      return;
-
-  line_interpolator_aa0<self_type> li(*this, lp)
-  if li.count())
-      if li.vertical())
-          while li.stepVer(): discard
-      else:
-          while li.stepHor(): discard
-
-proc line0*[R,C](lp: var LineParameters)
-  if self.mClipping)
-    int x1 = lp.x1;
-    int y1 = lp.y1;
-    int x2 = lp.x2;
-    int y2 = lp.y2;
-    unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
-    if (flags & 4) == 0:
-      if flags)
-        line_parameters lp2(x1, y1, x2, y2,
-                          uround(calcDistance(x1, y1, x2, y2)))
-        line0_no_clip(lp2)
-      else:
-        line0_no_clip(lp)
-  else:
-    line0_no_clip(lp)
-
-proc line1_no_clip*[R,C](lp: var LineParameters, sx, sy: int)
-  if lp.len > lineMaxLength)    
-    line_parameters lp1, lp2;
-    lp.divide(lp1, lp2)
-    line1_no_clip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1)
-    line1_no_clip(lp2, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
-    return;
+  var
+    x1 = x1
+    x0 = x1
+    dx = x - xc1
+    dy = y - yc1
     
+  inc x1
+  doWhile x1 <= x2:
+    let d = fastSqrt(dx*dx + dy*dy)
+    p1[] = 0
+    if cmp(di.dist()) and d <= w:
+      p1[] = CoverType(self.cover(d))
+    inc p1
+    dx += lineSubpixelScale
+    di.incX()
+    inc x1
 
-  fix_degenerate_bisectrix_start(lp, &sx, &sy)
-  line_interpolator_aa1<self_type> li(*this, lp, sx, sy)
-  if li.vertical())
+  self.mRen[].blendSolidHspan(x0, y1, p1 - p0, self.color(), p0)
+
+proc semiDot*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2, yc2: int) =
+  if self.mClipping and clippingFlags(xc1, yc1, self.mClipBox): return
+
+  var
+    r = (self.subPixelWidth() + lineSubpixelMask) shr lineSubpixelShift
+  
+  if r < 1: r = 1
+  
+  var
+    ei = initEllipseBresenhamInterpolator(r, r)
+    dx = 0
+    dy = -r
+    dy0 = dy
+    dx0 = dx
+    x = xc1 shr lineSubpixelShift
+    y = yc1 shr lineSubpixelShift
+
+  doWhile dy < 0:
+    dx += ei.dx()
+    dy += ei.dy()
+
+    if dy != dy0:
+      self.semiDotHline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
+      self.semiDotHline(cmp, xc1, yc1, xc2, yc2, x-dx0, y-dy0, x+dx0)
+    dx0 = dx
+    dy0 = dy
+    inc ei
+
+  self.semiDotHline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
+
+proc pieHline*[R,C](self: var RendererOutlineAA[R,C], xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int) =
+  if self.mClipping and clippingFlags(xc, yc, self.mClipBox): return
+
+  var
+    covers: array[maxHalfWidth * 2 + 4, CoverType]
+    p0 = covers
+    p1 = covers[0].addr
+    x = xh1 shl lineSubpixelShift
+    y = yh1 shl lineSubpixelShift
+    w = self.subPixelWidth()
+    di = initDistanceInterpolator00(xc, yc, xp1, yp1, xp2, yp2, x, y)
+  
+  x += lineSubpixelScale div 2
+  y += lineSubpixelScale div 2
+
+  var
+    xh1 = xh1
+    xh0 = xh1
+    dx = x - xc
+    dy = y - yc
+    
+  inc xh1
+  doWhile xh1 <= xh2:
+    let d = fastSqrt(dx*dx + dy*dy)
+    p1[] = 0
+    if di.dist1() <= 0 and di.dist2() > 0 and d <= w:
+      p1[] = CoverType(self.cover(d))
+    inc p1
+    dx += lineSubpixelScale
+    di.incX()
+    inc xh1
+
+  self.mRen[].blendSolidHspan(xh0, yh1, p1 - p0, self.color(), p0)
+
+proc pie*[R,C](self: var RendererOutlineAA[R,C], xc, yc, x1, y1, x2, y2: int) =
+  var r = (self.subPixelWidth() + lineSubpixelMask) shr lineSubpixelShift
+  if r < 1: r = 1
+  
+  var
+    ei = initEllipseBresenhamInterpolator(r, r)
+    dx = 0
+    dy = -r
+    dy0 = dy
+    dx0 = dx
+    x = xc shr lineSubpixelShift
+    y = yc shr lineSubpixelShift
+
+  doWhile dy < 0:
+    dx += ei.dx()
+    dy += ei.dy()
+
+    if dy != dy0:
+      self.pieHline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
+      self.pieHline(xc, yc, x1, y1, x2, y2, x-dx0, y-dy0, x+dx0)
+    dx0 = dx
+    dy0 = dy
+    inc ei
+
+  self.pieHline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
+
+proc line0NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters) =
+  if lp.len > lineMaxLength:
+    var lp1, lp2: LineParameters
+    lp.divide(lp1, lp2)
+    self.line0NoClip(lp1)
+    self.line0NoClip(lp2)
+    return
+
+  var li = initLineInterpolatorAA0(self, lp)
+  if li.count():
+    if li.vertical():
+      while li.stepVer(): discard
+    else:
+      while li.stepHor(): discard
+
+proc line0*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters) =
+  if self.mClipping:
+    var
+      x1 = lp.x1
+      y1 = lp.y1
+      x2 = lp.x2
+      y2 = lp.y2
+      flags = clipLineSegment(x1, y1, x2, y2, self.mClipBox)
+      
+    if (flags and 4) == 0:
+      if flags != 0:
+        var lp2 = initLineParameters(x1, y1, x2, y2, uround(calcDistance(x1, y1, x2, y2)))
+        self.line0NoClip(lp2)
+      else:
+        self.line0NoClip(lp)
+  else:
+    self.line0NoClip(lp)
+
+proc line1NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy: int) =
+  if lp.len > lineMaxLength:
+    var lp1, lp2: LineParameters
+    lp.divide(lp1, lp2)
+    self.line1NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1)
+    self.line1NoClip(lp2, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
+    return
+    
+  fixDegenerateBisectrixStart(lp, sx, sy)
+  var li = initLineInterpolatorAA1(self, lp, sx, sy)
+  if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-
-proc line1*[R,C](lp: var LineParameters, sx, sy: int)
-  if self.mClipping)
-  {
-      int x1 = lp.x1;
-      int y1 = lp.y1;
-      int x2 = lp.x2;
-      int y2 = lp.y2;
-      unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
-      if (flags & 4) == 0:
-      {
-          if flags)
-          {
-              line_parameters lp2(x1, y1, x2, y2,
-                                uround(calcDistance(x1, y1, x2, y2)))
-              if flags & 1)
-              {
-                  sx = x1 + (y2 - y1)
-                  sy = y1 - (x2 - x1)
-              }
-              else:
-              {
-                  while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len)
-                  {
-                      sx = (lp.x1 + sx) shr 1;
-                      sy = (lp.y1 + sy) shr 1;
-                  }
-              }
-              line1_no_clip(lp2, sx, sy)
-          }
-          else:
-          {
-              line1_no_clip(lp, sx, sy)
-          }
-      }
-  }
+    
+proc line1*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy: int) =
+  if self.mClipping:
+    var
+      x1 = lp.x1
+      y1 = lp.y1
+      x2 = lp.x2
+      y2 = lp.y2
+      flags = clipLineSegment(x1, y1, x2, y2, self.mClipBox)
+    if (flags and 4) == 0:
+      if flags != 0:
+        var lp2 = initLineParameters(x1, y1, x2, y2, uround(calcDistance(x1, y1, x2, y2)))
+        if (flags and 1) != 0:
+          sx = x1 + (y2 - y1)
+          sy = y1 - (x2 - x1)
+        else:
+          while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len:
+            sx = (lp.x1 + sx) shr 1
+            sy = (lp.y1 + sy) shr 1
+        self.line1NoClip(lp2, sx, sy)
+      else:
+        self.line1NoClip(lp, sx, sy)
   else:
-  {
-      line1_no_clip(lp, sx, sy)
-  }
+    self.line1NoClip(lp, sx, sy)
 
+proc line2NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, ex, ey: int) =
+  if lp.len > lineMaxLength:
+    var lp1, lp2: LineParameters
+    lp.divide(lp1, lp2)
+    self.line2NoClip(lp1, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
+    self.line2NoClip(lp2, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
+    return
 
-proc line2NoClip*[R,C](lp: var LineParameters, ex, ey: int)
-  if lp.len > lineMaxLength)
-      line_parameters lp1, lp2;
-      lp.divide(lp1, lp2)
-      line2NoClip(lp1, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
-      line2NoClip(lp2, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
-      return;
-
-  fix_degenerate_bisectrix_end(lp, &ex, &ey)
-  line_interpolator_aa2<self_type> li(*this, lp, ex, ey)
-  if li.vertical())
+  fixDegenerateBisectrixEnd(lp, ex, ey)
+  var li = initLineInterpolatorAA2(self, lp, ex, ey)
+  if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-
-proc line2*[R,C](lp: var LineParameters, ex, ey: int)
-  if self.mClipping)
-  {
-      int x1 = lp.x1;
-      int y1 = lp.y1;
-      int x2 = lp.x2;
-      int y2 = lp.y2;
-      unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
-      if (flags & 4) == 0:
-      {
-          if flags)
-          {
-              line_parameters lp2(x1, y1, x2, y2,
-                                uround(calcDistance(x1, y1, x2, y2)))
-              if flags & 2)
-              {
-                  ex = x2 + (y2 - y1)
-                  ey = y2 - (x2 - x1)
-              }
-              else:
-              {
-                  while abs(ex - lp.x2) + abs(ey - lp.y2) > lp2.len)
-                  {
-                      ex = (lp.x2 + ex) shr 1;
-                      ey = (lp.y2 + ey) shr 1;
-                  }
-              }
-              line2NoClip(lp2, ex, ey)
-          }
-          else:
-          {
-              line2NoClip(lp, ex, ey)
-          }
-      }
-  }
+    
+proc line2*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, ex, ey: int) =
+  if self.mClipping:
+    var
+      x1 = lp.x1
+      y1 = lp.y1
+      x2 = lp.x2
+      y2 = lp.y2
+      flags = clipLineSegment(x1, y1, x2, y2, self.mClipBox)
+    if (flags and 4) == 0:
+      if flags != 0:
+        var lp2 = initLineParameters(x1, y1, x2, y2, uround(calcDistance(x1, y1, x2, y2)))
+        if (flags and 2) != 0:
+          ex = x2 + (y2 - y1)
+          ey = y2 - (x2 - x1)
+        else:
+          while abs(ex - lp.x2) + abs(ey - lp.y2) > lp2.len:
+            ex = (lp.x2 + ex) shr 1
+            ey = (lp.y2 + ey) shr 1
+        self.line2NoClip(lp2, ex, ey)
+      else:
+        self.line2NoClip(lp, ex, ey)
   else:
-  {
-      line2NoClip(lp, ex, ey)
-  }
-
-proc line3NoClip*[R,C](lp: var LineParameters, sx, sy, ex, ey: int) =
+    self.line2NoClip(lp, ex, ey)
+    
+proc line3NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy, ex, ey: int) =
+  var 
+    sx = sx
+    sy = sy
+    ex = ex
+    ey = ey
+    
   if lp.len > lineMaxLength:
     var
       lp1, lp2: LineParameters
@@ -1382,68 +1344,54 @@ proc line3NoClip*[R,C](lp: var LineParameters, sx, sy, ex, ey: int) =
       mx = lp1.x2 + (lp1.y2 - lp1.y1)
       my = lp1.y2 - (lp1.x2 - lp1.x1)
 
-    line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
-    line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
+    self.line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
+    self.line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
     return
 
   fixDegenerateBisectrixStart(lp, sx, sy)
   fixDegenerateBisectrixEnd(lp, ex, ey)
 
-  line_interpolator_aa3<self_type> li(*this, lp, sx, sy, ex, ey)
+  var li = initLineInterpolatorAA3(self, lp, sx, sy, ex, ey)
 
   if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
 
-proc line3*[R,C](lp: var LineParameters, sx, sy, ex, ey: int)
-  if self.mClipping)
-  {
-      int x1 = lp.x1;
-      int y1 = lp.y1;
-      int x2 = lp.x2;
-      int y2 = lp.y2;
-      unsigned flags = clipLineSegment(&x1, &y1, &x2, &y2, self.mClipBox)
-      if (flags & 4) == 0:
-      {
-          if flags)
-          {
-              line_parameters lp2(x1, y1, x2, y2,
-                                uround(calcDistance(x1, y1, x2, y2)))
-              if flags & 1)
-              {
-                  sx = x1 + (y2 - y1)
-                  sy = y1 - (x2 - x1)
-              }
-              else:
-              {
-                  while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len)
-                  {
-                      sx = (lp.x1 + sx) shr 1;
-                      sy = (lp.y1 + sy) shr 1;
-                  }
-              }
-              if flags & 2)
-              {
-                  ex = x2 + (y2 - y1)
-                  ey = y2 - (x2 - x1)
-              }
-              else:
-              {
-                  while abs(ex - lp.x2) + abs(ey - lp.y2) > lp2.len)
-                  {
-                      ex = (lp.x2 + ex) shr 1;
-                      ey = (lp.y2 + ey) shr 1;
-                  }
-              }
-              line3NoClip(lp2, sx, sy, ex, ey)
-          }
-          else:
-          {
-              line3NoClip(lp, sx, sy, ex, ey)
-          }
-      }
-  }
+proc line3*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy, ex, ey: int) =
+  var 
+    sx = sx
+    sy = sy
+    ex = ex
+    ey = ey
+  
+  if self.mClipping:
+    var
+      x1 = lp.x1
+      y1 = lp.y1
+      x2 = lp.x2
+      y2 = lp.y2
+      flags = clipLineSegment(x1, y1, x2, y2, self.mClipBox)
+    if (flags and 4) == 0:
+      if flags != 0:
+        var lp2 = initLineParameters(x1, y1, x2, y2, uround(calcDistance(x1, y1, x2, y2)))
+        if (flags and 1) != 0:
+          sx = x1 + (y2 - y1)
+          sy = y1 - (x2 - x1)
+        else:
+          while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len:
+            sx = (lp.x1 + sx) shr 1
+            sy = (lp.y1 + sy) shr 1
+            
+        if (flags and 2) != 0:
+          ex = x2 + (y2 - y1)
+          ey = y2 - (x2 - x1)
+        else:
+          while abs(ex - lp.x2) + abs(ey - lp.y2) > lp2.len:
+            ex = (lp.x2 + ex) shr 1
+            ey = (lp.y2 + ey) shr 1
+        self.line3NoClip(lp2, sx, sy, ex, ey)
+      else:
+        self.line3NoClip(lp, sx, sy, ex, ey)
   else:
-    line3NoClip(lp, sx, sy, ex, ey)
-]#
+    self.line3NoClip(lp, sx, sy, ex, ey)

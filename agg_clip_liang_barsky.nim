@@ -28,7 +28,7 @@ proc clipMovePoint*[T](x1, y1, x2, y2: T, clipBox: var RectBase[T], x, y: var T,
      if x1 == x2:
        return false
      bound = if (flags and clippingFlagsX1Clipped) != 0: clipBox.x1 else: clipBox.x2
-     y = T(float64(bound - x1) * (y2 - y1) / (x2 - x1) + y1)
+     y = T(float64(bound - x1) * float64(y2 - y1) / float64(x2 - x1) + float64(y1))
      x = bound
 
    var flags = clippingFlagsY(y, clipBox)
@@ -36,14 +36,13 @@ proc clipMovePoint*[T](x1, y1, x2, y2: T, clipBox: var RectBase[T], x, y: var T,
      if y1 == y2:
        return false
      bound = if (flags and clippingFlagsY1Clipped) != 0: clipBox.y1 else: clipBox.y2
-     x = T(float64(bound - y1) * (x2 - x1) / (y2 - y1) + x1)
+     x = T(float64(bound - y1) * float64(x2 - x1) / float64(y2 - y1) + float64(x1))
      y = bound
    result = true
 
 # Returns: ret >= 4        - Fully clipped
 #          (ret & 1) != 0  - First point has been moved
 #          (ret & 2) != 0  - Second point has been moved
-#
 proc clipLineSegment*[T](x1, y1, x2, y2: var T, clipBox: var RectBase[T]): uint =
   var
     f1 = clippingFlags(x1, y1, clipBox)

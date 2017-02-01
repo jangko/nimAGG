@@ -12,7 +12,7 @@ proc initLineAAVertex*(x, y: int): LineAAVertex =
   result.y = y
   result.len = 0
 
-proc getValue*(self, val: var LineAAVertex): bool =
+proc cmp*(self, val: var LineAAVertex): bool =
   let
     dx = val.x - self.x
     dy = val.y - self.y
@@ -177,10 +177,10 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
     x1, y1, x2, y2, lprev: int
 
   if closePolygon:
-    if self.mSrcVertices.len >= 3:
+    if self.mSrcVertices.size >= 3:
       dv.idx = 2
 
-      var v = self.mSrcVertices[self.mSrcVertices.len - 1].addr
+      var v = self.mSrcVertices[self.mSrcVertices.size - 1].addr
       x1    = v.x
       y1    = v.y
       lprev = v.len
@@ -211,8 +211,8 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
       of outlineNoJoin:
           dv.flags = 3
       of outlineMiterJoin, outlineRoundJoin:
-        dv.flags = (prev.diagonalQuadrant() == dv.curr.diagonalQuadrant()) or
-          ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()) shl 1)
+        dv.flags = ((prev.diagonalQuadrant() == dv.curr.diagonalQuadrant()).int or
+          ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()).int shl 1)).uint
       of outlineMiterAccurateJoin:
         dv.flags = 0
       else: discard
@@ -224,9 +224,9 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
       if (dv.flags and 2) == 0 and self.mLineJoin != outlineRoundJoin:
          bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
 
-      self.draw(dv, 0, self.mSrcVertices.len)
+      self.draw(dv, 0, self.mSrcVertices.size)
   else:
-    case self.mSrcVertices.len
+    case self.mSrcVertices.size
       of 0, 1: discard
       of 2:
         var v = self.mSrcVertices[0].addr

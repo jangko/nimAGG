@@ -45,12 +45,13 @@ image_filters
 span_image_filter
 trans_warp_magnifier
 span_interpolator_trans
+renderer_outline_aa
+span_subdiv_adaptor
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
-  renderer_outline_aa
   agg_math
   
 translate ok:

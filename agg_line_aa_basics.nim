@@ -87,7 +87,7 @@ proc divide*(self, lp1, lp2: var LineParameters) =
   lp2.dx  = abs(lp2.x2 - lp2.x1)
   lp2.dy  = abs(lp2.y2 - lp2.y1)
 
-proc bisectrix*(self, l1, l2: var LineParameters, x, y: var int) =
+proc bisectrix*(l1, l2: var LineParameters, x, y: var int) =
   var
     k = float64(l2.len) / float64(l1.len)
     tx = float64(l2.x2) - float64(l2.x1 - l1.x1) * k
@@ -113,14 +113,14 @@ proc bisectrix*(self, l1, l2: var LineParameters, x, y: var int) =
   x = iround(tx)
   y = iround(ty)
 
-proc fixDegenerateBisectrixStart*(self, lp: var LineParameters, x, y: var int) {.inline.} =
+proc fixDegenerateBisectrixStart*(lp: var LineParameters, x, y: var int) {.inline.} =
   let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:
     x = lp.x1 + (lp.y2 - lp.y1)
     y = lp.y1 - (lp.x2 - lp.x1)
 
-proc fixDegenerateBisectrixEnd*(self, lp: var LineParameters, x, y: var int) {.inline.} =
+proc fixDegenerateBisectrixEnd*(lp: var LineParameters, x, y: var int) {.inline.} =
   let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:
