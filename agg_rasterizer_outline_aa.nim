@@ -1,7 +1,7 @@
 import agg_basics, agg_line_aa_basics, agg_vertex_sequence, math
 
-proc cmpDistStart(d: int): bool {.inline.} = d > 0
-proc cmpDistEnd(d: int): bool {.inline.} = d <= 0
+proc cmpDistStart(d: int): bool = d > 0
+proc cmpDistEnd(d: int): bool = d <= 0
 
 type
   LineAAVertex* = object
@@ -51,7 +51,8 @@ proc initRasterizerOutlineAA*[Renderer](ren: var Renderer): RasterizerOutlineAA[
   result.mRoundCap = false
   result.mStartX = 0
   result.mStartY = 0
-
+  result.mSrcVertices = initVertexSequence[LineAAVertex]()
+  
 proc attach*[Renderer](self: var RasterizerOutlineAA[Renderer], ren: var Renderer) =
   self.mRen = ren.addr
 
@@ -71,23 +72,23 @@ proc moveTo*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: int) =
 proc lineTo*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: int) =
   self.mSrcVertices.add(initLineAAVertex(x, y))
 
-proc moveToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, Coord: typedesc = LineCoord) =
+proc moveToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, Coord: typedesc) =
   self.moveTo(Coord.conv(x), Coord.conv(y))
 
-proc lineToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, Coord: typedesc = LineCoord) =
+proc lineToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, Coord: typedesc) =
   self.lineTo(Coord.conv(x), Coord.conv(y))
 
 proc addVertex*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, cmd: uint) =
   if isMoveTo(cmd):
     self.render(false)
-    self.moveToD(x, y)
+    self.moveToD(x, y, LineCoord)
   else:
     if isEndPoly(cmd):
       self.render(isClosed(cmd))
       if isClosed(cmd):
         self.moveTo(self.mStartX, self.mStartY)
     else:
-      self.lineToD(x, y)
+      self.lineToD(x, y, LineCoord)
 
 proc addPath*[Renderer, VertexSource](self: var RasterizerOutlineAA[Renderer], vs: var VertexSource, pathId = 0) =
   var
@@ -138,10 +139,11 @@ proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, 
     dv.x1 = dv.x2
     dv.y1 = dv.y2
     dv.lcurr = dv.lnext
-    dv.lnext = self.mSrcVertices[dv.idx].len
+    var vx = self.mSrcVertices[dv.idx]
+    dv.lnext = vx.len
 
     inc dv.idx
-    if dv.idx >= self.mSrcVertices.len: dv.idx = 0
+    if dv.idx >= self.mSrcVertices.size: dv.idx = 0
 
     let v = self.mSrcVertices[dv.idx].addr
     dv.x2 = v.x
@@ -158,13 +160,13 @@ proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, 
     of outlineMiterJoin:
         dv.flags = dv.flags shr 1
         dv.flags = dv.flags or
-          ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()) shl 1)
+          ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()).uint shl 1)
         if (dv.flags and 2) == 0:
           bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
     of outlineRoundJoin:
       dv.flags = dv.flags shr 1
       dv.flags = dv.flags or
-        ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()) shl 1)
+        ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()).uint shl 1)
     of outlineMiterAccurateJoin:
       dv.flags = 0
       bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
@@ -319,8 +321,8 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
         of outlineNoJoin:
           dv.flags = 3
         of outlineMiterJoin, outlineRoundJoin:
-            dv.flags = (prev.diagonalQuadrant() == dv.curr.diagonalQuadrant()) or
-                       ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()) shl 1)
+            dv.flags = (prev.diagonalQuadrant() == dv.curr.diagonalQuadrant()).uint or
+                       ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()).uint shl 1)
         of outlineMiterAccurateJoin:
             dv.flags = 0
 
@@ -344,7 +346,7 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
         if (dv.flags and 2) == 0 and self.mLineJoin != outlineRoundJoin:
           bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
 
-        self.draw(dv, 1, self.mSrcVertices.len - 2)
+        self.draw(dv, 1, self.mSrcVertices.size - 2)
 
         if (dv.flags and 1) == 0:
           if self.mLineJoin == outlineRoundJoin:

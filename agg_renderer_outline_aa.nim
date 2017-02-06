@@ -308,7 +308,7 @@ const
   maxHalfWidth = 64
 
 type
-  LineInterpolatorAAbase*[Renderer] = object of RootObj
+  LineInterpolatorAABase*[Renderer] = object of RootObj
     mLp: ptr LineParameters
     mLi: Dda2LineInterpolator
     mRen: ptr Renderer
@@ -318,7 +318,7 @@ type
     mDist: array[maxHalfWidth + 1, int]
     mCovers: array[maxHalfWidth * 2 + 4, CoverType]
 
-proc init*[Renderer](self: var LineInterpolatorAAbase[Renderer], ren: var Renderer, lp: var LineParameters) =
+proc init*[Renderer](self: var LineInterpolatorAABase[Renderer], ren: var Renderer, lp: var LineParameters) =
   self.mLp = lp.addr
   self.mLi = initDda2LineInterpolator(if lp.vertical: lineDblHr(lp.x2 - lp.x1) else: lineDblHr(lp.y2 - lp.y1),
     if lp.vertical: abs(lp.y2 - lp.y1) else: abs(lp.x2 - lp.x1) + 1)
@@ -350,7 +350,7 @@ proc init*[Renderer](self: var LineInterpolatorAAbase[Renderer], ren: var Render
 
   self.mDist[maxHalfWidth] = 0x7FFF0000
 
-proc stepHorBase*[Renderer,DI](self: var LineInterpolatorAAbase[Renderer], di: var DI): int =
+proc stepHorBase*[Renderer,DI](self: var LineInterpolatorAABase[Renderer], di: var DI): int =
   inc self.mLi
   self.mX += self.mLp[].inc
   self.mY = (self.mLp[].y1 + self.mLi.y()) shr lineSubpixelShift
@@ -359,9 +359,9 @@ proc stepHorBase*[Renderer,DI](self: var LineInterpolatorAAbase[Renderer], di: v
   else:                  di.decX(self.mY - self.mOldY)
 
   self.mOldY = self.mY
-  result = di.dist() / self.mLen
+  result = di.dist() div self.mLen
 
-proc stepVerBase*[Renderer,DI](self: var LineInterpolatorAAbase[Renderer], di: var DI): int =
+proc stepVerBase*[Renderer,DI](self: var LineInterpolatorAABase[Renderer], di: var DI): int =
   inc self.mLi
   self.mY += self.mLp[].inc
   self.mX = (self.mLp[].x1 + self.mLi.y()) shr lineSubpixelShift
@@ -370,29 +370,30 @@ proc stepVerBase*[Renderer,DI](self: var LineInterpolatorAAbase[Renderer], di: v
   else:                  di.decY(self.mX - self.mOldX)
 
   self.mOldX = self.mX
-  result = di.dist() / self.mLen
+  result = di.dist() div self.mLen
 
-proc vertical*[Renderer](self: LineInterpolatorAAbase[Renderer]): bool = self.mLp[].vertical
-proc width*[Renderer](self: LineInterpolatorAAbase[Renderer]): int = self.mWidth
-proc count*[Renderer](self: LineInterpolatorAAbase[Renderer]): int = self.mCount
+proc vertical*[Renderer](self: LineInterpolatorAABase[Renderer]): bool = self.mLp[].vertical
+proc width*[Renderer](self: LineInterpolatorAABase[Renderer]): int = self.mWidth
+proc count*[Renderer](self: LineInterpolatorAABase[Renderer]): int = self.mCount
 
 type
-  LineInterpolatorAA0*[Renderer] = object of LineInterpolatorAAbase[Renderer]
+  LineInterpolatorAA0*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator1
 
 proc initLineInterpolatorAA0*[Renderer](ren: var Renderer, lp: var LineParameters): LineInterpolatorAA0[Renderer] =
-  LineInterpolatorAAbase[Renderer](result).init(ren, lp)
+  LineInterpolatorAABase[Renderer](result).init(ren, lp)
 
-  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, lp.x1 and (not lineSubpixelMask), lp.y1 and (not lineSubpixelMask))
+  result.mDi = initDistanceInterpolator1(lp.x1, lp.y1, lp.x2, lp.y2, lp.x1 and (not lineSubpixelMask), lp.y1 and (not lineSubpixelMask))
   result.mLi.adjustForward()
 
 proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
+  mixin blendSolidVspan
   type
-    base = LineInterpolatorAAbase[Renderer]
+    base = LineInterpolatorAABase[Renderer]
   var
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -421,13 +422,14 @@ proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
   result = base(self).mStep < base(self).mCount
 
 proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
+  mixin blendSolidHspan
   type
-    base = LineInterpolatorAAbase[Renderer]
+    base = LineInterpolatorAABase[Renderer]
 
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -443,7 +445,7 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
 
   dx = 1
   dist = base(self).mDist[dx] + s1
-  while base <= base(self).mWidth:
+  while dist <= base(self).mWidth:
     dec p0
     p0[] = CoverType(base(self).mRen[].cover(dist))
     inc dx
@@ -457,14 +459,14 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
 
 
 type
-  LineInterpolatorAA1*[Renderer] = object of LineInterpolatorAAbase[Renderer]
+  LineInterpolatorAA1*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator2
 
 proc initLineInterpolatorAA1*[R](ren: var R, lp: var LineParameters, sx, sy: int): LineInterpolatorAA1[R] =
-  type base = LineInterpolatorAAbase[R]
+  type base = LineInterpolatorAABase[R]
 
-  base(result)(ren, lp)
-  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy,
+  base(result).init(ren, lp)
+  result.mDi = initDistanceInterpolator2(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy,
     lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask))
 
   var
@@ -527,12 +529,13 @@ proc initLineInterpolatorAA1*[R](ren: var R, lp: var LineParameters, sx, sy: int
   base(result).mLi.adjustForward()
 
 proc stepHor*[R](self: var LineInterpolatorAA1[R]): bool =
-  type base = LineInterpolatorAAbase[R]
+  mixin blendSolidVspan
+  type base = LineInterpolatorAABase[R]
   var
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
     distStart = self.mDi.distStart()
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
 
   p1[] = 0
@@ -572,13 +575,14 @@ proc stepHor*[R](self: var LineInterpolatorAA1[R]): bool =
   result = base(self).mStep < base(self).mCount
 
 proc stepVer*[R](self: var LineInterpolatorAA1[R]): bool =
+  mixin blendSolidHspan
   type
     base = LineInterpolatorAABase[R]
 
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
 
@@ -627,19 +631,19 @@ proc initLineInterpolatorAA2*[Renderer](ren: var Renderer,
     base = LineInterpolatorAABase[Renderer]
 
   base(result).init(ren, lp)
-  result.mDi(lp.x1, lp.y1, lp.x2, lp.y2, ex, ey,
-    lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask), 0)
+  result.mDi = initDistanceInterpolator2(lp.x1, lp.y1, lp.x2, lp.y2, ex, ey, lp.x1 and (not(lineSubpixelMask)), lp.y1 and (not(lineSubpixelMask)), 0)
   base(result).mLi.adjustForward()
   base(result).mStep -= base(result).mMaxExtent
 
 proc stepHor*[R](self: var LineInterpolatorAA2[R]): bool =
+  mixin blendSolidVspan
   type
     base = LineInterpolatorAABase[R]
 
   var
     distEnd, dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
 
   distEnd = self.mDi.distEnd()
@@ -683,17 +687,18 @@ proc stepHor*[R](self: var LineInterpolatorAA2[R]): bool =
   result = npix != 0 and base(self).mStep < base(self).mCount
 
 proc stepVer*[R](self: var LineInterpolatorAA2[R]): bool =
+  mixin blendSolidHspan
   type
     base = LineInterpolatorAABase[R]
-    
+
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
     distEnd = self.mDi.distEnd()
     npix = 0
-    
+
   p1[] = 0
   if distEnd > 0:
     p1[] = CoverType((self).mRen[].cover(s1))
@@ -729,40 +734,39 @@ proc stepVer*[R](self: var LineInterpolatorAA2[R]): bool =
                                     base(self).mY,
                                     p1 - p0,
                                     p0)
-                                    
+
   inc base(self).mStep
   result = npix != 0 and base(self).mStep < base(self).mCount
 
 type
   LineInterpolatorAA3*[Renderer] = object of LineInterpolatorAABase[Renderer]
     mDi: DistanceInterpolator3
-    
+
 proc initLineInterpolatorAA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex, ey: int): LineInterpolatorAA3[R] =
   type base = LineInterpolatorAABase[R]
   base(result).init(ren, lp)
-  
+
   result.mDi = initDistanceInterpolator3(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
       lp.x1 and not(lineSubpixelMask), lp.y1 and not(lineSubpixelMask))
-  
+
   var
     dist1_start, dist2_start: int
     npix = 1
-    
+
   if lp.vertical:
-    dec base(result).mStep
     doWhile base(result).mStep >= -base(result).mMaxExtent:
       dec base(result).mLi
       base(result).mY -= lp.inc
       base(result).mX = (base(result).mLp[].x1 + base(result).mLi.y()) shr lineSubpixelShift
-      
+
       if lp.inc > 0: result.mDi.decY(base(result).mX - base(result).mOldX)
       else:          result.mDi.incY(base(result).mX - base(result).mOldX)
-      
+
       base(result).mOldX = base(result).mX
-      
+
       dist2_start = result.mDi.distStart()
       dist1_start = dist2_start
-           
+
       var dx = 0
       if dist1_start < 0: inc npix
       doWhile base(result).mDist[dx] <= base(result).mWidth:
@@ -776,20 +780,19 @@ proc initLineInterpolatorAA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex,
       npix = 0
       dec base(result).mStep
   else:
-    dec base(result).mStep
     doWhile base(result).mStep >= -base(result).mMaxExtent:
       dec base(result).mLi
       base(result).mX -= lp.inc
       base(result).mY = (base(result).mLp[].y1 + base(result).mLi.y()) shr lineSubpixelShift
-      
+
       if lp.inc > 0: result.mDi.decX(base(result).mY - base(result).mOldY)
       else:          result.mDi.incX(base(result).mY - base(result).mOldY)
-      
+
       base(result).mOldY = base(result).mY
-      
+
       dist2_start = result.mDi.distStart()
       dist1_start = dist2_start
-      
+
       var dy = 0
       if dist1_start < 0: inc npix
       doWhile base(result).mDist[dy] <= base(result).mWidth:
@@ -800,30 +803,31 @@ proc initLineInterpolatorAA3*[R](ren: var R, lp: var LineParameters, sx, sy, ex,
         inc dy
 
       if npix == 0: break
-      npix = 0      
-      dec base(result).mStep    
-    
+      npix = 0
+      dec base(result).mStep
+
   base(result).mLi.adjustForward()
   base(result).mStep -= base(result).mMaxExtent;
 
 proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
+  mixin blendSolidVspan
   type base = LineInterpolatorAABase[R]
   var
     dist, dy : int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
     npix = 0
-    
+
   p1[] = 0
   if distEnd > 0:
     if distStart <= 0:
       p1[] = CoverType((self).mRen[].cover(s1))
     inc npix
   inc p1
-  
+
   dy = 1
   dist = base(self).mDist[dy] - s1
   while dist <= base(self).mWidth:
@@ -836,7 +840,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
     inc p1
     inc dy
     dist = base(self).mDist[dy] - s1
-  
+
   dy = 1
   distStart = self.mDi.distStart()
   distEnd   = self.mDi.distEnd()
@@ -860,23 +864,24 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
   return npix != 0 and base(self).mStep  < base(self).mCount
 
 proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
+  mixin blendSolidHspan
   type base = LineInterpolatorAABase[R]
   var
-    dist, dy : int
+    dist, dx : int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers + maxHalfWidth + 2
+    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
     npix = 0
-    
+
   p1[] = 0
   if distEnd > 0:
     if distStart <= 0:
       p1[] = CoverType((self).mRen[].cover(s1))
     inc npix
   inc p1
-  
+
   dx = 1
   dist = base(self).mDist[dx] - s1
   while dist <= base(self).mWidth:
@@ -889,7 +894,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
     inc p1
     inc dx
     dist = base(self).mDist[dx] - s1
-  
+
   dx = 1
   distStart = self.mDi.distStart()
   distEnd   = self.mDi.distEnd()
@@ -903,7 +908,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
       p0[] = CoverType((self).mRen[].cover(dist))
       inc npix
     inc dx
-    
+
   base(self).mRen[].blendSolidHspan(base(self).mX - dx + 1,
                                     base(self).mY,
                                     p1 - p0,
@@ -944,6 +949,7 @@ proc initLineProfileAA*[GammaF](w: float64, gammaF: var GammaF): LineProfileAA =
   result.msubPixelWidth = 0
   result.mMinWidth = 1.0
   result.mSmootherWidth = 1.0
+  result.mProfile = @[]
   result.gamma(gammaF)
   result.width(w)
 
@@ -1059,24 +1065,24 @@ proc init[R,C](ren: var R, prof: var LineProfileAA): RendererOutlineAA[R,C] =
 proc initRendererOutlineAA*[R](ren: var R, prof: var LineProfileAA): auto =
   result = init[R, getColorType(R)](ren, prof)
 
-proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) = 
+proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) =
   self.mRen = ren.addr
 
-proc color*[R,ColorT](self: var RendererOutlineAA[R,ColorT], c: ColorT) = 
+proc color*[R,ColorT](self: var RendererOutlineAA[R,ColorT], c: ColorT) =
   self.mColor = c
-  
-proc color*[R,C](self: RendererOutlineAA[R,C]): C = 
+
+proc color*[R,C](self: RendererOutlineAA[R,C]): C =
   self.mColor
 
-proc profile*[R,C](self: var RendererOutlineAA[R,C], prof: var LineProfileAA) = 
+proc profile*[R,C](self: var RendererOutlineAA[R,C], prof: var LineProfileAA) =
   self.mProfile = prof.addr
-  
+
 proc profile*[R,C](self: RendererOutlineAA[R,C]): var LineProfileAA = self.mProfile[]
 proc subPixelWidth*[R,C](self: RendererOutlineAA[R,C]): int = self.mProfile[].subPixelWidth()
 
-proc resetClipping*[R,C](self: var RendererOutlineAA[R,C]) = 
+proc resetClipping*[R,C](self: var RendererOutlineAA[R,C]) =
   self.mClipping = false
-  
+
 proc clipBox*[R,C](self: var RendererOutlineAA[R,C], x1, y1, x2, y2: float64) =
   self.mClipBox.x1 = LineCoordSat.conv(x1)
   self.mClipBox.y1 = LineCoordSat.conv(y1)
@@ -1085,7 +1091,7 @@ proc clipBox*[R,C](self: var RendererOutlineAA[R,C], x1, y1, x2, y2: float64) =
   self.mClipping = true
 
 proc cover*[R,C](self: var RendererOutlineAA[R,C], d: int): int =
-  self.mProfile[].value(d)
+  self.mProfile[].value(d).int
 
 proc blendSolidHspan*[R,C](self: var RendererOutlineAA[R,C],x, y, len: int, covers: ptr CoverType) =
   self.mRen[].blendSolidHspan(x, y, len, self.mColor, covers)
@@ -1096,15 +1102,15 @@ proc blendSolidVspan*[R,C](self: var RendererOutlineAA[R,C],x, y, len: int, cove
 proc accurateJoinOnly*[R,C](self: var RendererOutlineAA[R,C]): bool = false
 
 proc semiDotHline*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2, yc2, x1, y1, x2: int) =
-  var 
+  var
     covers: array[maxHalfWidth * 2 + 4, CoverType]
-    p0 = covers
+    p0 = covers[0].addr
     p1 = covers[0].addr
     x = x1 shl lineSubpixelShift
     y = y1 shl lineSubpixelShift
     w = self.subPixelWidth()
     di = initDistanceInterpolator0(xc1, yc1, xc2, yc2, x, y)
-  
+
   x += lineSubpixelScale div 2
   y += lineSubpixelScale div 2
 
@@ -1113,8 +1119,7 @@ proc semiDotHline*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1
     x0 = x1
     dx = x - xc1
     dy = y - yc1
-    
-  inc x1
+
   doWhile x1 <= x2:
     let d = fastSqrt(dx*dx + dy*dy)
     p1[] = 0
@@ -1128,13 +1133,13 @@ proc semiDotHline*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1
   self.mRen[].blendSolidHspan(x0, y1, p1 - p0, self.color(), p0)
 
 proc semiDot*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2, yc2: int) =
-  if self.mClipping and clippingFlags(xc1, yc1, self.mClipBox): return
+  if self.mClipping and clippingFlags(xc1, yc1, self.mClipBox) != 0: return
 
   var
     r = (self.subPixelWidth() + lineSubpixelMask) shr lineSubpixelShift
-  
+
   if r < 1: r = 1
-  
+
   var
     ei = initEllipseBresenhamInterpolator(r, r)
     dx = 0
@@ -1145,8 +1150,8 @@ proc semiDot*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2
     y = yc1 shr lineSubpixelShift
 
   doWhile dy < 0:
-    dx += ei.dx()
-    dy += ei.dy()
+    dx += ei.getDx()
+    dy += ei.getDy()
 
     if dy != dy0:
       self.semiDotHline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
@@ -1158,17 +1163,17 @@ proc semiDot*[R,C,Cmp](self: var RendererOutlineAA[R,C], cmp: Cmp, xc1, yc1, xc2
   self.semiDotHline(cmp, xc1, yc1, xc2, yc2, x-dx0, y+dy0, x+dx0)
 
 proc pieHline*[R,C](self: var RendererOutlineAA[R,C], xc, yc, xp1, yp1, xp2, yp2, xh1, yh1, xh2: int) =
-  if self.mClipping and clippingFlags(xc, yc, self.mClipBox): return
+  if self.mClipping and clippingFlags(xc, yc, self.mClipBox) != 0: return
 
   var
     covers: array[maxHalfWidth * 2 + 4, CoverType]
-    p0 = covers
+    p0 = covers[0].addr
     p1 = covers[0].addr
     x = xh1 shl lineSubpixelShift
     y = yh1 shl lineSubpixelShift
     w = self.subPixelWidth()
     di = initDistanceInterpolator00(xc, yc, xp1, yp1, xp2, yp2, x, y)
-  
+
   x += lineSubpixelScale div 2
   y += lineSubpixelScale div 2
 
@@ -1177,8 +1182,7 @@ proc pieHline*[R,C](self: var RendererOutlineAA[R,C], xc, yc, xp1, yp1, xp2, yp2
     xh0 = xh1
     dx = x - xc
     dy = y - yc
-    
-  inc xh1
+
   doWhile xh1 <= xh2:
     let d = fastSqrt(dx*dx + dy*dy)
     p1[] = 0
@@ -1194,7 +1198,7 @@ proc pieHline*[R,C](self: var RendererOutlineAA[R,C], xc, yc, xp1, yp1, xp2, yp2
 proc pie*[R,C](self: var RendererOutlineAA[R,C], xc, yc, x1, y1, x2, y2: int) =
   var r = (self.subPixelWidth() + lineSubpixelMask) shr lineSubpixelShift
   if r < 1: r = 1
-  
+
   var
     ei = initEllipseBresenhamInterpolator(r, r)
     dx = 0
@@ -1205,8 +1209,8 @@ proc pie*[R,C](self: var RendererOutlineAA[R,C], xc, yc, x1, y1, x2, y2: int) =
     y = yc shr lineSubpixelShift
 
   doWhile dy < 0:
-    dx += ei.dx()
-    dy += ei.dy()
+    dx += ei.getDx()
+    dy += ei.getDy()
 
     if dy != dy0:
       self.pieHline(xc, yc, x1, y1, x2, y2, x-dx0, y+dy0, x+dx0)
@@ -1226,7 +1230,7 @@ proc line0NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters)
     return
 
   var li = initLineInterpolatorAA0(self, lp)
-  if li.count():
+  if li.count() != 0:
     if li.vertical():
       while li.stepVer(): discard
     else:
@@ -1240,7 +1244,7 @@ proc line0*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters) =
       x2 = lp.x2
       y2 = lp.y2
       flags = clipLineSegment(x1, y1, x2, y2, self.mClipBox)
-      
+
     if (flags and 4) == 0:
       if flags != 0:
         var lp2 = initLineParameters(x1, y1, x2, y2, uround(calcDistance(x1, y1, x2, y2)))
@@ -1257,17 +1261,22 @@ proc line1NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters,
     self.line1NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1)
     self.line1NoClip(lp2, lp1.x2 + (lp1.y2 - lp1.y1), lp1.y2 - (lp1.x2 - lp1.x1))
     return
-    
+
+  var
+    sx = sx
+    sy = sy
   fixDegenerateBisectrixStart(lp, sx, sy)
   var li = initLineInterpolatorAA1(self, lp, sx, sy)
   if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-    
+
 proc line1*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy: int) =
   if self.mClipping:
     var
+      sx = sx
+      sy = sy
       x1 = lp.x1
       y1 = lp.y1
       x2 = lp.x2
@@ -1297,16 +1306,21 @@ proc line2NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters,
     self.line2NoClip(lp2, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
     return
 
+  var
+    ex = ex
+    ey = ey
   fixDegenerateBisectrixEnd(lp, ex, ey)
   var li = initLineInterpolatorAA2(self, lp, ex, ey)
   if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-    
+
 proc line2*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, ex, ey: int) =
   if self.mClipping:
     var
+      ex = ex
+      ey = ey
       x1 = lp.x1
       y1 = lp.y1
       x2 = lp.x2
@@ -1327,14 +1341,14 @@ proc line2*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, ex, e
         self.line2NoClip(lp, ex, ey)
   else:
     self.line2NoClip(lp, ex, ey)
-    
+
 proc line3NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy, ex, ey: int) =
-  var 
+  var
     sx = sx
     sy = sy
     ex = ex
     ey = ey
-    
+
   if lp.len > lineMaxLength:
     var
       lp1, lp2: LineParameters
@@ -1359,12 +1373,12 @@ proc line3NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters,
     while li.stepHor(): discard
 
 proc line3*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy, ex, ey: int) =
-  var 
+  var
     sx = sx
     sy = sy
     ex = ex
     ey = ey
-  
+
   if self.mClipping:
     var
       x1 = lp.x1
@@ -1382,7 +1396,7 @@ proc line3*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, s
           while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len:
             sx = (lp.x1 + sx) shr 1
             sy = (lp.y1 + sy) shr 1
-            
+
         if (flags and 2) != 0:
           ex = x2 + (y2 - y1)
           ey = y2 - (x2 - x1)

@@ -36,7 +36,7 @@ template `[]=`*[O: enum; T](p: ptr T, off: O, val: T) =
 template `-`*[T](a, b: ptr T): int =
   (cast[int](a) - cast[int](b)) div sizeof(T)
 
-template doWhile*(a: typed, b: typed) =
+template doWhile*(a: typed, b: untyped) =
   while true:
     b
     if not a:

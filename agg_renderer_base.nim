@@ -207,6 +207,7 @@ proc blendSolidVSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
   var
     len = len
     covers = covers
+    y = y
 
   if y < self.ymin():
     len -= self.ymin() - y
