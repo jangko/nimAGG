@@ -52,7 +52,7 @@ proc initRasterizerOutlineAA*[Renderer](ren: var Renderer): RasterizerOutlineAA[
   result.mStartX = 0
   result.mStartY = 0
   result.mSrcVertices = initVertexSequence[LineAAVertex]()
-  
+
 proc attach*[Renderer](self: var RasterizerOutlineAA[Renderer], ren: var Renderer) =
   self.mRen = ren.addr
 
@@ -100,6 +100,7 @@ proc addPath*[Renderer, VertexSource](self: var RasterizerOutlineAA[Renderer], v
 
   while not isStop(cmd):
     self.addVertex(x, y, cmd)
+    cmd = vs.vertex(x, y)
 
   self.render(false)
 
@@ -123,10 +124,14 @@ proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, 
       dv.yb2 = dv.curr.y2 - (dv.curr.x2 - dv.curr.x1)
 
     case dv.flags
-    of 0: self.mRen[].line3(dv.curr, dv.xb1, dv.yb1, dv.xb2, dv.yb2)
-    of 1: self.mRen[].line2(dv.curr, dv.xb2, dv.yb2)
-    of 2: self.mRen[].line1(dv.curr, dv.xb1, dv.yb1)
-    of 3: self.mRen[].line0(dv.curr)
+    of 0:
+      self.mRen[].line3(dv.curr, dv.xb1, dv.yb1, dv.xb2, dv.yb2)
+    of 1:
+      self.mRen[].line2(dv.curr, dv.xb2, dv.yb2)
+    of 2:
+      self.mRen[].line1(dv.curr, dv.xb1, dv.yb1)
+    of 3:
+      self.mRen[].line0(dv.curr)
     else: discard
 
     if self.mLineJoin == outlineRoundJoin and ((dv.flags and 2) == 0):

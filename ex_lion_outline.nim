@@ -12,7 +12,7 @@ const
 
 type
   ValueType = uint8
-  
+
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
@@ -28,11 +28,11 @@ proc onDraw() =
     pathIdx: array[100, int]
     numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
     x1, x2, y1, y2, base_dx, base_dy: float64
- 
+
   discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
   base_dx = (x2 - x1) / 2.0
   base_dy = (y2 - y1) / 2.0
-  
+
   let
     width  = frameWidth.float64
     height = frameHeight.float64
@@ -45,13 +45,13 @@ proc onDraw() =
     kWidth = 1.0
 
   rb.clear(initRgba(1,1,1))
-  
+
   mtx *= transAffineTranslation(-base_dx, -base_dy)
   mtx *= transAffineScaling(scale, scale)
   mtx *= transAffineRotation(angle + pi)
   mtx *= transAffineSkewing(skew_x/1000.0, skew_y/1000.0)
   mtx *= transAffineTranslation(width / 2, height / 2)
-  
+
   if mode:
     var stroke = initConvStroke(path)
     stroke.width(kWidth)
@@ -68,6 +68,6 @@ proc onDraw() =
       trans   = initConvTransform(path, mtx)
 
     ras.renderAllPaths(trans, colors, pathIdx, numPaths)
-    
+
   saveBMP24("lion_outline.bmp", buffer, frameWidth, frameHeight)
 onDraw()
