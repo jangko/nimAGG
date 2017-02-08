@@ -1,0 +1,159 @@
+import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
+import agg_path_storage, agg_conv_stroke, agg_conv_transform, agg_bounding_rect
+import agg_scanline_u, agg_scanline_p, agg_pixfmt_rgb, agg_renderer_base, agg_renderer_outline_aa
+import agg_rasterizer_outline_aa, agg_renderer_scanline, agg_span_allocator, agg_ellipse
+import agg_trans_affine, agg_color_rgba
+import parse_lion, nimBMP
+
+type
+  SpanSimpleBlurRgb24[Order] = object
+    mSourceImage: ptr RenderingBuffer
+
+proc initSpanSimpleBlurRgb24*[Order](src: var RenderingBuffer): SpanSimpleBlurRgb24[Order] =
+  result.mSourceImage = src.addr
+
+proc sourceImage*[Order](self: var SpanSimpleBlurRgb24[Order], src: var RenderingBuffer) =
+  self.mSourceImage = src.addr
+
+proc sourceImage*[Order](self: SpanSimpleBlurRgb24[Order]): var RenderingBuffer =
+  self.mSourceImage[]
+
+proc prepare*[Order](self: SpanSimpleBlurRgb24[Order]) = discard
+
+proc generate*[Order, ColorT](self: var SpanSimpleBlurRgb24[Order], span: ptr ColorT, x, y, len: int) =
+  var
+    len = len
+    span = span
+    x = x
+
+  if y < 1 or y >= self.mSourceImage[].height() - 1:
+    doWhile len != 0:
+      span[] = initRgba8(0,0,0,0)
+      inc span
+      dec len
+    return
+
+  doWhile len != 0:
+    var color = [0,0,0,0]
+    if x > 0 and x < self.mSourceImage[].width()-1:
+      var i = 3
+      doWhile i != 0:
+        var p = self.mSourceImage[].rowPtr(y - i + 2) + (x - 1) * 3
+
+        color[0] += p[].int; inc p
+        color[1] += p[].int; inc p
+        color[2] += p[].int; inc p
+        color[3] += 255
+
+        color[0] += p[].int; inc p
+        color[1] += p[].int; inc p
+        color[2] += p[].int; inc p
+        color[3] += 255
+
+        color[0] += p[].int; inc p
+        color[1] += p[].int; inc p
+        color[2] += p[].int; inc p
+        color[3] += 255
+        dec i
+
+      color[0] = color[0] div 9
+      color[1] = color[1] div 9
+      color[2] = color[2] div 9
+      color[3] = color[3] div 9
+    span[] = initRgba8(color[Order.R.ord].uint, color[Order.G.ord].uint, color[Order.B.ord].uint, color[3].uint)
+    inc span
+    inc x
+    dec len
+
+const
+  frameWidth = 512
+  frameHeight = 400
+  pixWidth = 3
+
+type
+  ValueType = uint8
+
+proc onDraw() =
+  var
+    buffer = newString(frameWidth * frameHeight * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    pf     = initPixFmtRgb24(rbuf)
+    rb     = initRendererBase(pf)
+    ren    = initRendererScanlineAASolid(rb)
+    sl     = initScanlineP8()
+    sl2    = initScanlineU8()
+    ras2   = initRasterizerScanlineAA()
+    path   = initPathStorage()
+    mtx    = initTransAffine()
+    trans  = initConvTransform(path, mtx)
+    colors: array[100, Rgba8]
+    pathIdx: array[100, int]
+    numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
+    x1, x2, y1, y2, base_dx, base_dy: float64
+    cx = 100.0
+    cy = 102.0
+    scale = 1.0
+    angle = 0.0
+    skew_x = 0.0
+    skew_y = 0.0
+
+  discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
+  base_dx = (x2 - x1) / 2.0
+  base_dy = (y2 - y1) / 2.0
+
+  rb.clear(initRgba(1, 1, 1))
+
+  mtx *= transAffineTranslation(-base_dx, -base_dy)
+  mtx *= transAffineScaling(scale, scale)
+  mtx *= transAffineRotation(angle + pi)
+  mtx *= transAffineSkewing(skew_x/1000.0, skew_y/1000.0)
+  mtx *= transAffineTranslation(frameWidth.float64/4, frameHeight.float64/2)
+  #mtx *= transAffineResizing()
+
+  renderAllPaths(ras2, sl, ren, trans, colors, pathIdx, numPaths)
+
+  #mtx *= ~trans_affine_resizing();
+  mtx *= transAffineTranslation(frameWidth.float64/2, 0)
+  #mtx *= trans_affine_resizing();
+
+  var
+    profile = initLineProfileAA()
+    rp      = initRendererOutlineAA(rb, profile)
+    ras     = initRasterizerOutlineAA(rp)
+
+  profile.width(1.0)
+  ras.roundCap(true)
+  ras.renderAllPaths(trans, colors, pathIdx, numPaths)
+
+  var
+    ell = initEllipse(cx, cy, 100.0, 100.0, 100)
+    ell_stroke1 = initConvStroke(ell)
+    ell_stroke2 = initConvStroke(ell_stroke1)
+
+  ell_stroke1.width(6.0)
+  ell_stroke2.width(2.0)
+
+  ren.color(initRgba(0,0.2,0))
+  ras2.addPath(ell_stroke2)
+  renderScanlines(ras2, sl, ren)
+
+  var
+    buffer2 = newString(frameWidth * frameHeight * pixWidth)
+    rbuf2   = initRenderingBuffer(cast[ptr ValueType](buffer2[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    sg = initSpanSimpleBlurRgb24[OrderRgb](rbuf2)
+    sa = initSpanAllocator[Rgba8]()
+
+  ras2.addPath(ell)
+
+  rbuf2.copyFrom(rbuf)
+  renderScanlinesAA(ras2, sl2, rb, sa, sg)
+
+  # More blur if desired :-)
+  #rbuf2.copyFrom(rbuf)
+  #renderScanlinesAA(ras2, sl2, rb, sa, sg)
+  #rbuf2.copyFrom(rbuf)
+  #renderScanlinesAA(ras2, sl2, rb, sa, sg)
+        
+  saveBMP24("simple_blur.bmp", buffer, frameWidth, frameHeight)
+
+onDraw()

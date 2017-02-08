@@ -944,6 +944,7 @@ proc initLineProfileAA*(): LineProfileAA =
   result.msubPixelWidth = 0
   result.mMinWidth = 1.0
   result.mSmootherWidth = 1.0
+  result.mProfile = @[]
   for i in 0.. <aaScale: result.mGamma[i] = i.uint8
 
 proc initLineProfileAA*[GammaF](w: float64, gammaF: var GammaF): LineProfileAA =

@@ -50,31 +50,31 @@ proc initRowAccessor*[T](buf: ptr T, width, height: int, stride: int): RowAccess
 proc initRenderingBuffer*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
   result = initRowAccessor[T](buf, width, height, stride)
 
-proc width*[T](self: var RowAccessor[T]): int {.inline.} =
+proc width*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.width
 
-proc height*[T](self: var RowAccessor[T]): int {.inline.} =
+proc height*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.height
 
-proc getBuf*[T](self: var RowAccessor[T]): ptr T {.inline.} =
+proc getBuf*[T](self: RowAccessor[T]): ptr T {.inline.} =
   result = self.buf
 
-proc stride*[T](self: var RowAccessor[T]): int {.inline.} =
+proc stride*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.stride
 
-proc strideAbs*[T](self: var RowAccessor[T]): int {.inline.} =
+proc strideAbs*[T](self: RowAccessor[T]): int {.inline.} =
   result = if self.stride < 0: -self.stride else: self.stride
 
-proc rowPtr*[T](self: var RowAccessor[T], y: int): ptr T {.inline.} =
+proc rowPtr*[T](self: RowAccessor[T], y: int): ptr T {.inline.} =
   result = cast[ptr T](cast[ByteAddress](self.start) + y * self.stride)
 
-proc rowPtr*[T](self: var RowAccessor[T], x, y, len: int): ptr T {.inline.} =
+proc rowPtr*[T](self: RowAccessor[T], x, y, len: int): ptr T {.inline.} =
   result = cast[ptr T](cast[ByteAddress](self.start) + y * self.stride)
 
-proc row*[T](self: var RowAccessor[T], y: int): RowInfo[T] {.inline.} =
+proc row*[T](self: RowAccessor[T], y: int): RowInfo[T] {.inline.} =
   result = RowInfo[T](x1:0, x2:(self.width-1).int, data: self.rowPtr(y))
 
-proc copyFrom*[T](self, src: var RowAccessor[T]) =
+proc copyFrom*[T](self: var RowAccessor[T], src: RowAccessor[T]) =
   let
     h = min(self.height, src.height).int
     s = min(self.strideAbs(), src.strideAbs()) * sizeof(T)
@@ -123,31 +123,31 @@ proc initRowPtrCache*[T](buf: ptr T, width, height: int, stride: int): RowPtrCac
 proc initRenderingBufferCached*[T](buf: ptr T, width, height: int, stride: int): RowPtrCache[T] =
   result = initRowPtrCache[T](buf, width, height, stride)
 
-proc width*[T](self: var RowPtrCache[T]): int {.inline.} =
+proc width*[T](self: RowPtrCache[T]): int {.inline.} =
   result = self.width
 
-proc height*[T](self: var RowPtrCache[T]): int {.inline.} =
+proc height*[T](self: RowPtrCache[T]): int {.inline.} =
   result = self.height
 
-proc getBuf*[T](self: var RowPtrCache[T]): ptr T {.inline.} =
+proc getBuf*[T](self: RowPtrCache[T]): ptr T {.inline.} =
   result = self.buf
 
-proc stride*[T](self: var RowPtrCache[T]): int {.inline.} =
+proc stride*[T](self: RowPtrCache[T]): int {.inline.} =
   result = self.stride
 
-proc strideAbs*[T](self: var RowPtrCache[T]): int {.inline.} =
+proc strideAbs*[T](self: RowPtrCache[T]): int {.inline.} =
   result = if self.stride < 0: -self.stride else: self.stride
 
-proc rowPtr*[T](self: var RowPtrCache[T], y: int): ptr T {.inline.} =
+proc rowPtr*[T](self: RowPtrCache[T], y: int): ptr T {.inline.} =
   result = self.rows[y]
 
-proc rowPtr*[T](self: var RowPtrCache[T], x, y, z: int): ptr T {.inline.} =
+proc rowPtr*[T](self: RowPtrCache[T], x, y, z: int): ptr T {.inline.} =
   result = self.rows[y]
 
-proc row*[T](self: var RowPtrCache[T], y: int): RowInfo[T] {.inline.} =
+proc row*[T](self: RowPtrCache[T], y: int): RowInfo[T] {.inline.} =
   result = RowInfo(x1:0, x2:(self.width-1).int, data: self.rows(y))
 
-proc copyFrom*[T](self, src: var RowPtrCache[T]) =
+proc copyFrom*[T](self: var RowPtrCache[T], src: RowPtrCache[T]) =
   let
     h = min(self.height, src.height).int
     s = min(self.strideAbs(), src.strideAbs()) * sizeof(T)
@@ -175,9 +175,9 @@ proc initDynaRow*[T](width, height, byteWidth: int): DynaRow[T] =
   result.byteWidth = byteWidth
   zeroMem(result.rows[0].addr, sizeof(Row[T]) * height)
 
-proc width*[T](self: var DynaRow[T]): int = self.width
-proc height*[T](self: var DynaRow[T]): int = self.height
-proc byteWidth*[T](self: var DynaRow[T]): int = self.byteWidth
+proc width*[T](self: DynaRow[T]): int = self.width
+proc height*[T](self: DynaRow[T]): int = self.height
+proc byteWidth*[T](self: DynaRow[T]): int = self.byteWidth
 
 proc rowPtr*[T](self: var DynaRow[T], x, y, len: int): ptr T =
   var
