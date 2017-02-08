@@ -10,7 +10,6 @@ const
   imageSubpixelScale* = 1 shl imageSubpixelShift
   imageSubpixelMask*  = imageSubpixelScale - 1
 
-
 type
   ImageFilterLut* = object of RootObj
     mRadius: float64

@@ -47,6 +47,7 @@ trans_warp_magnifier
 span_interpolator_trans
 renderer_outline_aa
 span_subdiv_adaptor
+span_image_filter_gray
 
 incomplete:
   path_storage

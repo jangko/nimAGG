@@ -17,6 +17,15 @@ proc init*[S, I](self: var SpanImageFilter[S, I], src: var S, interp: var I, fil
   self.mDxInt = imageSubpixelScale div 2
   self.mDyInt = imageSubpixelScale div 2
 
+proc init*[S, I](self: var SpanImageFilter[S, I], src: var S, interp: var I) =
+  self.mSrc = src.addr
+  self.mInterpolator = interp.addr
+  self.mFilter = nil
+  self.mDxDbl = 0.5
+  self.mDyDbl = 0.5
+  self.mDxInt = imageSubpixelScale div 2
+  self.mDyInt = imageSubpixelScale div 2
+  
 proc attach*[S, I](self: var SpanImageFilter[S, I], v: var S) =
   self.mSrc = v.addr
 
@@ -106,7 +115,7 @@ proc prepare*[Source](self: var SpanImageResampleAffine[Source]) =
   self.mRyInv = uround(1.0/scaleY * float64(imageSubpixelScale))
 
 type
-  SpanImageResample[Source, Interpolator] = object of SpanImageFilter[Source, Interpolator]
+  SpanImageResample*[Source, Interpolator] = object of SpanImageFilter[Source, Interpolator]
     mScaleLimit, mBlurX, mBlurY: int
 
 proc initSpanImageResample*[S,I](): SpanImageResample[S,I] =
