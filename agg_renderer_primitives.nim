@@ -6,7 +6,7 @@ type
     mFillColor: ColorT
     mLineColor: ColorT
     currX: int
-    currT: int
+    currY: int
 
 template getColorType*[B,C](x: typedesc[RendererPrimitives[B,C]]): typedesc = getColorType(B.type)
 
@@ -26,8 +26,18 @@ proc attach*[B,C](self: var RendererPrimitives[B,C], ren: var B) =
 proc coord*[B,C](x: typedesc[RendererPrimitives[B,C]], c: float64): int =
   result = iround(c * SubpixelScale)
 
-proc fillColor*[B,C](self: var RendererPrimitives[B,C], c: C) = self.mFillColor = c
-proc lineColor*[B,C](self: var RendererPrimitives[B,C], c: C) = self.mLineColor = c
+proc fillColor*[B,C,CT](self: var RendererPrimitives[B,C], c: CT) =
+  when C isnot CT:
+    self.mFillColor = construct(C, c)
+  else:
+    self.mFillColor = c
+
+proc lineColor*[B,C,CT](self: var RendererPrimitives[B,C], c: CT) =
+  when C isnot CT:
+    self.mLineColor = construct(C, c)
+  else:
+    self.mLineColor = c
+
 proc fillColor*[B,C](self: RendererPrimitives[B,C]): var C = self.mFillColor
 proc lineColor*[B,C](self: RendererPrimitives[B,C]): var C = self.mLineColor
 
@@ -102,15 +112,15 @@ proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int)
 
     inc ei
 
-proc line*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int, last = false) =
+proc line*[B,C](self: var RendererPrimitives[B,C], xx1, yy1, xx2, yy2: int, last = false) =
   var
-    li = LineBresenhamInterpolator(x1, y1, x2, y2)
+    li = initLineBresenhamInterpolator(xx1, yy1, xx2, yy2)
     len = li.len()
 
   if len == 0:
     if last:
-      self.ren[].blendPixel(LineBresenhamInterpolator.lineLr(x1),
-        LineBresenhamInterpolator.lineLr(y1), self.mLineColor, coverFull)
+      self.ren[].blendPixel(LineBresenhamInterpolator.lineLr(xx1),
+        LineBresenhamInterpolator.lineLr(yy1), self.mLineColor, coverFull)
     return
 
   if last: inc len

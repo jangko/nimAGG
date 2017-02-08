@@ -4,7 +4,7 @@ type
   RasterizerOutline*[Renderer] = object
     ren: ptr Renderer
     startX: int
-    startT: int
+    startY: int
     vertices: int
 
 proc initRasterizerOutline*[Renderer](ren: var Renderer): RasterizerOutline[Renderer] =
@@ -17,12 +17,14 @@ proc attach*[Renderer](self: var RasterizerOutline[Renderer], ren: var Renderer)
   self.ren = ren.addr
 
 proc moveTo*[Renderer](self: var RasterizerOutline[Renderer], x, y: int) =
+  mixin moveTo
   self.vertices = 1
   self.ren[].moveTo(x, y)
   self.startX = x
   self.startY = y
 
 proc lineTo*[Renderer](self: var RasterizerOutline[Renderer], x, y: int) =
+  mixin lineTo
   inc self.vertices
   self.ren[].lineTo(x, y)
 
