@@ -13,7 +13,7 @@ type
 const
   subPixelShift = 8
   subPixelScale = 1 shl subPixelShift
-  
+
 proc begin*[I](self: var SpanSubdivAdaptor[I], x, y: float64, len: int)
 
 proc initSpanSubdivAdaptor*[I](): SpanSubdivAdaptor[I] =
@@ -66,7 +66,7 @@ proc inc*[I](self: var SpanSubdivAdaptor[I]) =
                                     self.mSrcY,
                                     len)
     self.mPos = 0
-    
+
   self.mSrcX += subPixelScale
   inc self.mPos
   dec self.mLen

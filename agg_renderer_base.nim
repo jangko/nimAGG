@@ -162,7 +162,7 @@ proc copyBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: in
   mixin copyHline
   when getColorType(PixFmt) isnot ColorT:
     var c = construct(getColorType(PixFmt), c)
-    
+
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()
   if rc.clip(self.clipBox()):

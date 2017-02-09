@@ -153,7 +153,7 @@ proc onDraw() =
   #renderScanlinesAA(ras2, sl2, rb, sa, sg)
   #rbuf2.copyFrom(rbuf)
   #renderScanlinesAA(ras2, sl2, rb, sa, sg)
-        
+
   saveBMP24("simple_blur.bmp", buffer, frameWidth, frameHeight)
 
 onDraw()

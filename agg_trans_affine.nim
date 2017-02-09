@@ -62,13 +62,13 @@ proc transform*(a: var TransAffine, x, y: var float64) {.inline.} =
   let tmp = x
   x = tmp * a.sx + y * a.shx + a.tx
   y = tmp * a.shy + y * a.sy  + a.ty
-  
+
 proc scale*(a: TransAffine): float64 {.inline.} =
   let
     x = 0.707106781 * a.sx  + 0.707106781 * a.shx
     y = 0.707106781 * a.shy + 0.707106781 * a.sy
   result = sqrt(x*x + y*y)
-  
+
 proc transAffineTranslation*(x, y: float64): TransAffine =
   result = initTransAffine(1.0, 0.0, 0.0, 1.0, x, y)
 

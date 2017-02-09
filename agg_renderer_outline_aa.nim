@@ -1366,14 +1366,14 @@ proc line3NoClip*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters,
 
   fixDegenerateBisectrixStart(lp, sx, sy)
   fixDegenerateBisectrixEnd(lp, ex, ey)
-  
+
   var li = initLineInterpolatorAA3(self, lp, sx, sy, ex, ey)
 
   if li.vertical():
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-  
+
 proc line3*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, sy, ex, ey: int) =
   var
     sx = sx
@@ -1398,7 +1398,7 @@ proc line3*[R,C](self: var RendererOutlineAA[R,C], lp: var LineParameters, sx, s
           while abs(sx - lp.x1) + abs(sy - lp.y1) > lp2.len:
             sx = (lp.x1 + sx) shr 1
             sy = (lp.y1 + sy) shr 1
-          
+
         if (flags and 2) != 0:
           ex = x2 + (y2 - y1)
           ey = y2 - (x2 - x1)

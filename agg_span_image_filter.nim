@@ -25,7 +25,7 @@ proc init*[S, I](self: var SpanImageFilter[S, I], src: var S, interp: var I) =
   self.mDyDbl = 0.5
   self.mDxInt = imageSubpixelScale div 2
   self.mDyInt = imageSubpixelScale div 2
-  
+
 proc attach*[S, I](self: var SpanImageFilter[S, I], v: var S) =
   self.mSrc = v.addr
 

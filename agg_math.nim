@@ -14,7 +14,7 @@ proc calcDistance*(x1, y1, x2, y2: int): float64 {.inline.} =
   let dx = float64(x2-x1)
   let dy = float64(y2-y1)
   sqrt(dx * dx + dy * dy)
-  
+
 proc calcIntersection*(ax, ay, bx, by, cx, cy, dx, dy: float64; x, y: var float64): bool =
   let num = (ay-cy) * (dx-cx) - (ax-cx) * (dy-cy)
   let den = (bx-ax) * (dy-cy) - (by-ay) * (dx-cx)

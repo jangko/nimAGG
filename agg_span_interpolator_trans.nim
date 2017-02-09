@@ -11,13 +11,13 @@ template getSubPixelScale*[T](x: typedesc[SpanInterpolatorTrans[T]]): int = 1 sh
 
 proc initSpanInterpolatorTrans*[T](trans: var T): SpanInterpolatorTrans[T] =
   result.mTrans = trans.addr
-  
+
 proc initSpanInterpolatorTrans*[T](trans: var T, x, y: float64, z: uint): SpanInterpolatorTrans[T] =
   result.mTrans = trans.addr
   result.begin(x, y, 0)
 
 proc transformer*[T](self: SpanInterpolatorTrans[T]): var T = self.mTrans[]
-proc transformer*[T](self: var SpanInterpolatorTrans[T], trans: var T) = 
+proc transformer*[T](self: var SpanInterpolatorTrans[T], trans: var T) =
   self.mTrans = trans.addr
 
 proc begin*[T](self: var SpanInterpolatorTrans[T], x, y: float64, z: uint) =

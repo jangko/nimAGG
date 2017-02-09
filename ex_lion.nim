@@ -11,7 +11,7 @@ const
 
 type
   ValueType = uint8
-  
+
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
@@ -27,11 +27,11 @@ proc onDraw() =
     pathIdx: array[100, int]
     numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
     x1, x2, y1, y2, base_dx, base_dy: float64
- 
+
   discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
   base_dx = (x2 - x1) / 2.0
   base_dy = (y2 - y1) / 2.0
-  
+
   let
     width  = frameWidth.float64
     height = frameHeight.float64
@@ -43,17 +43,17 @@ proc onDraw() =
 
   for i in 0.. <numPaths:
     colors[i].a = uint8(alpha * 255)
-    
+
   mtx *= transAffineTranslation(-base_dx, -base_dy)
   mtx *= transAffineScaling(scale, scale)
   mtx *= transAffineRotation(angle + pi)
   mtx *= transAffineSkewing(skew_x/1000.0, skew_y/1000.0)
   mtx *= transAffineTranslation(width/2, height/2)
-  
+
   # This code renders the lion:
   var trans = initConvTransform(path, mtx)
   rb.clear(initrgba(1, 1, 1))
   renderAllPaths(ras, sl, ren, trans, colors, pathIdx, numPaths)
   saveBMP24("lion.bmp", buffer, frameWidth, frameHeight)
-  
+
 onDraw()

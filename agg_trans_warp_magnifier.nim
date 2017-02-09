@@ -30,7 +30,7 @@ proc transform*(self: TransWarpMagnifier, x, y: var float64) =
     dx = x - self.mXc
     dy = y - self.mYc
     r = sqrt(dx * dx + dy * dy)
-    
+
   if r < self.mRadius:
     x = self.mXc + dx * self.mMagn
     y = self.mYc + dy * self.mMagn
@@ -54,7 +54,7 @@ proc inverseTransform*(self: TransWarpMagnifier, x, y: var float64) =
     let rnew = r - self.mRadius * (self.mMagn - 1.0)
     x = self.mXc + rnew * dx / r
     y = self.mYc + rnew * dy / r
-  
+
   # Old version
   #trans_warp_magnifier t(*this);
   #t.magnification(1.0 / self.mMagn);
