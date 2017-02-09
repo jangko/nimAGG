@@ -23,7 +23,6 @@ conv_clip_polyline
 vpgen_clip_polygon
 conv_clip_polygon
 vcgen_smooth_poly1
-conv_smooth_poly1
 span_gouraud
 span_gouraud_rgba
 span_interpolator_linear
@@ -48,12 +47,14 @@ span_interpolator_trans
 renderer_outline_aa
 span_subdiv_adaptor
 span_image_filter_gray
+span_image_filter_rgb
 
 incomplete:
   path_storage
   renderer_scanline
   trans_affine
   agg_math
+  conv_smooth_poly1  
   
 translate ok:
   clip_liang_barsky
