@@ -128,8 +128,8 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
   mixin blendHline
   var
     x1 = x1
-    x2 = x2  
-  
+    x2 = x2
+
   if x1 > x2: swap(x1, x2)
   if y  > self.ymax(): return
   if y  < self.ymin(): return
@@ -139,7 +139,7 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
   if x1 < self.xmin(): x1 = self.xmin()
   if x2 > self.xmax(): x2 = self.xmax()
 
-  echo "x1 $1 y $2 x2 $3" % [$x1, $y , $x2]
+  #echo "x1 $1 y $2 x2 $3" % [$x1, $y , $x2]
   self.mRen[].blendHline(x1, y, x2 - x1 + 1, c, cover)
 
 proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: ColorT, cover: CoverType) =

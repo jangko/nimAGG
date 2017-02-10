@@ -139,7 +139,7 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       mask += self.rbuf[].stride()
       dec count
 
-  proc combine_vspan*(self: var name, x, yy: int, dst: ptr CoverType, numPix: int) =
+  proc combineVspan*(self: var name, x, yy: int, dst: ptr CoverType, numPix: int) =
     var
       xmax = self.rbuf[].width() - 1
       ymax = self.rbuf[].height() - 1

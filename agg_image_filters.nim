@@ -1,4 +1,4 @@
-import agg_basics, math, agg_math
+import agg_basics, math, agg_math, strutils
 
 const
   imageFilterShift* = 14
@@ -17,11 +17,11 @@ type
     mStart: int
     mWeightArray: seq[int16]
 
-proc initImageFilterLut*(): ImageFilterLut =
-  result.mRadius = 0
-  result.mDiameter = 0
-  result.mStart = 0
-  result.mWeightArray = @[]
+proc init(self: var ImageFilterLut) =
+  self.mRadius = 0
+  self.mDiameter = 0
+  self.mStart = 0
+  self.mWeightArray = @[]
 
 proc radius*(self: ImageFilterLut): float64 = self.mRadius
 proc diameter*(self: ImageFilterLut): int = self.mDiameter
@@ -76,6 +76,7 @@ proc reallocLut(self: var ImageFilterLut, radius: float64) =
     self.mWeightArray.setLen(size)
 
 proc calculate*[FilterF](self: var ImageFilterLut, filter: var FilterF, normalization = true) =
+  mixin radius
   var r = filter.radius()
   self.reallocLut(r)
 
@@ -92,11 +93,16 @@ proc calculate*[FilterF](self: var ImageFilterLut, filter: var FilterF, normaliz
   if normalization:
     self.normalize()
 
+proc initImageFilterLut*[FilterF](filter: var FilterF, normalization = true): ImageFilterLut =
+  result.init()
+  result.calculate(filter, normalization)
+
 type
   ImageFilter*[FilterF] = object of ImageFilterLut
     mFilterF: FilterF
 
 proc initImageFilter*[FilterF](): ImageFilter[FilterF] =
+  ImageFilterLut(result).init()
   result.mFilterF.calculate()
 
 type
@@ -179,13 +185,11 @@ type
 
 proc bessel_i0(self: ImageFilterKaiser, x: float64): float64 =
   var
-    sum, y, t: float64
+    sum = 1.0
+    y = x * x / 4.0
+    t = y
+    i = 2
 
-  sum = 1.0
-  y = x * x / 4.0
-  t = y
-
-  var i = 2
   while t > self.epsilon:
     sum += t
     t *= float64(y) / (i * i).float64

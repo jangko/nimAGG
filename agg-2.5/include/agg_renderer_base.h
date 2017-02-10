@@ -208,7 +208,6 @@ namespace agg
             if(x1 < xmin()) x1 = xmin();
             if(x2 > xmax()) x2 = xmax();
             
-            printf("x1 %d y %d x2 %d\n", x1, y , x2);
             m_ren->blend_hline(x1, y, x2 - x1 + 1, c, cover);
         }
 

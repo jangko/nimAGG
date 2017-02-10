@@ -29,7 +29,7 @@ type
   RenderingBufferCached* = RowPtrCache[uint8]
   RenderingBuffer16* = RowAccessor[uint16]
   RenderingBufferCached16* = RowPtrCache[uint16]
-
+  
 proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: int, stride: int) =
   self.buf = buf
   self.start = buf
@@ -38,7 +38,7 @@ proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: int, stride
   self.stride = stride
   if stride < 0:
     self.start = self.buf - int(height - 1) * stride
-
+  
 proc initRowAccessor*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
   result.buf = nil
   result.start = nil

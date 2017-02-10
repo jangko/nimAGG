@@ -1,4 +1,4 @@
-import agg_basics, agg_rendering_buffer, agg_color_rgba
+import agg_basics, agg_rendering_buffer, agg_color_rgba, strutils
 
 type
   BlenderRgb*[ColorT, OrderT] = object
@@ -289,18 +289,18 @@ proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
     p = self.rbuf[].rowPtr(x, y, len) + x + x + x
 
   let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
-  #if alpha == baseMask:
-  #  doWhile len != 0:
-  #    p[OrderType.R] = c.r
-  #    p[OrderType.G] = c.g
-  #    p[OrderType.B] = c.b
-  #    inc(p, 3)
-  #    dec len
-  #else:
-  #  doWhile len != 0:
-  #    self.blender.blendPix(p, c.r, c.g, c.b, alpha, cover)
-  #    inc(p, 3)
-  #    dec len
+  if alpha == baseMask:
+    doWhile len != 0:
+      p[OrderType.R] = c.r
+      p[OrderType.G] = c.g
+      p[OrderType.B] = c.b
+      inc(p, 3)
+      dec len
+  else:
+    doWhile len != 0:
+      self.blender.blendPix(p, c.r, c.g, c.b, alpha, cover)
+      inc(p, 3)
+      dec len
 
 proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, length: int, c: ColorT, cover: uint8) =
