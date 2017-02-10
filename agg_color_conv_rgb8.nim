@@ -281,7 +281,6 @@ proc color_conv_rgb565_to_rgb555*(dst, src: ptr uint8, width: int) {.procvar.} =
 color_conv_same(2, color_conv_rgb555_to_rgb555)  #----color_conv_rgb555_to_rgb555
 color_conv_same(2, color_conv_rgb565_to_rgb565)  #----color_conv_rgb565_to_rgb565
 
-
 template color_conv_rgb24_gray8(R, B: int, x: untyped) =
   proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
     var
@@ -294,5 +293,25 @@ template color_conv_rgb24_gray8(R, B: int, x: untyped) =
       inc d
       dec w
 
+
+
 color_conv_rgb24_gray8(0,2, color_conv_rgb24_to_gray8)  #----color_conv_rgb24_to_gray8
 color_conv_rgb24_gray8(2,0, color_conv_bgr24_to_gray8)  #----color_conv_bgr24_to_gray8
+
+template color_conv_gray8_rgb24(R, B: int, x: untyped) =
+  proc x*(dst, src: ptr uint8, width: int) {.procvar.} =
+    var
+      d = dst
+      w = width
+      s = src
+    doWhile w != 0:
+      let ss = s[]
+      d[R] = ss
+      d[1] = ss
+      d[B] = ss
+      inc(d, 3)
+      inc s
+      dec w
+
+color_conv_gray8_rgb24(0,2, color_conv_gray8_to_rgb24)  #----color_conv_gray8_to_rgb24
+color_conv_gray8_rgb24(2,0, color_conv_gray8_to_bgr24)  #----color_conv_gray8_to_bgr24

@@ -100,6 +100,7 @@ proc attach*[PixFmt](self: var ImageAccessorClone[PixFmt], pixf: var PixFmt) =
   self.mPixF = pixf.addr
 
 proc pixel*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} =
+  mixin height, width, pixPtr
   var
     x = self.mX
     y = self.mY
@@ -111,6 +112,7 @@ proc pixel*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} 
   result = self.mPixF[].pixPtr(x, y)
 
 proc span*[PixFmt](self: var ImageAccessorClone[PixFmt], x,y,len:int): ptr uint8 {.inline.} =
+  mixin height, width, pixPtr
   self.mX = x
   self.mX0 = x
   self.mY = y
@@ -131,6 +133,7 @@ proc nextX*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} 
   result = self.pixel()
 
 proc nextY*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} =
+  mixin height, pixPtr
   inc self.mY
   self.mX = self.mX0
   if self.mPixPtr != nil and self.mY >= 0 and self.mY < self.mPixF[].height():

@@ -39,15 +39,12 @@ conv_marker
 image_accessors
 pixfmt_transposer
 rasterizer_outline_aa
+renderer_outline_aa
 span_gradient
-image_filters
 span_image_filter
 trans_warp_magnifier
 span_interpolator_trans
-renderer_outline_aa
 span_subdiv_adaptor
-span_image_filter_gray
-span_image_filter_rgb
 span_image_filter_rgba
 
 incomplete:
@@ -68,7 +65,10 @@ translate ok:
   scanline_bin
   ellipse_bresenham
   bezier_arc
-  
+
+  -image_filters  
+  -span_image_filter_gray
+  -span_image_filter_rgb
   -gsv_text
   -pixfmt_amask_adaptor
   -alpha_mask_u8
@@ -76,7 +76,7 @@ translate ok:
   -make_arrows
   -scanline_u
   -scanline_p
-  -parse_lion.cpp
+  -parse_lion
   -conv_transform
   -bounding_rect
   -conv_stroke

@@ -1,6 +1,8 @@
 import agg_basics, agg_color_gray, agg_span_image_filter, agg_image_filters
 import agg_span_interpolator_linear
 
+export agg_span_image_filter
+
 type
   SpanImageFilterGrayNN*[Source, Interpolator] = object of SpanImageFilter[Source, Interpolator]
 
@@ -13,12 +15,16 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayNN[S,I], span: ptr Color
     base = SpanImageFilter[S,I]
     ValueType = getValueType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    baseMask = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
   var
     len = len
     x = x
     y = y
+    span = span
 
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
@@ -35,7 +41,7 @@ type
 
 proc initSpanImageFilterGrayBilinear*[S,I](src: var S, inter: var I): SpanImageFilterGrayBilinear[S,I] =
   type base = SpanImageFilter[S,I]
-  base(result).init(src, inter, 0)
+  base(result).init(src, inter)
 
 proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinear[S,I], span: ptr ColorT, x, y, len: int) =
   type
@@ -43,11 +49,16 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinear[S,I], span: ptr
     CalcType = getCalcType(ColorT)
     ValueType = getValueType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    baseMask = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
   var
     fg: CalcType
     fgPtr: ptr ValueType
+    span = span
+    len = len
 
   doWhile len != 0:
     var
@@ -59,25 +70,25 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinear[S,I], span: ptr
     yHr -= base(self).filterDyInt()
 
     var
-      xLr = xHr shr imageSubpixelShift
-      yLr = yHr shr imageSubpixelShift
+      xLr = sar(xHr, imageSubpixelShift)
+      yLr = sar(yHr, imageSubpixelShift)
 
-    fg = imageSubpixelScale * imageSubpixelScale / 2
+    fg = imageSubpixelScale * imageSubpixelScale div 2
 
     xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
     fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, 2))
-    fg   += fgPtr[] * (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
+    fg   += fgPtr[].CalcType * CalcType((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
 
     fgPtr = cast[ptr ValueType](base(self).source().nextX())
-    fg   += fgPtr[] * xHr * (imageSubpixelScale - yHr)
+    fg   += fgPtr[].CalcType * CalcType(xHr * (imageSubpixelScale - yHr))
 
     fgPtr = cast[ptr ValueType](base(self).source().nextY())
-    fg   += fgPtr[] * (imageSubpixelScale - xHr) * yHr
+    fg   += fgPtr[].CalcType * CalcType((imageSubpixelScale - xHr) * yHr)
 
     fgPtr = cast[ptr ValueType](base(self).source().nextX())
-    fg   += fgPtr[] * xHr * yHr
+    fg   += fgPtr[].CalcType * CalcType(xHr * yHr)
 
     span.v = ValueType(fg shr (imageSubpixelShift * 2))
     span.a = baseMask
@@ -101,6 +112,10 @@ proc backgroundColor*[S,I,ColorT](self: SpanImageFilterGrayBilinearClip[S, I, Co
 proc backgroundColor*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, ColorT], v: ColorT) =
   self.mBackColor = v
 
+proc prepare*[S,I,ColorT](self: SpanImageFilterGrayBilinearClip[S,I,ColorT]) =
+  type base = SpanImageFilter[S, I]
+  base(self).prepare()
+
 proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, ColorT],
   span: ptr ColorT, x, y, len: int) =
   type
@@ -108,15 +123,20 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
     CalcType = getCalcType(ColorT)
     ValueType = getValueType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    baseMask = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
   var
     fg, srcAlpha: CalcType
     fgPtr: ptr ValueType
-    backV = self.mBackColor.v
-    backA = self.mBackColor.a
+    backV = self.mBackColor.v.CalcType
+    backA = self.mBackColor.a.CalcType
     maxx = base(self).source().width() - 1
     maxy = base(self).source().height() - 1
+    span = span
+    len = len
 
   doWhile len != 0:
     var  xHr, yHr: int
@@ -137,17 +157,17 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
       yHr = yHr and imageSubpixelMask
       fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)
 
-      fg += fgPtr[] * (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
+      fg += fgPtr[].CalcType * CalcType((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
       inc fgPtr
-      fg += fgPtr[] * (imageSubpixelScale - yHr) * xHr
+      fg += fgPtr[].CalcType * CalcType((imageSubpixelScale - yHr) * xHr)
       inc fgPtr
 
       inc yLr
       fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)
 
-      fg += fgPtr[] * (imageSubpixelScale - xHr) * yHr
+      fg += fgPtr[].CalcType * CalcType((imageSubpixelScale - xHr) * yHr)
       inc fgPtr
-      fg += fgPtr[] * xHr * yHr
+      fg += fgPtr[].CalcType * CalcType(xHr * yHr)
       inc fgPtr
 
       fg = fg shr (imageSubpixelShift * 2)
@@ -163,18 +183,18 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
         xHr = xHr and imageSubpixelMask
         yHr = yHr and imageSubpixelMask
 
-        var weight = (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
+        var weight = CalcType((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fg += weight * cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[]
+          fg += weight * CalcType(cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
           fg       += backV * weight
           srcAlpha += backA * weight
 
         inc xLr
-        weight = xHr * (imageSubpixelScale - yHr)
+        weight = CalcType(xHr * (imageSubpixelScale - yHr))
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fg += weight * cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[]
+          fg += weight * CalcType(cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
           fg       += backV * weight
@@ -183,18 +203,18 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
         dec xLr
         inc yLr
 
-        weight = (imageSubpixelScale - xHr) * yHr
+        weight = CalcType((imageSubpixelScale - xHr) * yHr)
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fg += weight * cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[]
+          fg += weight * CalcType(cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
           fg       += backV * weight
           srcAlpha += backA * weight
 
         inc xLr
-        weight = xHr * yHr
+        weight = CalcType(xHr * yHr)
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fg += weight * cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[]
+          fg += weight * CalcType(cast[ptr ValueType](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
           fg       += backV * weight
@@ -223,13 +243,19 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGray2x2[S,I], span: ptr Colo
     CalcType = getCalcType(ColorT)
     ValueType = getValueType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    baseMask = CalcType(getBaseMask(ColorT))
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
   var
     fg: CalcType
     fgPtr: ptr ValueType
-    weightArray = base(self).filter().weightArray() +
-                  ((base(self).filter().diameter() div 2 - 1) shl imageSubpixelShift)
+    weightArray = base(self).filter().weightArray()
+    len = len
+    span = span
+
+  weightArray += ((base(self).filter().diameter() div 2 - 1) shl imageSubpixelShift)
 
   doWhile len != 0:
     var xHr, yHr: int
@@ -244,58 +270,61 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGray2x2[S,I], span: ptr Colo
 
     fg = imageFilterScale div 2
 
-    xHr = xHr and imageSubpixelMaskv
+    xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
     fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, 2))
-    weight = (weightArray[xHr + imageSubpixelScale] *
-              weightArray[yHr + imageSubpixelScale] +
-              imageFilterScale div 2) shr imageFilterShift
+    var weight = CalcType(sar((weightArray[xHr + imageSubpixelScale].int *
+              weightArray[yHr + imageSubpixelScale].int +
+              imageFilterScale div 2), imageFilterShift))
     fg += weight * fgPtr[]
 
     fgPtr = cast[ptr ValueType](base(self).source().nextX())
-    weight = (weightArray[xHr] *
-              weightArray[yHr + imageSubpixelScale] +
-              imageFilterScale div 2) shr imageFilterShift
+    weight = CalcType(sar((weightArray[xHr].int *
+              weightArray[yHr + imageSubpixelScale].int +
+              imageFilterScale div 2), imageFilterShift))
     fg += weight * fgPtr[]
 
     fgPtr = cast[ptr ValueType](base(self).source().nextY())
-    weight = (weightArray[xHr + imageSubpixelScale] *
-              weightArray[yHr] +
-              imageFilterScale div 2) shr imageFilterShift
+    weight = CalcType(sar((weightArray[xHr + imageSubpixelScale].int *
+              weightArray[yHr].int +
+              imageFilterScale div 2), imageFilterShift))
     fg += weight * fgPtr[]
 
     fgPtr = cast[ptr ValueType](base(self).source().nextX())
-    weight = (weightArray[xHr] *
-              weightArray[yHr] +
-              imageFilterScale div 2) shr imageFilterShift
+    weight = CalcType(sar((weightArray[xHr].int *
+              weightArray[yHr].int +
+              imageFilterScale div 2), imageFilterShift))
     fg += weight * fgPtr[]
 
     fg = fg shr imageFilterShift
     if fg > baseMask: fg = baseMask
 
     span.v = ValueType(fg)
-    span.a = baseMask
+    span.a = ValueType(baseMask)
     inc span
     inc base(self).interpolator()
     dec len
 
 type
-  SpanImageFiltergray*[Source, Interpolator] = object of SpanImageFilter[Source, Interpolator]
+  SpanImageFilterGray*[Source, Interpolator] = object of SpanImageFilter[Source, Interpolator]
 
 proc initSpanImageFilterGray*[S,I](src: var S,
-  inter: var I, filter: var ImageFilterLut): SpanImageFiltergray[S,I] =
+  inter: var I, filter: var ImageFilterLut): SpanImageFilterGray[S,I] =
   type base = SpanImageFilter[S,I]
   base(result).init(src, inter, filter)
 
-proc generate*[S,I,ColorT](self: var SpanImageFiltergray[S,I], span: ptr ColorT, x, y, len: int) =
+proc generate*[S,I,ColorT](self: var SpanImageFilterGray[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S,I]
     CalcType = getCalcType(ColorT)
     ValueType = getValueType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    baseMask = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
 
   var
     fg: int
@@ -304,6 +333,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFiltergray[S,I], span: ptr ColorT,
     start        = base(self).filter().start()
     weightArray  = base(self).filter().weightArray()
     xCount, weightY: int
+    x = x
+    y = y
+    span = span
+    len = len
 
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
@@ -329,7 +362,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFiltergray[S,I], span: ptr ColorT,
       weightY = weightArray[yHr]
       xHr = imageSubpixelMask - xFract
       while true:
-        fg += fgPtr[] * sar((weightY * weightArray[xHr] + imageFilterScale div 2), imageFilterShift)
+        fg += fgPtr[].int * sar((weightY * weightArray[xHr] + imageFilterScale div 2), imageFilterShift)
         dec xCount
         if xCount == 0: break
         xHr  += imageSubpixelScale
@@ -365,8 +398,12 @@ proc generate*[S,ColorT](self: var SpanImageResampleGrayAffine[S], span: ptr Col
     ValueType = getValueType(ColorT)
     LongType = getLongType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    downscaleShift = imageFilterShift
+    baseMask  = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
 
   var
     fg: LongType
@@ -376,6 +413,10 @@ proc generate*[S,ColorT](self: var SpanImageResampleGrayAffine[S], span: ptr Col
     radiusY     = sar((diameter * base(self).mRy), 1)
     lenXlr      = sar((diameter * base(self).mRx + imageSubpixelMask), imageSubpixelShift)
     weightArray = base(self).filter().weightArray()
+    x = x
+    y = y
+    span = span
+    len = len
 
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
@@ -388,7 +429,7 @@ proc generate*[S,ColorT](self: var SpanImageResampleGrayAffine[S], span: ptr Col
     var
       yLr = sar(y, imageSubpixelShift)
       yHr = sar(((imageSubpixelMask - (y and imageSubpixelMask)) * base(self).mRyInv), imageSubpixelShift)
-      totalWeight = 0
+      totalWeight = LongType(0)
       xLr = sar(x, imageSubpixelShift)
       xHr = sar(((imageSubpixelMask - (x and imageSubpixelMask)) * base(self).mRxInv), imageSubpixelShift)
       xHr2 = xHr
@@ -398,9 +439,9 @@ proc generate*[S,ColorT](self: var SpanImageResampleGrayAffine[S], span: ptr Col
       var weightY = weightArray[yHr]
       xHr = xHr2
       while true:
-        var weight = sar((weightY * weightArray[xHr] + imageFilterScale / 2), downScaleShift)
+        var weight = LongType(sar((weightY * weightArray[xHr].int + imageFilterScale div 2), downScaleShift))
 
-        fg += fgPtr[] * weight
+        fg += fgPtr[].LongType * weight
         totalWeight += weight
         xHr  += base(self).mRxInv
         if xHr >= filterScale: break
@@ -409,7 +450,6 @@ proc generate*[S,ColorT](self: var SpanImageResampleGrayAffine[S], span: ptr Col
       yHr += base(self).mRyInv
       if yHr >= filterScale: break
       fgPtr = cast[ptr ValueType](base(self).source().nextY())
-
 
     fg = fg div totalWeight
     if fg < 0: fg = 0
@@ -436,14 +476,22 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleGray[S,I], span: ptr Color
     ValueType = getValueType(ColorT)
     LongType = getLongType(ColorT)
 
-  base(self).interpolator().begin(x + base(self).filterDxDbl(),
-                                  y + base(self).filterDyDbl(), len)
+  const
+    downscaleShift = imageFilterShift
+    baseMask  = getBaseMask(ColorT)
+
+  base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
+                                  y.float64 + base(self).filterDyDbl(), len)
 
   var
     fg: LongType
     diameter = base(self).filter().diameter()
     filterScale = diameter shl imageSubpixelShift
     weightArray = base(self).filter().weightArray()
+    x = x
+    y = y
+    len = len
+    span = span
 
   doWhile len != 0:
     var
@@ -465,13 +513,12 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleGray[S,I], span: ptr Color
 
     x += base(self).filterDxInt() - radiusX
     y += base(self).filterDyInt() - radiusY
-
     fg = imageFilterScale div 2
 
     var
       yLr = sar(y, imageSubpixelShift)
       yHr = sar(((imageSubpixelMask - (y and imageSubpixelMask)) * ryInv), imageSubpixelShift)
-      totalWeight = 0
+      totalWeight = LongType(0)
       xLr = sar(x, imageSubpixelShift)
       xHr = sar(((imageSubpixelMask - (x and imageSubpixelMask)) * rxInv), imageSubpixelShift)
       xHr2 = xHr
@@ -482,8 +529,8 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleGray[S,I], span: ptr Color
       xHr = xHr2
 
       while true:
-        var weight = sar((weightY * weightArray[xHr] + imageFilterScale div 2), downScaleShift)
-        fg += fgPtr[] * weight
+        var weight = LongType(sar((weightY * weightArray[xHr] + imageFilterScale div 2), downScaleShift))
+        fg += fgPtr[].LongType * weight
         totalWeight += weight
         xHr  += rxInv
         if xHr >= filterScale: break

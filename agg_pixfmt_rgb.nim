@@ -27,6 +27,7 @@ template getPixWidth* [C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): int = sizeof
 
 template getOrderType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getOrderType(B.type)
 template getColorType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getColorType(B.type)
+template getValueType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getValueType(B.type)
 template getPixWidth *[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): int = getPixWidth(B.type)
 
 proc blendPix*[C,O,T](self: BlenderRgb[C,O], p: ptr T,
@@ -524,17 +525,21 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
 
 proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   src: SrcPixelFormatRenderer, color: ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
-
+  
+  type
+    SrcValueType = getValueType(SrcPixelFormatRenderer)
+    ValueType = getValueType(ColorT)
+    
   const
     baseShift = getBaseShift(ColorT)
     baseMask  = getBaseMask(ColorT)
 
   var
     len  = length
-    psrc = src.rowPtr(ysrc)
+    psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
 
   if psrc == nil: return
-  var pdst = self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3
+  var pdst = cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
   doWhile len != 0:
     self.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
     inc psrc
@@ -543,13 +548,16 @@ proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixf
 
 proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   src: SrcPixelFormatRenderer, colorLut: ptr ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
-
+  type
+    SrcValueType = getValueType(SrcPixelFormatRenderer)
+    ValueType = getValueType(ColorT)
+    
   var
-    psrc = src.rowPtr(ysrc)
+    psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
     len = length
 
   if psrc == nil: return
-  var pdst =  self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3
+  var pdst =  cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
 
   if cover == 255:
     doWhile len != 0:
