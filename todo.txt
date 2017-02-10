@@ -52,12 +52,12 @@ span_image_filter_rgba
 
 incomplete:
   path_storage
-  renderer_scanline
-  trans_affine
+  renderer_scanline  
   agg_math
   conv_smooth_poly1  
   
 translate ok:
+  trans_affine
   clip_liang_barsky
   conv_curve
   curve

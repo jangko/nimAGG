@@ -251,3 +251,6 @@ proc getOrientation*(c: uint): uint {.inline.} =
 
 proc setOrientation*(c, o: uint): uint {.inline.} =
   result = clearOrientation(c) or o
+  
+proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
+  result = abs(v1 - v2) <= float64(epsilon)
