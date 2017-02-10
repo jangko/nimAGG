@@ -102,6 +102,9 @@ proc initImageFilter*[FilterF](): ImageFilter[FilterF] =
 type
   ImageFilterBilinear* = object
 
+proc construct*(x: typedesc[ImageFilterBilinear]): ImageFilterBilinear =
+  discard
+
 proc radius*(self: ImageFilterBilinear): float64 = 1.0
 
 proc calcWeight*(self: ImageFilterBilinear, x: float64): float64 =
@@ -109,6 +112,9 @@ proc calcWeight*(self: ImageFilterBilinear, x: float64): float64 =
 
 type
   ImageFilterHanning* = object
+
+proc construct*(x: typedesc[ImageFilterHanning]): ImageFilterHanning =
+  discard
 
 proc radius*(self: ImageFilterHanning): float64 = 1.0
 
@@ -118,6 +124,9 @@ proc calcWeight*(self: ImageFilterHanning, x: float64): float64 =
 type
   ImageFilterHamming* = object
 
+proc construct*(x: typedesc[ImageFilterHamming]): ImageFilterHamming =
+  discard
+
 proc radius*(self: ImageFilterHamming): float64 = 1.0
 
 proc calcWeight*(self: ImageFilterHamming, x: float64): float64 =
@@ -126,6 +135,9 @@ proc calcWeight*(self: ImageFilterHamming, x: float64): float64 =
 type
   ImageFilterHermite* = object
 
+proc construct*(x: typedesc[ImageFilterHermite]): ImageFilterHermite =
+  discard
+
 proc radius*(self: ImageFilterHermite): float64 = 1.0
 
 proc calcWeight*(self: ImageFilterHermite, x: float64): float64 =
@@ -133,6 +145,9 @@ proc calcWeight*(self: ImageFilterHermite, x: float64): float64 =
 
 type
   ImageFilterQuadric* = object
+
+proc construct*(x: typedesc[ImageFilterQuadric]): ImageFilterQuadric =
+  discard
 
 proc radius*(self: ImageFilterQuadric): float64 = 1.5
 
@@ -145,6 +160,9 @@ proc calcWeight*(self: ImageFilterQuadric, x: float64): float64 =
 
 type
   ImageFilterBicubic* = object
+
+proc construct*(x: typedesc[ImageFilterBicubic]): ImageFilterBicubic =
+  discard
 
 proc pow3(x: float64): float64 =
   result = if x <= 0.0: 0.0 else: x * x * x
@@ -180,6 +198,9 @@ proc initImageFilterKaiser*(b = 6.33): ImageFilterKaiser =
   result.epsilon = 1e-12
   result.i0a = 1.0 / result.bessel_i0(b)
 
+proc construct*(x: typedesc[ImageFilterKaiser]): ImageFilterKaiser =
+  initImageFilterKaiser()
+
 proc radius*(self: ImageFilterKaiser): float64 = 1.0
 
 proc calcWeight*(self: ImageFilterKaiser, x: float64): float64 =
@@ -187,6 +208,9 @@ proc calcWeight*(self: ImageFilterKaiser, x: float64): float64 =
 
 type
   ImageFilterCatrom* = object
+
+proc construct*(x: typedesc[ImageFilterCatrom]): ImageFilterCatrom =
+  discard
 
 proc radius*(self: ImageFilterCatrom): float64 = 2.0
 
@@ -212,6 +236,9 @@ proc initImageFilterMitchell*(b = onethird, c = onethird): ImageFilterMitchell =
   result.q2 = (6.0 * b + 30.0 * c) / 6.0
   result.q3 = (-b - 6.0 * c) / 6.0
 
+proc construct*(x: typedesc[ImageFilterMitchell]): ImageFilterMitchell =
+  initImageFilterMitchell()
+
 proc radius*(self: ImageFilterMitchell): float64 =  2.0
 
 proc calcWeight*(self: ImageFilterMitchell, x: float64): float64 =
@@ -221,6 +248,9 @@ proc calcWeight*(self: ImageFilterMitchell, x: float64): float64 =
 
 type
   ImageFilterSpline16* = object
+
+proc construct*(x: typedesc[ImageFilterSpline16]): ImageFilterSpline16 =
+  discard
 
 proc radius*(self: ImageFilterSpline16): float64 = 2.0
 
@@ -232,6 +262,9 @@ proc calcWeight*(self: ImageFilterSpline16, x: float64): float64 =
 
 type
   ImageFilterSpline36* = object
+
+proc construct*(x: typedesc[ImageFilterSpline36]): ImageFilterSpline36 =
+  discard
 
 proc radius*(self: ImageFilterSpline36): float64 = 3.0
 
@@ -248,6 +281,9 @@ proc calcWeight*(self: ImageFilterSpline36, x: float64): float64 =
 type
   ImageFilterGaussian* = object
 
+proc construct*(x: typedesc[ImageFilterGaussian]): ImageFilterGaussian =
+  discard
+
 proc radius*(self: ImageFilterGaussian): float64 = 2.0
 
 proc calcWeight*(self: ImageFilterGaussian, x: float64): float64 =
@@ -255,6 +291,9 @@ proc calcWeight*(self: ImageFilterGaussian, x: float64): float64 =
 
 type
   ImageFilterBessel* = object
+
+proc construct*(x: typedesc[ImageFilterBessel]): ImageFilterBessel =
+  discard
 
 proc radius*(self: ImageFilterBessel): float64 = 3.2383
 
@@ -267,6 +306,9 @@ type
 
 proc initImageFilterSinc*(r: float64): ImageFilterSinc =
   result.mRadius = if r < 2.0: 2.0 else: r
+
+proc construct*(x: typedesc[ImageFilterSinc], r: float64): ImageFilterSinc =
+  initImageFilterSinc(r)
 
 proc radius*(self: ImageFilterSinc): float64 = self.mRadius
 proc calcWeight*(self: ImageFilterSinc, x: float64): float64 =
@@ -281,6 +323,9 @@ type
 
 proc initImageFilterLanczos*(r: float64): ImageFilterLanczos =
   result.mRadius = if r < 2.0: 2.0 else: r
+
+proc construct*(x: typedesc[ImageFilterLanczos], r: float64): ImageFilterLanczos =
+  initImageFilterLanczos(r)
 
 proc radius*(self: ImageFilterLanczos): float64 = self.mRadius
 proc calcWeight*(self: ImageFilterLanczos, x: float64): float64 =
@@ -297,6 +342,9 @@ type
 
 proc initImageFilterBlackman*(r: float64): ImageFilterBlackman =
   result.mRadius = if r < 2.0: 2.0 else: r
+
+proc construct*(x: typedesc[ImageFilterBlackman], r: float64): ImageFilterBlackman =
+  initImageFilterBlackman(r)
 
 proc radius*(self: ImageFilterBlackman): float64 = self.mRadius
 proc calcWeight*(self: ImageFilterBlackman, x: float64): float64 =

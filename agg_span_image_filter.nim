@@ -155,8 +155,8 @@ proc adjustScale*[S,I](self: var SpanImageResample[S,I], rx, ry: var int) =
   if ry > imageSubpixelScale * self.mScaleLimit:
     ry = imageSubpixelScale * self.mScaleLimit
 
-  rx = (rx * self.mBlurX) shr imageSubpixelShift
-  ry = (ry * self.mBlurY) shr imageSubpixelShift
+  rx = sar((rx * self.mBlurX), imageSubpixelShift)
+  ry = sar((ry * self.mBlurY), imageSubpixelShift)
 
   if rx < imageSubpixelScale: rx = imageSubpixelScale
   if ry < imageSubpixelScale: ry = imageSubpixelScale

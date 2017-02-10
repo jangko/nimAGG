@@ -48,6 +48,7 @@ renderer_outline_aa
 span_subdiv_adaptor
 span_image_filter_gray
 span_image_filter_rgb
+span_image_filter_rgba
 
 incomplete:
   path_storage
