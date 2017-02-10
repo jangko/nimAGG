@@ -6,6 +6,8 @@ type
     mBkBuf: array[4, uint8]
     mX, mX0, mY: int
     mPixPtr: ptr uint8
+    
+template getOrderType*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getOrderType(PixFmt.type)
 
 proc initImageAccessorClip*[PixFmt, ColorT](pixf: var PixFmt, bk: ColorT): ImageAccessorClip[PixFmt] =
   result.mPixF = pixf.addr
@@ -58,6 +60,8 @@ type
     mPixF: ptr PixFmt
     mX, mY: int
     mPixPtr: ptr uint8
+    
+template getOrderType*[PixFmt](x: typedesc[ImageAccessorNoClip[PixFmt]]): typedesc = getOrderType(PixFmt.type)
 
 proc initImageAccessorNoClip*[PixFmt](pixf: var PixFmt): ImageAccessorNoClip[PixFmt] =
   result.mPixF = pixf.addr
@@ -87,6 +91,8 @@ type
     mX, mX0, mY: int
     mPixPtr: ptr uint8
 
+template getOrderType*[PixFmt](x: typedesc[ImageAccessorClone[PixFmt]]): typedesc = getOrderType(PixFmt.type)
+
 proc initImageAccessorClone*[PixFmt](pixf: var PixFmt): ImageAccessorClone[PixFmt] =
   result.mPixF = pixf.addr
 
@@ -112,7 +118,7 @@ proc span*[PixFmt](self: var ImageAccessorClone[PixFmt], x,y,len:int): ptr uint8
      x >= 0 and x+len <= self.mPixF[].width():
      self.mPixPtr = self.mPixF[].pixPtr(x, y)
      return self.mPixPtr
-  self.mPixPtr = 0
+  self.mPixPtr = nil
   result = self.pixel()
 
 proc nextX*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} =
@@ -127,10 +133,10 @@ proc nextX*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} 
 proc nextY*[PixFmt](self: var ImageAccessorClone[PixFmt]): ptr uint8 {.inline.} =
   inc self.mY
   self.mX = self.mX0
-  if self.mPixPtr and self.mY >= 0 and self.mY < self.mPixF[].height():
+  if self.mPixPtr != nil and self.mY >= 0 and self.mY < self.mPixF[].height():
     self.mPixPtr = self.mPixF[].pixPtr(self.mX, self.mY)
     return self.mPixPtr
-  self.mPixPtr = 0
+  self.mPixPtr = nil
   result = self.pixel()
 
 type
@@ -141,6 +147,7 @@ type
     mWrapX: WrapX
     mWrapY: WrapY
 
+template getOrderType*[PixFmt, WrapX, WrapY](x: typedesc[ImageAccessorWrap[PixFmt, WrapX, WrapY]]): typedesc = getOrderType(PixFmt.type)
 
 proc initImageAccessorWrap*[PixFmt, WrapX, WrapY](pixf: var PixFmt): ImageAccessorWrap[PixFmt, WrapX, WrapY] =
   result.mPixF = pixf.addr

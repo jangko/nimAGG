@@ -27,7 +27,7 @@ template getPixWidth* [C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): int = sizeof
 
 template getOrderType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getOrderType(B.type)
 template getColorType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getColorType(B.type)
-template getPixWidth *[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getPixWidth(B.type)
+template getPixWidth *[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): int = getPixWidth(B.type)
 
 proc blendPix*[C,O,T](self: BlenderRgb[C,O], p: ptr T,
   cr, cg, cb, alpha: uint, cover=0.uint) {.inline.} =

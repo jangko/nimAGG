@@ -23,6 +23,9 @@ proc init(self: var ImageFilterLut) =
   self.mStart = 0
   self.mWeightArray = @[]
 
+proc initImageFilterLut*(): ImageFilterLut =
+  result.init()
+
 proc radius*(self: ImageFilterLut): float64 = self.mRadius
 proc diameter*(self: ImageFilterLut): int = self.mDiameter
 proc start*(self: ImageFilterLut): int = self.mStart
@@ -75,7 +78,7 @@ proc reallocLut(self: var ImageFilterLut, radius: float64) =
   if size > self.mWeightArray.len:
     self.mWeightArray.setLen(size)
 
-proc calculate*[FilterF](self: var ImageFilterLut, filter: var FilterF, normalization = true) =
+proc calculate*[FilterF](self: var ImageFilterLut, filter: FilterF, normalization = true) =
   mixin radius
   var r = filter.radius()
   self.reallocLut(r)
@@ -96,14 +99,6 @@ proc calculate*[FilterF](self: var ImageFilterLut, filter: var FilterF, normaliz
 proc initImageFilterLut*[FilterF](filter: var FilterF, normalization = true): ImageFilterLut =
   result.init()
   result.calculate(filter, normalization)
-
-type
-  ImageFilter*[FilterF] = object of ImageFilterLut
-    mFilterF: FilterF
-
-proc initImageFilter*[FilterF](): ImageFilter[FilterF] =
-  ImageFilterLut(result).init()
-  result.mFilterF.calculate()
 
 type
   ImageFilterBilinear* = object
@@ -412,3 +407,12 @@ proc ImageFilterBlackman196*(): ImageFilterBlackman =
 
 proc ImageFilterBlackman256*(): ImageFilterBlackman =
   result = initImageFilterBlackman(8.0)
+
+type
+  ImageFilter*[FilterF] = object of ImageFilterLut
+    mFilterF: FilterF
+
+proc initImageFilter*[FilterF](): ImageFilter[FilterF] =
+  result.mFilterF = construct(FilterF)
+  ImageFilterLut(result).init()
+  calculate(result, result.mFilterF)

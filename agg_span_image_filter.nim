@@ -54,27 +54,62 @@ proc prepare*[S, I](self: SpanImageFilter[S, I]) = discard
 
 type
   SpanImageResampleAffine*[Source] = object of SpanImageFilter[Source, SpanInterpolatorLinear]
-    mRx, mRy, mRxInv, mRyInv: int
+    mRx*, mRy*, mRxInv*, mRyInv*: int
     mScaleLimit, mBlurX, mBlurY: float64
 
-proc initSpanImageResampleAffine*[Source](): SpanImageResampleAffine[Source] =
-  result.mScaleLimit = 200.0
-  result.mBlurX = 1.0
-  result.mBlurY = 1.0
-
-proc initSpanImageResampleAffine*[Source](src: var Source,
-  inter: var SpanInterpolatorLinear, filter: var ImageFilterLut): SpanImageResampleAffine[Source] =
+proc init*[Source](self: var SpanImageResampleAffine[Source]) =
+  self.mScaleLimit = 200.0
+  self.mBlurX = 1.0
+  self.mBlurY = 1.0
+  
+proc init*[Source](self: var SpanImageResampleAffine[Source], src: var Source,
+  inter: var SpanInterpolatorLinear, filter: var ImageFilterLut) =
   type
     base = SpanImageFilter[Source, SpanInterpolatorLinear]
 
-  base(result).init(src, inter, filter)
-  result.mScaleLimit = 200.0
-  result.mBlurX = 1.0
-  result.mBlurY = 1.0
+  base(self).init(src, inter, filter)
+  self.mScaleLimit = 200.0
+  self.mBlurX = 1.0
+  self.mBlurY = 1.0
+
+proc initSpanImageResampleAffine*[Source](): SpanImageResampleAffine[Source] =
+  result.init()
+  
+proc initSpanImageResampleAffine*[Source](src: var Source,
+  inter: var SpanInterpolatorLinear, filter: var ImageFilterLut): SpanImageResampleAffine[Source] =
+  result.init(src, inter, filter)
 
 proc scaleLimit*[Source](self: SpanImageResampleAffine[Source]): int = uround(self.mScaleLimit)
 proc scaleLimit*[Source](self: var SpanImageResampleAffine[Source], v: int) = self.mScaleLimit = v
 
+proc interpolator*[Source](self: SpanImageResampleAffine[Source]): var SpanInterpolatorLinear =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).interpolator()
+  
+proc filter*[Source](self: SpanImageResampleAffine[Source]): var ImageFilterLut =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).filter()
+
+proc source*[Source](self: SpanImageResampleAffine[Source]): var Source =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).source()
+  
+proc filterDxDbl*[Source](self: SpanImageResampleAffine[Source]): float64 =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).filterDxDbl()
+  
+proc filterDyDbl*[Source](self: SpanImageResampleAffine[Source]): float64 =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).filterDyDbl()
+
+proc filterDxInt*[Source](self: SpanImageResampleAffine[Source]): int =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).filterDxInt()
+  
+proc filterDyInt*[Source](self: SpanImageResampleAffine[Source]): int =
+  type base = SpanImageFilter[Source, SpanInterpolatorLinear]
+  base(self).filterDyInt()
+  
 proc blurX*[Source](self: SpanImageResampleAffine[Source]): float64 = self.mBlurX
 proc blurY*[Source](self: SpanImageResampleAffine[Source]): float64 = self.mBlurY
 proc blurX*[Source](self: var SpanImageResampleAffine[Source], v: float64) = self.mBlurX = v
