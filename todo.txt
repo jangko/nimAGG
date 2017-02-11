@@ -65,7 +65,8 @@ translate ok:
   scanline_bin
   ellipse_bresenham
   bezier_arc
-
+  pixfmt_rgba
+  
   -image_filters  
   -span_image_filter_gray
   -span_image_filter_rgb

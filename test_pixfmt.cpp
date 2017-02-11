@@ -3,6 +3,7 @@
 #include <agg_gamma_lut.h>
 #include <agg_pixfmt_gray.h>
 #include <agg_color_gray.h>
+#include <agg_pixfmt_rgba.h>
 
 typedef agg::gamma_lut<agg::int8u, agg::int8u, 8, 8> GammaLUT8; 
 typedef agg::gamma_lut<agg::int16u, agg::int16u, 16, 16> GammaLUT16; 
@@ -51,6 +52,14 @@ agg::pixfmt_gray8* create_pixf_gray8(agg::rendering_buffer* rbuf) {
 
 agg::pixfmt_gray16* create_pixf_gray16(agg::rendering_buffer* rbuf) {
   return new agg::pixfmt_gray16(*rbuf);
+}
+
+agg::pixfmt_rgba32* create_pixf_rgba32(agg::rendering_buffer* rbuf) {
+  return new agg::pixfmt_rgba32(*rbuf);
+}
+
+agg::pixfmt_rgba64* create_pixf_rgba64(agg::rendering_buffer* rbuf) {
+  return new agg::pixfmt_rgba64(*rbuf);
 }
 
 GammaLUT8* create_gamma_lut8() {
@@ -220,6 +229,82 @@ void pixf_gray16_apply_gamma_inv(agg::pixfmt_gray16* pixf, GammaLUT16* g) {
 }
 
 void pixf_gray16_apply_gamma_dir(agg::pixfmt_gray16* pixf, GammaLUT16* g) {
+  pixf->apply_gamma_dir(*g);
+}
+
+void pixf_rgba32_blend_pixel(agg::pixfmt_rgba32* pixf, int x, int y, agg::rgba8& c, agg::int8u cover) {
+  pixf->blend_pixel(x, y, c, cover);
+}
+
+void pixf_rgba32_blend_color_hspan(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8* colors,
+                               agg::int8u* covers, agg::int8u cover) {
+  pixf->blend_color_hspan(x, y, len, colors, covers, cover);
+}
+
+void pixf_rgba32_blend_color_vspan(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8* colors,
+                               agg::int8u* covers, agg::int8u cover) {
+  pixf->blend_color_vspan(x, y, len, colors, covers, cover);
+}
+
+void pixf_rgba32_blend_hline(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8& c, agg::int8u cover) {
+  pixf->blend_hline(x, y, len, c, cover);
+}
+
+void pixf_rgba32_blend_vline(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8& c, agg::int8u cover) {
+  pixf->blend_vline(x, y, len, c, cover);
+}
+
+void pixf_rgba32_blend_solid_hspan(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8& c, agg::int8u* covers) {
+  pixf->blend_solid_hspan(x, y, len, c, covers);
+}
+
+void pixf_rgba32_blend_solid_vspan(agg::pixfmt_rgba32* pixf, int x, int y, unsigned len, agg::rgba8& c, agg::int8u* covers) {
+  pixf->blend_solid_vspan(x, y, len, c, covers);
+}
+
+void pixf_rgba32_apply_gamma_inv(agg::pixfmt_rgba32* pixf, GammaLUT8* g) {
+  pixf->apply_gamma_inv(*g);
+}
+
+void pixf_rgba32_apply_gamma_dir(agg::pixfmt_rgba32* pixf, GammaLUT8* g) {
+  pixf->apply_gamma_dir(*g);
+}
+
+void pixf_rgba64_blend_pixel(agg::pixfmt_rgba64* pixf, int x, int y, agg::rgba16& c, agg::int8u cover) {
+  pixf->blend_pixel(x, y, c, cover);
+}
+
+void pixf_rgba64_blend_color_hspan(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16* colors,
+                               agg::int8u* covers, agg::int8u cover) {
+  pixf->blend_color_hspan(x, y, len, colors, covers, cover);
+}
+
+void pixf_rgba64_blend_color_vspan(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16* colors,
+                               agg::int8u* covers, agg::int8u cover) {
+  pixf->blend_color_vspan(x, y, len, colors, covers, cover);
+}
+
+void pixf_rgba64_blend_hline(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16& c, agg::int8u cover) {
+  pixf->blend_hline(x, y, len, c, cover);
+}
+
+void pixf_rgba64_blend_vline(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16& c, agg::int8u cover) {
+  pixf->blend_vline(x, y, len, c, cover);
+}
+
+void pixf_rgba64_blend_solid_hspan(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16& c, agg::int8u* covers) {
+  pixf->blend_solid_hspan(x, y, len, c, covers);
+}
+
+void pixf_rgba64_blend_solid_vspan(agg::pixfmt_rgba64* pixf, int x, int y, unsigned len, agg::rgba16& c, agg::int8u* covers) {
+  pixf->blend_solid_vspan(x, y, len, c, covers);
+}
+
+void pixf_rgba64_apply_gamma_inv(agg::pixfmt_rgba64* pixf, GammaLUT16* g) {
+  pixf->apply_gamma_inv(*g);
+}
+
+void pixf_rgba64_apply_gamma_dir(agg::pixfmt_rgba64* pixf, GammaLUT16* g) {
   pixf->apply_gamma_dir(*g);
 }
 }

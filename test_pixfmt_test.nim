@@ -1,5 +1,5 @@
 import agg_rendering_buffer, agg_basics, agg_pixfmt_rgb, agg_color_rgba, agg_gamma_lut
-import agg_color_gray, agg_pixfmt_gray
+import agg_color_gray, agg_pixfmt_gray, agg_pixfmt_rgba
 
 {.passC: "-I./agg-2.5/include".}
 {.compile: "test_pixfmt.cpp".}
@@ -13,7 +13,9 @@ type
   agg_pixfmt_gray16 = distinct pointer
   GammaLUT8 = distinct pointer
   GammaLUT16 = distinct pointer
-
+  agg_pixfmt_rgba32 = distinct pointer
+  agg_pixfmt_rgba64 = distinct pointer
+  
 proc create_rbuf(buffer: cstring, frameWidth, frameHeight, stride: cint): agg_rbuf {.importc.}
 proc create_pixf_rgb24(rbuf: agg_rbuf): agg_pixfmt_rgb24 {.importc.}
 proc blend_pixel(pixf: agg_pixfmt_rgb24, x, y: cint, c: var Rgba8, cover: uint8) {.importc: "pixf_rgb24_blend_pixel".}
@@ -59,6 +61,28 @@ proc blend_solid_vspan(pixf: agg_pixfmt_gray16, x, y: cint, len: cuint, c: var G
 proc apply_gamma_inv(pixf: agg_pixfmt_gray16, g: GammaLUT16) {.importc: "pixf_gray16_apply_gamma_inv".}
 proc apply_gamma_dir(pixf: agg_pixfmt_gray16, g: GammaLUT16) {.importc: "pixf_gray16_apply_gamma_dir".}
 
+proc create_pixf_rgba32(rbuf: agg_rbuf): agg_pixfmt_rgba32 {.importc.}
+proc blend_pixel(pixf: agg_pixfmt_rgba32, x, y: cint, c: var Rgba8, cover: uint8) {.importc: "pixf_rgba32_blend_pixel".}
+proc blend_color_hspan(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) {.importc: "pixf_rgba32_blend_color_hspan".}
+proc blend_color_vspan(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) {.importc: "pixf_rgba32_blend_color_vspan".}
+proc blend_hline(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, c: var Rgba8, cover: uint8) {.importc: "pixf_rgba32_blend_hline".}
+proc blend_vline(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, c: var Rgba8, cover: uint8) {.importc: "pixf_rgba32_blend_vline".}
+proc blend_solid_hspan(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, c: var Rgba8, covers: ptr uint8) {.importc: "pixf_rgba32_blend_solid_hspan".}
+proc blend_solid_vspan(pixf: agg_pixfmt_rgba32, x, y: cint, len: cuint, c: var Rgba8, covers: ptr uint8) {.importc: "pixf_rgba32_blend_solid_vspan".}
+proc apply_gamma_inv(pixf: agg_pixfmt_rgba32, g: GammaLUT8) {.importc: "pixf_rgba32_apply_gamma_inv".}
+proc apply_gamma_dir(pixf: agg_pixfmt_rgba32, g: GammaLUT8) {.importc: "pixf_rgba32_apply_gamma_dir".}
+
+proc create_pixf_rgba64(rbuf: agg_rbuf): agg_pixfmt_rgba64 {.importc.}
+proc blend_pixel(pixf: agg_pixfmt_rgba64, x, y: cint, c: var Rgba16, cover: uint8) {.importc: "pixf_rgba64_blend_pixel".}
+proc blend_color_hspan(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) {.importc: "pixf_rgba64_blend_color_hspan".}
+proc blend_color_vspan(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) {.importc: "pixf_rgba64_blend_color_vspan".}
+proc blend_hline(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, c: var Rgba16, cover: uint8) {.importc: "pixf_rgba64_blend_hline".}
+proc blend_vline(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, c: var Rgba16, cover: uint8) {.importc: "pixf_rgba64_blend_vline".}
+proc blend_solid_hspan(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, c: var Rgba16, covers: ptr uint8) {.importc: "pixf_rgba64_blend_solid_hspan".}
+proc blend_solid_vspan(pixf: agg_pixfmt_rgba64, x, y: cint, len: cuint, c: var Rgba16, covers: ptr uint8) {.importc: "pixf_rgba64_blend_solid_vspan".}
+proc apply_gamma_inv(pixf: agg_pixfmt_rgba64, g: GammaLUT16) {.importc: "pixf_rgba64_apply_gamma_inv".}
+proc apply_gamma_dir(pixf: agg_pixfmt_rgba64, g: GammaLUT16) {.importc: "pixf_rgba64_apply_gamma_dir".}
+
 proc create_gamma_lut8(): GammaLUT8 {.importc.}
 #proc create_gamma_lut8_a(a: cdouble): GammaLUT8 {.importc.}
 proc create_gamma_lut16(): GammaLUT16 {.importc.}
@@ -68,13 +92,13 @@ const
   frameWidth = 255
   frameHeight = frameWidth
 
-template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
+template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: int) =
   proc `test name`() =
     type
       OrderT = getOrderT(PixFmt)
       ValueT = getValueT(ColorT)
     const
-      pixWidth = sizeof(ValueT) * 3
+      pixWidth = getPixWidth(PixFmt)
       baseMask = getBaseMask(ColorT)
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
@@ -112,7 +136,7 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
       doAssert(p[OrderT.R] == color.r)
       doAssert(p[OrderT.G] == color.g)
       doAssert(p[OrderT.B] == color.b)
-      inc(p, 3)
+      inc(p, pixElem)
 
     for y in 0.. <frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
@@ -134,7 +158,7 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
       doAssert(p[OrderT.R] == span[x].r)
       doAssert(p[OrderT.G] == span[x].g)
       doAssert(p[OrderT.B] == span[x].b)
-      inc(p, 3)
+      inc(p, pixElem)
 
     for y in 0.. <frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
@@ -216,11 +240,20 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
     discard pixf.pixPtr(1, 1)
 
-genTest(test1, PixFmtRgb24, Rgba8, pixf_rgb24, lut8, initRenderingBuffer)
-genTest(test2, PixFmtRgb48, Rgba16, pixf_rgb48, lut16, initRenderingBuffer)
+genTest(test1, PixFmtRgb24, Rgba8, pixf_rgb24, lut8, initRenderingBuffer, 3)
+genTest(test2, PixFmtRgb48, Rgba16, pixf_rgb48, lut16, initRenderingBuffer, 3)
 
+echo "PixFmtRgb24"
 testtest1()
+echo "PixFmtRgb48"
 testtest2()
+
+genTest(test3, PixFmtRgba32, Rgba8, pixf_rgba32, lut8, initRenderingBuffer, 4)
+genTest(test4, PixFmtRgba64, Rgba16, pixf_rgba64, lut16, initRenderingBuffer, 4)
+echo "PixFmtRgba32"
+testtest3()
+echo "PixFmtRgba64"
+testtest4()
 
 template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
   proc `test name`() =
@@ -361,7 +394,9 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 genTestGray(test5, PixFmtGray8, Gray8, lut8, initRenderingBuffer)
 genTestGray(test6, PixFmtGray16, Gray16, lut16, initRenderingBuffer)
 
+echo "PixFmtGray8"
 testtest5()
+echo "PixFmtGray16"
 testtest6()
 
 proc testRenderingBuffer[ColorT]() =
@@ -415,6 +450,8 @@ proc testRenderingBuffer[ColorT]() =
         doAssert(false)
       inc p1
       inc p2
-
+      
+echo "RenderingBufferRgba8"
 testRenderingBuffer[Rgba8]()
+echo "RenderingBufferRgba16"
 testRenderingBuffer[Rgba16]()
