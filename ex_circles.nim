@@ -10,7 +10,7 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 const
   num_points = 10000
@@ -39,7 +39,7 @@ var
   spline_b = initBSpline(6, spline_b_x[0].addr, spline_b_y[0].addr)
 
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
   pf     = initPixFmtRgb24(rbuf)
   rb     = initRendererBase(pf)
   sl     = initScanlineP8()

@@ -7,14 +7,14 @@ type
     mAlpha: AType
 
 proc init[Source, AType](src: var Source, offsetX, offsetY: int): SpanPatternGray[Source, AType] =
-  const baseMask = getBaseMask(getColorType(Source))
+  const baseMask = getBaseMask(getColorT(Source))
   result.mSrc = src.addr
   result.mOffsetX = offsetX
   result.mOffsetY = offsetY
   result.mAlpha = baseMask
 
 proc initSpanPatternGray*[Source](src: var Source, offsetX, offsetY: int): auto =
-  result = init[Source, getValueType(getColorType(Source))](src, offsetX, offsetY)
+  result = init[Source, getValueT(getColorT(Source))](src, offsetX, offsetY)
 
 proc attach*[S,A](self: var SpanPatternGray[S,A], v: var S) =
   self.mSrc = v.addr

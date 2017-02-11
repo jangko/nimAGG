@@ -6,8 +6,8 @@ type
     mask: ptr Amask
     span: seq[CoverType]
 
-template getOrderType*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getOrderType(P.type)
-template getColorType*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getColorType(P.type)
+template getOrderT*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getOrderT(P.type)
+template getColorT*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getColorT(P.type)
 
 const
   spanExtraTail = 256

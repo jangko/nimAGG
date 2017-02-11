@@ -6,67 +6,67 @@ type
   BlenderGray*[ColorT] = object
   BlenderGrayPre*[ColorT] = object
 
-template getCalcType* [C](x: typedesc[BlenderGray[C]]): untyped = getCalcType(C.type)
-template getValueType*[C](x: typedesc[BlenderGray[C]]): untyped = getValueType(C.type)
-template getColorType*[C](x: typedesc[BlenderGray[C]]): typedesc = C
-template getPixWidth* [C](x: typedesc[BlenderGray[C]]): int = sizeof(getValueType(C.type))
+template getCalcT* [C](x: typedesc[BlenderGray[C]]): untyped = getCalcT(C.type)
+template getValueT*[C](x: typedesc[BlenderGray[C]]): untyped = getValueT(C.type)
+template getColorT*[C](x: typedesc[BlenderGray[C]]): typedesc = C
+template getPixWidth* [C](x: typedesc[BlenderGray[C]]): int = sizeof(getValueT(C.type))
 
-template getCalcType* [C](x: typedesc[BlenderGrayPre[C]]): untyped = getCalcType(C.type)
-template getValueType*[C](x: typedesc[BlenderGrayPre[C]]): untyped = getValueType(C.type)
-template getColorType*[C](x: typedesc[BlenderGrayPre[C]]): typedesc = C
-template getPixWidth* [C](x: typedesc[BlenderGrayPre[C]]): int = sizeof(getValueType(C.type))
+template getCalcT* [C](x: typedesc[BlenderGrayPre[C]]): untyped = getCalcT(C.type)
+template getValueT*[C](x: typedesc[BlenderGrayPre[C]]): untyped = getValueT(C.type)
+template getColorT*[C](x: typedesc[BlenderGrayPre[C]]): typedesc = C
+template getPixWidth* [C](x: typedesc[BlenderGrayPre[C]]): int = sizeof(getValueT(C.type))
 
 proc BlenderGrayBlendPix*[C,T](p: ptr T; cv, alpha: uint; cover = 0'u) {.inline.} =
   type
-    ValueType = getValueType(C)
-    CalcType = getCalcType(C)
-  const baseShift = getBaseShift(C).CalcType
-  p[] = ValueType((((CalcType(cv) - CalcType(p[])) * CalcType(alpha)) + (CalcType(p[]) shl baseShift)) shr baseShift)
+    ValueT = getValueT(C)
+    CalcT = getCalcT(C)
+  const baseShift = getBaseShift(C).CalcT
+  p[] = ValueT((((CalcT(cv) - CalcT(p[])) * CalcT(alpha)) + (CalcT(p[]) shl baseShift)) shr baseShift)
 
 proc BlenderGrayPreBlendPix*[C,T](p: ptr T; cv, alpha, cover: uint) {.inline.} =
   const
     baseMask = getBaseMask(C)
     baseShift = getBaseShift(C)
   type
-    ValueType = getValueType(C)
+    ValueT = getValueT(C)
   let alpha = baseMask - alpha
   let cover = (cover + 1) shl (baseShift - 8)
-  p[] = ValueType((p[] * alpha + cv * cover) shr baseShift)
+  p[] = ValueT((p[] * alpha + cv * cover) shr baseShift)
 
 proc BlenderGrayPreBlendPix*[C,T](p: ptr T; cv, alpha: uint) {.inline.} =
   const
     baseMask = getBaseMask(C)
     baseShift = getBaseShift(C)
   type
-    ValueType = getValueType(C)
-  p[] = ValueType(((p[] * (baseMask - alpha)) shr baseShift) + cv)
+    ValueT = getValueT(C)
+  p[] = ValueT(((p[] * (baseMask - alpha)) shr baseShift) + cv)
 
 template blendPix*[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha: uint) =
-  BlenderGrayBlendPix[C.type, getValueType(C.type)](p, cv, alpha)
+  BlenderGrayBlendPix[C.type, getValueT(C.type)](p, cv, alpha)
 
 template blendPix*[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha, cover: uint) =
-  BlenderGrayBlendPix[C.type, getValueType(C.type)](p, cv, alpha, cover)
+  BlenderGrayBlendPix[C.type, getValueT(C.type)](p, cv, alpha, cover)
 
 template blendPix*[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha: uint) =
-  BlenderGrayPreBlendPix[C.type, getValueType(C.type)](p, cv, alpha)
+  BlenderGrayPreBlendPix[C.type, getValueT(C.type)](p, cv, alpha)
 
 template blendPix*[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha, cover: uint) =
-  BlenderGrayPreBlendPix[C.type, getValueType(C.type)](p, cv, alpha, cover)
+  BlenderGrayPreBlendPix[C.type, getValueT(C.type)](p, cv, alpha, cover)
 
 template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: untyped) =
   type
     name* = object
       rbuf: ptr RenBuf
 
-  template getColorType*(x: typedesc[name]): typedesc = getColorType(Blender)
+  template getColorT*(x: typedesc[name]): typedesc = getColorT(Blender)
   template getPixWidth* (x: typedesc[name]): int = getPixWidth(Blender)
 
   proc copyOrBlendPix[ColorT, ValueT](x: typedesc[name], p: ptr ValueT, c: ColorT, cover: uint) {.inline.} =
-    type CalcType = getCalcType(ColorT)
+    type CalcT = getCalcT(ColorT)
     const baseMask = getBaseMask(ColorT)
 
     if c.a != 0:
-      let alpha = (CalcType(c.a) * CalcType(cover + 1)) shr 8
+      let alpha = (CalcT(c.a) * CalcT(cover + 1)) shr 8
       if alpha == baseMask:
         p[] = c.v
       else:
@@ -106,12 +106,12 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
   proc pixPtr*(self: name; x, y: int): auto = self.rbuf[].rowPtr(y) + x * Step + Offset
 
   proc makePix*[ColorT](x: typedesc[name], p: pointer, c: ColorT) {.inline.} =
-    type ValueType = getValueType(ColorT)
-    cast[ptr ValueType](p)[] = c.v
+    type ValueT = getValueT(ColorT)
+    cast[ptr ValueT](p)[] = c.v
 
   proc pixel*(self: name, x, y: int): auto {.inline.} =
     let p = self.rbuf[].rowPtr(y) + x * Step + Offset
-    result = construct(getColorType(Blender), p[])
+    result = construct(getColorT(Blender), p[])
 
   proc copyPixel*[ColorT](self: name; x, y: int, c: ColorT) {.inline.} =
     var p = self.rbuf[].rowPtr(x, y, 1) + x * Step + Offset
@@ -122,7 +122,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     name.copyOrBlendPix(p, c, cover)
 
   proc copyHline*[ColorT](self: name; x, y, length: int, c: ColorT) {.inline.} =
-    type ValueType = getValueType(Blender)
+    type ValueT = getValueT(Blender)
     var
       len = length
       p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
@@ -132,20 +132,20 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       dec len
 
   proc copyVline*[ColorT](self: name; x, y, length: int, c: ColorT) {.inline.} =
-    type ValueType = getValueType(Blender)
+    type ValueT = getValueT(Blender)
     var
       len = length
       line = y
     doWhile len != 0:
-      var p = cast[ptr ValueType](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       p[] = c.v
       dec len
 
   proc blendHline*[ColorT](self: name, x, y, length: int; c: ColorT, cover: uint8) =
     type
-      ValueType = getValueType(ColorT)
-      CalcType = getCalcType(ColorT)
+      ValueT = getValueT(ColorT)
+      CalcT = getCalcT(ColorT)
     const
       baseMask = getBaseMask(ColorT)
     if c.a == 0: return
@@ -153,7 +153,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       len = length
       p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
 
-    let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
+    let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
     if alpha == baseMask:
       doWhile len != 0:
         p[] = c.v
@@ -167,15 +167,15 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
   proc blendVline*[ColorT](self: name, x, y, length: int; c: ColorT, cover: uint8) =
     type
-      ValueType = getValueType(ColorT)
-      CalcType = getCalcType(ColorT)
+      ValueT = getValueT(ColorT)
+      CalcT = getCalcT(ColorT)
     const
       baseMask = getBaseMask(ColorT)
 
     if c.a == 0: return
-    let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
+    let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
     var
-      p: ptr ValueType
+      p: ptr ValueT
       line = y
       len = length
 
@@ -194,8 +194,8 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
   proc blendSolidHspan*[ColorT](self: name, x, y, length: int; c: ColorT, covers: ptr uint8) =
     type
-      ValueType = getValueType(ColorT)
-      CalcType = getCalcType(ColorT)
+      ValueT = getValueT(ColorT)
+      CalcT = getCalcT(ColorT)
     const
       baseMask = getBaseMask(ColorT)
     if c.a == 0: return
@@ -205,7 +205,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       cv = covers
 
     doWhile len != 0:
-      let alpha = (CalcType(c.a) * (CalcType(cv[]) + 1)) shr 8
+      let alpha = (CalcT(c.a) * (CalcT(cv[]) + 1)) shr 8
       if alpha == baseMask:
         p[] = c.v
       else:
@@ -217,8 +217,8 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
   proc blendSolidVspan*[ColorT](self: name, x, y, length: int; c: ColorT, covers: ptr uint8) =
     type
-      ValueType = getValueType(ColorT)
-      CalcType = getCalcType(ColorT)
+      ValueT = getValueT(ColorT)
+      CalcT = getCalcT(ColorT)
     const
       baseMask = getBaseMask(ColorT)
     if c.a == 0: return
@@ -228,8 +228,8 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       cv = covers
 
     doWhile len != 0:
-      let alpha = (CalcType(c.a) * (CalcType(cv[]) + 1)) shr 8
-      var p = cast[ptr ValueType](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      let alpha = (CalcT(c.a) * (CalcT(cv[]) + 1)) shr 8
+      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       if alpha == baseMask:
         p[] = c.v
@@ -239,7 +239,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       dec len
 
   proc copyColorHspan*[ColorT](self: name, x, y, length: int; colors: ptr ColorT) =
-    type ValueType = getValueType(Blender)
+    type ValueT = getValueT(Blender)
     var
       len = length
       p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
@@ -252,25 +252,25 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       dec len
 
   proc copyColorVspan*[ColorT](self: name, x, y, length: int; colors: ptr ColorT) =
-    type ValueType = getValueType(Blender)
+    type ValueT = getValueT(Blender)
     var
       len = length
       line = y
       co = colors
 
     doWhile len != 0:
-      var p = cast[ptr ValueType](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       p[] = co.v
       inc co
       dec len
 
   proc blendColorHspan*[ColorT](self: name, x, y, length: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
-    type ValueType = getValueType(ColorT)
+    type ValueT = getValueT(ColorT)
     const baseMask = getBaseMask(ColorT)
     var
       len = length
-      p = cast[ptr ValueType](self.rbuf[].rowPtr(x, y, len) + x * Step + Offset)
+      p = cast[ptr ValueT](self.rbuf[].rowPtr(x, y, len) + x * Step + Offset)
       co = colors
       cv = covers
 
@@ -300,10 +300,10 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         dec len
 
   proc blendColorVspan*[ColorT](self: name, x, y, length: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
-    type ValueType = getValueType(ColorT)
+    type ValueT = getValueT(ColorT)
     const baseMask = getBaseMask(ColorT)
     var
-      p: ptr ValueType
+      p: ptr ValueT
       len = length
       line = y
       co = colors
@@ -338,28 +338,28 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         dec len
 
   proc forEachPixel[Func](self: name, f: Func) =
-    type ValueType = getValueType(Blender)
+    type ValueT = getValueT(Blender)
     let h = self.height()
     for y in 0.. <h:
       let r = self.rbuf[].row(y)
       if r.data != nil:
         var
           len = r.x2 - r.x1 + 1
-          p = cast[ptr ValueType](self.rbuf[].rowPtr(r.x1, y, len) + r.x1 * Step + Offset)
+          p = cast[ptr ValueT](self.rbuf[].rowPtr(r.x1, y, len) + r.x1 * Step + Offset)
         doWhile len != 0:
           f(p)
           inc(p, Step)
           dec len
 
   proc applyGammaDir*[GammaLut](self: name, gamma: GammaLut) =
-    type ValueType = getValueType(Blender)
-    proc apply_gamma_dir_gray(p: ptr ValueType) =
+    type ValueT = getValueT(Blender)
+    proc apply_gamma_dir_gray(p: ptr ValueT) =
       p[] = gamma.dir(p[])
     self.forEachPixel(apply_gamma_dir_gray)
 
   proc applyGammaInv*[GammaLut](self: name, gamma: GammaLut) =
-    type ValueType = getValueType(Blender)
-    proc apply_gamma_inv_gray(p: ptr ValueType) =
+    type ValueT = getValueT(Blender)
+    proc apply_gamma_inv_gray(p: ptr ValueT) =
       p[] = gamma.inv(p[])
     self.forEachPixel(apply_gamma_inv_gray)
 
@@ -373,11 +373,11 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
   proc blendFromColor*[SrcPixelFormatRenderer, ColorT](self: name, src: SrcPixelFormatRenderer,
     color: ColorT; xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =
       type
-        SrcValueType = getValueType(SrcPixelFormatRenderer)
-        ValueType = getValueType(ColorT)
-      var psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
+        SrcValueT = getValueT(SrcPixelFormatRenderer)
+        ValueT = getValueT(ColorT)
+      var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
       if psrc != nil:
-        var pdst = cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
         doWhile len != 0:
           name.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
           inc psrc
@@ -387,11 +387,11 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
   proc blendFromLut*[SrcPixelFormatRenderer, ColorT](self: name, src: SrcPixelFormatRenderer,
     colorLut: ptr ColorT; xdst, ydst, xsrc, ysrc, len: int; cover: uint8) =
       type
-        SrcValueType = getValueType(SrcPixelFormatRenderer)
-        ValueType = getValueType(ColorT)
-      var psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
+        SrcValueT = getValueT(SrcPixelFormatRenderer)
+        ValueT = getValueT(ColorT)
+      var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
       if psrc != nil:
-        var pdst = cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
         doWhile len != 0:
           name.copyOrBlendPix(pdst, colorLut[psrc[]], cover)
           inc psrc

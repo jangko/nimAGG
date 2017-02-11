@@ -7,14 +7,14 @@ type
     mAlpha: AType
 
 proc init[Source,AType](src: var Source, offsetX, offsetY: int): SpanPatternRgb[Source, AType] =
-  const baseMask = getBaseMask(getColorType(Source))
+  const baseMask = getBaseMask(getColorT(Source))
   result.mSrc = src.addr
   result.mOffsetX = offsetX
   result.mOffsetY = offsetY
   result.mAlpha = baseMask
 
 proc initSpanPatternRgb*[Source](src: var Source, offsetX, offsetY: int): auto =
-  result = init[Source, getValueType(getColorType(Source))](src, offsetX, offsetY)
+  result = init[Source, getValueT(getColorT(Source))](src, offsetX, offsetY)
 
 proc attach*[S,A](self: var SpanPatternRgb[S,A], v: var S) = self.mSrc = v.addr
 proc source*[S,A](self: SpanPatternRgb[S,A]): var S = self.mSrc[]
@@ -29,7 +29,7 @@ proc alpha*[S,A](self: SpanPatternRgb[S,A]): A = self.mAlpha
 proc prepare*[S,A](self: SpanPatternRgb[S,A],) = discard
 proc generate*[S,A, ColorT](self: var SpanPatternRgb[S,A], span: ColorT, x, y, len: int) =
   type
-    OrderType = getOrderType(S)
+    OrderT = getOrderT(S)
   var
     x = x
     y = y
@@ -40,9 +40,9 @@ proc generate*[S,A, ColorT](self: var SpanPatternRgb[S,A], span: ColorT, x, y, l
   var p = cast[ptr A](self.mSrc[].span(x, y, len))
 
   doWhile len != 0:
-    span.r = p[OrderType.R]
-    span.g = p[OrderType.G]
-    span.b = p[OrderType.B]
+    span.r = p[OrderT.R]
+    span.g = p[OrderT.G]
+    span.b = p[OrderT.B]
     span.a = self.mAlpha
     p = cast[ptr A](self.mSrc[].nextX())
     inc span

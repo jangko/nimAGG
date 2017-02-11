@@ -28,13 +28,13 @@ const
   mRadius = 25.0
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 var
   mx, my: array[2, float64]
   gamma  = newGammaLut8(mGamma)
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
   pixf   = initPixFmt(rbuf, gamma)
   rb     = initRendererBase(pixf)
   ren    = initRendererScanlineAASolid(rb)

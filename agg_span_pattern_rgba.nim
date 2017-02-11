@@ -25,8 +25,8 @@ proc alpha*[Source,A](self: SpanPatternRgba[Source]): A = 0
 proc prepare*[Source](self: SpanPatternRgba[Source]) = discard
 proc generate*[Source, ColorT](self: var SpanPatternRgba[Source], span: ptr ColorT, x, y, len: int) =
   type
-    OrderType = getOrderType(Source)
-    ValueType = getValueType(getColorType(Source))
+    OrderT = getOrderT(Source)
+    ValueT = getValueT(getColorT(Source))
   var
     x = x
     y = y
@@ -34,12 +34,12 @@ proc generate*[Source, ColorT](self: var SpanPatternRgba[Source], span: ptr Colo
 
   x += self.mOffsetX
   y += self.mOffsetY
-  var p = cast[ptr ValueType](self.mSrc[].span(x, y, len))
+  var p = cast[ptr ValueT](self.mSrc[].span(x, y, len))
   doWhile len != 0:
-    span.r = p[OrderType.R]
-    span.g = p[OrderType.G]
-    span.b = p[OrderType.B]
-    span.a = p[OrderType.A]
-    p = cast[ptr ValueType](self.mSrc[].nextX())
+    span.r = p[OrderT.R]
+    span.g = p[OrderT.G]
+    span.b = p[OrderT.B]
+    span.a = p[OrderT.A]
+    p = cast[ptr ValueT](self.mSrc[].nextX())
     inc span
     dec len

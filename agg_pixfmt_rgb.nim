@@ -10,24 +10,24 @@ type
     blender: Blender
     rbuf: ptr RenBuf
 
-template getOrderType*[C,O](x: typedesc[BlenderRgb[C,O]]): typedesc = O
-template getValueType*[C,O](x: typedesc[BlenderRgb[C,O]]): untyped = getValueType(C.type)
-template getColorType*[C,O](x: typedesc[BlenderRgb[C,O]]): typedesc = C
-template getPixWidth* [C,O](x: typedesc[BlenderRgb[C,O]]): int = sizeof(getValueType(C.type)) * 3
+template getOrderT*[C,O](x: typedesc[BlenderRgb[C,O]]): typedesc = O
+template getValueT*[C,O](x: typedesc[BlenderRgb[C,O]]): untyped = getValueT(C.type)
+template getColorT*[C,O](x: typedesc[BlenderRgb[C,O]]): typedesc = C
+template getPixWidth* [C,O](x: typedesc[BlenderRgb[C,O]]): int = sizeof(getValueT(C.type)) * 3
 
-template getOrderType*[C,O](x: typedesc[BlenderRgbPre[C,O]]): typedesc = O
-template getValueType*[C,O](x: typedesc[BlenderRgbPre[C,O]]): untyped = getValueType(C.type)
-template getColorType*[C,O](x: typedesc[BlenderRgbPre[C,O]]): typedesc = C
-template getPixWidth* [C,O](x: typedesc[BlenderRgbPre[C,O]]): int = sizeof(getValueType(C.type)) * 3
+template getOrderT*[C,O](x: typedesc[BlenderRgbPre[C,O]]): typedesc = O
+template getValueT*[C,O](x: typedesc[BlenderRgbPre[C,O]]): untyped = getValueT(C.type)
+template getColorT*[C,O](x: typedesc[BlenderRgbPre[C,O]]): typedesc = C
+template getPixWidth* [C,O](x: typedesc[BlenderRgbPre[C,O]]): int = sizeof(getValueT(C.type)) * 3
 
-template getOrderType*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): typedesc = O
-template getValueType*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): untyped = getValueType(C.type)
-template getColorType*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): typedesc = C
-template getPixWidth* [C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): int = sizeof(getValueType(C.type)) * 3
+template getOrderT*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): typedesc = O
+template getValueT*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): untyped = getValueT(C.type)
+template getColorT*[C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): typedesc = C
+template getPixWidth* [C,O,G](x: typedesc[BlenderRgbGamma[C,O,G]]): int = sizeof(getValueT(C.type)) * 3
 
-template getOrderType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getOrderType(B.type)
-template getColorType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getColorType(B.type)
-template getValueType*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getValueType(B.type)
+template getOrderT*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getOrderT(B.type)
+template getColorT*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getColorT(B.type)
+template getValueT*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): typedesc = getValueT(B.type)
 template getPixWidth *[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]]): int = getPixWidth(B.type)
 
 proc blendPix*[C,O,T](self: BlenderRgb[C,O], p: ptr T,
@@ -69,7 +69,7 @@ proc gamma*[C,O,G](self: var BlenderRgbGamma[C,O,G], gamma: G) =
 proc blendPix*[C,O,T,G](self: BlenderRgbGamma[C,O,G], p: ptr T,
   cr, cg, cb, alpha: uint, cover=0.uint) {.inline.} =
   type
-    CalcType = getCalcType(C)
+    CalcT = getCalcT(C)
   const
     baseShift = getBaseShift(C)
     baseMask = getBaseMask(C)
@@ -85,34 +85,34 @@ proc blendPix*[C,O,T,G](self: BlenderRgbGamma[C,O,G], p: ptr T,
 proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, c: ColorT) =
   type
-    OrderType = getOrderType(Blender)
-    ValueType = getValueType(Blender)
+    OrderT = getOrderT(Blender)
+    ValueT = getValueT(Blender)
 
   var p = self.rbuf[].rowPtr(x, y, 1) + x + x + x
-  p[OrderType.R] = c.r
-  p[OrderType.G] = c.g
-  p[OrderType.B] = c.b
+  p[OrderT.R] = c.r
+  p[OrderT.G] = c.g
+  p[OrderT.B] = c.b
 
 proc makePix*[Blender, RenBuf, ColorT](x: typedesc[PixfmtAlphaBlendRgb[Blender, RenBuf]],
   p: pointer, c: ColorT) =
 
   type
-    OrderType = getOrderType(Blender)
-    ValueType = getValueType(Blender)
+    OrderT = getOrderT(Blender)
+    ValueT = getValueT(Blender)
 
-  cast[ptr ValueType](p)[OrderType.R] = c.r
-  cast[ptr ValueType](p)[OrderType.G] = c.g
-  cast[ptr ValueType](p)[OrderType.B] = c.b
+  cast[ptr ValueT](p)[OrderT.R] = c.r
+  cast[ptr ValueT](p)[OrderT.G] = c.g
+  cast[ptr ValueT](p)[OrderT.B] = c.b
 
 proc pixel*[Blender, RenBuf](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int): auto =
 
   type
-    OrderType = getOrderType(Blender)
-    ValueType = getValueType(Blender)
+    OrderT = getOrderT(Blender)
+    ValueT = getValueT(Blender)
 
   var p = self.rbuf[].rowPtr(y) + x + x + x
-  result = construct(getColorType(Blender), p[OrderType.R], p[OrderType.G], p[OrderType.B])
+  result = construct(getColorT(Blender), p[OrderT.R], p[OrderT.G], p[OrderT.B])
 
 proc height*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int =
   result = self.rbuf[].height()
@@ -136,31 +136,31 @@ proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], x, y: 
 proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   p: ptr T, c: C, cover: uint) {.inline.} =
   type
-    CalcType = getCalcType(C)
-    OrderType = getOrderType(Blender)
+    CalcT = getCalcT(C)
+    OrderT = getOrderT(Blender)
   const
     baseMask = getBaseMask(C)
 
   if c.a != 0:
-    let alpha = (CalcType(c.a) * CalcType(cover + 1)) shr 8
+    let alpha = (CalcT(c.a) * CalcT(cover + 1)) shr 8
     if alpha == baseMask:
-      p[OrderType.R] = c.r
-      p[OrderType.G] = c.g
-      p[OrderType.B] = c.b
+      p[OrderT.R] = c.r
+      p[OrderT.G] = c.g
+      p[OrderT.B] = c.b
     else:
       self.blender.blendPix(p, c.r.uint, c.g.uint, c.b.uint, alpha, cover)
 
 proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   p: ptr T, c: C) {.inline.} =
 
-  type OrderType = getOrderType(Blender)
+  type OrderT = getOrderT(Blender)
   const baseMask = getBaseMask(C)
 
   if c.a != 0:
     if c.a == baseMask:
-      p[OrderType.R] = c.r
-      p[OrderType.G] = c.g
-      p[OrderType.B] = c.b
+      p[OrderT.R] = c.r
+      p[OrderT.G] = c.g
+      p[OrderT.B] = c.b
   else:
     self.blender.blendPix(p, c.r.uint, c.g.uint, c.b.uint, c.a.uint)
 
@@ -170,14 +170,14 @@ proc blendPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender,
   self.copyOrBlendPix(p, c, cover)
 
 proc blendColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y, length: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
+  x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
 
   type
-    ValueType = getValueType(Blender)
+    ValueT = getValueT(Blender)
 
   var
-    p = cast[ptr ValueType](self.rbuf[].rowPtr(x, y, length) + x + x + x)
-    len = length
+    p = cast[ptr ValueT](self.rbuf[].rowPtr(x, y, len) + x + x + x)
+    len = len
     co = colors
     cv = covers
 
@@ -204,13 +204,13 @@ proc blendColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
       dec len
 
 proc blendColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y, length: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
+  x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
 
   type
-    ValueType = getValueType(Blender)
+    ValueT = getValueT(Blender)
 
   var
-    len = length
+    len = len
     line = y
     cv = covers
     co = colors
@@ -241,60 +241,60 @@ proc blendColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
       dec len
 
 proc copyHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT) =
+  x, y, len: int, c: ColorT) =
 
   type
-    OrderType = getOrderType(Blender)
+    OrderT = getOrderT(Blender)
 
   var
-    len = length
+    len = len
     p = self.rbuf[].rowPtr(x, y, len) + x + x + x
 
   doWhile len != 0:
-    p[OrderType.R] = c.r
-    p[OrderType.G] = c.g
-    p[OrderType.B] = c.b
+    p[OrderT.R] = c.r
+    p[OrderT.G] = c.g
+    p[OrderT.B] = c.b
     inc(p, 3)
     dec len
 
 proc copyVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT) =
+  x, y, len: int, c: ColorT) =
 
   type
-    OrderType = getOrderType(Blender)
+    OrderT = getOrderT(Blender)
 
   var
-    len = length
+    len = len
     line = y
 
   doWhile len != 0:
     var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
-    p[OrderType.R] = c.r
-    p[OrderType.G] = c.g
-    p[OrderType.B] = c.b
+    p[OrderT.R] = c.r
+    p[OrderT.G] = c.g
+    p[OrderT.B] = c.b
     inc line
     dec len
 
 proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT, cover: uint8) =
+  x, y, len: int, c: ColorT, cover: uint8) =
 
   type
-    CalcType = getCalcType(ColorT)
-    OrderType = getOrderType(Blender)
+    CalcT = getCalcT(ColorT)
+    OrderT = getOrderT(Blender)
 
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
   var
-    len = length
+    len = len
     p = self.rbuf[].rowPtr(x, y, len) + x + x + x
 
-  let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
+  let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
   if alpha == baseMask:
     doWhile len != 0:
-      p[OrderType.R] = c.r
-      p[OrderType.G] = c.g
-      p[OrderType.B] = c.b
+      p[OrderT.R] = c.r
+      p[OrderT.G] = c.g
+      p[OrderT.B] = c.b
       inc(p, 3)
       dec len
   else:
@@ -304,18 +304,18 @@ proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
       dec len
 
 proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT, cover: uint8) =
+  x, y, len: int, c: ColorT, cover: uint8) =
 
   type
-    CalcType = getCalcType(ColorT)
-    OrderType = getOrderType(Blender)
+    CalcT = getCalcT(ColorT)
+    OrderT = getOrderT(Blender)
 
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
-  let alpha = (CalcType(c.a) * (CalcType(cover) + 1)) shr 8
+  let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
   var
-    len = length
+    len = len
     line = y
 
   if alpha == baseMask:
@@ -323,9 +323,9 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
       let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
 
-      p[OrderType.R] = c.r
-      p[OrderType.G] = c.g
-      p[OrderType.B] = c.b
+      p[OrderT.R] = c.r
+      p[OrderT.G] = c.g
+      p[OrderT.B] = c.b
       dec len
   else:
     doWhile len != 0:
@@ -335,26 +335,26 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
       dec len
 
 proc blendSolidHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT, covers: ptr uint8) =
+  x, y, len: int, c: ColorT, covers: ptr uint8) =
 
   type
-    CalcType = getCalcType(ColorT)
-    OrderType = getOrderType(Blender)
+    CalcT = getCalcT(ColorT)
+    OrderT = getOrderT(Blender)
 
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
   var
-    len = length
+    len = len
     p = self.rbuf[].rowPtr(x, y, len) + x + x + x
     co = covers
 
   doWhile len != 0:
-    let alpha = (CalcType(c.a) * (CalcType(co[]) + 1)) shr 8
+    let alpha = (CalcT(c.a) * (CalcT(co[]) + 1)) shr 8
     if alpha == baseMask:
-      p[OrderType.R] = c.r
-      p[OrderType.G] = c.g
-      p[OrderType.B] = c.b
+      p[OrderT.R] = c.r
+      p[OrderT.G] = c.g
+      p[OrderT.B] = c.b
     else:
       self.blender.blendPix(p, c.r, c.g, c.b, alpha, co[])
     inc(p, 3)
@@ -362,67 +362,67 @@ proc blendSolidHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
     dec len
 
 proc blendSolidVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, c: ColorT, covers: ptr uint8) =
+  x, y, len: int, c: ColorT, covers: ptr uint8) =
 
   type
-    CalcType = getCalcType(ColorT)
-    OrderType = getOrderType(Blender)
+    CalcT = getCalcT(ColorT)
+    OrderT = getOrderT(Blender)
 
   const baseMask = getBaseMask(ColorT)
   if c.a == 0: return
 
   var
     line = y
-    len = length
+    len = len
     co = covers
 
   doWhile len != 0:
     var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
     inc line
 
-    let alpha = (CalcType(c.a) * (CalcType(co[]) + 1)) shr 8
+    let alpha = (CalcT(c.a) * (CalcT(co[]) + 1)) shr 8
     if alpha == baseMask:
-        p[OrderType.R] = c.r
-        p[OrderType.G] = c.g
-        p[OrderType.B] = c.b
+        p[OrderT.R] = c.r
+        p[OrderT.G] = c.g
+        p[OrderT.B] = c.b
     else:
       self.blender.blendPix(p, c.r, c.g, c.b, alpha, co[])
     inc co
     dec len
 
 proc copyColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, colors: ptr ColorT) =
+  x, y, len: int, colors: ptr ColorT) =
   type
-    OrderType = getOrderType(Blender)
+    OrderT = getOrderT(Blender)
 
   var
-    len = length
+    len = len
     p = self.rbuf[].rowPtr(x, y, len) + x + x + x
     co = colors
 
   doWhile len != 0:
-    p[OrderType.R] = co[].r
-    p[OrderType.G] = co[].g
-    p[OrderType.B] = co[].b
+    p[OrderT.R] = co[].r
+    p[OrderT.G] = co[].g
+    p[OrderT.B] = co[].b
     inc co
     inc(p, 3)
     dec len
 
 proc copyColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  x, y: int, length: int, colors: ptr ColorT) =
+  x, y, len: int, colors: ptr ColorT) =
 
   type
-    OrderType = getOrderType(Blender)
+    OrderT = getOrderT(Blender)
   var
     co = colors
     line = y
-    len = length
+    len = len
 
   doWhile len != 0:
     var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
-    p[OrderType.R] = co[].r
-    p[OrderType.G] = co[].g
-    p[OrderType.B] = co[].b
+    p[OrderT.R] = co[].r
+    p[OrderT.G] = co[].g
+    p[OrderT.B] = co[].b
     inc co
     inc line
     dec len
@@ -444,13 +444,13 @@ proc applyGammaDir*[Blender, RenBuf, GammaLut](self: PixfmtAlphaBlendRgb[Blender
   gamma: GammaLut) =
 
   type
-    ValueType = getValueType(Blender)
-    OrderType = getOrderType(Blender)
+    ValueT = getValueT(Blender)
+    OrderT = getOrderT(Blender)
 
-  proc apply_gamma_dir_rgb(p: ptr ValueType) =
-    p[OrderType.R] = gamma.dir(p[OrderType.R])
-    p[OrderType.G] = gamma.dir(p[OrderType.G])
-    p[OrderType.B] = gamma.dir(p[OrderType.B])
+  proc apply_gamma_dir_rgb(p: ptr ValueT) =
+    p[OrderT.R] = gamma.dir(p[OrderT.R])
+    p[OrderT.G] = gamma.dir(p[OrderT.G])
+    p[OrderT.B] = gamma.dir(p[OrderT.B])
 
   self.forEachPixel(apply_gamma_dir_rgb)
 
@@ -458,13 +458,13 @@ proc applyGammaInv*[Blender, RenBuf, GammaLut](self: PixfmtAlphaBlendRgb[Blender
   gamma: GammaLut) =
 
   type
-    ValueType = getValueType(Blender)
-    OrderType = getOrderType(Blender)
+    ValueT = getValueT(Blender)
+    OrderT = getOrderT(Blender)
 
-  proc apply_gamma_inv_rgb(p: ptr ValueType) =
-    p[OrderType.R] = gamma.inv(p[OrderType.R])
-    p[OrderType.G] = gamma.inv(p[OrderType.G])
-    p[OrderType.B] = gamma.inv(p[OrderType.B])
+  proc apply_gamma_inv_rgb(p: ptr ValueT) =
+    p[OrderT.R] = gamma.inv(p[OrderT.R])
+    p[OrderT.G] = gamma.inv(p[OrderT.G])
+    p[OrderT.B] = gamma.inv(p[OrderT.B])
 
   self.forEachPixel(apply_gamma_inv_rgb)
 
@@ -481,15 +481,15 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
   src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc: int, length: uint, cover: uint8) =
 
   type
-    SrcOrder  = getOrderType(SrcPixelFormatRenderer)
-    OrderType = getOrderType(Blender)
-    ColorType = getColorType(Blender)
+    SrcOrder  = getOrderT(SrcPixelFormatRenderer)
+    OrderT = getOrderT(Blender)
+    ColorType = getColorT(Blender)
   const
-    baseMask = getBaseMask(getColorType(Blender))
+    baseMask = getBaseMask(getColorT(Blender))
 
   var
     psrc = src.rowPtr(ysrc)
-    len = length
+    len = len
   if psrc == nil: return
 
   inc(psrc, xsrc * 4)
@@ -499,9 +499,9 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
       let alpha = psrc[SrcOrder.A]
       if alpha != 0:
         if alpha == baseMask:
-          pdst[OrderType.R] = psrc[SrcOrder.R]
-          pdst[OrderType.G] = psrc[SrcOrder.G]
-          pdst[OrderType.B] = psrc[SrcOrder.B]
+          pdst[OrderT.R] = psrc[SrcOrder.R]
+          pdst[OrderT.G] = psrc[SrcOrder.G]
+          pdst[OrderT.B] = psrc[SrcOrder.B]
         else:
           self.blender.blendPix(pdst,
             psrc[SrcOrder.R],
@@ -527,8 +527,8 @@ proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixf
   src: SrcPixelFormatRenderer, color: ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
   
   type
-    SrcValueType = getValueType(SrcPixelFormatRenderer)
-    ValueType = getValueType(ColorT)
+    SrcValueT = getValueT(SrcPixelFormatRenderer)
+    ValueT = getValueT(ColorT)
     
   const
     baseShift = getBaseShift(ColorT)
@@ -536,10 +536,10 @@ proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixf
 
   var
     len  = length
-    psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
+    psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
 
   if psrc == nil: return
-  var pdst = cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
   doWhile len != 0:
     self.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
     inc psrc
@@ -549,15 +549,15 @@ proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixf
 proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   src: SrcPixelFormatRenderer, colorLut: ptr ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
   type
-    SrcValueType = getValueType(SrcPixelFormatRenderer)
-    ValueType = getValueType(ColorT)
+    SrcValueT = getValueT(SrcPixelFormatRenderer)
+    ValueT = getValueT(ColorT)
     
   var
-    psrc = cast[ptr SrcValueType](src.rowPtr(ysrc))
-    len = length
+    psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
+    len = len
 
   if psrc == nil: return
-  var pdst =  cast[ptr ValueType](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst =  cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
 
   if cover == 255:
     doWhile len != 0:

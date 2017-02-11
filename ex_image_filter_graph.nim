@@ -71,12 +71,12 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)

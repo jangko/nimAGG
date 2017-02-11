@@ -10,7 +10,7 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
@@ -24,7 +24,7 @@ proc onDraw() =
 
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = newGammaLut8(kGamma)
     pf     = initPixFmt(rbuf, gamma)
     rb     = initRendererBase(pf)

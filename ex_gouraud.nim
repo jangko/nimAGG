@@ -13,7 +13,7 @@ const
   mAlpha = 1.0
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 var
   m_x, m_y: array[3, float64]
@@ -27,7 +27,7 @@ m_x[2] = 143;   m_y[2] = 310
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     renBase= initRendererBase(pf)
     sl     = initScanlineU8()
@@ -39,7 +39,7 @@ proc onDraw() =
     d = mDilation
 
   type
-    ColorType = Rgba8#getColorType(PixFmtRgb24)
+    ColorType = Rgba8#getColorT(PixFmtRgb24)
 
   var spanGen = initSpanGouraudRgba[ColorType]()
 

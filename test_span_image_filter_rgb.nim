@@ -11,7 +11,7 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 const
   V = 255
@@ -40,14 +40,14 @@ proc free_buffer(b: cstring) {.importc.}
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     rb     = initRendererBase(pf)    
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
     
     
-    img    = initRenderingBuffer(cast[ptr ValueType](image[0].unsafeAddr), 4, 4, 4*3)
+    img    = initRenderingBuffer(cast[ptr ValueT](image[0].unsafeAddr), 4, 4, 4*3)
     para   = [200.0, 40.0, 200.0+300.0, 40.0, 200.0+300.0, 40.0+300.0, 200.0, 40.0+300.0]
     mtx    = initTransAffine(para, 0, 0, 4, 4)
     inter  = initSpanInterpolatorLinear(mtx)

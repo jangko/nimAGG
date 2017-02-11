@@ -5,7 +5,7 @@ type
     mRen: ptr PixFmt
     mClipBox: RectI
 
-template getColorType*[PixFmt](x: typedesc[RendererBase[PixFmt]]): typedesc = getColorType(PixFmt.type)
+template getColorT*[PixFmt](x: typedesc[RendererBase[PixFmt]]): typedesc = getColorT(PixFmt.type)
 
 proc initRendererBase*[PixFmt](ren: var PixFmt): RendererBase[PixFmt] =
   result.mRen = ren.addr
@@ -69,8 +69,8 @@ proc boundingYmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y2
 
 proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
   mixin copyHline
-  when getColorType(PixFmt) isnot ColorT:
-    var c = construct(getColorType(PixFmt), c)
+  when getColorT(PixFmt) isnot ColorT:
+    var c = construct(getColorT(PixFmt), c)
 
   if self.width() != 0:
     for y in 0.. <self.height():
@@ -88,7 +88,7 @@ proc blendPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: C
 
 proc pixel*[PixFmt](self: var RendererBase[PixFmt], x, y: int): auto =
   mixin pixel
-  result = if self.inbox(x, y): self.mRen[].pixel(x, y) else: getColorType(PixFmt).noColor()
+  result = if self.inbox(x, y): self.mRen[].pixel(x, y) else: getColorT(PixFmt).noColor()
 
 proc copyHLine*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: ColorT) =
   mixin copyHline
@@ -161,8 +161,8 @@ proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: 
 
 proc copyBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT) =
   mixin copyHline
-  when getColorType(PixFmt) isnot ColorT:
-    var c = construct(getColorType(PixFmt), c)
+  when getColorT(PixFmt) isnot ColorT:
+    var c = construct(getColorT(PixFmt), c)
 
   var rc = initRectI(x1, y1, x2, y2)
   rc.normalize()

@@ -82,7 +82,7 @@ proc blendPixel*[PixFmt, ColorT](self: var RendererMclip[PixFmt], x, y: int, c: 
       break
 
 proc pixel*[PixFmt](self: var RendererMclip[PixFmt], x, y: int): auto =
-  type ColorT = getColorType(PixFmt)
+  type ColorT = getColorT(PixFmt)
   if self.mRen.inbox(x, y):
     return self.mRen.ren().pixel(x, y)
   result = noColor(ColorT)

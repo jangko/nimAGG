@@ -6,12 +6,12 @@ const
 
 proc testRendererBase[ColorT]() =
   type
-    ValueType = getValueType(ColorT)
+    ValueT = getValueT(ColorT)
   const
-    pixWidth = sizeof(ValueType) * 3
+    pixWidth = sizeof(ValueT) * 3
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     pixf = initPixFmtRgb24(rbuf)
     ren = initRendererBase(pixf)
 

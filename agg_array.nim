@@ -15,7 +15,7 @@ proc size*[T](self: PodBVector[T]): int {.inline.} = self.data.len
 
 proc `[]`*[T](self: var PodBVector[T], idx: int): var T = self.data[idx]
 
-template getValueType*[T](x: typedesc[PodBVector[T]]): typedesc = T
+template getValueT*[T](x: typedesc[PodBVector[T]]): typedesc = T
 
 # Remove duplicates from a sorted array. It doesn't cut the
 # tail of the array, it just returns the number of remaining elements.

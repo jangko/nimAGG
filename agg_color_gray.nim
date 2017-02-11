@@ -5,9 +5,9 @@ type
     v*: uint8
     a*: uint8
 
-template getValueType*(x: typedesc[Gray8]): typedesc = uint8
-template getCalcType*(x: typedesc[Gray8]): typedesc = uint32
-template getLongType*(x: typedesc[Gray8]): typedesc = int32
+template getValueT*(x: typedesc[Gray8]): typedesc = uint8
+template getCalcT*(x: typedesc[Gray8]): typedesc = uint32
+template getLongT*(x: typedesc[Gray8]): typedesc = int32
 template getBaseShift*(x: typedesc[Gray8]): int = 8
 template getBaseScale*(x: typedesc[Gray8]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Gray8]): int = getBaseScale(x) - 1
@@ -30,30 +30,30 @@ proc initGray8*(c: Gray8): Gray8 = c
 
 proc initGray8*(c: Rgba): Gray8 =
   const baseMask = getBaseMask(Gray8).float64
-  type ValueType = getValueType(Gray8)
-  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueType
-  result.a = uround(c.a * baseMask).ValueType
+  type ValueT = getValueT(Gray8)
+  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueT
+  result.a = uround(c.a * baseMask).ValueT
 
 proc initGray8*(c: Rgba, a: float64): Gray8 =
   const baseMask = getBaseMask(Gray8).float64
-  type ValueType = getValueType(Gray8)
+  type ValueT = getValueT(Gray8)
 
-  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueType
-  result.a = uround(a * baseMask).ValueType
+  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueT
+  result.a = uround(a * baseMask).ValueT
 
 proc initGray8*(c: Rgba8): Gray8 =
   type
-    ValueType = getValueType(Gray8)
-    CalcType = getCalcType(Gray8)
-  result.v = ((c.r.CalcType*77 + c.g.CalcType*150 + c.b.CalcType*29) shr 8).ValueType
+    ValueT = getValueT(Gray8)
+    CalcT = getCalcT(Gray8)
+  result.v = ((c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29) shr 8).ValueT
   result.a = c.a
 
 proc initGray8*(c: Rgba8, a: uint): Gray8 =
   type
-    ValueType = getValueType(Gray8)
-    CalcType = getCalcType(Gray8)
-  result.v = ((c.r.CalcType*77 + c.g.CalcType*150 + c.b.CalcType*29) shr 8).ValueType
-  result.a = a.ValueType
+    ValueT = getValueT(Gray8)
+    CalcT = getCalcT(Gray8)
+  result.v = ((c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29) shr 8).ValueT
+  result.a = a.ValueT
 
 proc clear*(self: var Gray8) =
   self.v = 0
@@ -64,12 +64,12 @@ proc transparent*(self: var Gray8) =
 
 proc opacity*(self: var Gray8, a: float64) =
   const baseMask = getBaseMask(Gray8).float64
-  type ValueType = getValueType(Gray8)
+  type ValueT = getValueT(Gray8)
 
   var a = a
   if a < 0.0: a = 0.0
   if a > 1.0: a = 1.0
-  self.a = uround(a * baseMask).ValueType
+  self.a = uround(a * baseMask).ValueT
 
 proc opacity*(self: Gray8): float64 =
   const baseMask = getBaseMask(Gray8).float64
@@ -81,79 +81,79 @@ proc premultiply*(self: var Gray8): var Gray8 {.discardable.} =
     baseShift = getBaseShift(Gray8)
 
   type
-    CalcType = getCalcType(Gray8)
-    ValueType = getValueType(Gray8)
+    CalcT = getCalcT(Gray8)
+    ValueT = getValueT(Gray8)
 
   if self.a == baseMask: return self
   if self.a == 0:
     self.v = 0
   result = self
 
-  self.v = ValueType((CalcType(self.v) * CalcType(self.a)) shr baseShift)
+  self.v = ValueT((CalcT(self.v) * CalcT(self.a)) shr baseShift)
   result = self
 
 proc premultiply*(self: var Gray8, a: uint): var Gray8 {.discardable.} =
   const baseMask = getBaseMask(Gray8)
   type
-    CalcType = getCalcType(Gray8)
-    ValueType = getValueType(Gray8)
+    CalcT = getCalcT(Gray8)
+    ValueT = getValueT(Gray8)
 
   if self.a == baseMask and a.int >= baseMask: return self
   if self.a == 0 or a == 0:
       self.v = 0
       self.a = 0
   result = self
-  let v = (CalcType(self.v) * CalcType(a)) div self.a
-  self.v = ValueType(if v > a: a else: v)
-  self.a = ValueType(a)
+  let v = (CalcT(self.v) * CalcT(a)) div self.a
+  self.v = ValueT(if v > a: a else: v)
+  self.a = ValueT(a)
   result = self
 
 proc demultiply*(self: var Gray8): var Gray8 {.discardable.} =
   const baseMask = getBaseMask(Gray8)
   type
-    CalcType = getCalcType(Gray8)
-    ValueType = getValueType(Gray8)
+    CalcT = getCalcT(Gray8)
+    ValueT = getValueT(Gray8)
 
   if self.a == baseMask: return self
   if self.a == 0:
       self.v = 0
   result = self
-  let v = (CalcType(self.v) * baseMask) div self.a
-  self.v = ValueType(if v.int > baseMask: baseMask else: v.int)
+  let v = (CalcT(self.v) * baseMask) div self.a
+  self.v = ValueT(if v.int > baseMask: baseMask else: v.int)
   result = self
 
 proc gradient*(self: var Gray8, c: Gray8, k: float64): Gray8 =
   type
-    CalcType = getCalcType(Gray8)
-    ValueType = getValueType(Gray8)
+    CalcT = getCalcT(Gray8)
+    ValueT = getValueT(Gray8)
 
   const
     baseScale = getBaseScale(Gray8)
-    baseShift = getBaseShift(Gray8).CalcType
+    baseShift = getBaseShift(Gray8).CalcT
 
-  let ik = uround(k * baseScale).CalcType
-  result.v = ValueType(CalcType(self.v) + (((CalcType(c.v) - CalcType(self.v)) * ik) shr baseShift))
-  result.a = ValueType(CalcType(self.a) + (((CalcType(c.a) - CalcType(self.a)) * ik) shr baseShift))
+  let ik = uround(k * baseScale).CalcT
+  result.v = ValueT(CalcT(self.v) + (((CalcT(c.v) - CalcT(self.v)) * ik) shr baseShift))
+  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - CalcT(self.a)) * ik) shr baseShift))
 
 
 proc add*(self: var Gray8, c: Gray8, cover: uint) {.inline.} =
   const baseMask = getBaseMask(Gray8)
   type
-    CalcType = getCalcType(Gray8)
-    ValueType = getValueType(Gray8)
+    CalcT = getCalcT(Gray8)
+    ValueT = getValueT(Gray8)
 
-  var cv, ca: CalcType
+  var cv, ca: CalcT
   if cover == coverMask:
     if c.a == baseMask:
       self = c
     else:
-      cv = self.v + c.v; self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
-      ca = self.a + c.a; self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+      cv = self.v + c.v; self.v = if cv > CalcT(baseMask): ValueT(baseMask) else: cv.ValueT
+      ca = self.a + c.a; self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
   else:
-    cv = self.v.CalcType + ((c.v.CalcType * cover.CalcType + coverMask div 2) shr coverShift)
-    ca = self.a.CalcType + ((c.a.CalcType * cover.CalcType + coverMask div 2) shr coverShift)
-    self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
-    self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+    cv = self.v.CalcT + ((c.v.CalcT * cover.CalcT + coverMask div 2) shr coverShift)
+    ca = self.a.CalcT + ((c.a.CalcT * cover.CalcT + coverMask div 2) shr coverShift)
+    self.v = if cv > CalcT(baseMask): ValueT(baseMask) else: cv.ValueT
+    self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
 
 proc noColor*(x: typedesc[Gray8]): Gray8 = Gray8(v: 0, a: 0)
 
@@ -192,58 +192,58 @@ type
     v*: uint16
     a*: uint16
 
-template getValueType*(x: typedesc[Gray16]): typedesc = uint16
-template getCalcType*(x: typedesc[Gray16]): typedesc = uint32
-template getLongType*(x: typedesc[Gray16]): typedesc = int64
+template getValueT*(x: typedesc[Gray16]): typedesc = uint16
+template getCalcT*(x: typedesc[Gray16]): typedesc = uint32
+template getLongT*(x: typedesc[Gray16]): typedesc = int64
 template getBaseShift*(x: typedesc[Gray16]): int = 16
 template getBaseScale*(x: typedesc[Gray16]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Gray16]): int = getBaseScale(x) - 1
 template construct*(x: typedesc[Gray16], v: typed): untyped = initGray16(v)
 
 proc initGray16*(v: uint): Gray16 =
-  type ValueType = getValueType(Gray16)
+  type ValueT = getValueT(Gray16)
   const baseMask = getBaseMask(Gray16)
-  result.v = v.ValueType
-  result.a = baseMask.ValueType
+  result.v = v.ValueT
+  result.a = baseMask.ValueT
 
 proc initGray16*(v, a: uint): Gray16 =
-  type ValueType = getValueType(Gray16)
-  result.v = v.ValueType
-  result.a = a.ValueType
+  type ValueT = getValueT(Gray16)
+  result.v = v.ValueT
+  result.a = a.ValueT
 
 proc initGray16*(c: Gray16, a: uint): Gray16 =
-  type ValueType = getValueType(Gray16)
+  type ValueT = getValueT(Gray16)
   result.v = c.v
-  result.a = a.ValueType
+  result.a = a.ValueT
 
 proc initGray16*(c: Gray16): Gray16 = c
 
 proc initGray16*(c: Rgba): Gray16 =
-  type ValueType = getValueType(Gray16)
+  type ValueT = getValueT(Gray16)
   const baseMask = getBaseMask(Gray16).float64
-  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueType
-  result.a = uround(c.a * baseMask).ValueType
+  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueT
+  result.a = uround(c.a * baseMask).ValueT
 
 proc initGray16*(c: Rgba, a: float64): Gray16 =
-  type ValueType = getValueType(Gray16)
+  type ValueT = getValueT(Gray16)
   const baseMask = getBaseMask(Gray16).float64
 
-  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueType
-  result.a = uround(a * baseMask).ValueType
+  result.v = uround((0.299*c.r + 0.587*c.g + 0.114*c.b) * baseMask).ValueT
+  result.a = uround(a * baseMask).ValueT
 
 proc initGray16*(c: Rgba8): Gray16 =
   type
-    ValueType = getValueType(Gray16)
-    CalcType = getCalcType(Gray16)
-  result.v = (c.r.CalcType*77 + c.g.CalcType*150 + c.b.CalcType*29).ValueType
-  result.a = (ValueType(c.a) shl 8) or c.a
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
+  result.v = (c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29).ValueT
+  result.a = (ValueT(c.a) shl 8) or c.a
 
 proc initGray16*(c: Rgba8, a: uint): Gray16 =
   type
-    ValueType = getValueType(Gray16)
-    CalcType = getCalcType(Gray16)
-  result.v = (c.r.CalcType*77 + c.g.CalcType*150 + c.b.CalcType*29).ValueType
-  result.a = (ValueType(a) shl 8) or c.a
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
+  result.v = (c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29).ValueT
+  result.a = (ValueT(a) shl 8) or c.a
 
 proc clear*(self: var Gray16) =
   self.v = 0
@@ -254,12 +254,12 @@ proc transparent*(self: var Gray16): var Gray16 {.discardable.} =
   result = self
 
 proc opacity*(self: var Gray16, a: float64) =
-  type ValueType = getValueType(Gray16)
+  type ValueT = getValueT(Gray16)
   const baseMask = getBaseMask(Gray16)
   var a = a
   if a < 0.0: a = 0.0
   if a > 1.0: a = 1.0
-  self.a = uround(a * float64(baseMask)).ValueType
+  self.a = uround(a * float64(baseMask)).ValueT
 
 proc opacity*(self: Gray16): float64 =
   const baseMask = getBaseMask(Gray16)
@@ -267,8 +267,8 @@ proc opacity*(self: Gray16): float64 =
 
 proc premultiply*(self: var Gray16): var Gray16 {.discardable.} =
   type
-    ValueType = getValueType(Gray16)
-    CalcType = getCalcType(Gray16)
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
   const
     baseMask = getBaseMask(Gray16)
     baseShift = getBaseShift(Gray16)
@@ -278,13 +278,13 @@ proc premultiply*(self: var Gray16): var Gray16 {.discardable.} =
     self.v = 0
     result = self
 
-  self.v = ValueType((CalcType(self.v) * self.a) shr baseShift)
+  self.v = ValueT((CalcT(self.v) * self.a) shr baseShift)
   result = self
 
 proc premultiply*(self: var Gray16, a: uint): var Gray16 {.discardable.} =
   type
-    ValueType = getValueType(Gray16)
-    CalcType = getCalcType(Gray16)
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
   const baseMask = getBaseMask(Gray16)
   if self.a == baseMask and a.int >= baseMask: return self
   if self.a == 0 or a == 0:
@@ -292,15 +292,15 @@ proc premultiply*(self: var Gray16, a: uint): var Gray16 {.discardable.} =
     self.a = 0
     result = self
 
-  let v = (CalcType(self.v) * a.CalcType) div self.a
-  self.v = ValueType(if v > a: a else: v)
-  self.a = ValueType(a)
+  let v = (CalcT(self.v) * a.CalcT) div self.a
+  self.v = ValueT(if v > a: a else: v)
+  self.a = ValueT(a)
   result = self
 
 proc demultiply*(self: var Gray16): var Gray16 {.discardable.} =
   type
-    CalcType = getCalcType(Gray16)
-    ValueType = getValueType(Gray16)
+    CalcT = getCalcT(Gray16)
+    ValueT = getValueT(Gray16)
   const baseMask = getBaseMask(Gray16)
 
   if self.a == baseMask: return self
@@ -308,40 +308,40 @@ proc demultiply*(self: var Gray16): var Gray16 {.discardable.} =
     self.v = 0
     result = self
 
-  let v = (CalcType(self.v) * baseMask.CalcType) div self.a
-  self.v = ValueType(if v > baseMask.CalcType: baseMask.CalcType else: v)
+  let v = (CalcT(self.v) * baseMask.CalcT) div self.a
+  self.v = ValueT(if v > baseMask.CalcT: baseMask.CalcT else: v)
   result = self
 
 proc gradient*(self: var Gray16, c: Gray16, k: float64): Gray16 =
   type
-    CalcType = getCalcType(Gray16)
-    ValueType = getValueType(Gray16)
+    CalcT = getCalcT(Gray16)
+    ValueT = getValueT(Gray16)
   const
     baseScale = getBaseScale(Gray16)
     baseShift = getBaseShift(Gray16)
 
-  let ik = uround(k * baseScale).CalcType
-  result.v = ValueType(CalcType(self.v) + (((CalcType(c.v) - self.v) * ik) shr baseShift))
-  result.a = ValueType(CalcType(self.a) + (((CalcType(c.a) - self.a) * ik) shr baseShift))
+  let ik = uround(k * baseScale).CalcT
+  result.v = ValueT(CalcT(self.v) + (((CalcT(c.v) - self.v) * ik) shr baseShift))
+  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
 
 proc add*(self: var Gray16, c: Gray16, cover: uint) {.inline.} =
   type
-    ValueType = getValueType(Gray16)
-    CalcType = getCalcType(Gray16)
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
   const baseMask = getBaseMask(Gray16)
 
-  var cv, ca: CalcType
+  var cv, ca: CalcT
   if cover == coverMask:
     if c.a == baseMask:
       self = c
     else:
-      cv = self.v + c.v; self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
-      ca = self.a + c.a; self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+      cv = self.v + c.v; self.v = if cv > CalcT(baseMask): ValueT(baseMask) else: cv.ValueT
+      ca = self.a + c.a; self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
   else:
-    cv = self.v.CalcType + ((c.v.CalcType * cover.CalcType + coverMask div 2) shr coverShift)
-    ca = self.a.CalcType + ((c.a.CalcType * cover.CalcType + coverMask div 2) shr coverShift)
-    self.v = if cv > CalcType(baseMask): ValueType(baseMask) else: cv.ValueType
-    self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+    cv = self.v.CalcT + ((c.v.CalcT * cover.CalcT + coverMask div 2) shr coverShift)
+    ca = self.a.CalcT + ((c.a.CalcT * cover.CalcT + coverMask div 2) shr coverShift)
+    self.v = if cv > CalcT(baseMask): ValueT(baseMask) else: cv.ValueT
+    self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
 
 proc noColor*(x: typedesc[Gray16]): Gray16 = Gray16(v:0, a:0)
 

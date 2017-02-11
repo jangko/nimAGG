@@ -8,7 +8,7 @@ type
     currX: int
     currY: int
 
-template getColorType*[B,C](x: typedesc[RendererPrimitives[B,C]]): typedesc = getColorType(B.type)
+template getColorT*[B,C](x: typedesc[RendererPrimitives[B,C]]): typedesc = getColorT(B.type)
 
 proc initRendererPrimitives1*[B,C](ren: var B): RendererPrimitives[B,C] =
   result.ren = ren.addr
@@ -18,7 +18,7 @@ proc initRendererPrimitives1*[B,C](ren: var B): RendererPrimitives[B,C] =
   result.currY = 0
 
 proc initRendererPrimitives*[B](ren: var B): auto =
-  result = initRendererPrimitives1[B, getColorType(B)](ren)
+  result = initRendererPrimitives1[B, getColorT(B)](ren)
 
 proc attach*[B,C](self: var RendererPrimitives[B,C], ren: var B) =
   self.ren = ren.addr

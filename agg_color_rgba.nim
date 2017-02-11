@@ -141,9 +141,9 @@ proc rgbaPre*(c: Rgba, a: float64): Rgba {.inline.} =
 proc initRgba*(wavelen: float64, gamma = 1.0'f64): Rgba =
   result = rgbaFromWavelength(wavelen, gamma)
 
-template getValueType*(x: typedesc[Rgba8]): typedesc = uint8
-template getCalcType*(x: typedesc[Rgba8]): typedesc = uint32
-template getLongType*(x: typedesc[Rgba8]): typedesc = int32
+template getValueT*(x: typedesc[Rgba8]): typedesc = uint8
+template getCalcT*(x: typedesc[Rgba8]): typedesc = uint32
+template getLongT*(x: typedesc[Rgba8]): typedesc = int32
 template getBaseShift*(x: typedesc[Rgba8]): int = 8
 template getBaseScale*(x: typedesc[Rgba8]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Rgba8]): int = getBaseScale(x) - 1
@@ -151,43 +151,43 @@ template construct*(x: typedesc[Rgba8], r,g,b: typed): untyped = initRgba8(r,g,b
 template construct*(x: typedesc[Rgba8], c: typed): untyped = initRgba8(c)
 
 proc initRgba8*(r,g,b:uint): Rgba8 =
-  type ValueType = getValueType(Rgba8)
-  result.r = r.ValueType
-  result.g = g.ValueType
-  result.b = b.ValueType
-  result.a = getBaseMask(Rgba8).ValueType
+  type ValueT = getValueT(Rgba8)
+  result.r = r.ValueT
+  result.g = g.ValueT
+  result.b = b.ValueT
+  result.a = getBaseMask(Rgba8).ValueT
 
 proc initRgba8*(r,g,b,a:uint): Rgba8 =
-  type ValueType = getValueType(Rgba8)
-  result.r = r.ValueType
-  result.g = g.ValueType
-  result.b = b.ValueType
-  result.a = a.ValueType
+  type ValueT = getValueT(Rgba8)
+  result.r = r.ValueT
+  result.g = g.ValueT
+  result.b = b.ValueT
+  result.a = a.ValueT
 
 proc initRgba8*(c: Rgba): Rgba8 =
-  type ValueType = getValueType(Rgba8)
+  type ValueT = getValueT(Rgba8)
   const baseMask = getBaseMask(Rgba8).float64
-  result.r = ValueType(uround(c.r * baseMask))
-  result.g = ValueType(uround(c.g * baseMask))
-  result.b = ValueType(uround(c.b * baseMask))
-  result.a = ValueType(uround(c.a * baseMask))
+  result.r = ValueT(uround(c.r * baseMask))
+  result.g = ValueT(uround(c.g * baseMask))
+  result.b = ValueT(uround(c.b * baseMask))
+  result.a = ValueT(uround(c.a * baseMask))
 
 proc initRgba8*(c: Rgba8, a: uint): Rgba8 =
-  type ValueType = getValueType(Rgba8)
+  type ValueT = getValueT(Rgba8)
   result.r = c.r
   result.g = c.g
   result.b = c.b
-  result.a = ValueType(a)
+  result.a = ValueT(a)
 
 proc initRgba8*(c: Rgba8): Rgba8 = c
 
 proc initRgba8*(c: Rgba, a: float64): Rgba8 =
-  type ValueType = getValueType(Rgba8)
+  type ValueT = getValueT(Rgba8)
   const baseMask = getBaseMask(Rgba8).float64
-  result.r = ValueType(uround(c.r * baseMask))
-  result.g = ValueType(uround(c.g * baseMask))
-  result.b = ValueType(uround(c.b * baseMask))
-  result.a = ValueType(uround(a   * baseMask))
+  result.r = ValueT(uround(c.r * baseMask))
+  result.g = ValueT(uround(c.g * baseMask))
+  result.b = ValueT(uround(c.b * baseMask))
+  result.a = ValueT(uround(a   * baseMask))
 
 proc clear*(c: var Rgba8) =
   c.r = 0
@@ -200,12 +200,12 @@ proc transparent*(c: var Rgba8): var Rgba8 {.discardable.} =
   result = c
 
 proc opacity*(c: var Rgba8, a: float64): var Rgba8 {.discardable.} =
-  type ValueType = getValueType(Rgba8)
+  type ValueT = getValueT(Rgba8)
   const baseMask = getBaseMask(Rgba8).float64
   var aa = a
   if a < 0.0: aa = 0.0
   if a > 1.0: aa = 1.0
-  c.a = ValueType(uround(aa * baseMask))
+  c.a = ValueT(uround(aa * baseMask))
   result = c
 
 proc opacity*(c: Rgba8): float64 {.discardable.} =
@@ -214,8 +214,8 @@ proc opacity*(c: Rgba8): float64 {.discardable.} =
 
 proc premultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
   type
-    ValueType = getValueType(Rgba8)
-    CalcType  = getCalcType(Rgba8)
+    ValueT = getValueT(Rgba8)
+    CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
     baseShift = getBaseShift(Rgba8)
@@ -227,15 +227,15 @@ proc premultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
     c.b = 0
     return c
 
-  c.r = ValueType((CalcType(c.r) * c.a) shr baseShift)
-  c.g = ValueType((CalcType(c.g) * c.a) shr baseShift)
-  c.b = ValueType((CalcType(c.b) * c.a) shr baseShift)
+  c.r = ValueT((CalcT(c.r) * c.a) shr baseShift)
+  c.g = ValueT((CalcT(c.g) * c.a) shr baseShift)
+  c.b = ValueT((CalcT(c.b) * c.a) shr baseShift)
   result = c
 
 proc premultiply*(c: var Rgba8, a: uint): var Rgba8 {.discardable, inline.} =
   type
-    ValueType = getValueType(Rgba8)
-    CalcType  = getCalcType(Rgba8)
+    ValueT = getValueT(Rgba8)
+    CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
 
@@ -247,19 +247,19 @@ proc premultiply*(c: var Rgba8, a: uint): var Rgba8 {.discardable, inline.} =
     c.a = 0
     return c
 
-  let r = (CalcType(c.r) * a.CalcType) div c.a
-  let g = (CalcType(c.g) * a.CalcType) div c.a
-  let b = (CalcType(c.b) * a.CalcType) div c.a
-  c.r = ValueType(if r > a: a else: r)
-  c.g = ValueType(if g > a: a else: g)
-  c.b = ValueType(if b > a: a else: b)
-  c.a = ValueType(a)
+  let r = (CalcT(c.r) * a.CalcT) div c.a
+  let g = (CalcT(c.g) * a.CalcT) div c.a
+  let b = (CalcT(c.b) * a.CalcT) div c.a
+  c.r = ValueT(if r > a: a else: r)
+  c.g = ValueT(if g > a: a else: g)
+  c.b = ValueT(if b > a: a else: b)
+  c.a = ValueT(a)
   result = c
 
 proc demultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
   type
-    ValueType = getValueType(Rgba8)
-    CalcType  = getCalcType(Rgba8)
+    ValueT = getValueT(Rgba8)
+    CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
 
@@ -270,32 +270,32 @@ proc demultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
     c.b = 0
     return c
 
-  let r = (CalcType(c.r) * baseMask) div c.a
-  let g = (CalcType(c.g) * baseMask) div c.a
-  let b = (CalcType(c.b) * baseMask) div c.a
-  c.r = ValueType(if r > CalcType(baseMask): CalcType(baseMask) else: r)
-  c.g = ValueType(if g > CalcType(baseMask): CalcType(baseMask) else: g)
-  c.b = ValueType(if b > CalcType(baseMask): CalcType(baseMask) else: b)
+  let r = (CalcT(c.r) * baseMask) div c.a
+  let g = (CalcT(c.g) * baseMask) div c.a
+  let b = (CalcT(c.b) * baseMask) div c.a
+  c.r = ValueT(if r > CalcT(baseMask): CalcT(baseMask) else: r)
+  c.g = ValueT(if g > CalcT(baseMask): CalcT(baseMask) else: g)
+  c.b = ValueT(if b > CalcT(baseMask): CalcT(baseMask) else: b)
   result = c
 
 proc gradient*(self, c: Rgba8, k: float64): Rgba8 =
   type
-    ValueType = getValueType(Rgba8)
-    CalcType  = getCalcType(Rgba8)
+    ValueT = getValueT(Rgba8)
+    CalcT  = getCalcT(Rgba8)
   const
     baseScale = getBaseScale(Rgba8)
     baseShift = getBaseShift(Rgba8)
 
-  let ik = uround(k * baseScale).CalcType
-  result.r = ValueType(CalcType(self.r) + (((CalcType(c.r) - self.r) * ik) shr baseShift))
-  result.g = ValueType(CalcType(self.g) + (((CalcType(c.g) - self.g) * ik) shr baseShift))
-  result.b = ValueType(CalcType(self.b) + (((CalcType(c.b) - self.b) * ik) shr baseShift))
-  result.a = ValueType(CalcType(self.a) + (((CalcType(c.a) - self.a) * ik) shr baseShift))
+  let ik = uround(k * baseScale).CalcT
+  result.r = ValueT(CalcT(self.r) + (((CalcT(c.r) - self.r) * ik) shr baseShift))
+  result.g = ValueT(CalcT(self.g) + (((CalcT(c.g) - self.g) * ik) shr baseShift))
+  result.b = ValueT(CalcT(self.b) + (((CalcT(c.b) - self.b) * ik) shr baseShift))
+  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
 
 proc add*(self: var Rgba8, c: Rgba8, cover: uint) =
   type
-    ValueType = getValueType(Rgba8)
-    CalcType  = getCalcType(Rgba8)
+    ValueT = getValueT(Rgba8)
+    CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
 
@@ -303,24 +303,24 @@ proc add*(self: var Rgba8, c: Rgba8, cover: uint) =
     if c.a == baseMask:
       self = c
     else:
-      let cr = self.r.CalcType + c.r.CalcType
-      let cg = self.g.CalcType + c.g.CalcType
-      let cb = self.b.CalcType + c.b.CalcType
-      let ca = self.a.CalcType + c.a.CalcType
-      self.r = if cr > CalcType(baseMask): ValueType(baseMask) else: cr.ValueType
-      self.g = if cg > CalcType(baseMask): ValueType(baseMask) else: cg.ValueType
-      self.b = if cb > CalcType(baseMask): ValueType(baseMask) else: cb.ValueType
-      self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+      let cr = self.r.CalcT + c.r.CalcT
+      let cg = self.g.CalcT + c.g.CalcT
+      let cb = self.b.CalcT + c.b.CalcT
+      let ca = self.a.CalcT + c.a.CalcT
+      self.r = if cr > CalcT(baseMask): ValueT(baseMask) else: cr.ValueT
+      self.g = if cg > CalcT(baseMask): ValueT(baseMask) else: cg.ValueT
+      self.b = if cb > CalcT(baseMask): ValueT(baseMask) else: cb.ValueT
+      self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
   else:
-    let coverMask2 = (coverMask div 2).CalcType
-    let cr = self.r.CalcType + ((c.r.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let cg = self.g.CalcType + ((c.g.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let cb = self.b.CalcType + ((c.b.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let ca = self.a.CalcType + ((c.a.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    self.r = if cr > CalcType(baseMask): ValueType(baseMask) else: cr.ValueType
-    self.g = if cg > CalcType(baseMask): ValueType(baseMask) else: cg.ValueType
-    self.b = if cb > CalcType(baseMask): ValueType(baseMask) else: cb.ValueType
-    self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+    let coverMask2 = (coverMask div 2).CalcT
+    let cr = self.r.CalcT + ((c.r.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let cg = self.g.CalcT + ((c.g.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let cb = self.b.CalcT + ((c.b.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let ca = self.a.CalcT + ((c.a.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    self.r = if cr > CalcT(baseMask): ValueT(baseMask) else: cr.ValueT
+    self.g = if cg > CalcT(baseMask): ValueT(baseMask) else: cg.ValueT
+    self.b = if cb > CalcT(baseMask): ValueT(baseMask) else: cb.ValueT
+    self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
 
 proc applyGammaDir*[GammaLUT](c: var Rgba8, gamma: GammaLUT) =
   c.r = gamma.dir(c.r)
@@ -379,9 +379,9 @@ proc rgba8GammaDir*[GammaLUT](c: Rgba8, gamma: GammaLUT): Rgba8 {.inline.} =
 proc rgba8GammaInv*[GammaLUT](c: Rgba8, gamma: GammaLUT): Rgba8 {.inline.} =
   result = initRgba8(gamma.inv(c.r), gamma.inv(c.g), gamma.inv(c.b), c.a)
 
-template getValueType*(x: typedesc[Rgba16]): typedesc = uint16
-template getCalcType*(x: typedesc[Rgba16]): typedesc = uint32
-template getLongType*(x: typedesc[Rgba16]): typedesc = int64
+template getValueT*(x: typedesc[Rgba16]): typedesc = uint16
+template getCalcT*(x: typedesc[Rgba16]): typedesc = uint32
+template getLongT*(x: typedesc[Rgba16]): typedesc = int64
 template getBaseShift*(x: typedesc[Rgba16]): int = 16
 template getBaseScale*(x: typedesc[Rgba16]): int = 1 shl getBaseShift(x)
 template getBaseMask*(x: typedesc[Rgba16]): int = getBaseScale(x) - 1
@@ -389,57 +389,57 @@ template construct*(x: typedesc[Rgba16], r,g,b: typed): untyped = initRgba16(r,g
 template construct*(x: typedesc[Rgba16], c: typed): untyped = initRgba16(c)
 
 proc initRgba16*(r, g, b, a: uint): Rgba16 =
-  type ValueType = getValueType(Rgba16)
-  result.r = ValueType(r)
-  result.g = ValueType(g)
-  result.b = ValueType(b)
-  result.a = ValueType(a)
+  type ValueT = getValueT(Rgba16)
+  result.r = ValueT(r)
+  result.g = ValueT(g)
+  result.b = ValueT(b)
+  result.a = ValueT(a)
 
 proc initRgba16*(r, g, b: uint): Rgba16 =
-  type ValueType = getValueType(Rgba16)
-  result.r = ValueType(r)
-  result.g = ValueType(g)
-  result.b = ValueType(b)
-  result.a = getBaseMask(Rgba16).ValueType
+  type ValueT = getValueT(Rgba16)
+  result.r = ValueT(r)
+  result.g = ValueT(g)
+  result.b = ValueT(b)
+  result.a = getBaseMask(Rgba16).ValueT
 
 proc initRgba16*(c: Rgba16, a: uint): Rgba16 =
-  type ValueType = getValueType(Rgba16)
+  type ValueT = getValueT(Rgba16)
   result.r = c.r
   result.g = c.g
   result.b = c.b
-  result.a = ValueType(a)
+  result.a = ValueT(a)
 
 proc initRgba16*(c: Rgba16): Rgba16 = c
 
 proc initRgba16*(c: Rgba): Rgba16 =
-  type ValueType = getValueType(Rgba16)
+  type ValueT = getValueT(Rgba16)
   const baseMask = getBaseMask(Rgba16).float64
-  result.r = ValueType(uround(c.r * baseMask))
-  result.g = ValueType(uround(c.g * baseMask))
-  result.b = ValueType(uround(c.b * baseMask))
-  result.a = ValueType(uround(c.a * baseMask))
+  result.r = ValueT(uround(c.r * baseMask))
+  result.g = ValueT(uround(c.g * baseMask))
+  result.b = ValueT(uround(c.b * baseMask))
+  result.a = ValueT(uround(c.a * baseMask))
 
 proc initRgba16*(c: Rgba, a: float64): Rgba16 =
-  type ValueType = getValueType(Rgba16)
+  type ValueT = getValueT(Rgba16)
   const baseMask = getBaseMask(Rgba16).float64
-  result.r = ValueType(uround(c.r * baseMask))
-  result.g = ValueType(uround(c.g * baseMask))
-  result.b = ValueType(uround(c.b * baseMask))
-  result.a = ValueType(uround(a   * baseMask))
+  result.r = ValueT(uround(c.r * baseMask))
+  result.g = ValueT(uround(c.g * baseMask))
+  result.b = ValueT(uround(c.b * baseMask))
+  result.a = ValueT(uround(a   * baseMask))
 
 proc initRgba16*(c: Rgba8): Rgba16 =
-  type ValueType = getValueType(Rgba16)
-  result.r = (ValueType(c.r) shl 8.ValueType) or c.r.ValueType
-  result.g = (ValueType(c.g) shl 8.ValueType) or c.g.ValueType
-  result.b = (ValueType(c.b) shl 8.ValueType) or c.b.ValueType
-  result.a = (ValueType(c.a) shl 8.ValueType) or c.a.ValueType
+  type ValueT = getValueT(Rgba16)
+  result.r = (ValueT(c.r) shl 8.ValueT) or c.r.ValueT
+  result.g = (ValueT(c.g) shl 8.ValueT) or c.g.ValueT
+  result.b = (ValueT(c.b) shl 8.ValueT) or c.b.ValueT
+  result.a = (ValueT(c.a) shl 8.ValueT) or c.a.ValueT
 
 proc initRgba16*(c: Rgba8, a: float64): Rgba16 =
-  type ValueType = getValueType(Rgba16)
-  result.r = (ValueType(c.r) shl 8.ValueType) or c.r.ValueType
-  result.g = (ValueType(c.g) shl 8.ValueType) or c.g.ValueType
-  result.b = (ValueType(c.b) shl 8.ValueType) or c.b.ValueType
-  result.a = (ValueType(a)   shl 8.ValueType) or c.a.ValueType
+  type ValueT = getValueT(Rgba16)
+  result.r = (ValueT(c.r) shl 8.ValueT) or c.r.ValueT
+  result.g = (ValueT(c.g) shl 8.ValueT) or c.g.ValueT
+  result.b = (ValueT(c.b) shl 8.ValueT) or c.b.ValueT
+  result.a = (ValueT(a)   shl 8.ValueT) or c.a.ValueT
 
 proc clear*(c: var Rgba16) =
   c.r = 0
@@ -452,12 +452,12 @@ proc transparent*(c: var Rgba16): var Rgba16 {.discardable.} =
   result = c
 
 proc opacity*(c: var Rgba16, a: float64): var Rgba16 {.discardable.} =
-  type ValueType = getValueType(Rgba16)
+  type ValueT = getValueT(Rgba16)
   const baseMask = getBaseMask(Rgba16).float64
   var aa = a
   if a < 0.0: aa = 0.0
   if a > 1.0: aa = 1.0
-  c.a = ValueType(uround(aa * baseMask))
+  c.a = ValueT(uround(aa * baseMask))
   result = c
 
 proc opacity*(c: var Rgba16): float64 =
@@ -466,8 +466,8 @@ proc opacity*(c: var Rgba16): float64 =
 
 proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
   type
-    ValueType = getValueType(Rgba16)
-    CalcType  = getCalcType(Rgba16)
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
     baseShift = getBaseShift(Rgba16)
@@ -479,15 +479,15 @@ proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
     c.b = 0
     return c
 
-  c.r = ValueType((CalcType(c.r) * c.a) shr baseShift)
-  c.g = ValueType((CalcType(c.g) * c.a) shr baseShift)
-  c.b = ValueType((CalcType(c.b) * c.a) shr baseShift)
+  c.r = ValueT((CalcT(c.r) * c.a) shr baseShift)
+  c.g = ValueT((CalcT(c.g) * c.a) shr baseShift)
+  c.b = ValueT((CalcT(c.b) * c.a) shr baseShift)
   result = c
 
 proc premultiply*(c: var Rgba16, a: uint): var Rgba16 {.discardable, inline.} =
   type
-    ValueType = getValueType(Rgba16)
-    CalcType  = getCalcType(Rgba16)
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
 
@@ -499,19 +499,19 @@ proc premultiply*(c: var Rgba16, a: uint): var Rgba16 {.discardable, inline.} =
     c.a = 0
     return c
 
-  let r = (CalcType(c.r) * a.CalcType) div c.a
-  let g = (CalcType(c.g) * a.CalcType) div c.a
-  let b = (CalcType(c.b) * a.CalcType) div c.a
-  c.r = ValueType(if r > a: a else: r)
-  c.g = ValueType(if g > a: a else: g)
-  c.b = ValueType(if b > a: a else: b)
-  c.a = ValueType(a)
+  let r = (CalcT(c.r) * a.CalcT) div c.a
+  let g = (CalcT(c.g) * a.CalcT) div c.a
+  let b = (CalcT(c.b) * a.CalcT) div c.a
+  c.r = ValueT(if r > a: a else: r)
+  c.g = ValueT(if g > a: a else: g)
+  c.b = ValueT(if b > a: a else: b)
+  c.a = ValueT(a)
   result = c
 
 proc demultiply*(c: var Rgba16): var Rgba16 {.discardable, inline.} =
   type
-    ValueType = getValueType(Rgba16)
-    CalcType  = getCalcType(Rgba16)
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
 
@@ -522,32 +522,32 @@ proc demultiply*(c: var Rgba16): var Rgba16 {.discardable, inline.} =
     c.b = 0
     return c
 
-  let r = (CalcType(c.r) * baseMask) div c.a
-  let g = (CalcType(c.g) * baseMask) div c.a
-  let b = (CalcType(c.b) * baseMask) div c.a
-  c.r = ValueType(if r > CalcType(baseMask): CalcType(baseMask) else: r)
-  c.g = ValueType(if g > CalcType(baseMask): CalcType(baseMask) else: g)
-  c.b = ValueType(if b > CalcType(baseMask): CalcType(baseMask) else: b)
+  let r = (CalcT(c.r) * baseMask) div c.a
+  let g = (CalcT(c.g) * baseMask) div c.a
+  let b = (CalcT(c.b) * baseMask) div c.a
+  c.r = ValueT(if r > CalcT(baseMask): CalcT(baseMask) else: r)
+  c.g = ValueT(if g > CalcT(baseMask): CalcT(baseMask) else: g)
+  c.b = ValueT(if b > CalcT(baseMask): CalcT(baseMask) else: b)
   result = c
 
 proc gradient*(self, c: Rgba16, k: float64): Rgba16 =
   type
-    ValueType = getValueType(Rgba16)
-    CalcType  = getCalcType(Rgba16)
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
   const
     baseScale = getBaseScale(Rgba16)
     baseShift = getBaseShift(Rgba16)
 
-  let ik = uround(k * baseScale).CalcType
-  result.r = ValueType(CalcType(self.r) + (((CalcType(c.r) - self.r) * ik) shr baseShift))
-  result.g = ValueType(CalcType(self.g) + (((CalcType(c.g) - self.g) * ik) shr baseShift))
-  result.b = ValueType(CalcType(self.b) + (((CalcType(c.b) - self.b) * ik) shr baseShift))
-  result.a = ValueType(CalcType(self.a) + (((CalcType(c.a) - self.a) * ik) shr baseShift))
+  let ik = uround(k * baseScale).CalcT
+  result.r = ValueT(CalcT(self.r) + (((CalcT(c.r) - self.r) * ik) shr baseShift))
+  result.g = ValueT(CalcT(self.g) + (((CalcT(c.g) - self.g) * ik) shr baseShift))
+  result.b = ValueT(CalcT(self.b) + (((CalcT(c.b) - self.b) * ik) shr baseShift))
+  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
 
 proc add*(self: var Rgba16, c: Rgba16, cover: uint) =
   type
-    ValueType = getValueType(Rgba16)
-    CalcType  = getCalcType(Rgba16)
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
 
@@ -555,24 +555,24 @@ proc add*(self: var Rgba16, c: Rgba16, cover: uint) =
     if c.a == baseMask:
       self = c
     else:
-      let cr = self.r.CalcType + c.r.CalcType
-      let cg = self.g.CalcType + c.g.CalcType
-      let cb = self.b.CalcType + c.b.CalcType
-      let ca = self.a.CalcType + c.a.CalcType
-      self.r = if cr > CalcType(baseMask): ValueType(baseMask) else: cr.ValueType
-      self.g = if cg > CalcType(baseMask): ValueType(baseMask) else: cg.ValueType
-      self.b = if cb > CalcType(baseMask): ValueType(baseMask) else: cb.ValueType
-      self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+      let cr = self.r.CalcT + c.r.CalcT
+      let cg = self.g.CalcT + c.g.CalcT
+      let cb = self.b.CalcT + c.b.CalcT
+      let ca = self.a.CalcT + c.a.CalcT
+      self.r = if cr > CalcT(baseMask): ValueT(baseMask) else: cr.ValueT
+      self.g = if cg > CalcT(baseMask): ValueT(baseMask) else: cg.ValueT
+      self.b = if cb > CalcT(baseMask): ValueT(baseMask) else: cb.ValueT
+      self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
   else:
-    let coverMask2 = (coverMask div 2).CalcType
-    let cr = self.r.CalcType + ((c.r.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let cg = self.g.CalcType + ((c.g.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let cb = self.b.CalcType + ((c.b.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    let ca = self.a.CalcType + ((c.a.CalcType * cover.CalcType + coverMask2) shr coverShift.CalcType)
-    self.r = if cr > CalcType(baseMask): ValueType(baseMask) else: cr.ValueType
-    self.g = if cg > CalcType(baseMask): ValueType(baseMask) else: cg.ValueType
-    self.b = if cb > CalcType(baseMask): ValueType(baseMask) else: cb.ValueType
-    self.a = if ca > CalcType(baseMask): ValueType(baseMask) else: ca.ValueType
+    let coverMask2 = (coverMask div 2).CalcT
+    let cr = self.r.CalcT + ((c.r.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let cg = self.g.CalcT + ((c.g.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let cb = self.b.CalcT + ((c.b.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    let ca = self.a.CalcT + ((c.a.CalcT * cover.CalcT + coverMask2) shr coverShift.CalcT)
+    self.r = if cr > CalcT(baseMask): ValueT(baseMask) else: cr.ValueT
+    self.g = if cg > CalcT(baseMask): ValueT(baseMask) else: cg.ValueT
+    self.b = if cb > CalcT(baseMask): ValueT(baseMask) else: cb.ValueT
+    self.a = if ca > CalcT(baseMask): ValueT(baseMask) else: ca.ValueT
 
 proc applyGammaDir*[GammaLUT](c: var Rgba16, gamma: GammaLUT) =
   c.r = gamma.dir(c.r)

@@ -20,7 +20,7 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 type
   SimpleVertexSource = object
@@ -110,7 +110,7 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
 pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 type
-  ColorType = Rgba8#getColorType(PixFmt)
+  ColorType = Rgba8#getColorT(PixFmt)
   ColorArrayType = seq[ColorType]
 
 spanGradient(SpanGradient, ColorType, SpanInterpolatorLinear, GradientX, ColorArrayType)
@@ -129,8 +129,8 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
 # consisting of 3 colors, "begin", "middle", "end"
 proc fill_color_array[ColorT](arr: var seq[ColorType], start, stop: ColorT) =
   var
-    start = construct(getColorType(PixFmt), start)
-    stop = construct(getColorType(PixFmt), stop)
+    start = construct(getColorT(PixFmt), start)
+    stop = construct(getColorT(PixFmt), stop)
 
   for i in 0.. <256:
     arr[i] = start.gradient(stop, i.float64 / 255.0)
@@ -150,7 +150,7 @@ proc print(mtx: TransAffine) =
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = newGammaLut8(1.5)
     pixf   = initPixFmt(rbuf, gamma)
     renBase= initRendererBase(pixf)
@@ -295,7 +295,7 @@ proc drawRandom() =
   randomize()
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = newGammaLut8(1.5)
     pixf   = initPixFmt(rbuf, gamma)
     renBase= initRendererBase(pixf)

@@ -14,12 +14,12 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaNN[S,I], span: ptr Color
                                   y + base(self).filterDyDbl(), len)
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
-    var fgPtr = cast[ptr ValueType](base(self).source().span(sar(x, imageSubpixelShift),
+    var fgPtr = cast[ptr ValueT](base(self).source().span(sar(x, imageSubpixelShift),
                                 sar(y, imageSubpixelShift), 1))
-    span.r = fgPtr[OrderType.R.ord]
-    span.g = fgPtr[OrderType.G.ord]
-    span.b = fgPtr[OrderType.B.ord]
-    span.a = fgPtr[OrderType.A.ord]
+    span.r = fgPtr[OrderT.R.ord]
+    span.g = fgPtr[OrderT.G.ord]
+    span.b = fgPtr[OrderT.B.ord]
+    span.a = fgPtr[OrderT.A.ord]
     inc span
     inc base(self).interpolator()
     dec len
@@ -34,15 +34,15 @@ proc initSpanImageFilterRgbaBilinear*[S,I](src: var S, inter: var I): SpanImageF
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinear[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S,I]
-    CalcType = getCalcType(ColorT)
-    ValueType = getValueType(ColorT)
+    CalcT = getCalcT(ColorT)
+    ValueT = getValueT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
 
   var
-    fg: array[4, CalcType]
-    fgPtr: ptr ValueType
+    fg: array[4, CalcT]
+    fgPtr: ptr ValueT
 
   doWhile len != 0:
     var xHr, yHr: int
@@ -63,38 +63,38 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinear[S,I], span: ptr
     xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
-    fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, 2))
+    fgPtr = cast[ptr ValueT](base(self).source().span(xLr, yLr, 2))
     weight = (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
     fg[0] += weight * fgPtr[]; inc fgPtr
     fg[1] += weight * fgPtr[]; inc fgPtr
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextX())
+    fgPtr = cast[ptr ValueT](base(self).source().nextX())
     weight = xHr * (imageSubpixelScale - yHr)
     fg[0] += weight * fgPtr[]; inc fgPtr
     fg[1] += weight * fgPtr[]; inc fgPtr
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextY())
+    fgPtr = cast[ptr ValueT](base(self).source().nextY())
     weight = (imageSubpixelScale - xHr) * yHr
     fg[0] += weight * fgPtr[]; inc fgPtr
     fg[1] += weight * fgPtr[]; inc fgPtr
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextX())
+    fgPtr = cast[ptr ValueT](base(self).source().nextX())
     weight = xHr * yHr
     fg[0] += weight * fgPtr[]; inc fgPtr
     fg[1] += weight * fgPtr[]; inc fgPtr
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    span.r = ValueType(fg[OrderType.R.ord] shr (imageSubpixelShift * 2))
-    span.g = ValueType(fg[OrderType.G.ord] shr (imageSubpixelShift * 2))
-    span.b = ValueType(fg[OrderType.B.ord] shr (imageSubpixelShift * 2))
-    span.a = ValueType(fg[OrderType.A.ord] shr (imageSubpixelShift * 2))
+    span.r = ValueT(fg[OrderT.R.ord] shr (imageSubpixelShift * 2))
+    span.g = ValueT(fg[OrderT.G.ord] shr (imageSubpixelShift * 2))
+    span.b = ValueT(fg[OrderT.B.ord] shr (imageSubpixelShift * 2))
+    span.a = ValueT(fg[OrderT.A.ord] shr (imageSubpixelShift * 2))
 
     inc span
     inc base(self).interpolator()
@@ -117,19 +117,19 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
   span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S,I]
-    CalcType = getCalcType(ColorT)
-    ValueType = getValueType(ColorT)
+    CalcT = getCalcT(ColorT)
+    ValueT = getValueT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
 
   var
-    fg: array[4, CalcType]
+    fg: array[4, CalcT]
     backR = self.mBackColor.r
     backG = self.mBackColor.g
     backB = self.mBackColor.b
     backA = self.mBackColor.a
-    fgPtr: ptr ValueType
+    fgPtr: ptr ValueT
     maxx = base(self).source().width() - 1
     maxy = base(self).source().height() - 1
 
@@ -153,7 +153,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
 
       xHr = xHr and imageSubpixelMask
       yHr = yHr and imageSubpixelMask
-      fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+      fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
 
       weight = (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
       fg[0] += weight * fgPtr[]; inc fgPtr
@@ -168,7 +168,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
       fg[3] += weight * fgPtr[]; inc fgPtr
 
       inc yLr
-      fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+      fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
 
       weight = (imageSubpixelScale - xHr) * yHr
       fg[0] += weight * fgPtr[]; inc fgPtr
@@ -188,10 +188,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
       fg[3] = fg[3] shr (imageSubpixelShift * 2)
     else:
       if xLr < -1 or yLr < -1 or xLr > maxx or yLr > maxy:
-        fg[OrderType.R.ord] = backR
-        fg[OrderType.G.ord] = backG
-        fg[OrderType.B.ord] = backB
-        fg[OrderType.A.ord] = backA
+        fg[OrderT.R.ord] = backR
+        fg[OrderT.G.ord] = backG
+        fg[OrderT.B.ord] = backB
+        fg[OrderT.A.ord] = backA
       else:
         fg[0] = imageSubpixelScale * imageSubpixelScale div 2
         fg[1] = fg[0]
@@ -203,72 +203,72 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
 
         weight = (imageSubpixelScale - xHr) * (imageSubpixelScale - yHr)
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+          fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
           fg[0] += weight * fgPtr[]; inc fgPtr
           fg[1] += weight * fgPtr[]; inc fgPtr
           fg[2] += weight * fgPtr[]; inc fgPtr
           fg[3] += weight * fgPtr[]; inc fgPtr
         else:
-          fg[OrderType.R.ord] += backR * weight
-          fg[OrderType.G.ord] += backG * weight
-          fg[OrderType.B.ord] += backB * weight
-          fg[OrderType.A.ord] += backA * weight
+          fg[OrderT.R.ord] += backR * weight
+          fg[OrderT.G.ord] += backG * weight
+          fg[OrderT.B.ord] += backB * weight
+          fg[OrderT.A.ord] += backA * weight
 
         inc xLr
         weight = xHr * (imageSubpixelScale - yHr)
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+          fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
 
           fg[0] += weight * fgPtr[]; inc fgPtr
           fg[1] += weight * fgPtr[]; inc fgPtr
           fg[2] += weight * fgPtr[]; inc fgPtr
           fg[3] += weight * fgPtr[]; inc fgPtr
         else:
-          fg[OrderType.R] += backR * weight
-          fg[OrderType.G] += backG * weight
-          fg[OrderType.B] += backB * weight
-          fg[OrderType.A] += backA * weight
+          fg[OrderT.R] += backR * weight
+          fg[OrderT.G] += backG * weight
+          fg[OrderT.B] += backB * weight
+          fg[OrderT.A] += backA * weight
 
         dec xLr
         inc yLr
 
         weight = (imageSubpixelScale - xHr) * yHr
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+          fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
           fg[0] += weight * fgPtr[]; inc fgPtr
           fg[1] += weight * fgPtr[]; inc fgPtr
           fg[2] += weight * fgPtr[]; inc fgPtr
           fg[3] += weight * fgPtr[]; inc fgPtr
         else:
-          fg[OrderType.R.ord] += backR * weight
-          fg[OrderType.G.ord] += backG * weight
-          fg[OrderType.B.ord] += backB * weight
-          fg[OrderType.A.ord] += backA * weight
+          fg[OrderT.R.ord] += backR * weight
+          fg[OrderT.G.ord] += backG * weight
+          fg[OrderT.B.ord] += backB * weight
+          fg[OrderT.A.ord] += backA * weight
 
         inc xLr
         weight = xHr * yHr
         if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
-          fgPtr = cast[ptr ValueType](base(self).source().rowPtr(yLr) + (xLr shl 2))
+          fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + (xLr shl 2))
 
           fg[0] += weight * fgPtr[]; inc fgPtr
           fg[1] += weight * fgPtr[]; inc fgPtr
           fg[2] += weight * fgPtr[]; inc fgPtr
           fg[3] += weight * fgPtr[]; inc fgPtr
         else:
-          fg[OrderType.R.ord] += backR * weight
-          fg[OrderType.G.ord] += backG * weight
-          fg[OrderType.B.ord] += backB * weight
-          fg[OrderType.A.ord] += backA * weight
+          fg[OrderT.R.ord] += backR * weight
+          fg[OrderT.G.ord] += backG * weight
+          fg[OrderT.B.ord] += backB * weight
+          fg[OrderT.A.ord] += backA * weight
 
         fg[0] = fg[0] shr (imageSubpixelShift * 2)
         fg[1] = fg[1] shr (imageSubpixelShift * 2)
         fg[2] = fg[2] shr (imageSubpixelShift * 2)
         fg[3] = fg[3] shr (imageSubpixelShift * 2)
 
-    span.r = ValueType(fg[OrderType.R.ord])
-    span.g = ValueType(fg[OrderType.G.ord])
-    span.b = ValueType(fg[OrderType.B.ord])
-    span.a = ValueType(fg[OrderType.A.ord])
+    span.r = ValueT(fg[OrderT.R.ord])
+    span.g = ValueT(fg[OrderT.G.ord])
+    span.b = ValueT(fg[OrderT.B.ord])
+    span.a = ValueT(fg[OrderT.A.ord])
     inc span
     inc base(self).interpolator()
     dec len
@@ -284,15 +284,15 @@ proc initSpanImageFilterRgba2x2*[S,I](src: var S,
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S,I]
-    CalcType = getCalcType(ColorT)
-    ValueType = getValueType(ColorT)
+    CalcT = getCalcT(ColorT)
+    ValueT = getValueT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
 
   var
-    fg: array[4, CalcType]
-    fgPtr: ptr ValueType
+    fg: array[4, CalcT]
+    fgPtr: ptr ValueT
     weightArray = base(self).filter().weightArray() +
                   ((base(self).filter().diameter()/2 - 1) shl imageSubpixelShift)
 
@@ -316,7 +316,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
-    fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, 2))
+    fgPtr = cast[ptr ValueT](base(self).source().span(xLr, yLr, 2))
     weight = sar((weightArray[xHr + imageSubpixelScale].int *
                   weightArray[yHr + imageSubpixelScale].int +
                   imageFilterScale div 2), imageFilterShift)
@@ -325,7 +325,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextX())
+    fgPtr = cast[ptr ValueT](base(self).source().nextX())
     weight = sar((weightArray[xHr].int *
                   weightArray[yHr + imageSubpixelScale].int +
                   imageFilterScale div 2), imageFilterShift)
@@ -334,7 +334,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextY())
+    fgPtr = cast[ptr ValueT](base(self).source().nextY())
     weight = sar((weightArray[xHr + imageSubpixelScale].int *
                   weightArray[yHr].int + imageFilterScale div 2), imageFilterShift)
     fg[0] += weight * fgPtr[]; inc fgPtr
@@ -342,7 +342,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     fg[2] += weight * fgPtr[]; inc fgPtr
     fg[3] += weight * fgPtr[]
 
-    fgPtr = cast[ptr ValueType](base(self).source().nextX())
+    fgPtr = cast[ptr ValueT](base(self).source().nextX())
     weight = sar((weightArray[xHr].int *
                   weightArray[yHr].int +
                   imageFilterScale div 2), imageFilterShift)
@@ -356,15 +356,15 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     fg[2] = fg[2] shr imageFilterShift
     fg[3] = fg[3] shr imageFilterShift
 
-    if fg[OrderType.A.ord] > baseMask:            fg[OrderType.A.ord] = baseMask
-    if fg[OrderType.R.ord] > fg[OrderType.A.ord]: fg[OrderType.R.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.G.ord] > fg[OrderType.A.ord]: fg[OrderType.G.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.B.ord] > fg[OrderType.A.ord]: fg[OrderType.B.ord] = fg[OrderType.A.ord]
+    if fg[OrderT.A.ord] > baseMask:            fg[OrderT.A.ord] = baseMask
+    if fg[OrderT.R.ord] > fg[OrderT.A.ord]: fg[OrderT.R.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.G.ord] > fg[OrderT.A.ord]: fg[OrderT.G.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.B.ord] > fg[OrderT.A.ord]: fg[OrderT.B.ord] = fg[OrderT.A.ord]
 
-    span.r = ValueType(fg[OrderType.R.ord])
-    span.g = ValueType(fg[OrderType.G.ord])
-    span.b = ValueType(fg[OrderType.B.ord])
-    span.a = ValueType(fg[OrderType.A.ord])
+    span.r = ValueT(fg[OrderT.R.ord])
+    span.g = ValueT(fg[OrderT.G.ord])
+    span.b = ValueT(fg[OrderT.B.ord])
+    span.a = ValueT(fg[OrderT.A.ord])
     inc span
     inc base(self).interpolator()
     dec len
@@ -381,14 +381,14 @@ proc initSpanImageFilterRgba*[S,I](src: var S,
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S,I]
-    ValueType = getValueType(ColorT)
+    ValueT = getValueT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
 
   var
     fg: array[4, int]
-    fgPtr: ptr ValueType
+    fgPtr: ptr ValueT
     diameter     = base(self).filter().diameter()
     start        = base(self).filter().start()
     weightArray  = base(self).filter().weightArray()
@@ -415,7 +415,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
       yCount = diameter
 
     yHr = imageSubpixelMask - (yHr and imageSubpixelMask)
-    fgPtr = cast[ptr ValueType](base(self).source().span(xLr + start, yLr + start, diameter))
+    fgPtr = cast[ptr ValueT](base(self).source().span(xLr + start, yLr + start, diameter))
 
     while true:
       xCount  = diameter
@@ -432,12 +432,12 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
         dec xCount
         if xCount == 0: break
         xHr  += imageSubpixelScale
-        fgPtr = cast[ptr ValueType](base(self).source().nextX())
+        fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
       dec yCount
       if yCount == 0: break
       yHr  += imageSubpixelScale
-      fgPtr = cast[ptr ValueType](base(self).source().nextY())
+      fgPtr = cast[ptr ValueT](base(self).source().nextY())
 
     fg[0] = fg[0] shr imageFilterShift
     fg[1] = fg[1] shr imageFilterShift
@@ -449,15 +449,15 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
     if fg[2] < 0: fg[2] = 0
     if fg[3] < 0: fg[3] = 0
 
-    if fg[OrderType.A.ord] > baseMask:            fg[OrderType.A.ord] = baseMask
-    if fg[OrderType.R.ord] > fg[OrderType.A.ord]: fg[OrderType.R.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.G.ord] > fg[OrderType.A.ord]: fg[OrderType.G.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.B.ord] > fg[OrderType.A.ord]: fg[OrderType.B.ord] = fg[OrderType.A.ord]
+    if fg[OrderT.A.ord] > baseMask:            fg[OrderT.A.ord] = baseMask
+    if fg[OrderT.R.ord] > fg[OrderT.A.ord]: fg[OrderT.R.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.G.ord] > fg[OrderT.A.ord]: fg[OrderT.G.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.B.ord] > fg[OrderT.A.ord]: fg[OrderT.B.ord] = fg[OrderT.A.ord]
 
-    span.r = ValueType(fg[OrderType.R.ord])
-    span.g = ValueType(fg[OrderType.G.ord])
-    span.b = ValueType(fg[OrderType.B.ord])
-    span.a = ValueType(fg[OrderType.A.ord])
+    span.r = ValueT(fg[OrderT.R.ord])
+    span.g = ValueT(fg[OrderT.G.ord])
+    span.b = ValueT(fg[OrderT.B.ord])
+    span.a = ValueT(fg[OrderT.A.ord])
     inc span
     inc base(self).interpolator()
     dec len
@@ -474,14 +474,14 @@ proc initSpanImageResampleRgbaAffine*[S](src: var S,
 proc generate*[S,ColorT](self: var SpanImageResampleRgbaAffine[S], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageResampleAffine[S]
-    LongType = getLongType(ColorT)
-    ValueType = getValueType(ColorT)
+    LongT = getLongT(ColorT)
+    ValueT = getValueT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
 
   var
-    fg: array[4, LongType]
+    fg: array[4, LongT]
     diameter     = base(self).filter().diameter()
     filterScale = diameter shl imageSubpixelShift
     radiusX     = sar((diameter * base(self).mRx), 1)
@@ -506,7 +506,7 @@ proc generate*[S,ColorT](self: var SpanImageResampleRgbaAffine[S], span: ptr Col
       xLr = sar(x, imageSubpixelShift)
       xHr = sar(((imageSubpixelMask - (x and imageSubpixelMask)) * base(self).mRxInv), imageSubpixelShift)
       xHr2 = xHr
-      fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, lenXLr))
+      fgPtr = cast[ptr ValueT](base(self).source().span(xLr, yLr, lenXLr))
 
     while true:
       var weightY = weightArray[yHr]
@@ -521,11 +521,11 @@ proc generate*[S,ColorT](self: var SpanImageResampleRgbaAffine[S], span: ptr Col
         totalWeight += weight
         xHr  += base(self).mRxInv
         if xHr >= filterScale: break
-        fgPtr = cast[ptr ValueType](base(self).source().nextX())
+        fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
       yHr += base(self).mRyInv
       if yHr >= filterScale: break
-      fgPtr = cast[ptr ValueType](base(self).source().nextY())
+      fgPtr = cast[ptr ValueT](base(self).source().nextY())
 
     fg[0] = fg[0] div totalWeight
     fg[1] = fg[1] div totalWeight
@@ -537,15 +537,15 @@ proc generate*[S,ColorT](self: var SpanImageResampleRgbaAffine[S], span: ptr Col
     if fg[2] < 0: fg[2] = 0
     if fg[3] < 0: fg[3] = 0
 
-    if fg[OrderType.A.ord] > baseMask:            fg[OrderType.A.ord] = baseMask
-    if fg[OrderType.R.ord] > fg[OrderType.A.ord]: fg[OrderType.R.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.G.ord] > fg[OrderType.A.ord]: fg[OrderType.G.ord] = fg[OrderType.A.ord]
-    if fg[OrderType.B.ord] > fg[OrderType.A.ord]: fg[OrderType.B.ord] = fg[OrderType.A.ord]
+    if fg[OrderT.A.ord] > baseMask:            fg[OrderT.A.ord] = baseMask
+    if fg[OrderT.R.ord] > fg[OrderT.A.ord]: fg[OrderT.R.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.G.ord] > fg[OrderT.A.ord]: fg[OrderT.G.ord] = fg[OrderT.A.ord]
+    if fg[OrderT.B.ord] > fg[OrderT.A.ord]: fg[OrderT.B.ord] = fg[OrderT.A.ord]
 
-    span.r = ValueType(fg[OrderType.R.ord])
-    span.g = ValueType(fg[OrderType.G.ord])
-    span.b = ValueType(fg[OrderType.B.ord])
-    span.a = ValueType(fg[OrderType.A.ord])
+    span.r = ValueT(fg[OrderT.R.ord])
+    span.g = ValueT(fg[OrderT.G.ord])
+    span.b = ValueT(fg[OrderT.B.ord])
+    span.a = ValueT(fg[OrderT.A.ord])
 
     inc span
     inc base(self).interpolator()
@@ -564,12 +564,12 @@ proc initSpanImageResampleRgba*[S,I](src: var S,
 proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageResample[S,I]
-    LongType = getLongType(ColorT)
+    LongT = getLongT(ColorT)
 
   base(self).interpolator().begin(x + base(self).filterDxDbl(),
                                   y + base(self).filterDyDbl(), len)
   var
-    fg: array[4, LongType]
+    fg: array[4, LongT]
     diameter = base(self).filter().diameter()
     filterScale = diameter shl imageSubpixelShift
     weightArray = base(self).filter().weightArray()
@@ -607,7 +607,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
       xLr = sar(x, imageSubpixelShift)
       xHr = sar(((imageSubpixelMask - (x and imageSubpixelMask)) * rxInv), imageSubpixelShift)
       xHr2 = xHr
-      fgPtr = cast[ptr ValueType](base(self).source().span(xLr, yLr, lenXLr))
+      fgPtr = cast[ptr ValueT](base(self).source().span(xLr, yLr, lenXLr))
 
     while true:
       var weightY = weightArray[yHr]
@@ -622,11 +622,11 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
         totalWeight += weight
         xHr  += rxInv
         if xHr >= filterScale: break
-        fgPtr = cast[ptr ValueType](base(self).source().nextX())
+        fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
       yHr += ryInv
       if yHr >= filterScale: break
-      fgPtr = cast[ptr ValueType](base(self).source().nextY())
+      fgPtr = cast[ptr ValueT](base(self).source().nextY())
 
     fg[0] = fg[0] div totalWeight
     fg[1] = fg[1] div totalWeight
@@ -638,15 +638,15 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
     if fg[2] < 0: fg[2] = 0
     if fg[3] < 0: fg[3] = 0
 
-    if fg[OrderType.A.ord] > baseMask:            fg[OrderType.A.ord] = baseMask
-    if fg[OrderType.R.ord] > fg[OrderType.R.ord]: fg[OrderType.R.ord] = fg[OrderType.R.ord]
-    if fg[OrderType.G.ord] > fg[OrderType.G.ord]: fg[OrderType.G.ord] = fg[OrderType.G.ord]
-    if fg[OrderType.B.ord] > fg[OrderType.B.ord]: fg[OrderType.B.ord] = fg[OrderType.B.ord]
+    if fg[OrderT.A.ord] > baseMask:            fg[OrderT.A.ord] = baseMask
+    if fg[OrderT.R.ord] > fg[OrderT.R.ord]: fg[OrderT.R.ord] = fg[OrderT.R.ord]
+    if fg[OrderT.G.ord] > fg[OrderT.G.ord]: fg[OrderT.G.ord] = fg[OrderT.G.ord]
+    if fg[OrderT.B.ord] > fg[OrderT.B.ord]: fg[OrderT.B.ord] = fg[OrderT.B.ord]
 
-    span.r = ValueType(fg[OrderType.R.ord])
-    span.g = ValueType(fg[OrderType.G.ord])
-    span.b = ValueType(fg[OrderType.B.ord])
-    span.a = ValueType(fg[OrderType.A.ord])
+    span.r = ValueT(fg[OrderT.R.ord])
+    span.g = ValueT(fg[OrderT.G.ord])
+    span.b = ValueT(fg[OrderT.B.ord])
+    span.a = ValueT(fg[OrderT.A.ord])
 
     inc span
     inc base(self).interpolator()

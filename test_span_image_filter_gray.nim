@@ -11,7 +11,7 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 const
   V = 255
@@ -34,14 +34,14 @@ proc free_buffer(b: cstring) {.importc.}
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth)
     pf     = initPixFmtGray8(rbuf)
     rb     = initRendererBase(pf)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
 
 
-    img    = initRenderingBuffer(cast[ptr ValueType](image[0].unsafeAddr), 4, 4, -4)
+    img    = initRenderingBuffer(cast[ptr ValueT](image[0].unsafeAddr), 4, 4, -4)
     para   = [200.0, 40.0, 200.0+300.0, 40.0, 200.0+300.0, 40.0+300.0, 200.0, 40.0+300.0]
     mtx    = initTransAffine(para, 0, 0, 4, 4)
     inter  = initSpanInterpolatorLinear(mtx)
@@ -67,7 +67,7 @@ proc onDraw() =
 
   var
     target = newString(frameWidth * frameHeight * pixWidth)
-    rbuf2  = initRenderingBuffer(cast[ptr ValueType](target[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    rbuf2  = initRenderingBuffer(cast[ptr ValueT](target[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
 
   colorConv(rbuf2, rbuf, color_conv_gray8_to_rgb24)
   saveBMP24("test_span_image.bmp", target, frameWidth, frameHeight)

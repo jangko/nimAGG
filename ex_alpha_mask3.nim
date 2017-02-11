@@ -12,11 +12,11 @@ const
   operationMode = 1
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 var
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
   pf     = initPixFmtRgb24(rbuf)
   rb     = initRendererBase(pf)
   sl     = initScanlineP8()
@@ -28,7 +28,7 @@ var
   cx     = frameWidth
   cy     = frameHeight
   alphaBuf  = newString(cx * cy)
-  alphaRbuf = initRenderingBuffer(cast[ptr ValueType](alphaBuf[0].addr), cx, cy, cx)
+  alphaRbuf = initRenderingBuffer(cast[ptr ValueT](alphaBuf[0].addr), cx, cy, cx)
   alphaMask = initAmaskNoClipGray8(alphaRbuf)
 
 proc drawText(x, y: float64, text: string) =

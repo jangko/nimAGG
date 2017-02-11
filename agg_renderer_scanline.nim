@@ -24,7 +24,7 @@ proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: va
   mixin reset
 
   if ras.rewindScanlines():
-    let renColor = getColorType(BaseRenderer).construct(color)
+    let renColor = getColorT(BaseRenderer).construct(color)
 
     sl.reset(ras.minX(), ras.maxX())
     while ras.sweepScanline(sl):
@@ -72,7 +72,7 @@ proc initRendererSAAS[B,C](ren: var B): RendererScanlineAASolid[B, C] =
   result.mRen = ren.addr
 
 proc initRendererScanlineAASolid*[BaseRenderer](ren: var BaseRenderer): auto =
-  result = initRendererSAAS[BaseRenderer, getColorType(BaseRenderer)](ren)
+  result = initRendererSAAS[BaseRenderer, getColorT(BaseRenderer)](ren)
 
 proc attach*[B, C](self: var RendererScanlineAASolid[B, C], ren: var B) =
   self.mRen = ren.addr
@@ -170,7 +170,7 @@ proc renderScanlinesBinSolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: v
     # For example, it can be called with color type "rgba", while
     # "rgba8" is needed. Otherwise it will be implicitly
     # converted in the loop many times.
-    let renColor = getColorType(BaseRenderer).construct(color)
+    let renColor = getColorT(BaseRenderer).construct(color)
 
     sl.reset(ras.minX(), ras.maxX())
     while ras.sweepScanline(sl):
@@ -203,7 +203,7 @@ proc initRendererSBS[B,C](ren: var B): RendererScanlineBinSolid[B, C] =
   result.mRen = ren.addr
 
 proc initRendererScanlineBinSolid*[BaseRenderer](ren: var BaseRenderer): auto =
-  result = initRendererSBS[BaseRenderer, getColorType(BaseRenderer)](ren)
+  result = initRendererSBS[BaseRenderer, getColorT(BaseRenderer)](ren)
 
 proc attach*[B,C](self: var RendererScanlineBinSolid[B,C], ren: var B) =
   self.mRen = ren.addr

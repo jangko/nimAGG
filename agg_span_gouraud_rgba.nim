@@ -122,7 +122,7 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
 
   var vr, vg, vb, va: int
   const lim = getBaseMask(ColorT)
-  type ValueType = getValueType(ColorT)
+  type ValueT = getValueT(ColorT)
 
   # Beginning part of the span. Since we rolled back the
   # interpolators, the color values may have overflow.
@@ -143,10 +143,10 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
     if vb > lim: vb = lim
     if va < 0: va = 0
     if va > lim: va = lim
-    span.r = ValueType(vr)
-    span.g = ValueType(vg)
-    span.b = ValueType(vb)
-    span.a = ValueType(va)
+    span.r = ValueT(vr)
+    span.g = ValueT(vg)
+    span.b = ValueT(vb)
+    span.a = ValueT(va)
     r     += subPixelScale
     g     += subPixelScale
     b     += subPixelScale
@@ -162,10 +162,10 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
   # overflow. But while "nlen" is positive we are safe.
   #-------------------------
   while len != 0 and nlen > 0:
-    span.r = ValueType(r.y())
-    span.g = ValueType(g.y())
-    span.b = ValueType(b.y())
-    span.a = ValueType(a.y())
+    span.r = ValueT(r.y())
+    span.g = ValueT(g.y())
+    span.b = ValueT(b.y())
+    span.a = ValueT(a.y())
     r    += subPixelScale
     g    += subPixelScale
     b    += subPixelScale
@@ -190,10 +190,10 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
     if vb > lim: vb = lim
     if va < 0: va = 0
     if va > lim: va = lim
-    span.r = ValueType(vr)
-    span.g = ValueType(vg)
-    span.b = ValueType(vb)
-    span.a = ValueType(va)
+    span.r = ValueT(vr)
+    span.g = ValueT(vg)
+    span.b = ValueT(vb)
+    span.a = ValueT(va)
     r += subPixelScale
     g += subPixelScale
     b += subPixelScale

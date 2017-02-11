@@ -73,7 +73,7 @@ proc innerMiterLimit*(self: MathStroke): float64 = self.mInnerMiterLimit
 proc approximationScale*(self: MathStroke): float64 = self.mApproxScale
 
 proc addVertex[VertexConsumer](vc: var VertexConsumer, x, y: float64) {.inline.} =
-  type CoordType = getValueType(VertexConsumer)
+  type CoordType = getValueT(VertexConsumer)
   vc.add(CoordType(x: x, y: y))
 
 proc calcArc[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, x, y, dx1, dy1, dx2, dy2: float64) =

@@ -86,7 +86,7 @@ proc next*(x: var seq[PointD], idx: int): var PointD =
 proc removeAll*(x: var seq[PointD]) =
   x.setLen(0)
 
-template getValueType*(x: typedesc[seq[PointD]]): typedesc = PointD
+template getValueT*(x: typedesc[seq[PointD]]): typedesc = PointD
 
 proc iround*(v: float64): int {.inline.} =
   result = if v < 0.0: (v - 0.5).int else: (v + 0.5).int

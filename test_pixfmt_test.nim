@@ -71,15 +71,15 @@ const
 template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
   proc `test name`() =
     type
-      OrderType = getOrderType(PixFmt)
-      ValueType = getValueType(ColorT)
+      OrderT = getOrderT(PixFmt)
+      ValueT = getValueT(ColorT)
     const
-      pixWidth = sizeof(ValueType) * 3
+      pixWidth = sizeof(ValueT) * 3
       baseMask = getBaseMask(ColorT)
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
     for i in 0.. <buffer.len: buffer[i] = 0.chr
-    var rbuf = RenBuf(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     var pixf = `init PixFmt`(rbuf)
 
     for x in 0.. <frameWidth:
@@ -93,37 +93,37 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
         doAssert(a == b)
 
     var color = `init ColorT`(1,2,3)
-    var p = cast[ptr ValueType](buffer[0].addr)
+    var p = cast[ptr ValueT](buffer[0].addr)
     makePix(PixFmt, p, color)
-    doAssert(p[OrderType.R.ord] == color.r)
-    doAssert(p[OrderType.G.ord] == color.g)
-    doAssert(p[OrderType.B.ord] == color.b)
+    doAssert(p[OrderT.R.ord] == color.r)
+    doAssert(p[OrderT.G.ord] == color.g)
+    doAssert(p[OrderT.B.ord] == color.b)
 
     pixf.copyHLine(0, 0, frameWidth, color)
     pixf.copyVLine(0, 0, frameHeight, color)
 
     var
-      start = cast[ptr ValueType](buffer[0].addr)
+      start = cast[ptr ValueT](buffer[0].addr)
       span: array[frameWidth, ColorT]
       covers: array[frameWidth, uint8]
 
     p = start
     for x in 0.. <frameWidth:
-      doAssert(p[OrderType.R] == color.r)
-      doAssert(p[OrderType.G] == color.g)
-      doAssert(p[OrderType.B] == color.b)
+      doAssert(p[OrderT.R] == color.r)
+      doAssert(p[OrderT.G] == color.g)
+      doAssert(p[OrderT.B] == color.b)
       inc(p, 3)
 
     for y in 0.. <frameHeight:
-      p = cast[ptr ValueType](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
-      doAssert(p[OrderType.R] == color.r)
-      doAssert(p[OrderType.G] == color.g)
-      doAssert(p[OrderType.B] == color.b)
+      p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
+      doAssert(p[OrderT.R] == color.r)
+      doAssert(p[OrderT.G] == color.g)
+      doAssert(p[OrderT.B] == color.b)
 
     for i in 0.. <frameWidth:
-      span[i].r = ValueType(i.uint and baseMask.uint)
-      span[i].g = ValueType(i.uint and baseMask.uint)
-      span[i].b = ValueType(i.uint and baseMask.uint)
+      span[i].r = ValueT(i.uint and baseMask.uint)
+      span[i].g = ValueT(i.uint and baseMask.uint)
+      span[i].b = ValueT(i.uint and baseMask.uint)
       covers[i] = uint8(i.uint and baseMask.uint)
 
     pixf.copyColorHspan(0, 0, frameWidth, span[0].addr)
@@ -131,16 +131,16 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
 
     p = start
     for x in 0.. <frameWidth:
-      doAssert(p[OrderType.R] == span[x].r)
-      doAssert(p[OrderType.G] == span[x].g)
-      doAssert(p[OrderType.B] == span[x].b)
+      doAssert(p[OrderT.R] == span[x].r)
+      doAssert(p[OrderT.G] == span[x].g)
+      doAssert(p[OrderT.B] == span[x].b)
       inc(p, 3)
 
     for y in 0.. <frameHeight:
-      p = cast[ptr ValueType](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
-      doAssert(p[OrderType.R] == span[y].r)
-      doAssert(p[OrderType.G] == span[y].g)
-      doAssert(p[OrderType.B] == span[y].b)
+      p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
+      doAssert(p[OrderT.R] == span[y].r)
+      doAssert(p[OrderT.G] == span[y].g)
+      doAssert(p[OrderT.B] == span[y].b)
 
     var
       cbuf = newString(frameWidth * frameHeight * pixWidth)
@@ -210,7 +210,7 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped) =
 
     var
       tempbuf = newString(frameWidth * frameHeight * pixWidth)
-      temprbuf = RenBuf(cast[ptr ValueType](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+      temprbuf = RenBuf(cast[ptr ValueT](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
       temppixf = `init PixFmt`(temprbuf)
 
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
@@ -225,14 +225,14 @@ testtest2()
 template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
   proc `test name`() =
     type
-      ValueType = getValueType(ColorT)
+      ValueT = getValueT(ColorT)
     const
-      pixWidth = sizeof(ValueType) * 2
+      pixWidth = sizeof(ValueT) * 2
       baseMask = getBaseMask(ColorT)
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
     for i in 0.. <buffer.len: buffer[i] = 0.chr
-    var rbuf = RenBuf(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     var pixf = `init PixFmt`(rbuf)
 
     for x in 0.. <frameWidth:
@@ -246,7 +246,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
         doAssert(a == b)
 
     var color = `init ColorT`(33, 77)
-    var p = cast[ptr ValueType](buffer[0].addr)
+    var p = cast[ptr ValueT](buffer[0].addr)
     makePix(PixFmt, p, color)
     doAssert(p[] == color.v)
 
@@ -254,7 +254,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     pixf.copyVLine(0, 0, frameHeight, color)
 
     var
-      start = cast[ptr ValueType](buffer[0].addr)
+      start = cast[ptr ValueT](buffer[0].addr)
       span: array[frameWidth, ColorT]
       covers: array[frameWidth, uint8]
 
@@ -264,12 +264,12 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
       inc p
 
     for y in 0.. <frameHeight:
-      p = cast[ptr ValueType](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
+      p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[] == color.v)
 
 
     for i in 0.. <frameWidth:
-      span[i].v = ValueType(i.uint and baseMask.uint)
+      span[i].v = ValueT(i.uint and baseMask.uint)
       covers[i] = uint8(i.uint and baseMask.uint)
 
     pixf.copyColorHspan(0, 0, frameWidth, span[0].addr)
@@ -281,7 +281,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
       inc p
 
     for y in 0.. <frameHeight:
-      p = cast[ptr ValueType](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
+      p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[] == span[y].v)
 
     var
@@ -352,7 +352,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     var
       tempbuf = newString(frameWidth * frameHeight * pixWidth)
-      temprbuf = RenBuf(cast[ptr ValueType](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+      temprbuf = RenBuf(cast[ptr ValueT](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
       temppixf = `init PixFmt`(temprbuf)
 
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
@@ -366,17 +366,17 @@ testtest6()
 
 proc testRenderingBuffer[ColorT]() =
   type
-    ValueType = getValueType(ColorT)
+    ValueT = getValueT(ColorT)
   const
-    pixWidth = sizeof(ValueType) * 3
+    pixWidth = sizeof(ValueT) * 3
     baseMask = getBaseMask(ColorT)
   var
     buf1 = newString(frameWidth * frameHeight * pixWidth)
     buf2 = newString(frameWidth * frameHeight * pixWidth)
-    rbuf1 = initRenderingBuffer(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbuf2 = initRenderingBuffer(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc1 = initRenderingBufferCached(cast[ptr ValueType](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc2 = initRenderingBufferCached(cast[ptr ValueType](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf1 = initRenderingBuffer(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf2 = initRenderingBuffer(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbufc1 = initRenderingBufferCached(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbufc2 = initRenderingBufferCached(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
 
   for i in 0.. <buf1.len:
     buf1[i] = 0.chr
@@ -394,8 +394,8 @@ proc testRenderingBuffer[ColorT]() =
 
   var
     byteWidth = sizeof(ColorT) * 3
-    dn1 = initDynaRow[ValueType](100, 120, byteWidth)
-    dn2 = initDynaRow[ValueType](100, 120, byteWidth)
+    dn1 = initDynaRow[ValueT](100, 120, byteWidth)
+    dn2 = initDynaRow[ValueT](100, 120, byteWidth)
 
   for i in 0.. <dn1.height():
     zeroMem(dn1.rowPtr(i), byteWidth)

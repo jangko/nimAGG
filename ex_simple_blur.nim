@@ -6,21 +6,21 @@ import agg_trans_affine, agg_color_rgba
 import parse_lion, nimBMP
 
 type
-  SpanSimpleBlurRgb24[Order] = object
+  SpanSimpleBlurRgb24[OrderT] = object
     mSourceImage: ptr RenderingBuffer
 
-proc initSpanSimpleBlurRgb24*[Order](src: var RenderingBuffer): SpanSimpleBlurRgb24[Order] =
+proc initSpanSimpleBlurRgb24*[OrderT](src: var RenderingBuffer): SpanSimpleBlurRgb24[OrderT] =
   result.mSourceImage = src.addr
 
-proc sourceImage*[Order](self: var SpanSimpleBlurRgb24[Order], src: var RenderingBuffer) =
+proc sourceImage*[OrderT](self: var SpanSimpleBlurRgb24[OrderT], src: var RenderingBuffer) =
   self.mSourceImage = src.addr
 
-proc sourceImage*[Order](self: SpanSimpleBlurRgb24[Order]): var RenderingBuffer =
+proc sourceImage*[OrderT](self: SpanSimpleBlurRgb24[OrderT]): var RenderingBuffer =
   self.mSourceImage[]
 
-proc prepare*[Order](self: SpanSimpleBlurRgb24[Order]) = discard
+proc prepare*[OrderT](self: SpanSimpleBlurRgb24[OrderT]) = discard
 
-proc generate*[Order, ColorT](self: var SpanSimpleBlurRgb24[Order], span: ptr ColorT, x, y, len: int) =
+proc generate*[OrderT, ColorT](self: var SpanSimpleBlurRgb24[OrderT], span: ptr ColorT, x, y, len: int) =
   var
     len = len
     span = span
@@ -60,7 +60,7 @@ proc generate*[Order, ColorT](self: var SpanSimpleBlurRgb24[Order], span: ptr Co
       color[1] = color[1] div 9
       color[2] = color[2] div 9
       color[3] = color[3] div 9
-    span[] = initRgba8(color[Order.R.ord].uint, color[Order.G.ord].uint, color[Order.B.ord].uint, color[3].uint)
+    span[] = initRgba8(color[OrderT.R.ord].uint, color[OrderT.G.ord].uint, color[OrderT.B.ord].uint, color[3].uint)
     inc span
     inc x
     dec len
@@ -71,12 +71,12 @@ const
   pixWidth = 3
 
 type
-  ValueType = uint8
+  ValueT = uint8
 
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueType](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
@@ -139,7 +139,7 @@ proc onDraw() =
 
   var
     buffer2 = newString(frameWidth * frameHeight * pixWidth)
-    rbuf2   = initRenderingBuffer(cast[ptr ValueType](buffer2[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    rbuf2   = initRenderingBuffer(cast[ptr ValueT](buffer2[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     sg = initSpanSimpleBlurRgb24[OrderRgb](rbuf2)
     sa = initSpanAllocator[Rgba8]()
 
