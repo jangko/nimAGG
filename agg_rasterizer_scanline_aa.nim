@@ -23,10 +23,10 @@ proc notEqual*(self: CellAA, ex, ey: int, other: CellAA): bool =
 
 const
   aaShift  = 8
-  aaScale  = 1 shl aa_shift
-  aaMask   = aa_scale - 1
-  aaScale2 = aa_scale * 2
-  aaMask2  = aa_scale2 - 1
+  aaScale  = 1 shl aaShift
+  aaMask   = aaScale - 1
+  aaScale2 = aaScale * 2
+  aaMask2  = aaScale2 - 1
 
 type
   StatusE = enum

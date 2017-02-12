@@ -1,51 +1,44 @@
-bitset_iterator
-conv_unclose_polygon
-conv_concat
-path_length
-span_solid
-rasterizer_outline
 vcgen_vertex_sequence
 vcgen_markers_term
+vcgen_bspline
+vcgen_contour
+vcgen_dash
+vcgen_smooth_poly1
+vpgen_clip_polyline
+vpgen_segmentator
+vpgen_clip_polygon
+
+conv_unclose_polygon
+conv_concat
 conv_shorten_path
 conv_close_polygon
-vpgen_segmentator
 conv_adaptor_vpgen
 conv_segmentator
-bspline
-vcgen_bspline
 conv_bspline
-vcgen_contour
 conv_contour
-vcgen_dash
 conv_dash
-vpgen_clip_polyline
 conv_clip_polyline
-vpgen_clip_polygon
 conv_clip_polygon
-vcgen_smooth_poly1
-span_gouraud
-span_gouraud_rgba
-span_interpolator_linear
-renderer_mclip
-line_aa_basics
-span_converter
 conv_adaptor_marker
+conv_marker
+
+bitset_iterator
+path_length
+span_solid
+image_accessors
+pixfmt_transposer
+trans_warp_magnifier
+bspline
+renderer_mclip
+
+span_gouraud
 span_gouraud_gray
-span_gradient_alpha
 span_pattern_rgba
 span_pattern_gray
 span_pattern_rgb
-conv_marker
-image_accessors
-pixfmt_transposer
-rasterizer_outline_aa
-renderer_outline_aa
-span_gradient
-span_image_filter
-trans_warp_magnifier
 span_interpolator_trans
 span_subdiv_adaptor
-span_image_filter_rgba
+
 
 incomplete:
   path_storage
@@ -54,19 +47,30 @@ incomplete:
   conv_smooth_poly1  
   
 translate ok:
-  trans_affine
-  clip_liang_barsky
   conv_curve
   curve
-  span_allocator
-  dda_line
-  renderer_primitive
-  rasterizer_outline
-  scanline_bin
-  ellipse_bresenham
+  dda_line 
   bezier_arc
   pixfmt_rgba
   
+  -line_aa_basics  
+  -span_gradient
+  -span_gradient_alpha
+  -rasterizer_outline_aa
+  -renderer_outline_aa
+  -span_gouraud_rgba
+  -rasterizer_outline 
+  -scanline_bin
+  -clip_liang_barsky  
+  -trans_affine
+  -span_allocator
+  -renderer_primitive
+  -ellipse_bresenham
+  -span_converter
+  -span_interpolator_linear
+  -span_image_filter
+  -span_image_filter_rgba
+  -renderer_markers
   -image_filters  
   -span_image_filter_gray
   -span_image_filter_rgb
