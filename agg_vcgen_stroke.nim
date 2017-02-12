@@ -81,7 +81,7 @@ proc rewind*(self: var VcgenStroke, pathId: int) =
   if self.mStatus == initial:
     self.mSrcVertices.close(self.mClosed != 0)
     shortenPath(self.mSrcVertices, self.mShorten, self.mClosed)
-    if self.mSrcVertices.size() < 3: self.mClosed = 0
+    if self.mSrcVertices.len() < 3: self.mClosed = 0
 
   self.mStatus = ready
   self.mSrcVertex = 0
@@ -96,7 +96,7 @@ proc vertex*(self: var VcgenStroke, x, y: var float64): uint =
       self.rewind(0)
       self.mStatus = ready
     of ready:
-      if self.mSrcVertices.size() < (2 + int(self.mClosed != 0)):
+      if self.mSrcVertices.len() < (2 + int(self.mClosed != 0)):
         cmd = pathCmdStop
       else:
         self.mStatus = if self.mClosed != 0: outline1 else: cap1
@@ -114,20 +114,20 @@ proc vertex*(self: var VcgenStroke, x, y: var float64): uint =
       self.mOutVertex = 0
     of cap2:
       self.mStroker.calcCap(self.mOutVertices,
-                          self.mSrcVertices[self.mSrcVertices.size() - 1],
-                          self.mSrcVertices[self.mSrcVertices.size() - 2],
-                          self.mSrcVertices[self.mSrcVertices.size() - 2].dist)
+                          self.mSrcVertices[self.mSrcVertices.len() - 1],
+                          self.mSrcVertices[self.mSrcVertices.len() - 2],
+                          self.mSrcVertices[self.mSrcVertices.len() - 2].dist)
       self.mPrevStatus = outline2
       self.mStatus = outVertices
       self.mOutVertex = 0
     of outline1:
       if self.mClosed != 0:
-        if self.mSrcVertex >= self.mSrcVertices.size():
+        if self.mSrcVertex >= self.mSrcVertices.len():
           self.mPrevStatus = closeFirst
           self.mStatus = endPoly1
           continue
       else:
-        if self.mSrcVertex >= self.mSrcVertices.size() - 1:
+        if self.mSrcVertex >= self.mSrcVertices.len() - 1:
           self.mStatus = cap2
           continue
 
@@ -161,7 +161,7 @@ proc vertex*(self: var VcgenStroke, x, y: var float64): uint =
         self.mStatus = outVertices
         self.mOutVertex = 0
     of outVertices:
-      if self.mOutVertex >= self.mOutVertices.size():
+      if self.mOutVertex >= self.mOutVertices.len():
         self.mStatus = self.mPrevStatus
       else:
         var c = self.mOutVertices[self.mOutVertex]

@@ -102,7 +102,7 @@ proc vertex*(self: var VcgenContour, x, y: var float64): uint =
       self.rewind(0)
       self.mStatus = ready
     of ready:
-      if self.mSrcVertices.size() < 2 + int(self.mClosed != 0):
+      if self.mSrcVertices.len() < 2 + int(self.mClosed != 0):
         cmd = pathCmdStop
         continue
 
@@ -111,7 +111,7 @@ proc vertex*(self: var VcgenContour, x, y: var float64): uint =
       self.mSrcVertex = 0
       self.mOutVertex = 0
     of outline:
-      if self.mSrcVertex >= self.mSrcVertices.size():
+      if self.mSrcVertex >= self.mSrcVertices.len():
         self.mStatus = endPoly
         continue
 

@@ -45,17 +45,18 @@ proc generate*[I,G,A, ColorT](self: var SpanGradientAlpha[I,G,A], span: ptr Colo
     dd = self.mD2 - self.mD1
     x = x
     y = y
+    span = span
 
   const downScaleShift = getDownscaleShift(SpanGradientAlpha[I,G,A])
 
   if dd < 1: dd = 1
-  self.mInterpolator[].begin(x+0.5, y+0.5, len)
+  self.mInterpolator[].begin(x.float64+0.5, y.float64+0.5, len)
   doWhile len != 0:
     self.mInterpolator[].coordinates(x, y)
     var d = self.mGradientF[].calculate(sar(x, downScaleShift), sar(y, downScaleShift), self.mD2)
     d = ((d - self.mD1) * self.mAlphaF[].len) div dd
     if d < 0: d = 0
-    if d >= self.mAlphaF.len: d = self.mAlphaF[].len - 1
+    if d >= self.mAlphaF[].len: d = self.mAlphaF[].len - 1
     span.a = self.mAlphaF[][d]
     inc span
     inc self.mInterpolator[]

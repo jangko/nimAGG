@@ -5,61 +5,74 @@ const
   gradientSubpixelScale* = 1 shl gradientSubpixelShift
   gradientSubpixelMask*  = gradientSubpixelScale - 1
 
-template spanGradient*(name: untyped, ColorT, Interpolator, GradientF, ColorF: typed) =
-  type
-    name* = object
-      mInterpolator: ptr Interpolator
-      mGradientF: ptr GradientF
-      mColorF: ptr ColorF
-      mD1, mD2: int
+type
+  SpanGradient*[Interpolator, GradientF, ColorF] = object
+    mInterpolator: ptr Interpolator
+    mGradientF: ptr GradientF
+    mColorF: ptr ColorF
+    mD1, mD2: int
 
-  template getDownscaleShift*(x: typedesc[name]): int = (getSubPixelShift(Interpolator) - gradientSubpixelShift)
+template getDownscaleShift*[I,G,C](x: typedesc[SpanGradient[I,G,C]]): int = (getSubPixelShift(I.type) - gradientSubpixelShift)
 
-  proc `init name`*(inter: var Interpolator, gradientF: var GradientF,
-    colorF: var ColorF, d1, d2: float64): name =
+proc initSpanGradient*[I,G,C](inter: var I,
+  gradientF: var G, colorF: var C, d1, d2: float64): SpanGradient[I,G,C] =
+  result.mInterpolator = inter.addr
+  result.mGradientF = gradientF.addr
+  result.mColorF = colorF.addr
+  result.mD1 = iround(d1 * gradientSubpixelScale)
+  result.mD2 = iround(d2 * gradientSubpixelScale)
 
-    result.mInterpolator = inter.addr
-    result.mGradientF = gradientF.addr
-    result.mColorF = colorF.addr
-    result.mD1 = iround(d1 * gradientSubpixelScale)
-    result.mD2 = iround(d2 * gradientSubpixelScale)
+proc interpolator*[Interpolator,G,C](self: SpanGradient[Interpolator,G,C]): var Interpolator =
+  self.mInterpolator[]
 
-  proc interpolator*(self: name): var Interpolator = self.mInterpolator[]
-  proc gradientFunction*(self: name): var GradientF = self.mGradientF[]
-  proc colorFunction*(self: name): var ColorF = self.mColorF[]
-  proc d1*(self: name): float64 = float64(self.mD1) / gradientSubpixelScale
-  proc d2*(self: name): float64 = float64(self.mD2) / gradientSubpixelScale
+proc gradientFunction*[I,GradientF,C](self: SpanGradient[I,GradientF,C]): var GradientF =
+  self.mGradientF[]
 
-  proc interpolator*(self: var name, i: var Interpolator) = self.mInterpolator = i.addr
-  proc gradientFunction*(self: var name, gf: var GradientF) = self.mGradientF = gf.addr
-  proc colorFunction*(self: var name, cf: var ColorF) = self.mColorF = cf.addr
-  proc d1*(self: var name, v: float64) = self.mD1 = iround(v * gradientSubpixelScale)
-  proc d2*(self: var name, v: float64) = self.mD2 = iround(v * gradientSubpixelScale)
+proc colorFunction*[I,G,ColorF](self: SpanGradient[I,G,ColorF]): var ColorF =
+  self.mColorF[]
 
-  proc prepare*(self: name) = discard
+proc d1*[I,G,C](self: SpanGradient[I,G,C]): float64 =
+  float64(self.mD1) / gradientSubpixelScale
 
-  proc generate*(self: var name, spanx: ptr ColorT, xx, yy, lenx: int) =
-    const downScaleShift = getDownscaleShift(name)
-    var
-      dd = self.mD2 - self.mD1
-      x = xx
-      y = yy
-      span = spanx
-      len = lenx
+proc d2*[I,G,C](self: SpanGradient[I,G,C]): float64 =
+  float64(self.mD2) / gradientSubpixelScale
 
-    if dd < 1: dd = 1
-    self.mInterpolator[].begin(x.float64+0.5, y.float64+0.5, len)
+proc interpolator*[Interpolator,G,C](self: var SpanGradient[Interpolator,G,C], i: var Interpolator) =
+  self.mInterpolator = i.addr
 
-    doWhile len != 0:
-      self.mInterpolator[].coordinates(x, y)
-      var d = self.mGradientF[].calculate(sar(x, downScaleShift), sar(y, downScaleShift), self.mD2)
-      d = ((d - self.mD1) * self.mColorF[].len) div dd
-      if d < 0: d = 0
-      if d >= self.mColorF[].len: d = self.mColorF[].len - 1
-      span[] = self.mColorF[][d]
-      inc span
-      inc self.mInterpolator[]
-      dec len
+proc gradientFunction*[I,GradientF,C](self: var SpanGradient[I,GradientF,C], gf: var GradientF) =
+  self.mGradientF = gf.addr
+
+proc colorFunction*[I,G,ColorF](self: var SpanGradient[I,G,ColorF], cf: var ColorF) =
+  self.mColorF = cf.addr
+
+proc d1*[I,G,C](self: var SpanGradient[I,G,C], v: float64) = self.mD1 = iround(v * gradientSubpixelScale)
+proc d2*[I,G,C](self: var SpanGradient[I,G,C], v: float64) = self.mD2 = iround(v * gradientSubpixelScale)
+
+proc prepare*[I,G,C](self: SpanGradient[I,G,C]) = discard
+
+proc generate*[I,G,C,ColorT](self: var SpanGradient[I,G,C], span: ptr ColorT, x, y, len: int) =
+  const downScaleShift = getDownscaleShift(self.type)
+  var
+    dd = self.mD2 - self.mD1
+    x = x
+    y = y
+    span = span
+    len = len
+
+  if dd < 1: dd = 1
+  self.mInterpolator[].begin(x.float64+0.5, y.float64+0.5, len)
+
+  doWhile len != 0:
+    self.mInterpolator[].coordinates(x, y)
+    var d = self.mGradientF[].calculate(sar(x, downScaleShift), sar(y, downScaleShift), self.mD2)
+    d = ((d - self.mD1) * self.mColorF[].len) div dd
+    if d < 0: d = 0
+    if d >= self.mColorF[].len: d = self.mColorF[].len - 1
+    span[] = self.mColorF[][d]
+    inc span
+    inc self.mInterpolator[]
+    dec len
 
 
 type
@@ -67,13 +80,12 @@ type
     mC1, mC2: ColorT
     mSize: int
 
-
 proc initGradientLinearColor*[ColorT](c1, c2: ColorT, size = 256): GradientLinearColor[ColorT] =
   result.mC1 = c1
   result.mC2 = c2
   result.mSize = size
 
-proc size*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
+proc len*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
 
 proc `[]`*[ColorT](self: var GradientLinearColor[ColorT], v: int): ColorT =
   self.mC1.gradient(self.mC2, v.float64 / float64(self.mSize - 1))

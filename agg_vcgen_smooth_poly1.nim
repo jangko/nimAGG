@@ -78,11 +78,11 @@ proc vertex*(self: var VcgenSmoothPoly1, x, y: var float64): uint =
       self.rewind(0)
       self.mStatus = ready
     of ready:
-      if self.mSrcVertices.size() <  2:
+      if self.mSrcVertices.len() <  2:
         cmd = pathCmdStop
         continue
 
-      if self.mSrcVertices.size() == 2:
+      if self.mSrcVertices.len() == 2:
         x = self.mSrcVertices[self.mSrcVertex].x
         y = self.mSrcVertices[self.mSrcVertex].y
         inc self.mSrcVertex
@@ -96,15 +96,15 @@ proc vertex*(self: var VcgenSmoothPoly1, x, y: var float64): uint =
       self.mSrcVertex = 0
     of polygon:
       if self.mClosed != 0:
-        if self.mSrcVertex >= self.mSrcVertices.size():
+        if self.mSrcVertex >= self.mSrcVertices.len():
           x = self.mSrcVertices[0].x
           y = self.mSrcVertices[0].y
           self.mStatus = endPoly
           return pathCmdCurve4
       else:
-        if self.mSrcVertex >= self.mSrcVertices.size() - 1:
-          x = self.mSrcVertices[self.mSrcVertices.size() - 1].x
-          y = self.mSrcVertices[self.mSrcVertices.size() - 1].y
+        if self.mSrcVertex >= self.mSrcVertices.len() - 1:
+          x = self.mSrcVertices[self.mSrcVertices.len() - 1].x
+          y = self.mSrcVertices[self.mSrcVertices.len() - 1].y
           self.mStatus = endPoly
           return pathCmdCurve3
 
@@ -125,7 +125,7 @@ proc vertex*(self: var VcgenSmoothPoly1, x, y: var float64): uint =
           self.mStatus = ctrlB
           return pathCmdMoveTo
 
-        if self.mSrcVertex >= self.mSrcVertices.size() - 1:
+        if self.mSrcVertex >= self.mSrcVertices.len() - 1:
           self.mStatus = ctrlE
           return pathCmdCurve3
 

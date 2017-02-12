@@ -38,7 +38,7 @@ proc drawText(x, y: float64, text: string) =
 
   stroke.width(1.5)
   stroke.lineCap(roundCap)
-  txt.size(10.0)
+  txt.len(10.0)
   txt.startPoint(x, y)
   txt.text(text)
   ras.addPath(stroke)

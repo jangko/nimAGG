@@ -1,8 +1,9 @@
-import agg_basics, agg_renderer_base, agg_dda_line, agg_ellipse_bresenham, agg_color_rgba
+import agg_basics, agg_renderer_base, agg_dda_line, agg_ellipse_bresenham
+import agg_rendering_buffer, agg_color_rgba
 
 type
-  RendererPrimitives*[BaseRenderer, ColorT] = object
-    ren: ptr BaseRenderer
+  RendererPrimitives*[BaseRenderer, ColorT] = object of RootObj
+    mRen: ptr BaseRenderer
     mFillColor: ColorT
     mLineColor: ColorT
     currX: int
@@ -10,18 +11,21 @@ type
 
 template getColorT*[B,C](x: typedesc[RendererPrimitives[B,C]]): typedesc = getColorT(B.type)
 
-proc initRendererPrimitives1*[B,C](ren: var B): RendererPrimitives[B,C] =
-  result.ren = ren.addr
-  result.mFillColor = noColor(C)
-  result.mLineColor = noColor(C)
-  result.currX = 0
-  result.currY = 0
+proc init*[B,C](self: var RendererPrimitives[B,C], ren: var B) =
+  self.mRen = ren.addr
+  self.mFillColor = noColor(C)
+  self.mLineColor = noColor(C)
+  self.currX = 0
+  self.currY = 0
+
+proc initRendererPrimitivesAux*[B,C](ren: var B): RendererPrimitives[B,C] =
+  result.init(ren)
 
 proc initRendererPrimitives*[B](ren: var B): auto =
-  result = initRendererPrimitives1[B, getColorT(B)](ren)
+  result = initRendererPrimitivesAux[B, getColorT(B)](ren)
 
 proc attach*[B,C](self: var RendererPrimitives[B,C], ren: var B) =
-  self.ren = ren.addr
+  self.mRen = ren.addr
 
 proc coord*[B,C](x: typedesc[RendererPrimitives[B,C]], c: float64): int =
   result = iround(c * SubpixelScale)
@@ -38,21 +42,21 @@ proc lineColor*[B,C,CT](self: var RendererPrimitives[B,C], c: CT) =
   else:
     self.mLineColor = c
 
-proc fillColor*[B,C](self: RendererPrimitives[B,C]): var C = self.mFillColor
-proc lineColor*[B,C](self: RendererPrimitives[B,C]): var C = self.mLineColor
+proc fillColor*[B,C](self: RendererPrimitives[B,C]): C = self.mFillColor
+proc lineColor*[B,C](self: RendererPrimitives[B,C]): C = self.mLineColor
 
 proc rectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
-  self.ren[].blendHline(x1,   y1,   x2-1, self.mLineColor, coverFull)
-  self.ren[].blendVline(x2,   y1,   y2-1, self.mLineColor, coverFull)
-  self.ren[].blendHline(x1+1, y2,   x2,   self.mLineColor, coverFull)
-  self.ren[].blendVline(x1,   y1+1, y2,   self.mLineColor, coverFull)
+  self.mRen[].blendHline(x1,   y1,   x2-1, self.mLineColor, coverFull)
+  self.mRen[].blendVline(x2,   y1,   y2-1, self.mLineColor, coverFull)
+  self.mRen[].blendHline(x1+1, y2,   x2,   self.mLineColor, coverFull)
+  self.mRen[].blendVline(x1,   y1+1, y2,   self.mLineColor, coverFull)
 
 proc solidRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
-  self.ren[].blendBar(x1, y1, x2, y2, self.mFillColor, coverFull)
+  self.mRen[].blendBar(x1, y1, x2, y2, self.mFillColor, coverFull)
 
 proc outlinedRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
-  rectangle(x1, y1, x2, y2)
-  self.ren[].blendBar(x1+1, y1+1, x2-1, y2-1, self.mFillColor, coverFull)
+  self.rectangle(x1, y1, x2, y2)
+  self.mRen[].blendBar(x1+1, y1+1, x2-1, y2-1, self.mFillColor, coverFull)
 
 proc ellipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   var
@@ -63,10 +67,10 @@ proc ellipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   doWhile dy < 0:
     dx += ei.dx()
     dy += ei.dy()
-    self.ren[].blendPixel(x + dx, y + dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x + dx, y - dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x - dx, y - dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x - dx, y + dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x + dx, y + dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x + dx, y - dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x - dx, y - dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x - dx, y + dy, self.mLineColor, coverFull)
     inc ei
 
 proc solidEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
@@ -82,14 +86,14 @@ proc solidEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
     dy += ei.getDy()
 
     if dy != dy0:
-      self.ren[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
-      self.ren[].blendHline(x-dx0, y-dy0, x+dx0, self.mFillColor, coverFull)
+      self.mRen[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
+      self.mRen[].blendHline(x-dx0, y-dy0, x+dx0, self.mFillColor, coverFull)
 
     dx0 = dx
     dy0 = dy
     inc ei
 
-  self.ren[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
+  self.mRen[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
 
 proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   var
@@ -101,14 +105,14 @@ proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int)
     dx += ei.getDx()
     dy += ei.getDy()
 
-    self.ren[].blendPixel(x + dx, y + dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x + dx, y - dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x - dx, y - dy, self.mLineColor, coverFull)
-    self.ren[].blendPixel(x - dx, y + dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x + dx, y + dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x + dx, y - dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x - dx, y - dy, self.mLineColor, coverFull)
+    self.mRen[].blendPixel(x - dx, y + dy, self.mLineColor, coverFull)
 
-    if ei.getDy() and dx != 0:
-      self.ren[].blendHline(x-dx+1, y+dy, x+dx-1, self.mFillColor, coverFull)
-      self.ren[].blendHline(x-dx+1, y-dy, x+dx-1, self.mFillColor, coverFull)
+    if (ei.getDy() and dx) != 0:
+      self.mRen[].blendHline(x-dx+1, y+dy, x+dx-1, self.mFillColor, coverFull)
+      self.mRen[].blendHline(x-dx+1, y-dy, x+dx-1, self.mFillColor, coverFull)
 
     inc ei
 
@@ -119,7 +123,7 @@ proc line*[B,C](self: var RendererPrimitives[B,C], xx1, yy1, xx2, yy2: int, last
 
   if len == 0:
     if last:
-      self.ren[].blendPixel(LineBresenhamInterpolator.lineLr(xx1),
+      self.mRen[].blendPixel(LineBresenhamInterpolator.lineLr(xx1),
         LineBresenhamInterpolator.lineLr(yy1), self.mLineColor, coverFull)
     return
 
@@ -127,12 +131,12 @@ proc line*[B,C](self: var RendererPrimitives[B,C], xx1, yy1, xx2, yy2: int, last
 
   if li.isVer():
     doWhile len != 0:
-      self.ren[].blendPixel(li.x2(), li.y1(), self.mLineColor, coverFull)
+      self.mRen[].blendPixel(li.x2(), li.y1(), self.mLineColor, coverFull)
       li.vstep()
       dec len
   else:
     doWhile len != 0:
-      self.ren[].blendPixel(li.x1(), li.y2(), self.mLineColor, coverFull)
+      self.mRen[].blendPixel(li.x1(), li.y2(), self.mLineColor, coverFull)
       li.hstep()
       dec len
 
@@ -145,4 +149,5 @@ proc lineTo*[B,C](self: var RendererPrimitives[B,C], x, y: int, last = false) =
   self.currX = x
   self.currY = y
 
-proc getRen*[B,C](self: var RendererPrimitives[B,C]): var B = self.ren[]
+proc ren*[B,C](self: RendererPrimitives[B,C]): var B = self.mRen[]
+proc rbuf*[B,C](self: RendererPrimitives[B,C]): var RenderingBuffer = self.mRen[].rbuf()

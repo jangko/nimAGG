@@ -11,7 +11,7 @@ proc add*[T](self: var PodBVector[T], val: T) {.inline.} =
 proc removeAll*[T](self: var PodBVector[T]) {.inline.} =
   self.data.setLen(0)
 
-proc size*[T](self: PodBVector[T]): int {.inline.} = self.data.len
+proc len*[T](self: PodBVector[T]): int {.inline.} = self.data.len
 
 proc `[]`*[T](self: var PodBVector[T], idx: int): var T = self.data[idx]
 

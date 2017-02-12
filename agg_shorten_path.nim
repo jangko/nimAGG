@@ -1,10 +1,10 @@
 import agg_vertex_sequence
 
 proc shortenPath*[VertexSequence](vs: var VertexSequence, s: float64, closed = 0'u) =
-  if s > 0.0 and vs.size() > 1:
+  if s > 0.0 and vs.len() > 1:
     var
       d: float64
-      n = int(vs.size() - 2)
+      n = int(vs.len() - 2)
       s = s
 
     while n != 0:
@@ -14,10 +14,10 @@ proc shortenPath*[VertexSequence](vs: var VertexSequence, s: float64, closed = 0
       s -= d
       dec n
 
-    if vs.size() < 2:
+    if vs.len() < 2:
       vs.removeAll()
     else:
-      n = vs.size() - 1
+      n = vs.len() - 1
       var prev = vs[n-1]
       var last = vs[n]
       d = (prev.dist - s) / prev.dist

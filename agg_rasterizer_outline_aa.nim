@@ -78,6 +78,12 @@ proc moveToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, 
 proc lineToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, Coord: typedesc) =
   self.lineTo(Coord.conv(x), Coord.conv(y))
 
+proc moveToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64) =
+  self.moveTo(LineCoord.conv(x), LineCoord.conv(y))
+
+proc lineToD*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64) =
+  self.lineTo(LineCoord.conv(x), LineCoord.conv(y))
+
 proc addVertex*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64, cmd: uint) =
   if isMoveTo(cmd):
     self.render(false)
@@ -148,7 +154,7 @@ proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, 
     dv.lnext = vx.len
 
     inc dv.idx
-    if dv.idx >= self.mSrcVertices.size: dv.idx = 0
+    if dv.idx >= self.mSrcVertices.len: dv.idx = 0
 
     let v = self.mSrcVertices[dv.idx].addr
     dv.x2 = v.x
@@ -184,10 +190,10 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
     x1, y1, x2, y2, lprev: int
 
   if closePolygon:
-    if self.mSrcVertices.size >= 3:
+    if self.mSrcVertices.len >= 3:
       dv.idx = 2
 
-      var v = self.mSrcVertices[self.mSrcVertices.size - 1].addr
+      var v = self.mSrcVertices[self.mSrcVertices.len - 1].addr
       x1    = v.x
       y1    = v.y
       lprev = v.len
@@ -231,9 +237,9 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
       if (dv.flags and 2) == 0 and self.mLineJoin != outlineRoundJoin:
          bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
 
-      self.draw(dv, 0, self.mSrcVertices.size)
+      self.draw(dv, 0, self.mSrcVertices.len)
   else:
-    case self.mSrcVertices.size
+    case self.mSrcVertices.len
       of 0, 1: discard
       of 2:
         var v = self.mSrcVertices[0].addr
@@ -351,7 +357,7 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
         if (dv.flags and 2) == 0 and self.mLineJoin != outlineRoundJoin:
           bisectrix(dv.curr, dv.next, dv.xb2, dv.yb2)
 
-        self.draw(dv, 1, self.mSrcVertices.size - 2)
+        self.draw(dv, 1, self.mSrcVertices.len - 2)
 
         if (dv.flags and 1) == 0:
           if self.mLineJoin == outlineRoundJoin:

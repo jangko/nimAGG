@@ -104,7 +104,7 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
       self.rewind(0)
       self.mStatus = ready
     of ready:
-        if self.mNumDashes < 2 or self.mSrcVertices.size() < 2:
+        if self.mNumDashes < 2 or self.mSrcVertices.len() < 2:
           cmd = pathCmdStop
           continue
 
@@ -136,13 +136,13 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
         self.mV1 = self.mV2
         self.mCurrRest = self.mV1.dist
         if self.mClosed != 0:
-          if self.mSrcVertex > self.mSrcVertices.size():
+          if self.mSrcVertex > self.mSrcVertices.len():
             self.mStatus = stop
           else:
-            let idx = if self.mSrcVertex >= self.mSrcVertices.size(): 0 else: self.mSrcVertex
+            let idx = if self.mSrcVertex >= self.mSrcVertices.len(): 0 else: self.mSrcVertex
             self.mV2 = self.mSrcVertices[idx].addr
         else:
-          if self.mSrcVertex >= self.mSrcVertices.size():
+          if self.mSrcVertex >= self.mSrcVertices.len():
             self.mStatus = stop
           else:
             self.mV2 = self.mSrcVertices[self.mSrcVertex].addr

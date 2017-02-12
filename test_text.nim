@@ -20,7 +20,7 @@ proc main() =
 
   var text = "abc"
 
-  txt.size(10.0)
+  txt.len(10.0)
   txt.startPoint(0, 0)
   txt.text(text)
   txt.addPath()

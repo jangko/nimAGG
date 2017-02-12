@@ -509,7 +509,7 @@ proc font*(self: var GsvText, font: pointer) =
   self.mFont = font
   if self.mFont == nil: self.mFont = self.mLoadedFont[0].addr
 
-proc size*(self: var GsvText, height: float64, width = 0.0'f64) =
+proc len*(self: var GsvText, height: float64, width = 0.0'f64) =
   self.mHeight = height
   self.mWidth  = width
 

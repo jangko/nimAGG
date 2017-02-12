@@ -40,7 +40,7 @@ proc calcPolygonArea*[Storage](st: var Storage): float64 =
     xs = x
     ys = y
 
-  for i in 1.. <st.size:
+  for i in 1.. <st.len:
     let v = st[i].addr
     sum += x * v.y - y * v.x
     x = v.x

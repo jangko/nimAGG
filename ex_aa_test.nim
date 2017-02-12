@@ -110,10 +110,7 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
 pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 type
-  ColorType = Rgba8#getColorT(PixFmt)
-  ColorArrayType = seq[ColorType]
-
-spanGradient(SpanGradient, ColorType, SpanInterpolatorLinear, GradientX, ColorArrayType)
+  ColorT = Rgba8#getColorT(PixFmt)
 
 proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffine, gradient_d2 = 100.0) =
   let
@@ -127,7 +124,7 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
 
 # A simple function to form the gradient color array
 # consisting of 3 colors, "begin", "middle", "end"
-proc fill_color_array[ColorT](arr: var seq[ColorType], start, stop: ColorT) =
+proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
   var
     start = construct(getColorT(PixFmt), start)
     stop = construct(getColorT(PixFmt), stop)
@@ -174,8 +171,8 @@ proc onDraw() =
     gradientF = initGradientX()
     gradientMtx = initTransAffine()
     spanInterpolator = initSpanInterpolatorLinear(gradientMtx)
-    spanAllocator = initSpanAllocator[ColorType]()
-    gradientColors = newSeq[ColorType](256)
+    spanAllocator = initSpanAllocator[ColorT]()
+    gradientColors: array[256, ColorT]
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
     renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
     dashGradient = initDashedLine(ras, renGradient, sl)
@@ -211,7 +208,7 @@ proc onDraw() =
     renderScanlines(ras, sl, renSl)
 
     # integral line widths 1..20
-    fill_color_array(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
+    fillColorArray(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
     #gradientColors.print_color()
 
     x1 = 20 + i* (i + 1)
@@ -222,7 +219,7 @@ proc onDraw() =
     #gradientMtx.print()
     dashGradient.draw(x1, y1, x2, y2, i, 0)
 
-    fill_color_array(gradientColors, initRgba(1,0,0), initRgba(0,0,1))
+    fillColorArray(gradientColors, initRgba(1,0,0), initRgba(0,0,1))
 
     # fractional line lengths H (red/blue)
     x1 = 17.5 + i * 4
@@ -242,7 +239,7 @@ proc onDraw() =
     dashGradient.draw(x1, y1, x2, y2, 1.0, 0)
 
     # fractional line positioning (red)
-    fill_color_array(gradientColors, initRgba(1,0,0), initRgba(1,1,1))
+    fillColorArray(gradientColors, initRgba(1,0,0), initRgba(1,1,1))
     x1 = 21.5
     y1 = 120 + (i - 1) * 3.1
     x2 = 52.5
@@ -252,7 +249,7 @@ proc onDraw() =
 
 
     # fractional line width 2..0 (green)
-    fill_color_array(gradientColors, initRgba(0,1,0), initRgba(1,1,1))
+    fillColorArray(gradientColors, initRgba(0,1,0), initRgba(1,1,1))
     x1 = 52.5
     y1 = 118 + i * 3
     x2 = 83.5
@@ -261,7 +258,7 @@ proc onDraw() =
     dashGradient.draw(x1, y1, x2, y2, 2.0 - (i - 1) / 10.0, 0)
 
     # stippled fractional width 2..0 (blue)
-    fill_color_array(gradientColors, initRgba(0,0,1), initRgba(1,1,1))
+    fillColorArray(gradientColors, initRgba(0,0,1), initRgba(1,1,1))
     x1 = 83.5
     y1 = 119 + i * 3
     x2 = 114.5
@@ -276,7 +273,7 @@ proc onDraw() =
 
   for ii in 1..13:
     let i = ii.float64
-    fill_color_array(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
+    fillColorArray(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
     calc_linear_gradient_transform(width  - 150,
                                    height - 20 - i * (i + 1.5),
                                    width  - 20,
@@ -323,8 +320,8 @@ proc drawRandom() =
     gradientF = initGradientX()
     gradientMtx = initTransAffine()
     spanInterpolator = initSpanInterpolatorLinear(gradientMtx)
-    spanAllocator = initSpanAllocator[ColorType]()
-    gradientColors = newSeq[ColorType](256)
+    spanAllocator = initSpanAllocator[ColorT]()
+    gradientColors: array[256, ColorT]
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
     renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
     dashGradient = initDashedLine(ras, renGradient, sl)
@@ -339,7 +336,7 @@ proc drawRandom() =
     x2 = x1 + random(w * 0.5) - w * 0.25
     y2 = y1 + random(h * 0.5) - h * 0.25
 
-    fill_color_array(gradientColors,
+    fillColorArray(gradientColors,
                      initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)),
                      initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
 
@@ -349,7 +346,7 @@ proc drawRandom() =
   let t2 = cpuTime() - startTime
 
   var
-    spanGouraud = initSpanGouraudRgba[ColorType]()
+    spanGouraud = initSpanGouraudRgba[ColorT]()
     renGouraud  = initRendererScanlineAA(renBase, spanAllocator, spanGouraud)
 
   startTime = cpuTime()

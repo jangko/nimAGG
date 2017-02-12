@@ -1,7 +1,7 @@
 import agg_basics
 
 type
-  Bspline* = object
+  BSpline* = object
     mMax, mNum: int
     mX, mY: ptr float64
     mAm: seq[float64]

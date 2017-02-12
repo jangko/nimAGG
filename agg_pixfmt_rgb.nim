@@ -8,7 +8,7 @@ type
 
   PixfmtAlphaBlendRgb*[Blender, RenBuf] = object
     blender: Blender
-    rbuf: ptr RenBuf
+    mRbuf: ptr RenBuf
 
 template getOrderT*[C,O](x: typedesc[BlenderRgb[C,O]]): typedesc = O
 template getValueT*[C,O](x: typedesc[BlenderRgb[C,O]]): untyped = getValueT(C.type)
@@ -88,7 +88,7 @@ proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, 
     OrderT = getOrderT(Blender)
     ValueT = getValueT(Blender)
 
-  var p = self.rbuf[].rowPtr(x, y, 1) + x + x + x
+  var p = self.mRbuf[].rowPtr(x, y, 1) + x + x + x
   p[OrderT.R] = c.r
   p[OrderT.G] = c.g
   p[OrderT.B] = c.b
@@ -111,28 +111,31 @@ proc pixel*[Blender, RenBuf](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
     OrderT = getOrderT(Blender)
     ValueT = getValueT(Blender)
 
-  var p = self.rbuf[].rowPtr(y) + x + x + x
+  var p = self.mRbuf[].rowPtr(y) + x + x + x
   result = construct(getColorT(Blender), p[OrderT.R], p[OrderT.G], p[OrderT.B])
 
-proc height*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int =
-  result = self.rbuf[].height()
+proc height*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int {.inline.} =
+  result = self.mRbuf[].height()
 
-proc width*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int =
-  result = self.rbuf[].width()
+proc width*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int {.inline.} =
+  result = self.mRbuf[].width()
 
-proc stride*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int =
-  result = self.rbuf[].stride()
+proc stride*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): int {.inline.} =
+  result = self.mRbuf[].stride()
 
-proc rowPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], y: int): auto =
-  result = self.rbuf[].rowPtr(y)
+proc rowPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], y: int): auto {.inline.} =
+  result = self.mRbuf[].rowPtr(y)
 
-proc row*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], y: int): auto =
-  result = self.rbuf[].row(y)
+proc row*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], y: int): auto {.inline.} =
+  result = self.mRbuf[].row(y)
 
-proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], x, y: int): auto =
+proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], x, y: int): auto {.inline.} =
   const pixWidth = getPixWidth(Blender)
-  result = self.rbuf[].rowPtr(y) + x * pixWidth
-
+  result = self.mRbuf[].rowPtr(y) + x * pixWidth
+  
+proc rbuf*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): var RenBuf {.inline.} =
+  result = self.mRbuf[]
+  
 proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   p: ptr T, c: C, cover: uint) {.inline.} =
   type
@@ -166,7 +169,7 @@ proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, Re
 
 proc blendPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, c: ColorT, cover: uint8) =
-  let p = self.rbuf[].rowPtr(x, y, 1) + x + x + x
+  let p = self.mRbuf[].rowPtr(x, y, 1) + x + x + x
   self.copyOrBlendPix(p, c, cover)
 
 proc blendColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
@@ -176,7 +179,7 @@ proc blendColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
     ValueT = getValueT(Blender)
 
   var
-    p = cast[ptr ValueT](self.rbuf[].rowPtr(x, y, len) + x + x + x)
+    p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len) + x + x + x)
     len = len
     co = colors
     cv = covers
@@ -217,7 +220,7 @@ proc blendColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
 
   if covers != nil:
     doWhile len != 0:
-      let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+      let p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
       self.copyOrBlendPix(p, co[], cv[])
       inc cv
@@ -227,14 +230,14 @@ proc blendColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
 
   if cover == 255:
     doWhile len != 0:
-      let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+      let p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
       self.copyOrBlendPix(p, co[])
       inc co
       dec len
   else:
     doWhile len != 0:
-      let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+      let p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
       self.copyOrBlendPix(p, co[], cover)
       inc co
@@ -248,7 +251,7 @@ proc copyHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenB
 
   var
     len = len
-    p = self.rbuf[].rowPtr(x, y, len) + x + x + x
+    p = self.mRbuf[].rowPtr(x, y, len) + x + x + x
 
   doWhile len != 0:
     p[OrderT.R] = c.r
@@ -268,7 +271,7 @@ proc copyVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenB
     line = y
 
   doWhile len != 0:
-    var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+    var p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
     p[OrderT.R] = c.r
     p[OrderT.G] = c.g
     p[OrderT.B] = c.b
@@ -287,7 +290,7 @@ proc blendHline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
 
   var
     len = len
-    p = self.rbuf[].rowPtr(x, y, len) + x + x + x
+    p = self.mRbuf[].rowPtr(x, y, len) + x + x + x
 
   let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
   if alpha == baseMask:
@@ -320,7 +323,7 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
 
   if alpha == baseMask:
     doWhile len != 0:
-      let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+      let p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
 
       p[OrderT.R] = c.r
@@ -329,7 +332,7 @@ proc blendVline*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender, Ren
       dec len
   else:
     doWhile len != 0:
-      let p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+      let p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
       inc line
       self.blender.blendPix(p, c.r, c.g, c.b, alpha, cover)
       dec len
@@ -346,7 +349,7 @@ proc blendSolidHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
 
   var
     len = len
-    p = self.rbuf[].rowPtr(x, y, len) + x + x + x
+    p = self.mRbuf[].rowPtr(x, y, len) + x + x + x
     co = covers
 
   doWhile len != 0:
@@ -377,7 +380,7 @@ proc blendSolidVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender
     co = covers
 
   doWhile len != 0:
-    var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+    var p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
     inc line
 
     let alpha = (CalcT(c.a) * (CalcT(co[]) + 1)) shr 8
@@ -397,7 +400,7 @@ proc copyColorHspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender,
 
   var
     len = len
-    p = self.rbuf[].rowPtr(x, y, len) + x + x + x
+    p = self.mRbuf[].rowPtr(x, y, len) + x + x + x
     co = colors
 
   doWhile len != 0:
@@ -419,7 +422,7 @@ proc copyColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender,
     len = len
 
   doWhile len != 0:
-    var p = self.rbuf[].rowPtr(x, line, 1) + x + x + x
+    var p = self.mRbuf[].rowPtr(x, line, 1) + x + x + x
     p[OrderT.R] = co[].r
     p[OrderT.G] = co[].g
     p[OrderT.B] = co[].b
@@ -430,11 +433,11 @@ proc copyColorVspan*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgb[Blender,
 proc forEachPixel[PixFmt, Func](self: PixFmt, f: Func) =
   let h = self.height()
   for y in 0.. <h:
-    let r = self.rbuf[].row(y)
+    let r = self.mRbuf[].row(y)
     if r.data != nil:
       var
         len = r.x2 - r.x1 + 1
-        p = self.rbuf[].rowPtr(r.x1, y, len) + r.x1 * 3
+        p = self.mRbuf[].rowPtr(r.x1, y, len) + r.x1 * 3
       doWhile len != 0:
         f(p)
         inc(p, 3)
@@ -474,7 +477,7 @@ proc copyFrom*[Blender, RenBuf, RenBuf2](self: PixfmtAlphaBlendRgb[Blender, RenB
   const pixWidth = getPixWidth(Blender)
   let p = src.rowPtr(ysrc)
   if p == nil: return
-  moveMem(self.rbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
+  moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
     p + xsrc * pixWidth, len * pixWidth)
 
 proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
@@ -493,7 +496,7 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
   if psrc == nil: return
 
   inc(psrc, xsrc * 4)
-  var pdst = self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3
+  var pdst = self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * 3
   if cover == 255:
     doWhile len != 0:
       let alpha = psrc[SrcOrder.A]
@@ -539,7 +542,7 @@ proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixf
     psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
 
   if psrc == nil: return
-  var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
   doWhile len != 0:
     self.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
     inc psrc
@@ -557,7 +560,7 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
     len = len
 
   if psrc == nil: return
-  var pdst =  cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst =  cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
 
   if cover == 255:
     doWhile len != 0:
@@ -581,7 +584,7 @@ proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf]
 
   if r.clip(c):
     let stride = pixf.stride()
-    self.rbuf[].attach(pixf.pixPtr(r.x1,
+    self.mRbuf[].attach(pixf.pixPtr(r.x1,
       if stride < 0: r.y2 else: r.y1),
       (r.x2 - r.x1) + 1, (r.y2 - r.y1) + 1, stride)
     return true
@@ -599,28 +602,28 @@ type
   PixfmtBgr48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderBgr], RenderingBuffer16]
 
 proc initPixFmtRgb24*(rbuf: var RenderingBuffer): PixfmtRgb24 =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtBgr24*(rbuf: var RenderingBuffer): PixfmtBgr24 =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtRgb48*(rbuf: var RenderingBuffer16): PixfmtRgb48 =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtBgr48*(rbuf: var RenderingBuffer16): PixfmtBgr48 =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtRgb24Pre*(rbuf: var RenderingBuffer): PixfmtRgb24Pre =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtBgr24Pre*(rbuf: var RenderingBuffer): PixfmtBgr24Pre =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtRgb48Pre*(rbuf: var RenderingBuffer16): PixfmtRgb48Pre =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 proc initPixFmtBgr48Pre*(rbuf: var RenderingBuffer16): PixfmtBgr48Pre =
-  result.rbuf = rbuf.addr
+  result.mRbuf = rbuf.addr
 
 template pixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
   type
@@ -628,7 +631,7 @@ template pixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
 
   proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
-    result.rbuf = rbuf.addr
+    result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
 template pixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
@@ -637,7 +640,7 @@ template pixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
 
   proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
-    result.rbuf = rbuf.addr
+    result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
 template pixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
@@ -646,7 +649,7 @@ template pixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]
 
   proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
-    result.rbuf = rbuf.addr
+    result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
 template pixfmtBgr48Gamma*(name: untyped, Gamma: typedesc) =
@@ -655,5 +658,5 @@ template pixfmtBgr48Gamma*(name: untyped, Gamma: typedesc) =
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]
 
   proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
-    result.rbuf = rbuf.addr
+    result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)

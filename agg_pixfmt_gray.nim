@@ -56,7 +56,7 @@ template blendPix*[C](x: typedesc[BlenderGrayPre[C]], p: untyped, cv, alpha, cov
 template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: untyped) =
   type
     name* = object
-      rbuf: ptr RenBuf
+      mRbuf: ptr RenBuf
 
   template getColorT*(x: typedesc[name]): typedesc = getColorT(Blender)
   template getPixWidth* (x: typedesc[name]): int = getPixWidth(Blender)
@@ -81,10 +81,10 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         Blender.blendPix(p, c.v, c.a)
 
   proc `init name`*(rb: var RenBuf): name =
-    result.rbuf = rb.addr
+    result.mRbuf = rb.addr
 
   proc attach*(self: var name, rb: var RenBuf) =
-    self.rbuf = rb.addr
+    self.mRbuf = rb.addr
 
   proc attach*[PixFmt](self: name, pixf: PixFmt; x1, y1, x2, y2: int): bool =
     var r = initRectBase[int](x1, y1, x2, y2)
@@ -92,40 +92,41 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
     if r.clip(c):
       let stride = pixf.stride()
-      self.rbuf[].attach(pixf.pixPtr(r.x1,
+      self.mRbuf[].attach(pixf.pixPtr(r.x1,
         if stride < 0: r.y2 else: r.y1),
         (r.x2 - r.x1) + 1, (r.y2 - r.y1) + 1, stride)
       return true
     result = false
 
-  proc width*(self: name) : int {.inline.} = self.rbuf[].width()
-  proc height*(self: name): int {.inline.} = self.rbuf[].height()
-  proc stride*(self: name): int {.inline.} = self.rbuf[].stride()
-  proc rowPtr*(self: name, y: int): auto = self.rbuf[].rowPtr(y)
-  proc row*(self: name, y: int): auto = self.rbuf[].row(y)
-  proc pixPtr*(self: name; x, y: int): auto = self.rbuf[].rowPtr(y) + x * Step + Offset
+  proc width*(self: name) : int {.inline.} = self.mRbuf[].width()
+  proc height*(self: name): int {.inline.} = self.mRbuf[].height()
+  proc stride*(self: name): int {.inline.} = self.mRbuf[].stride()
+  proc rowPtr*(self: name, y: int): auto {.inline.}  = self.mRbuf[].rowPtr(y)
+  proc row*(self: name, y: int): auto {.inline.}  = self.mRbuf[].row(y)
+  proc pixPtr*(self: name; x, y: int): auto {.inline.} = self.mRbuf[].rowPtr(y) + x * Step + Offset
+  proc rbuf*(self: name): var RenBuf {.inline.} = self.mRbuf[]
 
   proc makePix*[ColorT](x: typedesc[name], p: pointer, c: ColorT) {.inline.} =
     type ValueT = getValueT(ColorT)
     cast[ptr ValueT](p)[] = c.v
 
   proc pixel*(self: name, x, y: int): auto {.inline.} =
-    let p = self.rbuf[].rowPtr(y) + x * Step + Offset
+    let p = self.mRbuf[].rowPtr(y) + x * Step + Offset
     result = construct(getColorT(Blender), p[])
 
   proc copyPixel*[ColorT](self: name; x, y: int, c: ColorT) {.inline.} =
-    var p = self.rbuf[].rowPtr(x, y, 1) + x * Step + Offset
+    var p = self.mRbuf[].rowPtr(x, y, 1) + x * Step + Offset
     p[] = c.v
 
   proc blendPixel*[ColorT](self: name; x, y: int, c: ColorT, cover: uint8) {.inline.} =
-    let p = self.rbuf[].rowPtr(x, y, 1) + x * Step + Offset
+    let p = self.mRbuf[].rowPtr(x, y, 1) + x * Step + Offset
     name.copyOrBlendPix(p, c, cover)
 
   proc copyHline*[ColorT](self: name; x, y, length: int, c: ColorT) {.inline.} =
     type ValueT = getValueT(Blender)
     var
       len = length
-      p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
+      p = self.mRbuf[].rowPtr(x, y, len) + x * Step + Offset
     doWhile len != 0:
       p[] = c.v
       inc(p, Step)
@@ -137,7 +138,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       len = length
       line = y
     doWhile len != 0:
-      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      var p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       p[] = c.v
       dec len
@@ -151,7 +152,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     if c.a == 0: return
     var
       len = length
-      p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
+      p = self.mRbuf[].rowPtr(x, y, len) + x * Step + Offset
 
     let alpha = (CalcT(c.a) * (CalcT(cover) + 1)) shr 8
     if alpha == baseMask:
@@ -181,13 +182,13 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
     if alpha == baseMask:
       doWhile len != 0:
-        p = self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset
+        p = self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset
         inc line
         p[] = c.v
         dec len
     else:
       doWhile len != 0:
-        p = self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset
+        p = self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset
         inc line
         Blender.blendPix(p, c.v, alpha, cover)
         dec len
@@ -201,7 +202,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     if c.a == 0: return
     var
       len = length
-      p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
+      p = self.mRbuf[].rowPtr(x, y, len) + x * Step + Offset
       cv = covers
 
     doWhile len != 0:
@@ -229,7 +230,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
     doWhile len != 0:
       let alpha = (CalcT(c.a) * (CalcT(cv[]) + 1)) shr 8
-      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      var p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       if alpha == baseMask:
         p[] = c.v
@@ -242,7 +243,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     type ValueT = getValueT(Blender)
     var
       len = length
-      p = self.rbuf[].rowPtr(x, y, len) + x * Step + Offset
+      p = self.mRbuf[].rowPtr(x, y, len) + x * Step + Offset
       co = colors
 
     doWhile len != 0:
@@ -259,7 +260,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       co = colors
 
     doWhile len != 0:
-      var p = cast[ptr ValueT](self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset)
+      var p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset)
       inc line
       p[] = co.v
       inc co
@@ -270,7 +271,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     const baseMask = getBaseMask(ColorT)
     var
       len = length
-      p = cast[ptr ValueT](self.rbuf[].rowPtr(x, y, len) + x * Step + Offset)
+      p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len) + x * Step + Offset)
       co = colors
       cv = covers
 
@@ -311,7 +312,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
     if covers != nil:
       doWhile len != 0:
-        p = self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset
+        p = self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset
         inc line
         name.copyOrBlendPix(p, co[], cv[])
         inc co
@@ -321,7 +322,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
 
     if cover == 255:
       doWhile len != 0:
-        p = self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset
+        p = self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset
         inc line
         if co.a == baseMask:
           p[] = co.v
@@ -331,7 +332,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         dec len
     else:
       doWhile len != 0:
-        p = self.rbuf[].rowPtr(x, line, 1) + x * Step + Offset
+        p = self.mRbuf[].rowPtr(x, line, 1) + x * Step + Offset
         inc line
         name.copyOrBlendPix(p, co[], cover)
         inc co
@@ -341,11 +342,11 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     type ValueT = getValueT(Blender)
     let h = self.height()
     for y in 0.. <h:
-      let r = self.rbuf[].row(y)
+      let r = self.mRbuf[].row(y)
       if r.data != nil:
         var
           len = r.x2 - r.x1 + 1
-          p = cast[ptr ValueT](self.rbuf[].rowPtr(r.x1, y, len) + r.x1 * Step + Offset)
+          p = cast[ptr ValueT](self.mRbuf[].rowPtr(r.x1, y, len) + r.x1 * Step + Offset)
         doWhile len != 0:
           f(p)
           inc(p, Step)
@@ -367,7 +368,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     const pixWidth = getPixWidth(Blender)
     let p = src.rowPtr(ysrc)
     if p == nil: return
-    moveMem(self.rbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
+    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
             p + xsrc * pixWidth, len * pixWidth)
 
   proc blendFromColor*[SrcPixelFormatRenderer, ColorT](self: name, src: SrcPixelFormatRenderer,
@@ -377,7 +378,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         ValueT = getValueT(ColorT)
       var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
       if psrc != nil:
-        var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst)
         doWhile len != 0:
           name.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
           inc psrc
@@ -391,7 +392,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
         ValueT = getValueT(ColorT)
       var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
       if psrc != nil:
-        var pdst = cast[ptr ValueT](self.rbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst)
         doWhile len != 0:
           name.copyOrBlendPix(pdst, colorLut[psrc[]], cover)
           inc psrc

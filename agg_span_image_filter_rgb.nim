@@ -404,7 +404,6 @@ proc initSpanImageFilterRgb*[S,I](src: var S, inter: var I, filter: var ImageFil
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgb[S,I], span: ptr ColorT, x, y, len: int) =
   type
     base = SpanImageFilter[S, I]
-    CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
     

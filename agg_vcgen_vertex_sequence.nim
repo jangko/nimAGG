@@ -47,11 +47,11 @@ proc vertex*(self: var VcgenVertexSequence, x, y: var float64): uint {.inline.} 
   if not self.mReady:
     self.rewind(0)
 
-  if self.mCurVertex == self.mSrcVertices.size:
+  if self.mCurVertex == self.mSrcVertices.len:
     inc self.mCurVertex
     return pathCmdEndPoly or self.mFlags
 
-  if self.mCurVertex > self.mSrcVertices.size:
+  if self.mCurVertex > self.mSrcVertices.len:
     return pathCmdStop
 
   let v = self.mSrcVertices[self.mCurVertex].addr

@@ -7,31 +7,31 @@ import math, agg_basics, strutils
 type
   FilterBase = object of RootObj
     name: string
-    radiusI: proc(self: var FilterBase): float64
+    radiusI: proc(self: FilterBase): float64
     setRadiusI: proc(self: var FilterBase, r: float64)
-    calcWeightI: proc(self: var FilterBase, x: float64): float64
+    calcWeightI: proc(self: FilterBase, x: float64): float64
 
-proc radius(self: var FilterBase): float64 =
+proc radius(self: FilterBase): float64 =
   self.radiusI(self)
 
 proc radius(self: var FilterBase, r: float64) =
   self.setRadiusI(self, r)
 
-proc calcWeight(self: var FilterBase, x: float64): float64 =
+proc calcWeight(self: FilterBase, x: float64): float64 =
   self.calcWeightI(self, x)
 
 type
   ImageFNoRadius[Filter] = object of FilterBase
     mFilter: Filter
 
-proc FNR_Radius[Filter](self: var FilterBase): float64 =
+proc FNR_Radius[Filter](self: FilterBase): float64 =
   type selfT = ImageFNoRadius[Filter]
   selfT(self).mFilter.radius()
 
 proc FNR_SetRadius[Filter](self: var FilterBase, r: float64) =
   discard
 
-proc FNR_CalcWeight[Filter](self: var FilterBase, x: float64): float64 =
+proc FNR_CalcWeight[Filter](self: FilterBase, x: float64): float64 =
   type selfT = ImageFNoRadius[Filter]
   selfT(self).mFilter.calcWeight(abs(x))
 
@@ -46,7 +46,7 @@ type
   ImageF[Filter] = object of FilterBase
     mFilter: Filter
 
-proc F_Radius[Filter](self: var FilterBase): float64 =
+proc F_Radius[Filter](self: FilterBase): float64 =
   type selfT = ImageF[Filter]
   selfT(self).mFilter.radius()
 
@@ -54,7 +54,7 @@ proc F_SetRadius[Filter](self: var FilterBase, r: float64) =
   type selfT = ImageF[Filter]
   selfT(self).mFilter = construct(Filter, r)
 
-proc F_CalcWeight[Filter](self: var FilterBase, x: float64): float64 =
+proc F_CalcWeight[Filter](self: FilterBase, x: float64): float64 =
   type selfT = ImageF[Filter]
   selfT(self).mFilter.calcWeight(abs(x))
 
