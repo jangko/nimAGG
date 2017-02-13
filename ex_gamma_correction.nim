@@ -25,7 +25,7 @@ proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = newGammaLut8(kGamma)
+    gamma  = initGammaLut8(kGamma)
     pf     = initPixFmt(rbuf, gamma)
     rb     = initRendererBase(pf)
     sl     = initScanlineU8()

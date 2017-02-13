@@ -48,7 +48,7 @@ proc yi*(x: typedesc[RasConvDbl3x], v: float64): int = iround((v) * polySubPixel
 proc upscale*(x: typedesc[RasConvDbl3x], v: float64): float64 = (v)
 proc downscale*(x: typedesc[RasConvDbl3x], v: int): float64 = ((v)float64 / polySubPixelScale.float64)
 
-template rasterizerSlClip(Conv, name: untyped, CoordType) =
+template rasterizerSlClip(Conv, name: untyped, CoordType: typed) =
   type
     name* = object
       clipBox: RectBase[CoordType]
@@ -64,8 +64,8 @@ template rasterizerSlClip(Conv, name: untyped, CoordType) =
     result.clipping = false
 
   template construct*(x: typedesc[name]): untyped = `init name`()
-  template getCoordType*(x: typedesc[name]): typedesc = CoordType
-  template getConvType*(x: typedesc[name]): typedesc = Conv
+  template getCoordT*(x: typedesc[name]): typedesc = CoordType
+  template getConvT*(x: typedesc[name]): typedesc = Conv
 
   proc resetClipping*(self: var name) =
     self.clipping = false

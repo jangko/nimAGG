@@ -4,7 +4,7 @@ type
   BlenderRgb*[ColorT, OrderT] = object
   BlenderRgbPre*[ColorT, OrderT] = object
   BlenderRgbGamma*[ColorT, OrderT, GammaT] = object
-    mGamma: GammaT
+    mGamma: ptr GammaT
 
   PixfmtAlphaBlendRgb*[Blender, RenBuf] = object
     blender: Blender
@@ -63,8 +63,8 @@ proc blendPix*[C,O,T](self: BlenderRgbPre[C,O], p: ptr T,
   p[O.G] = T(((p[O.G] * al) shr baseShift) + cg)
   p[O.B] = T(((p[O.B] * al) shr baseShift) + cb)
 
-proc gamma*[C,O,G](self: var BlenderRgbGamma[C,O,G], gamma: G) =
-  self.mGamma = gamma
+proc gamma*[C,O,G](self: var BlenderRgbGamma[C,O,G], gamma: var G) =
+  self.mGamma = gamma.addr
 
 proc blendPix*[C,O,T,G](self: BlenderRgbGamma[C,O,G], p: ptr T,
   cr, cg, cb, alpha: uint, cover=0.uint) {.inline.} =
@@ -74,13 +74,13 @@ proc blendPix*[C,O,T,G](self: BlenderRgbGamma[C,O,G], p: ptr T,
     baseShift = getBaseShift(C)
     baseMask = getBaseMask(C)
 
-  let r = self.mGamma.dir(p[O.R]).int
-  let g = self.mGamma.dir(p[O.G]).int
-  let b = self.mGamma.dir(p[O.B]).int
+  let r = self.mGamma[].dir(p[O.R]).int
+  let g = self.mGamma[].dir(p[O.G]).int
+  let b = self.mGamma[].dir(p[O.B]).int
 
-  p[O.R] = self.mGamma.inv(((((self.mGamma.dir(cr).int - r) * alpha.int) shr baseShift) + r) and baseMask)
-  p[O.G] = self.mGamma.inv(((((self.mGamma.dir(cg).int - g) * alpha.int) shr baseShift) + g) and baseMask)
-  p[O.B] = self.mGamma.inv(((((self.mGamma.dir(cb).int - b) * alpha.int) shr baseShift) + b) and baseMask)
+  p[O.R] = self.mGamma[].inv(((((self.mGamma[].dir(cr).int - r) * alpha.int) shr baseShift) + r) and baseMask)
+  p[O.G] = self.mGamma[].inv(((((self.mGamma[].dir(cg).int - g) * alpha.int) shr baseShift) + g) and baseMask)
+  p[O.B] = self.mGamma[].inv(((((self.mGamma[].dir(cb).int - b) * alpha.int) shr baseShift) + b) and baseMask)
 
 proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, c: ColorT) =
@@ -630,7 +630,7 @@ template pixfmtRgb24Gamma*(name: untyped, Gamma: typedesc) =
     `name blender`* = BlenderRgbGamma[Rgba8, OrderRgb, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
 
-  proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
+  proc `init name`*(rbuf: var RenderingBuffer, gamma: var Gamma): name =
     result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
@@ -639,7 +639,7 @@ template pixfmtBgr24Gamma*(name: untyped, Gamma: typedesc) =
     `name blender`* = BlenderRgbGamma[Rgba8, OrderBgr, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer]
 
-  proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
+  proc `init name`*(rbuf: var RenderingBuffer, gamma: var Gamma): name =
     result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
@@ -648,7 +648,7 @@ template pixfmtRgb48Gamma*(name: untyped, Gamma: typedesc) =
     `name blender`* = BlenderRgbGamma[Rgba16, OrderRgb, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]
 
-  proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
+  proc `init name`*(rbuf: var RenderingBuffer, gamma: var Gamma): name =
     result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)
 
@@ -657,6 +657,6 @@ template pixfmtBgr48Gamma*(name: untyped, Gamma: typedesc) =
     `name blender`* = BlenderRgbGamma[Rgba16, OrderBgr, Gamma]
     name* = PixfmtAlphaBlendRgb[`name blender`, RenderingBuffer16]
 
-  proc `init name`*(rbuf: var RenderingBuffer, gamma: Gamma): name =
+  proc `init name`*(rbuf: var RenderingBuffer, gamma: var Gamma): name =
     result.mRbuf = rbuf.addr
     result.blender.gamma(gamma)

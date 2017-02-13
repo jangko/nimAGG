@@ -2,7 +2,7 @@ import agg_basics, math
 
 template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResShift: int) =
   type
-    nameT* = ref object
+    nameT* = object
       mGamma: float64
       dirGamma: seq[HiResT]
       invGamma: seq[LoResT]
@@ -15,14 +15,13 @@ template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResSh
   template getHiResSize*(x: typedesc[nameT]): int  = 1 shl getHiResShift(x)
   template getHiResMask*(x: typedesc[nameT]): int  = getHiResSize(x) - 1
 
-  proc `new nameT`*(): nameT =
+  proc `init nameT`*(): nameT =
     const
       gammaSize  = getGammaSize(nameT)
       gammaShift = getGammaShift(nameT)
       hiResSize  = getHiResSize(nameT)
       hiResShift = getHiResShift(nameT)
 
-    new(result)
     result.mGamma = 1.0
     result.dirGamma = newSeq[HiResT](gammaSize)
     result.invGamma = newSeq[LoResT](hiResSize)
@@ -49,12 +48,11 @@ template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResSh
     for i in 0.. <hiResSize:
       self.invGamma[i] = uround(math.pow(i.float64 / hiResMask, inv_g) * gammaMask).LoResT
 
-  proc `new nameT`*(g: float64): nameT =
+  proc `init nameT`*(g: float64): nameT =
     const
       gammaSize  = getGammaSize(nameT)
       hiResSize  = getHiResSize(nameT)
 
-    new(result)
     result.mGamma = 1.0
     result.dirGamma = newSeq[HiResT](gammaSize)
     result.invGamma = newSeq[LoResT](hiResSize)

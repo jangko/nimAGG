@@ -223,7 +223,7 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
     doAssert(buffer == cbuf)
 
     var clut = `create_gamma nbit`()
-    var lut = `newGamma nbit`()
+    var lut = `initGamma nbit`()
 
     cpixf.apply_gamma_inv(clut)
     cpixf.apply_gamma_dir(clut)
@@ -374,7 +374,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     doAssert(buffer == cbuf)
 
     var clut = `create_gamma nbit`()
-    var lut = `newGamma nbit`()
+    var lut = `initGamma nbit`()
 
     cpixf.apply_gamma_inv(clut)
     cpixf.apply_gamma_dir(clut)

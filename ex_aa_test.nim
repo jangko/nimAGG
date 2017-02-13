@@ -148,7 +148,7 @@ proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = newGammaLut8(1.5)
+    gamma  = initGammaLut8(1.5)
     pixf   = initPixFmt(rbuf, gamma)
     renBase= initRendererBase(pixf)
     renSl  = initRendererScanlineAASolid(renBase)
@@ -293,7 +293,7 @@ proc drawRandom() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = newGammaLut8(1.5)
+    gamma  = initGammaLut8(1.5)
     pixf   = initPixFmt(rbuf, gamma)
     renBase= initRendererBase(pixf)
     renSl  = initRendererScanlineAASolid(renBase)

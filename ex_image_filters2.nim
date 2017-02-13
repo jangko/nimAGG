@@ -68,7 +68,7 @@ proc onDraw() =
     norm   = true
     radius = 4.0
     mGamma = 1.0
-    gamma  = newGammaLut8(mGamma)
+    gamma  = initGammaLut8(mGamma)
     
   for i in 0..16:
     ras.reset()

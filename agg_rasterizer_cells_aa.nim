@@ -104,6 +104,7 @@ proc setCurrCell[T](self: RasterizerCellsAA[T], x, y: int) =
     self.currCell.cover = 0
     self.currCell.area  = 0
 
+    #[
 proc qsortCells[Cell](start: ptr ptr Cell, num: int) =
   const
     qsortThreshold = 9
@@ -182,6 +183,7 @@ proc qsortCells[Cell](start: ptr ptr Cell, num: int) =
 
         j = i
         i.inc
+]#
 
 proc sortCells*[T](self: RasterizerCellsAA[T]) =
   #Perform sort only the first time.

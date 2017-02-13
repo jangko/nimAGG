@@ -30,6 +30,8 @@ pixfmt_transposer
 trans_warp_magnifier
 bspline
 renderer_mclip
+rasterizer_compound_aa
+gradient_lut
 
 span_gouraud
 span_gouraud_gray
@@ -39,29 +41,28 @@ span_pattern_rgb
 span_interpolator_trans
 span_subdiv_adaptor
 
-
 incomplete:
   path_storage
-  renderer_scanline  
   agg_math
-  conv_smooth_poly1  
-  
+  conv_smooth_poly1
+
 translate ok:
   conv_curve
   curve
-  dda_line 
+  dda_line
   bezier_arc
   pixfmt_rgba
-  
-  -line_aa_basics  
+  renderer_scanline
+
+  -line_aa_basics
   -span_gradient
   -span_gradient_alpha
   -rasterizer_outline_aa
   -renderer_outline_aa
   -span_gouraud_rgba
-  -rasterizer_outline 
+  -rasterizer_outline
   -scanline_bin
-  -clip_liang_barsky  
+  -clip_liang_barsky
   -trans_affine
   -span_allocator
   -renderer_primitive
@@ -71,7 +72,7 @@ translate ok:
   -span_image_filter
   -span_image_filter_rgba
   -renderer_markers
-  -image_filters  
+  -image_filters
   -span_image_filter_gray
   -span_image_filter_rgb
   -gsv_text
@@ -88,7 +89,7 @@ translate ok:
   -conv_adaptor_vcgen
   -vcgen_stroke
   -math_stroke
-  -vertex_sequence  
+  -vertex_sequence
   -ellipse
   -renderer_base
   -rasterizer_scanline_aa

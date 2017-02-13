@@ -46,7 +46,7 @@ type
     status: StatusE
     scanY: int
 
-  RasterizerScanlineAA* = RasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]
+  RasterizerScanlineAA* = RasterizerScanlineAA1[RasterizerSlClipInt, getCoordT(RasterizerSlClipInt)]
 
 proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
@@ -73,16 +73,16 @@ proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: Gamm
   result.gamma(gammaFunction)
 
 template initRasterizerScanlineAA*(ClipType: typedesc): untyped =
-  initRasterizerScanlineAA1[ClipType, getCoordType(ClipType)]()
+  initRasterizerScanlineAA1[ClipType, getCoordT(ClipType)]()
 
 template initRasterizerScanlineAA*(): untyped =
-  initRasterizerScanlineAA1[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt)]()
+  initRasterizerScanlineAA1[RasterizerSlClipInt, getCoordT(RasterizerSlClipInt)]()
 
 template initRasterizerScanlineAA*(ClipType: typedesc, gamma: typed): untyped =
-  initRasterizerScanlineAA2[ClipType, getCoordType(ClipType), gamma.type](gamma)
+  initRasterizerScanlineAA2[ClipType, getCoordT(ClipType), gamma.type](gamma)
 
 proc initRasterizerScanlineAA*[T](gamma: T): auto =
-  initRasterizerScanlineAA2[RasterizerSlClipInt, getCoordType(RasterizerSlClipInt), T](gamma)
+  initRasterizerScanlineAA2[RasterizerSlClipInt, getCoordT(RasterizerSlClipInt), T](gamma)
 
 proc reset*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   self.outline.reset()
@@ -93,7 +93,7 @@ proc resetClipping*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT
   self.clipper.resetClipping()
 
 proc clipBox*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
   self.reset()
   self.clipper.clipBox(Conv.upscale(x1), Conv.upscale(y1),
                        Conv.upscale(x2), Conv.upscale(y2))
@@ -113,7 +113,7 @@ proc closePolygon*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]
     self.status = statusClosed
 
 proc moveTo*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   if self.outline.sorted(): self.reset()
   if self.autoClose: self.closePolygon()
@@ -125,13 +125,13 @@ proc moveTo*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y
   self.status = statusMoveTo
 
 proc lineTo*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: int) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   self.clipper.lineTo(self.outline, Conv.downscale(x), Conv.downscale(y))
   self.status = statusLineTo
 
 proc moveToD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   if self.outline.sorted(): self.reset()
   if self.autoClose: self.closePolygon()
@@ -143,7 +143,7 @@ proc moveToD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, 
   self.status = statusMoveTo
 
 proc lineToD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x, y: float64) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   self.clipper.lineTo(self.outline, Conv.upscale(x), Conv.upscale(y))
   self.status = statusLineTo
@@ -157,7 +157,7 @@ proc addVertex*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x
     self.closePolygon()
 
 proc edge*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: int) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   if self.outline.sorted(): self.reset()
 
@@ -166,7 +166,7 @@ proc edge*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1
   self.status = statusMoveTo
 
 proc edgeD*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1, y1, x2, y2: float64) =
-  template Conv: untyped = getConvType(ClipT)
+  template Conv: untyped = getConvT(ClipT)
 
   if self.outline.sorted(): self.reset()
 
