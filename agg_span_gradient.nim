@@ -1,4 +1,4 @@
-import agg_basics, agg_math, math
+import agg_basics, agg_math, math, strutils
 
 const
   gradientSubpixelShift* = 4

@@ -111,7 +111,14 @@ proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: int, stride
   for i in 0.. <height.int:
     self.rows[i] = cast[ptr T](p)
     inc(p, stride)
-
+    
+proc initRowPtrCache*[T](): RowPtrCache[T] =
+  result.buf = nil
+  result.rows = @[]
+  result.width = 0
+  result.height = 0
+  result.stride = 0
+  
 proc initRowPtrCache*[T](buf: ptr T, width, height: int, stride: int): RowPtrCache[T] =
   result.buf = nil
   result.rows = newSeq[ptr T](height.int)

@@ -536,53 +536,50 @@ proc RgbaColorBurn_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, s
     CalcT = getCalcT(ColorT)
     LongT = getLongT(ColorT)
   const
-    baseMask = LongT(getBaseMask(ColorT))
-    baseShift = LongT(getBaseShift(ColorT))
+    baseMask = getBaseMask(ColorT)
+    baseShift = getBaseShift(ColorT)
   var
-    sr = sr
-    sg = sg
-    sb = sb
-    sa = sa
+    sr = sr.LongT
+    sg = sg.LongT
+    sb = sb.LongT
+    sa = sa.LongT
+    cover = cover.LongT
 
   if cover < 255:
     sr = (sr * cover + 255) shr 8
     sg = (sg * cover + 255) shr 8
     sb = (sb * cover + 255) shr 8
     sa = (sa * cover + 255) shr 8
-  if cover < 255:
-    sr = (sr * cover + 255) shr 8
-    sg = (sg * cover + 255) shr 8
-    sb = (sb * cover + 255) shr 8
-    sa = (sa * cover + 255) shr 8
+
   if sa != 0:
     var
       d1a  = baseMask - LongT(p[OrderT.A])
-      s1a  = baseMask - sa.LongT
+      s1a  = baseMask - sa
       dr   = LongT(p[OrderT.R])
       dg   = LongT(p[OrderT.G])
       db   = LongT(p[OrderT.B])
       da   = LongT(p[OrderT.A])
-      drsa = LongT(dr * sa.LongT)
-      dgsa = LongT(dg * sa.LongT)
-      dbsa = LongT(db * sa.LongT)
-      srda = LongT(sr.LongT * da)
-      sgda = LongT(sg.LongT * da)
-      sbda = LongT(sb.LongT * da)
-      sada = LongT(sa.LongT * da)
+      drsa = dr * sa
+      dgsa = dg * sa
+      dbsa = db * sa
+      srda = sr * da
+      sgda = sg * da
+      sbda = sb * da
+      sada = sa * da
 
     p[OrderT.R] = ValueT((if srda + drsa <= sada:
-        sr.LongT * d1a + dr * s1a else:
-        sa.LongT * (srda + drsa - sada) div sr.LongT + sr.LongT * d1a + dr * s1a + baseMask) shr baseShift)
+        sr * d1a + dr * s1a else:
+        sa * (srda + drsa - sada) div sr + sr * d1a + dr * s1a + baseMask) shr baseShift)
 
     p[OrderT.G] = ValueT((if sgda + dgsa <= sada:
-        sg.LongT * d1a + dg * s1a else:
-        sa.LongT * (sgda + dgsa - sada) div sg.LongT + sg.LongT * d1a + dg * s1a + baseMask) shr baseShift)
+        sg * d1a + dg * s1a else:
+        sa * (sgda + dgsa - sada) div sg + sg * d1a + dg * s1a + baseMask) shr baseShift)
 
     p[OrderT.B] = ValueT((if sbda + dbsa <= sada:
-        sb.LongT * d1a + db * s1a else:
-        sa .LongT* (sbda + dbsa - sada) div sb.LongT + sb.LongT * d1a + db * s1a + baseMask) shr baseShift)
+        sb * d1a + db * s1a else:
+        sa * (sbda + dbsa - sada) div sb + sb * d1a + db * s1a + baseMask) shr baseShift)
 
-    p[OrderT.A] = ValueT(sa.LongT + da - ((sa.LongT * da + baseMask) shr baseShift))
+    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
 
 # if 2.Sca < Sa
 #    Dca' = 2.Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)

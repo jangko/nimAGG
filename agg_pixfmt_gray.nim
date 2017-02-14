@@ -25,21 +25,21 @@ proc BlenderGrayBlendPix*[C,T](p: ptr T; cv, alpha: uint; cover = 0'u) {.inline.
 
 proc BlenderGrayPreBlendPix*[C,T](p: ptr T; cv, alpha, cover: uint) {.inline.} =
   const
-    baseMask = getBaseMask(C)
-    baseShift = getBaseShift(C)
+    baseMask = getBaseMask(C).uint
+    baseShift = getBaseShift(C).uint
   type
     ValueT = getValueT(C)
   let alpha = baseMask - alpha
   let cover = (cover + 1) shl (baseShift - 8)
-  p[] = ValueT((p[] * alpha + cv * cover) shr baseShift)
+  p[] = ValueT((p[].uint * alpha + cv * cover) shr baseShift)
 
 proc BlenderGrayPreBlendPix*[C,T](p: ptr T; cv, alpha: uint) {.inline.} =
   const
-    baseMask = getBaseMask(C)
-    baseShift = getBaseShift(C)
+    baseMask = getBaseMask(C).uint
+    baseShift = getBaseShift(C).uint
   type
     ValueT = getValueT(C)
-  p[] = ValueT(((p[] * (baseMask - alpha)) shr baseShift) + cv)
+  p[] = ValueT(((p[].uint * (baseMask - alpha)) shr baseShift) + cv)
 
 template blendPix*[C](x: typedesc[BlenderGray[C]], p: untyped, cv, alpha: uint) =
   BlenderGrayBlendPix[C.type, getValueT(C.type)](p, cv, alpha)

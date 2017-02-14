@@ -31,7 +31,6 @@ trans_warp_magnifier
 bspline
 renderer_mclip
 rasterizer_compound_aa
-gradient_lut
 
 span_gouraud
 span_gouraud_gray
@@ -48,12 +47,13 @@ incomplete:
 
 translate ok:
   conv_curve
-  curve
-  dda_line
+  curve  
   bezier_arc
-  pixfmt_rgba
   renderer_scanline
-
+  
+  -dda_line
+  -gradient_lut
+  -pixfmt_rgba
   -line_aa_basics
   -span_gradient
   -span_gradient_alpha

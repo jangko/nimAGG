@@ -42,26 +42,26 @@ proc blendPix*[C,O,T](self: BlenderRgb[C,O], p: ptr T,
 proc blendPix*[C,O,T](self: BlenderRgbPre[C,O], p: ptr T,
   cr, cg, cb, alpha, cover: uint) {.inline.} =
   const
-    baseShift = getBaseShift(C)
-    baseMask  = getBaseMask(C)
+    baseShift = getBaseShift(C).uint
+    baseMask  = getBaseMask(C).uint
 
   let al = baseMask - alpha
   let co = (cover + 1) shl (baseShift - 8)
 
-  p[O.R] = T((p[O.R] * al + cr * co) shr baseShift)
-  p[O.G] = T((p[O.G] * al + cg * co) shr baseShift)
-  p[O.B] = T((p[O.B] * al + cb * co) shr baseShift)
+  p[O.R] = T((p[O.R].uint * al + cr * co) shr baseShift)
+  p[O.G] = T((p[O.G].uint * al + cg * co) shr baseShift)
+  p[O.B] = T((p[O.B].uint * al + cb * co) shr baseShift)
 
 proc blendPix*[C,O,T](self: BlenderRgbPre[C,O], p: ptr T,
   cr, cg, cb, alpha: uint) {.inline.} =
   const
-    baseShift = getBaseShift(C)
-    baseMask  = getBaseMask(C)
+    baseShift = getBaseShift(C).uint
+    baseMask  = getBaseMask(C).uint
 
   let al = baseMask - alpha
-  p[O.R] = T(((p[O.R] * al) shr baseShift) + cr)
-  p[O.G] = T(((p[O.G] * al) shr baseShift) + cg)
-  p[O.B] = T(((p[O.B] * al) shr baseShift) + cb)
+  p[O.R] = T(((p[O.R].uint * al) shr baseShift) + cr)
+  p[O.G] = T(((p[O.G].uint * al) shr baseShift) + cg)
+  p[O.B] = T(((p[O.B].uint * al) shr baseShift) + cb)
 
 proc gamma*[C,O,G](self: var BlenderRgbGamma[C,O,G], gamma: var G) =
   self.mGamma = gamma.addr

@@ -106,7 +106,7 @@ proc onDraw() =
     buf = $nDrawn
     txt = initGsvText()
 
-  txt.len(15.0)
+  txt.size(15.0)
   txt.text(buf)
   txt.startPoint(10.0, frameHeight.float64 - 20.0)
 

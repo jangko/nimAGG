@@ -94,6 +94,12 @@ proc iround*(v: float64): int {.inline.} =
 proc uround*(x: float64): int {.inline.} =
   result = math.round(x).int
 
+proc ufloor*(x: float64): uint {.inline.} =
+  result = uint(math.floor(x))
+  
+proc uceil*(x: float64): uint {.inline.} =
+  result = uint(math.ceil(x))
+    
 proc iround*(v: float64, Limit: static[int]): int {.inline.} =
   if v < float64(-Limit): return -Limit
   if v > float64( Limit): return  Limit
