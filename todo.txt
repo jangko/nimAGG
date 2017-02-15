@@ -31,6 +31,7 @@ trans_warp_magnifier
 bspline
 renderer_mclip
 rasterizer_compound_aa
+pixfmt_rgb_packed
 
 span_gouraud
 span_gouraud_gray
