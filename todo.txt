@@ -32,6 +32,7 @@ bspline
 renderer_mclip
 rasterizer_compound_aa
 pixfmt_rgb_packed
+renderer_outline_image
 
 span_gouraud
 span_gouraud_gray
