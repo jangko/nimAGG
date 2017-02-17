@@ -132,7 +132,7 @@ proc `~`*(self: TransPerspective): TransPerspective {.inline.} =
   result = self
   discard result.invert()
 
-proc isEqual*(self: TransPerspective, m: TransPerspective, epsilon: float64): bool {.inline.}
+proc isEqual*(self: TransPerspective, m: TransPerspective, epsilon: float64 = affine_epsilon): bool {.inline.}
 
 # Equal operator with default epsilon
 proc `==`*(self: TransPerspective, m: TransPerspective): bool {.inline.} =
@@ -441,10 +441,10 @@ proc determinant*(self: TransPerspective): float64 {.inline.} =
 proc determinantReciprocal*(self: TransPerspective): float64 {.inline.} =
   result = 1.0 / self.determinant()
 
-proc isValid*(self: TransPerspective, epsilon: float64): bool {.inline.} =
+proc isValid*(self: TransPerspective, epsilon: float64 = affineEpsilon): bool {.inline.} =
   result = abs(self.sx) > epsilon and abs(self.sy) > epsilon and abs(self.w2) > epsilon
 
-proc isIdentity*(self: TransPerspective, epsilon: float64): bool {.inline.} =
+proc isIdentity*(self: TransPerspective, epsilon: float64 = affineEpsilon): bool {.inline.} =
   result = isEqualEps(self.sx,  1.0, epsilon) and
            isEqualEps(self.shy, 0.0, epsilon) and
            isEqualEps(self.w0,  0.0, epsilon) and
