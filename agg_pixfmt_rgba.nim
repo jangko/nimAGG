@@ -707,6 +707,9 @@ proc initPixfmtCustomBlendRgba*[Blender, RenBuf](rbuf: var Renbuf, compOp = 3): 
   result.mCompOp = compOp
   result.mTable = cast[CustomBlendTable](compOpTable[getColorT(Blender), getOrderT(Blender), getValueT(Blender)]())
 
+proc initPixfmtCustomBlendRgba*[Blender, RenBuf](rbuf: var Renbuf, compOp: CompOp): PixfmtCustomBlendRgba[Blender, RenBuf] =
+  result = initPixfmtCustomBlendRgba[Blender, RenBuf](rbuf, compOp.ord)
+
 proc attach*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf], rbuf: var Renbuf) =
   self.mRbuf = rbuf.addr
 
@@ -742,6 +745,9 @@ proc pixPtr*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], x, y
 
 proc compOp*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf], op: int) {.inline.} =
   self.mCompOp = op
+
+proc compOp*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf], op: CompOp) {.inline.} =
+  self.mCompOp = op.ord
 
 proc compOp*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf]): int {.inline.} =
   self.mCompOp
