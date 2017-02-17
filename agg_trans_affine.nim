@@ -1,7 +1,7 @@
 import math, agg_basics
 
 const
-  affineEpsilon = 1e-14
+  affineEpsilon* = 1e-14
 
 type
   TransAffine* = object
