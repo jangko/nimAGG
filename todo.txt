@@ -34,6 +34,7 @@ rasterizer_compound_aa
 pixfmt_rgb_packed
 renderer_outline_image
 trans_perspective
+span_intepolator_persp
 
 span_gouraud
 span_gouraud_gray

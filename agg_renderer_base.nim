@@ -1,4 +1,4 @@
-import agg_basics, agg_rendering_buffer, agg_pixfmt_rgb, strutils
+import agg_basics, agg_rendering_buffer, agg_pixfmt_rgba, strutils
 
 type
   RendererBase*[PixFmt] = object
@@ -317,7 +317,7 @@ proc blendColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len:
 
   self.mRen[].blendColorVspan(x, y, len, colors, covers, cover)
 
-proc clipRectArea*[PixFmt](self: RendererBase[PixFmt], dst, src: var RectI, wsrc, hsrc: int): RectI =
+proc clipRectArea*[PixFmt](self: var RendererBase[PixFmt], dst, src: var RectI, wsrc, hsrc: int): RectI =
   var
     rc = initRectI(0,0,0,0)
     cb = self.clipBox()
@@ -369,7 +369,7 @@ proc copyFrom*[PixFmt, RenBuf](self: var RendererBase[PixFmt], src: RenBuf, rect
 
   # Version with dx, dy (relative positioning)
   var
-    rdst = RectI(rsrc.x1 + dx, rsrc.y1 + dy, rsrc.x2 + dx, rsrc.y2 + dy)
+    rdst = initRectI(rsrc.x1 + dx, rsrc.y1 + dy, rsrc.x2 + dx, rsrc.y2 + dy)
     rc = self.clipRectArea(rdst, rsrc, src.width(), src.height())
 
   if rc.x2 > 0:
@@ -384,6 +384,7 @@ proc copyFrom*[PixFmt, RenBuf](self: var RendererBase[PixFmt], src: RenBuf, rect
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
       dec rc.y2
+
 
 proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: var RendererBase[PixFmt], src: SrcPixelFormatRenderer,
   rectSrcPtr: ptr RectI = nil, dx = 0, dy = 0, cover: CoverType = coverFull) =
@@ -408,7 +409,7 @@ proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: var RendererBase[PixFmt], 
     if rdst.y1 > rsrc.y1:
       rsrc.y1 += rc.y2 - 1
       rdst.y1 += rc.y2 - 1
-      dec incy
+      incy = -1
     while rc.y2 > 0:
       var rw = src.row(rsrc.y1)
       if rw.data != nil:
@@ -427,7 +428,7 @@ proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: var RendererBase[PixFmt], 
             self.mRen[].blendFrom(src, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
-      inc rc.y2
+      dec rc.y2
 
 proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBase[PixFmt], src: SrcPixelFormatRenderer,
   color: ColorT, rectSrcPtr: ptr RectI = nil,  dx = 0, dy = 0, cover: CoverType = coverFull) =

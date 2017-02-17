@@ -889,7 +889,7 @@ type
     CompOpSoftLight,    #----CompOpsoft_light
     CompOpDifference,   #----CompOpdifference
     CompOpExclusion,    #----CompOpexclusion
-    CompOpEontrast,     #----CompOpcontrast
+    CompOpContrast,     #----CompOpcontrast
     CompOpInvert,       #----CompOpinvert
     CompOpInvertRgb,    #----CompOpinvert_rgb
     EndOfCompOp

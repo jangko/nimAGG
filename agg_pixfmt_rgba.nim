@@ -131,8 +131,8 @@ proc rgbaWrapperCopyOrBlendPix[Blender, ValueT](p: ptr ValueT,
       p[OrderT.G] = ValueT(cg)
       p[OrderT.B] = ValueT(cb)
       p[OrderT.A] = ValueT(baseMask)
-  else:
-    Blender.blendPix(p, cr, cg, cb, alpha)
+    else:
+      Blender.blendPix(p, cr, cg, cb, alpha)
 
 proc rgbaWrapperCopyOrBlendPix[Blender, ValueT](p: ptr ValueT,
   cr, cg, cb, alpha, cover: uint) =
@@ -610,7 +610,7 @@ proc blendFrom*[Blender, RenBuf, PixelT, SrcPixelFormatRenderer](self: var Pixfm
   psrc += xsrc shl 2
 
   var
-    pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + (xdst shl 2))
+    pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len)) + (xdst shl 2)
     incp = 4
 
   if xdst > xsrc:
