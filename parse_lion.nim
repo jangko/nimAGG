@@ -1,4 +1,5 @@
 import agg_color_rgba, agg_basics, agg_bounding_rect, agg_path_storage, strutils, parseutils
+import agg_trans_affine
 
 const lion = """f2cc99
 M 69,18 L 82,8 L 99,3 L 118,5 L 135,12 L 149,21 L 156,13 L 165,9 L 177,13 L 183,28 L 180,50 L 164,91 L 155,107 L 154,114 L 151,121 L 141,127 L 139,136 L 155,206 L 157,251 L 126,342 L 133,357 L 128,376 L 83,376 L 75,368 L 67,350 L 61,350 L 53,369 L 4,369 L 2,361 L 5,354 L 12,342 L 16,321 L 4,257 L 4,244 L 7,218 L 9,179 L 26,127 L 43,93 L 32,77 L 30,70 L 24,67 L 16,49 L 17,35 L 18,23 L 30,12 L 40,7 L 53,7 L 62,12 L 69,18 L 69,18 L 69,18
@@ -202,3 +203,27 @@ proc parseLion*(path: var PathStorage, colors: ptr Rgba8, pathIdx: ptr int): int
   path.arrangeOrientationsAllPaths(pathFlagsCw)
   result = npaths
 
+type
+  Lion* = object
+    path*: PathStorage
+    colors*: array[100, Rgba8]
+    pathIdx*: array[100, int]
+    numPaths*: int
+    mtx*: TransAffine
+
+proc parseLion*(width, height: int, scale = 1.0, angle = 0.0, skewX = 0.0, skewY = 0.0): Lion =
+  var x1, x2, y1, y2: float64
+  
+  result.path = initPathStorage()
+  result.numPaths = parseLion(result.path, result.colors[0].addr, result.pathIdx[0].addr)
+  discard boundingRect(result.path, result.pathIdx, 0, result.numPaths, x1, y1, x2, y2)
+  var
+    baseDx = (x2 - x1) / 2.0
+    baseDy = (y2 - y1) / 2.0
+  
+  result.mtx  = initTransAffine()
+  result.mtx *= transAffineTranslation(-baseDx, -baseDy)
+  result.mtx *= transAffineScaling(scale, scale)
+  result.mtx *= transAffineRotation(angle + pi)
+  result.mtx *= transAffineSkewing(skewX/1000.0, skewY/1000.0)
+  result.mtx *= transAffineTranslation(width.float64/4, height.float64/2)

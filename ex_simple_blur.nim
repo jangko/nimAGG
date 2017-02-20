@@ -83,37 +83,19 @@ proc onDraw() =
     sl     = initScanlineP8()
     sl2    = initScanlineU8()
     ras2   = initRasterizerScanlineAA()
-    path   = initPathStorage()
-    mtx    = initTransAffine()
-    trans  = initConvTransform(path, mtx)
-    colors: array[100, Rgba8]
-    pathIdx: array[100, int]
-    numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
-    x1, x2, y1, y2, base_dx, base_dy: float64
-    cx = 100.0
-    cy = 102.0
-    scale = 1.0
-    angle = 0.0
-    skew_x = 0.0
-    skew_y = 0.0
-
-  discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
-  base_dx = (x2 - x1) / 2.0
-  base_dy = (y2 - y1) / 2.0
-
+    lion   = parseLion(frameWidth, frameHeight)
+    trans  = initConvTransform(lion.path, lion.mtx)
+    cx     = 100.0
+    cy     = 102.0
+  
   rb.clear(initRgba(1, 1, 1))
 
-  mtx *= transAffineTranslation(-base_dx, -base_dy)
-  mtx *= transAffineScaling(scale, scale)
-  mtx *= transAffineRotation(angle + pi)
-  mtx *= transAffineSkewing(skew_x/1000.0, skew_y/1000.0)
-  mtx *= transAffineTranslation(frameWidth.float64/4, frameHeight.float64/2)
-  #mtx *= transAffineResizing()
+  #lion.mtx *= transAffineResizing()
 
-  renderAllPaths(ras2, sl, ren, trans, colors, pathIdx, numPaths)
+  renderAllPaths(ras2, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
 
   #mtx *= ~trans_affine_resizing();
-  mtx *= transAffineTranslation(frameWidth.float64/2, 0)
+  lion.mtx *= transAffineTranslation(frameWidth.float64/2, 0)
   #mtx *= trans_affine_resizing();
 
   var
@@ -123,7 +105,7 @@ proc onDraw() =
 
   profile.width(1.0)
   ras.roundCap(true)
-  ras.renderAllPaths(trans, colors, pathIdx, numPaths)
+  ras.renderAllPaths(trans, lion.colors, lion.pathIdx, lion.numPaths)
 
   var
     ell = initEllipse(cx, cy, 100.0, 100.0, 100)

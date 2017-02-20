@@ -18,21 +18,11 @@ type
   ValueT = uint8
 
 var
-  colors: array[100, Rgba8]
-  pathIdx: array[100, int]
-  path = initPathStorage()
-  numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
-  x1, x2, y1, y2, base_dx, base_dy: float64
-
-discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
-base_dx = (x2 - x1) / 2.0
-base_dy = (y2 - y1) / 2.0
-
-var
   alphaBuf  = newString(frameWidth * frameHeight)
   alphaRbuf = initRenderingBuffer(cast[ptr ValueT](alphaBuf[0].addr), frameWidth, frameHeight, frameWidth)
   alphaMask = initAlphaMaskGray8(alphaRbuf)
   ras       = initRasterizerScanlineAA()
+  lion      = parseLion(frameWidth, frameHeight)
 
 proc generateAlphaMask(cx, cy: int) =
   var
@@ -56,19 +46,16 @@ generateAlphaMask(frameWidth, frameHeight)
 
 var
   buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
   pf     = initPixFmtRgb24(rbuf)
   rb     = initRendererBase(pf)
   sl     = initScanlineU8Am(alphaMask)
   ren    = initRendererScanlineAASolid(rb)
-  mtx    = initTransAffine()
 
 rb.clear(initRgba(1,1,1))
 
-mtx *= transAffineTranslation(-base_dx, -base_dy)
-mtx *= transAffineTranslation(frameWidth.float64/2, frameHeight.float64/2)
-var trans = initConvTransform(path, mtx)
+var trans = initConvTransform(lion.path, lion.mtx)
 
-renderAllPaths(ras, sl, ren, trans, colors, pathIdx, numPaths)
+renderAllPaths(ras, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
 
 saveBMP24("alpha_mask.bmp", buffer, frameWidth, frameHeight)

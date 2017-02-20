@@ -30,18 +30,9 @@ proc onDraw() =
     rb     = initRendererScanlineAASolid(rbase)
     gras   = initRasterizerScanlineAA()
     sl     = initScanlineU8()
-    mtx    = initTransAffine()
-    path   = initPathStorage()
-    colors: array[100, Rgba8]
-    pathIdx: array[100, int]
-    numPaths = parseLion(path, colors[0].addr, pathIdx[0].addr)
-    x1, x2, y1, y2, base_dx, base_dy: float64
+    lion   = parseLion(frameWidth, frameHeight)
     width  = frameWidth.float64
     height = frameHeight.float64
-    scale  = 1.0
-    angle  = 0.0
-    skew_x = 0.0
-    skew_y = 0.0
     
   proc generateAlphaMask(cx, cy: int) =
     var
@@ -61,22 +52,12 @@ proc onDraw() =
       ren.color(initGray8(random(127).uint + 128'u, random(127).uint + 128'u))
       renderScanlines(gras, sl, ren)
   
-  discard boundingRect(path, pathIdx, 0, numPaths, x1, y1, x2, y2)
-  base_dx = (x2 - x1) / 2.0
-  base_dy = (y2 - y1) / 2.0
-  
-  mtx *= transAffineTranslation(-base_dx, -base_dy)
-  mtx *= transAffineScaling(scale, scale)
-  mtx *= transAffineRotation(angle + pi)
-  mtx *= transAffineSkewing(skew_x/1000.0, skew_y/1000.0)
-  mtx *= transAffineTranslation(width/2.0, height/2.0)
-  
   generateAlphaMask(frameWidth, frameHeight)
   rbase.clear(initRgba(1, 1, 1))
         
   # Render the lion
-  var trans = initConvTransform(path, mtx)
-  renderAllPaths(gras, sl, rs, trans, colors, pathIdx, numPaths)
+  var trans = initConvTransform(lion.path, lion.mtx)
+  renderAllPaths(gras, sl, rs, trans, lion.colors, lion.pathIdx, lion.numPaths)
   
   # Render random Bresenham lines and markers
   var markers = initRendererMarkers(rba)

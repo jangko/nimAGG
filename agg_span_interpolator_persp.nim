@@ -5,7 +5,7 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
     name* = object
       mTransDir: TransPerspective
       mTransInv: TransPerspective
-      mIterator: IteratorX
+      mIterator: IteratorXPersp
       mScaleX: Dda2LineInterpolator
       mScaleY: Dda2LineInterpolator
 

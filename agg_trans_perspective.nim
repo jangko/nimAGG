@@ -160,13 +160,13 @@ proc transform2x2*(self: TransPerspective, x, y: var float64) {.inline.}
 proc inverseTransform*(self: TransPerspective, x, y: var float64): TransPerspective  {.inline.}
 
 type
-  IteratorX* = object
+  IteratorXPersp* = object
     den, denStep: float64
     nomX, nomXstep: float64
     nomY, nomYstep: float64
     x*, y*: float64
 
-proc initIteratorX(px, py, step: float64, m: TransPerspective): IteratorX =
+proc initIteratorXPersp(px, py, step: float64, m: TransPerspective): IteratorXPersp =
   result.den      = px * m.w0 + py * m.w1 + m.w2
   result.denStep  = m.w0 * step
   result.nomX     = px * m.sx + py * m.shx + m.tx
@@ -176,7 +176,7 @@ proc initIteratorX(px, py, step: float64, m: TransPerspective): IteratorX =
   result.x        = result.nomX / result.den
   result.y        = result.nomY / result.den
 
-proc inc*(self: var IteratorX) =
+proc inc*(self: var IteratorXPersp) =
   self.den  += self.denStep
   self.nomX += self.nomXstep
   self.nomY += self.nomYstep
@@ -185,8 +185,8 @@ proc inc*(self: var IteratorX) =
   self.x = self.nomX * d
   self.y = self.nomY * d
 
-proc begin*(self: TransPerspective, x, y, step: float64): IteratorX =
-  initIteratorX(x, y, step, self)
+proc begin*(self: TransPerspective, x, y, step: float64): IteratorXPersp =
+  initIteratorXPersp(x, y, step, self)
 
 proc squareToQuad(self: var TransPerspective, q: ptr float64): bool =
   var

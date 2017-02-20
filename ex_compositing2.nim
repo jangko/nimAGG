@@ -9,22 +9,22 @@ proc generateColorRamp[CA,CB](c: var openArray[CA], c1, c2, c3, c4: CB) =
   when CA is not CB:
     for i in 0.. <85:
       c[i] = construct(CA, c1.gradient(c2, i.float64/85.0))
-    
+
     for i in 85.. <170:
       c[i] = construct(CA, c2.gradient(c3, (i.float64 - 85.0)/85.0))
-    
+
     for i in 170.. <256:
       c[i] = construct(CA, c3.gradient(c4, (i.float64 - 170.0)/85.0))
   else:
     for i in 0.. <85:
       c[i] = c1.gradient(c2, i.float64/85.0)
-    
+
     for i in 85.. <170:
       c[i] = c2.gradient(c3, (i.float64 - 85.0)/85.0)
-    
+
     for i in 170.. <256:
       c[i] = c3.gradient(c4, (i.float64 - 170.0)/85.0)
-    
+
 proc radialShape[RenBase, ColorT](rbase: var RenBase, colors: var array[256, ColorT],
   x1, y1, x2, y2: float64, ras: var RasterizerScanlineAA, sl: var ScanlineU8) =
 
@@ -37,16 +37,16 @@ proc radialShape[RenBase, ColorT](rbase: var RenBase, colors: var array[256, Col
     cx = (x1 + x2) / 2.0
     cy = (y1 + y2) / 2.0
     r  = 0.5 * (if((x2 - x1) < (y2 - y1)): (x2 - x1) else: (y2 - y1))
-  
+
   gradientMtx *= transAffineScaling(r / 100.0)
   gradientMtx *= transAffineTranslation(cx, cy)
   #gradientMtx *= trans_affine_resizing();
   gradientMtx.invert()
-  
-  var 
+
+  var
     ell   = initEllipse(cx, cy, r, r, 100)
     #trans = initConvTransform(ell, trans_affine_resizing())
-  
+
   #ras.addPath(trans)
   ras.addPath(ell)
   renderScanlinesAA(ras, sl, rbase, spanAllocator, spanGradient)
@@ -61,11 +61,11 @@ const
 type
   ValueT = uint8
 
-proc renderScene[RenBase, ColorT](rb: var RenBase, rbuf: var RenderingBuffer, 
+proc renderScene[RenBase, ColorT](rb: var RenBase, rbuf: var RenderingBuffer,
   ramp1, ramp2: var array[256, ColorT], compOp: int, ras: var RasterizerScanlineAA, sl: var ScanlineU8) =
   type
     BlenderT = CompOpAdaptorRgba[Rgba8, OrderRgba]
-  
+
   var
     pixf = initPixfmtCustomBlendRgba[BlenderT, RenderingBuffer](rbuf)
     ren  = initRendererBase(pixf)
@@ -78,10 +78,10 @@ proc renderScene[RenBase, ColorT](rb: var RenBase, rbuf: var RenderingBuffer,
   let
     cx = 50.0
     cy = 50.0
-    
+
   radialShape(ren, ramp2, cx+120.0-70.0, cy+120.0-70.0, cx+120.0+70.0, cy+120.0+70.0, ras, sl)
   radialShape(ren, ramp2, cx+200.0-70.0, cy+120.0-70.0, cx+200.0+70.0, cy+120.0+70.0, ras, sl)
-  radialShape(ren, ramp2, cx+120.0-70.0, cy+200.0-70.0, cx+120.0+70.0, cy+200.0+70.0, ras, sl) 
+  radialShape(ren, ramp2, cx+120.0-70.0, cy+200.0-70.0, cx+120.0+70.0, cy+200.0+70.0, ras, sl)
   radialShape(ren, ramp2, cx+200.0-70.0, cy+200.0-70.0, cx+200.0+70.0, cy+200.0+70.0, ras, sl)
 
 proc onDraw() =
@@ -94,26 +94,26 @@ proc onDraw() =
     sl     = initScanlineU8()
     ramp1, ramp2: array[256, Rgba8]
     ren    = initRendererScanlineAASolid(rb)
-    
+
   for mode in 0.. <EndOfCompOp.ord:
     rb.clear(initRgba8(255, 255, 255))
-        
-    generateColorRamp(ramp1, 
+
+    generateColorRamp(ramp1,
        initRgba(0, 0, 0, alphaDst),
        initRgba(0, 0, 1, alphaDst),
        initRgba(0, 1, 0, alphaDst),
        initRgba(1, 0, 0, 0))
 
-    generateColorRamp(ramp2, 
+    generateColorRamp(ramp2,
        initRgba(0, 0, 0, alphaSrc),
        initRgba(0, 0, 1, alphaSrc),
        initRgba(0, 1, 0, alphaSrc),
        initRgba(1, 0, 0, 0))
-       
+
     let startTime = cpuTime()
     renderScene(rb, rbuf, ramp1, ramp2, mode, ras, sl)
     let t2 = cpuTime() - startTime
-    
+
     var
       t = initGsvText()
       pt = initConvStroke(t)
