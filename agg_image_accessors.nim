@@ -10,6 +10,8 @@ type
 template getOrderT*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getOrderT(PixFmt.type)
 
 proc initImageAccessorClip*[PixFmt, ColorT](pixf: var PixFmt, bk: ColorT): ImageAccessorClip[PixFmt] =
+  when getColorT(PixFmt) is not ColorT:
+    var bk = construct(getColorT(PixFmt), bk)
   result.mPixF = pixf.addr
   makePix(PixFmt, result.mBkBuf[0].addr, bk)
 
@@ -17,7 +19,9 @@ proc attach*[PixFmt](self: var ImageAccessorClip[PixFmt], pixf: var PixFmt) =
    self.mPixF = pixf.addr
 
 proc backgroundColor*[PixFmt, ColorT](self: var ImageAccessorClip[PixFmt], bk: ColorT) =
-   makePix(PixFmt, self.mBkBuf[0].addr, bk)
+  when getColorT(PixFmt) is not ColorT:
+    var bk = construct(getColorT(PixFmt), bk)
+  makePix(PixFmt, self.mBkBuf[0].addr, bk)
 
 proc pixel*[PixFmt](self: var ImageAccessorClip[PixFmt]): ptr uint8 {.inline.} =
   if self.mY >= 0 and self.mY < self.mPixF[].height() and

@@ -153,6 +153,9 @@ proc rowPtr*[T](self: RowPtrCache[T], x, y, z: int): ptr T {.inline.} =
 
 proc row*[T](self: RowPtrCache[T], y: int): RowInfo[T] {.inline.} =
   result = RowInfo(x1:0, x2:(self.width-1).int, data: self.rows(y))
+  
+proc rows*[T](self: var RowPtrCache[T]): var seq[ptr T] {.inline.} =
+  self.rows
 
 proc copyFrom*[T](self: var RowPtrCache[T], src: RowPtrCache[T]) =
   let
