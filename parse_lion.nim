@@ -210,7 +210,8 @@ type
     pathIdx*: array[100, int]
     numPaths*: int
     mtx*: TransAffine
-
+    x1*, x2*, y1*, y2*: float64
+    
 proc parseLion*(width, height: int, scale = 1.0, angle = 0.0, skewX = 0.0, skewY = 0.0): Lion =
   var x1, x2, y1, y2: float64
   
@@ -227,3 +228,7 @@ proc parseLion*(width, height: int, scale = 1.0, angle = 0.0, skewX = 0.0, skewY
   result.mtx *= transAffineRotation(angle + pi)
   result.mtx *= transAffineSkewing(skewX/1000.0, skewY/1000.0)
   result.mtx *= transAffineTranslation(width.float64/2, height.float64/2)
+  result.x1 = x1
+  result.x2 = x2
+  result.y1 = y1
+  result.y2 = y2

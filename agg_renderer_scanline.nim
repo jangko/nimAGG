@@ -55,7 +55,7 @@ proc renderScanlines*[Rasterizer, Scanline, Renderer](ras: var Rasterizer, sl: v
 proc renderAllPaths*[Rasterizer, Scanline, Renderer, VertexSource, ColorT](ras: var Rasterizer, sl: var Scanline,
   ren: var Renderer, vs: var VertexSource, col: openArray[ColorT], pathId: openArray[int], numPaths: int) =
 
-  mixin reset, addPath
+  mixin reset, addPath, color
 
   for i in 0.. <numPaths:
     ras.reset()

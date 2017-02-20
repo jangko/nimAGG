@@ -27,7 +27,6 @@ bspline
 rasterizer_compound_aa
 pixfmt_rgb_packed
 renderer_outline_image
-trans_perspective
 span_intepolator_persp
 
 span_pattern_rgba
@@ -46,7 +45,10 @@ translate ok:
   curve  
   bezier_arc
   renderer_scanline
-  
+
+  -simul_eq
+  -trans_bilinear
+  -trans_perspective
   -span_solid  
   -span_gouraud
   -span_gouraud_gray

@@ -17,7 +17,7 @@ proc initTransPerspective*(v0, v1, v2, v3, v4, v5, v6, v7, v8: float64): TransPe
   result.tx  = v6; result.ty  = v7; result.w2 = v8
 
 # Custom matrix from m[9]
-proc initTransPerspective*(m: ptr float64): TransPerspective =
+proc initTransPerspective*(m: array[9, float64]): TransPerspective =
   result.sx  = m[0]; result.shy = m[1]; result.w0 = m[2]
   result.shx = m[3]; result.sy  = m[4]; result.w1 = m[5]
   result.tx  = m[6]; result.ty  = m[7]; result.w2 = m[8]
@@ -29,26 +29,26 @@ proc initTransPerspective*(a: TransAffine): TransPerspective =
   result.tx  = a.tx ; result.ty  = a.ty ; result.w2 = 1
 
 # Rectangle to quadrilateral
-proc initTransPerspective*(x1, y1, x2, y2: float64, quad: ptr float64): TransPerspective
+proc initTransPerspective*(x1, y1, x2, y2: float64, quad: array[8, float64]): TransPerspective
 
 # Quadrilateral to rectangle
-proc initTransPerspective*(quad: ptr float64, x1, y1, x2, y2: float64): TransPerspective
+proc initTransPerspective*(quad: array[8, float64], x1, y1, x2, y2: float64): TransPerspective
 
 # Arbitrary quadrilateral transformations
-proc initTransPerspective*(src, dst: ptr float64): TransPerspective
+proc initTransPerspective*(src, dst: array[8, float64]): TransPerspective
 
 #-------------------------------------- Quadrilateral transformations
 # The arguments are double[8] that are mapped to quadrilaterals:
 # x1,y1, x2,y2, x3,y3, x4,y4
-proc quadToQuad*(self: var TransPerspective, qs, qd: ptr float64): bool
+proc quadToQuad*(self: var TransPerspective, qs, qd: array[8, float64]): bool
 
-proc rectToQuad*(self: var TransPerspective, x1, y1, x2, y2: float64, q: ptr float64): bool
+proc rectToQuad*(self: var TransPerspective, x1, y1, x2, y2: float64, q: array[8, float64]): bool
 
-proc quadToRect*(self: var TransPerspective, q: ptr float64, x1, y1, x2, y2: float64): bool
+proc quadToRect*(self: var TransPerspective, q: array[8, float64], x1, y1, x2, y2: float64): bool
 
 # Map square (0,0,1,1) to the quadrilateral and vice versa
-proc squareToQuad*(self: var TransPerspective, q: ptr float64): bool
-proc quadToSquare*(self: var TransPerspective, q: ptr float64): bool
+proc squareToQuad*(self: var TransPerspective, q: array[8, float64]): bool
+proc quadToSquare*(self: var TransPerspective, q: array[8, float64]): bool
 
 
 #--------------------------------------------------------- Operations
@@ -89,8 +89,8 @@ proc multiplyInv*(self: var TransPerspective, m: TransAffine)
 proc premultiplyInv*(self: var TransPerspective, m: TransAffine)
 
 # Load/Store
-proc storeTo*(self: TransPerspective, m: ptr float64) {.inline.}
-proc loadFrom*(self: var TransPerspective, m: ptr float64) {.inline.}
+proc storeTo*(self: TransPerspective, m: var array[9, float64]) {.inline.}
+proc loadFrom*(self: var TransPerspective, m: array[9, float64]) {.inline.}
 
 # Operators
 # Multiply the matrix by another one
@@ -188,7 +188,7 @@ proc inc*(self: var IteratorXPersp) =
 proc begin*(self: TransPerspective, x, y, step: float64): IteratorXPersp =
   initIteratorXPersp(x, y, step, self)
 
-proc squareToQuad(self: var TransPerspective, q: ptr float64): bool =
+proc squareToQuad(self: var TransPerspective, q: array[8, float64]): bool =
   var
     dx = q[0] - q[2] + q[4] - q[6]
     dy = q[1] - q[3] + q[5] - q[7]
@@ -272,41 +272,41 @@ proc invert*(self: var TransPerspective): bool =
   self.w2  = d * (a.sx  * a.sy  - a.shy * a.shx)
   result = true
 
-proc quadToSquare(self: var TransPerspective, q: ptr float64): bool =
+proc quadToSquare(self: var TransPerspective, q: array[8, float64]): bool =
   if not self.squareToQuad(q): return false
   discard self.invert()
   result = true
 
-proc quadToQuad(self: var TransPerspective, qs, qd: ptr float64): bool =
+proc quadToQuad(self: var TransPerspective, qs, qd: array[8, float64]): bool =
   var p: TransPerspective
   if not self.quadToSquare(qs): return false
   if not p.squareToQuad(qd): return false
   self.multiply(p)
   result = true
 
-proc rectToQuad(self: var TransPerspective, x1, y1, x2, y2: float64, q: ptr float64): bool =
+proc rectToQuad(self: var TransPerspective, x1, y1, x2, y2: float64, q: array[8, float64]): bool =
   var r: array[8, float64]
   r[0] = x1; r[6] = x1
   r[2] = x2; r[4] = x2
   r[1] = y1; r[3] = y1
   r[5] = y2; r[7] = y2
-  result = self.quadToQuad(r[0].addr, q)
+  result = self.quadToQuad(r, q)
 
-proc quadToRect(self: var TransPerspective, q: ptr float64, x1, y1, x2, y2: float64): bool =
+proc quadToRect(self: var TransPerspective, q: array[8, float64], x1, y1, x2, y2: float64): bool =
   var r: array[8, float64]
   r[0] = x1; r[6] = x1
   r[2] = x2; r[4] = x2
   r[1] = y1; r[3] = y1
   r[5] = y2; r[7] = y2
-  result = self.quadToQuad(q, r[0].addr)
+  result = self.quadToQuad(q, r)
 
-proc initTransPerspective(x1, y1, x2, y2: float64, quad: ptr float64): TransPerspective =
+proc initTransPerspective(x1, y1, x2, y2: float64, quad: array[8, float64]): TransPerspective =
   discard result.rectToQuad(x1, y1, x2, y2, quad)
 
-proc initTransPerspective(quad: ptr float64, x1, y1, x2, y2: float64): TransPerspective =
+proc initTransPerspective(quad: array[8, float64], x1, y1, x2, y2: float64): TransPerspective =
   discard result.quadToRect(quad, x1, y1, x2, y2)
 
-proc initTransPerspective(src, dst: ptr float64): TransPerspective =
+proc initTransPerspective(src, dst: array[8, float64]): TransPerspective =
   discard result.quadToQuad(src, dst)
 
 proc reset*(self: var TransPerspective) =
@@ -416,17 +416,17 @@ proc inverseTransform(self: TransPerspective, x, y: var float64): TransPerspecti
     t.transform(x, y)
   result = t
 
-proc storeTo(self: TransPerspective, m: ptr float64) =
+proc storeTo(self: TransPerspective, m: var array[9, float64]) =
   var m = m
-  m[] = self.sx; inc m; m[] = self.shy; inc m; m[] = self.w0; inc m
-  m[] = self.shx;inc m; m[] = self.sy;  inc m; m[] = self.w1; inc m
-  m[] = self.tx; inc m; m[] = self.ty;  inc m; m[] = self.w2
+  m[0] = self.sx;  m[1] = self.shy;  m[2] = self.w0
+  m[3] = self.shx; m[4] = self.sy;   m[5] = self.w1
+  m[6] = self.tx;  m[7] = self.ty;   m[8] = self.w2
 
-proc loadFrom(self: var TransPerspective, m: ptr float64) =
+proc loadFrom(self: var TransPerspective, m: array[9, float64]) =
   var m = m
-  self.sx  = m[]; inc m; self.shy = m[]; inc m; self.w0 = m[]; inc m
-  self.shx = m[]; inc m; self.sy  = m[]; inc m; self.w1 = m[]; inc m
-  self.tx  = m[]; inc m; self.ty  = m[]; inc m; self.w2 = m[]
+  self.sx  = m[0]; self.shy = m[1];  self.w0 = m[2]
+  self.shx = m[3]; self.sy  = m[4];  self.w1 = m[5]
+  self.tx  = m[6]; self.ty  = m[7];  self.w2 = m[8]
 
 proc fromAffine*(self: var TransPerspective, a: TransAffine) {.inline.} =
   self.sx  = a.sx;  self.shy = a.shy; self.w0 = 0
