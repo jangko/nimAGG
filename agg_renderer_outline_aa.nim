@@ -1065,6 +1065,7 @@ proc init[R,C](ren: var R, prof: var LineProfileAA): RendererOutlineAA[R,C] =
   result.mClipping = false
 
 proc initRendererOutlineAA*[R](ren: var R, prof: var LineProfileAA): auto =
+  mixin getColorT
   result = init[R, getColorT(R)](ren, prof)
 
 proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) =

@@ -1,4 +1,4 @@
-import agg_basics, agg_rendering_buffer, agg_pixfmt_rgba, strutils
+import agg_basics, agg_rendering_buffer, agg_pixfmt_rgb, strutils
 
 type
   RendererBase*[PixFmt] = object
@@ -15,7 +15,7 @@ proc attach*[PixFmt](self: var RendererBase[PixFmt], ren: var PixFmt) =
   self.mRen = ren.addr
   self.mClipBox = initRectI(0, 0, ren.width() - 1, ren.height() - 1)
 
-proc ren*[PixFmt](self: RendererBase[PixFmt]): var PixFmt = self.mRen
+proc ren*[PixFmt](self: RendererBase[PixFmt]): var PixFmt = self.mRen[]
 
 proc width*[PixFmt](self: RendererBase[PixFmt]): int = self.mRen[].width()
 proc height*[PixFmt](self: RendererBase[PixFmt]): int = self.mRen[].height()
@@ -55,7 +55,12 @@ proc inbox*[PixFmt](self: RendererBase[PixFmt], x, y: int): bool =
   result = x >= self.mClipBox.x1 and y >= self.mClipBox.y1 and
            x <= self.mClipBox.x2 and y <= self.mClipBox.y2
 
-proc clipBox*[PixFmt](self: var RendererBase[PixFmt]): var RectI = self.mClipBox
+proc clipBox*[PixFmt](self: var RendererBase[PixFmt]): var RectI = 
+  self.mClipBox
+
+proc clipBox*[PixFmt](self: var RendererBase[PixFmt], clipBox: RectI) = 
+  self.mClipBox = clipBox
+  
 proc xmin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x1
 proc ymin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y1
 proc xmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x2

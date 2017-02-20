@@ -1,8 +1,8 @@
 import agg_basics, agg_renderer_base, strutils
 
 proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
-  ren: BaseRenderer, color: ColorT) =
-
+  ren: var BaseRenderer, color: ColorT) =
+  mixin blendSolidHspan, blendHline
   let y = sl.getY()
   var
     numSpans = sl.numSpans()
@@ -20,8 +20,8 @@ proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
     inc span
 
 proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: var Rasterizer,
-  sl: var Scanline, ren: BaseRenderer, color: ColorT) =
-  mixin reset
+  sl: var Scanline, ren: var BaseRenderer, color: ColorT) =
+  mixin reset, blendSolidHspan, blendHline
 
   if ras.rewindScanlines():
     let renColor = getColorT(BaseRenderer).construct(color)
@@ -72,6 +72,7 @@ proc initRendererSAAS[B,C](ren: var B): RendererScanlineAASolid[B, C] =
   result.mRen = ren.addr
 
 proc initRendererScanlineAASolid*[BaseRenderer](ren: var BaseRenderer): auto =
+  mixin getColorT
   result = initRendererSAAS[BaseRenderer, getColorT(BaseRenderer)](ren)
 
 proc attach*[B, C](self: var RendererScanlineAASolid[B, C], ren: var B) =
@@ -93,6 +94,7 @@ proc render*[B,C, Scanline](self: RendererScanlineAASolid[B, C], sl: var Scanlin
 
 proc renderScanlineAA*[Scanline, BaseRenderer, SpanAllocator, SpanGenerator](sl: var Scanline,
   ren: var BaseRenderer, alloc: var SpanAllocator, spanGen: var SpanGenerator) =
+  mixin blendColorHSpan
 
   let y = sl.getY()
   var

@@ -21,19 +21,15 @@ conv_marker
 
 bitset_iterator
 path_length
-span_solid
 image_accessors
 pixfmt_transposer
 bspline
-renderer_mclip
 rasterizer_compound_aa
 pixfmt_rgb_packed
 renderer_outline_image
 trans_perspective
 span_intepolator_persp
 
-span_gouraud
-span_gouraud_gray
 span_pattern_rgba
 span_pattern_gray
 span_pattern_rgb
@@ -51,6 +47,10 @@ translate ok:
   bezier_arc
   renderer_scanline
   
+  -span_solid  
+  -span_gouraud
+  -span_gouraud_gray
+  -renderer_mclip  
   -vpgen_segmentator
   -conv_adaptor_vpgen
   -trans_warp_magnifier
@@ -69,7 +69,7 @@ translate ok:
   -clip_liang_barsky
   -trans_affine
   -span_allocator
-  -renderer_primitive
+  -renderer_primitives
   -ellipse_bresenham
   -span_converter
   -span_interpolator_linear

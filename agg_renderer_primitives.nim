@@ -46,15 +46,18 @@ proc fillColor*[B,C](self: RendererPrimitives[B,C]): C = self.mFillColor
 proc lineColor*[B,C](self: RendererPrimitives[B,C]): C = self.mLineColor
 
 proc rectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
+  mixin blendHLine, blendVLine
   self.mRen[].blendHline(x1,   y1,   x2-1, self.mLineColor, coverFull)
   self.mRen[].blendVline(x2,   y1,   y2-1, self.mLineColor, coverFull)
   self.mRen[].blendHline(x1+1, y2,   x2,   self.mLineColor, coverFull)
   self.mRen[].blendVline(x1,   y1+1, y2,   self.mLineColor, coverFull)
 
 proc solidRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
+  mixin blendBar
   self.mRen[].blendBar(x1, y1, x2, y2, self.mFillColor, coverFull)
 
 proc outlinedRectangle*[B,C](self: var RendererPrimitives[B,C], x1, y1, x2, y2: int) =
+  mixin blendBar
   self.rectangle(x1, y1, x2, y2)
   self.mRen[].blendBar(x1+1, y1+1, x2-1, y2-1, self.mFillColor, coverFull)
 
@@ -74,6 +77,7 @@ proc ellipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
     inc ei
 
 proc solidEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
+  mixin blendHLine
   var
     ei = initEllipseBresenhamInterpolator(rx, ry)
     dx = 0
@@ -96,6 +100,7 @@ proc solidEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
   self.mRen[].blendHline(x-dx0, y+dy0, x+dx0, self.mFillColor, coverFull)
 
 proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int) =
+  mixin blendPixel, blendHLine
   var
     ei = initEllipseBresenhamInterpolator(rx, ry)
     dx = 0
@@ -110,13 +115,14 @@ proc outlinedEllipse*[B,C](self: var RendererPrimitives[B,C], x, y, rx, ry: int)
     self.mRen[].blendPixel(x - dx, y - dy, self.mLineColor, coverFull)
     self.mRen[].blendPixel(x - dx, y + dy, self.mLineColor, coverFull)
 
-    if (ei.getDy() and dx) != 0:
+    if ei.getDy() != 0 and dx != 0:
       self.mRen[].blendHline(x-dx+1, y+dy, x+dx-1, self.mFillColor, coverFull)
       self.mRen[].blendHline(x-dx+1, y-dy, x+dx-1, self.mFillColor, coverFull)
 
     inc ei
 
 proc line*[B,C](self: var RendererPrimitives[B,C], xx1, yy1, xx2, yy2: int, last = false) =
+  mixin blendPixel
   var
     li = initLineBresenhamInterpolator(xx1, yy1, xx2, yy2)
     len = li.len()

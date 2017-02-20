@@ -2,33 +2,33 @@ import agg_basics, agg_renderer_primitives, agg_ellipse_bresenham, agg_renderer_
 
 type
   Marker* = enum
-    marker_square,
-    marker_diamond,
-    marker_circle,
-    marker_crossed_circle,
-    marker_semiellipse_left,
-    marker_semiellipse_right,
-    marker_semiellipse_up,
-    marker_semiellipse_down,
-    marker_triangle_left,
-    marker_triangle_right,
-    marker_triangle_up,
-    marker_triangle_down,
-    marker_four_rays,
-    marker_cross,
-    marker_x,
-    marker_dash,
-    marker_dot,
-    marker_pixel,
-    end_of_markers
+    MarkerSquare,
+    MarkerDiamond,
+    MarkerCircle,
+    MarkerCrossedCircle,
+    MarkerSemiEllipseLeft,
+    MarkerSemiEllipseRight,
+    MarkerSemiEllipseUp,
+    MarkerSemiEllipseDown,
+    MarkerTriangleLeft,
+    MarkerTriangleRight,
+    MarkerTriangleUp,
+    MarkerTriangleDown,
+    MarkerFourRays,
+    MarkerCross,
+    MarkerX,
+    MarkerDash,
+    MarkerDot,
+    MarkerPixel,
+    EndOfMarkers
 
 type
   RendererMarkers*[BaseRenderer, ColorT] = object of RendererPrimitives[BaseRenderer, ColorT]
-  
+
 proc coord*[R,C](self: RendererMarkers[R,C], c: float64): int =
   type base = RendererPrimitives[R,C]
   result = base.coord(c)
-  
+
 proc initRendererMarkersAux*[Renderer,ColorT](rbuf: var Renderer): RendererMarkers[Renderer, ColorT] =
   type base = RendererPrimitives[Renderer,ColorT]
   base(result).init(rbuf)
@@ -37,11 +37,13 @@ proc initRendererMarkers*[Renderer](rbuf: var Renderer): auto =
   result = initRendererMarkersAux[Renderer,getColorT(Renderer)](rbuf)
 
 proc visible*[Renderer,ColorT](self: RendererMarkers[Renderer,ColorT], x, y, r: int): bool =
+  mixin boundingClipBox
   type base = RendererPrimitives[Renderer,ColorT]
   var rc= initRectI(x-r, y-r, x+y, y+r)
   rc.clip(base(self).ren().boundingClipBox())
 
 proc square*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -50,6 +52,7 @@ proc square*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, 
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc diamond*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHLine
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -70,6 +73,7 @@ proc diamond*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y,
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc circle*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -78,6 +82,7 @@ proc circle*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, 
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc crossedCircle*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendHline, blendVline, blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -92,7 +97,8 @@ proc crossedCircle*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT],
   else:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
-proc semiellipseLeft*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+proc semiEllipseLeft*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendVline, blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -108,14 +114,15 @@ proc semiellipseLeft*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT
       base(self).ren().blendPixel(x + dy, y + dx, base(self).lineColor(), coverFull)
       base(self).ren().blendPixel(x + dy, y - dx, base(self).lineColor(), coverFull)
 
-      if (ei.getDy() and dx) != 0:
+      if ei.getDy() != 0 and dx != 0:
          base(self).ren().blendVline(x+dy, y-dx+1, y+dx-1, base(self).fillColor(), coverFull)
       inc ei
     base(self).ren().blendVline(x+dy, y-dx, y+dx, base(self).lineColor(), coverFull)
   else:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
-proc semiellipseRight*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+proc semiEllipseRight*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendVline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -131,14 +138,15 @@ proc semiellipseRight*[Renderer,ColorT](self: var RendererMarkers[Renderer,Color
       base(self).ren().blendPixel(x - dy, y + dx, base(self).lineColor(), coverFull)
       base(self).ren().blendPixel(x - dy, y - dx, base(self).lineColor(), coverFull)
 
-      if (ei.getDy() and dx) != 0:
+      if ei.getDy() != 0 and dx != 0:
         base(self).ren().blendVline(x-dy, y-dx+1, y+dx-1, base(self).fillColor(), coverFull)
       inc ei
     base(self).ren().blendVline(x-dy, y-dx, y+dx, base(self).lineColor(), coverFull)
   else:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
-proc semiellipseUp*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+proc semiEllipseUp*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -154,14 +162,15 @@ proc semiellipseUp*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT],
       base(self).ren().blendPixel(x + dx, y - dy, base(self).lineColor(), coverFull)
       base(self).ren().blendPixel(x - dx, y - dy, base(self).lineColor(), coverFull)
 
-      if (ei.getDy() and dx) != 0:
+      if ei.getDy() != 0 and dx != 0:
         base(self).ren().blendHline(x-dx+1, y-dy, x+dx-1, base(self).fillColor(), coverFull)
       inc ei
     base(self).ren().blendHline(x-dx, y-dy-1, x+dx, base(self).lineColor(), coverFull)
   else:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
-proc semiellipseDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+proc semiEllipseDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -177,7 +186,7 @@ proc semiellipseDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT
       base(self).ren().blendPixel(x + dx, y + dy, base(self).lineColor(), coverFull)
       base(self).ren().blendPixel(x - dx, y + dy, base(self).lineColor(), coverFull)
 
-      if (ei.getDy() and dx) != 0:
+      if ei.getDy() != 0 and dx != 0:
         base(self).ren().blendHline(x-dx+1, y+dy, x+dx-1, base(self).fillColor(), coverFull)
       inc ei
     base(self).ren().blendHline(x-dx, y+dy+1, x+dx, base(self).lineColor(), coverFull)
@@ -185,6 +194,7 @@ proc semiellipseDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc triangleLeft*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendVline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
 
@@ -208,6 +218,7 @@ proc triangleLeft*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], 
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc triangleRight*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendVline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -230,6 +241,7 @@ proc triangleRight*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT],
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc triangleUp*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -252,6 +264,7 @@ proc triangleUp*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x,
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc triangleDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -274,6 +287,7 @@ proc triangleDown*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], 
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc fourRays*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendVline, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -305,6 +319,7 @@ proc fourRays*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc cross*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendVline, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -314,6 +329,7 @@ proc cross*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc xing*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -327,6 +343,7 @@ proc xing*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r:
   base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc dash*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel, blendHline
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
@@ -335,37 +352,39 @@ proc dash*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc dot*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   if not self.visible(x, y, r): return
   if r != 0:
-    base(self).solid_ellipse(x, y, r, r)
+    base(self).solidEllipse(x, y, r, r)
   else:
     base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc pixel*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int) =
+  mixin blendPixel
   type base = RendererPrimitives[Renderer,ColorT]
   base(self).ren().blendPixel(x, y, base(self).fillColor(), coverFull)
 
 proc marker*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, r: int, shape: Marker) =
   case shape
-  of marker_square:            self.square(x, y, r)
-  of marker_diamond:           self.diamond(x, y, r)
-  of marker_circle:            self.circle(x, y, r)
-  of marker_crossed_circle:    self.crossed_circle(x, y, r)
-  of marker_semiellipse_left:  self.semiellipse_left(x, y, r)
-  of marker_semiellipse_right: self.semiellipse_right(x, y, r)
-  of marker_semiellipse_up:    self.semiellipse_up(x, y, r)
-  of marker_semiellipse_down:  self.semiellipse_down(x, y, r)
-  of marker_triangle_left:     self.triangle_left(x, y, r)
-  of marker_triangle_right:    self.triangle_right(x, y, r)
-  of marker_triangle_up:       self.triangle_up(x, y, r)
-  of marker_triangle_down:     self.triangle_down(x, y, r)
-  of marker_four_rays:         self.four_rays(x, y, r)
-  of marker_cross:             self.cross(x, y, r)
-  of marker_x:                 self.xing(x, y, r)
-  of marker_dash:              self.dash(x, y, r)
-  of marker_dot:               self.dot(x, y, r)
-  of marker_pixel:             self.pixel(x, y, r)
+  of MarkerSquare:           self.square(x, y, r)
+  of MarkerDiamond:          self.diamond(x, y, r)
+  of MarkerCircle:           self.circle(x, y, r)
+  of MarkerCrossedCircle:    self.crossedCircle(x, y, r)
+  of MarkerSemiEllipseLeft:  self.semiEllipseLeft(x, y, r)
+  of MarkerSemiEllipseRight: self.semiEllipseRight(x, y, r)
+  of MarkerSemiEllipseUp:    self.semiEllipseUp(x, y, r)
+  of MarkerSemiEllipseDown:  self.semiEllipseDown(x, y, r)
+  of MarkerTriangleLeft:     self.triangleLeft(x, y, r)
+  of MarkerTriangleRight:    self.triangleRight(x, y, r)
+  of MarkerTriangleUp:       self.triangleUp(x, y, r)
+  of MarkerTriangleDown:     self.triangleDown(x, y, r)
+  of MarkerFourRays:         self.fourRays(x, y, r)
+  of MarkerCross:            self.cross(x, y, r)
+  of MarkerX:                self.xing(x, y, r)
+  of MarkerDash:             self.dash(x, y, r)
+  of MarkerDot:              self.dot(x, y, r)
+  of MarkerPixel:            self.pixel(x, y, r)
   else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
@@ -386,94 +405,94 @@ proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
     return
 
   case shape
-  of marker_square:            doWhile n != 0: self.square(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_diamond:           doWhile n != 0: self.diamond(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_circle:            doWhile n != 0: self.circle(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_crossed_circle:    doWhile n != 0: self.crossed_circle(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_semiellipse_left:  doWhile n != 0: self.semiellipse_left(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_semiellipse_right: doWhile n != 0: self.semiellipse_right(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_semiellipse_up:    doWhile n != 0: self.semiellipse_up(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_semiellipse_down:  doWhile n != 0: self.semiellipse_down(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_triangle_left:     doWhile n != 0: self.triangle_left(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_triangle_right:    doWhile n != 0: self.triangle_right(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_triangle_up:       doWhile n != 0: self.triangle_up(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_triangle_down:     doWhile n != 0: self.triangle_down(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_four_rays:         doWhile n != 0: self.four_rays(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_cross:             doWhile n != 0: self.cross(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_x:                 doWhile n != 0: self.xing(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_dash:              doWhile n != 0: self.dash(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_dot:               doWhile n != 0: self.dot(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  of marker_pixel:             doWhile n != 0: self.pixel(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerSquare:           doWhile n != 0: self.square(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerDiamond:          doWhile n != 0: self.diamond(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerCircle:           doWhile n != 0: self.circle(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerCrossedCircle:    doWhile n != 0: self.crossedCircle(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerSemiEllipseLeft:  doWhile n != 0: self.semiEllipseLeft(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerSemiEllipseRight: doWhile n != 0: self.semiEllipseRight(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerSemiEllipseUp:    doWhile n != 0: self.semiEllipseUp(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerSemiEllipseDown:  doWhile n != 0: self.semiEllipseDown(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerTriangleLeft:     doWhile n != 0: self.triangleLeft(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerTriangleRight:    doWhile n != 0: self.triangleRight(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerTriangleUp:       doWhile n != 0: self.triangleUp(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerTriangleDown:     doWhile n != 0: self.triangleDown(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerFourRays:         doWhile n != 0: self.fourRays(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerCross:            doWhile n != 0: self.cross(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerX:                doWhile n != 0: self.xing(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerDash:             doWhile n != 0: self.dash(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerDot:              doWhile n != 0: self.dot(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
+  of MarkerPixel:            doWhile n != 0: self.pixel(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
   else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, shape: Marker) =
   if n <= 0: return
   case shape
-  of marker_square:            doWhile n != 0: square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_diamond:           doWhile n != 0: diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_circle:            doWhile n != 0: circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_crossed_circle:    doWhile n != 0: crossed_circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_semiellipse_left:  doWhile n != 0: semiellipse_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_semiellipse_right: doWhile n != 0: semiellipse_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_semiellipse_up:    doWhile n != 0: semiellipse_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_semiellipse_down:  doWhile n != 0: semiellipse_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_triangle_left:     doWhile n != 0: triangle_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_triangle_right:    doWhile n != 0: triangle_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_triangle_up:       doWhile n != 0: triangle_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_triangle_down:     doWhile n != 0: triangle_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_four_rays:         doWhile n != 0: four_rays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_cross:             doWhile n != 0: cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_x:                 doWhile n != 0: xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_dash:              doWhile n != 0: dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_dot:               doWhile n != 0: dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  of marker_pixel:             doWhile n != 0: pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerSquare:           doWhile n != 0: self.square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerDiamond:          doWhile n != 0: self.diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerCircle:           doWhile n != 0: self.circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerCrossedCircle:    doWhile n != 0: self.crossedCircle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerSemiEllipseLeft:  doWhile n != 0: self.semiEllipseLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerSemiEllipseRight: doWhile n != 0: self.semiEllipseRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerSemiEllipseUp:    doWhile n != 0: self.semiEllipseUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerSemiEllipseDown:  doWhile n != 0: self.semiEllipseDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerTriangleLeft:     doWhile n != 0: self.triangleLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerTriangleRight:    doWhile n != 0: self.triangleRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerTriangleUp:       doWhile n != 0: self.triangleUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerTriangleDown:     doWhile n != 0: self.triangleDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerFourRays:         doWhile n != 0: self.fourRays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerCross:            doWhile n != 0: self.cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerX:                doWhile n != 0: self.xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerDash:             doWhile n != 0: self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerDot:              doWhile n != 0: self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
+  of MarkerPixel:            doWhile n != 0: self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
   else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, fc: ptr ColorT, shape: Marker) =
   if n <= 0: return
   case shape
-  of marker_square:            doWhile n != 0: base(self).fillColor(fc[]); self.square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_diamond:           doWhile n != 0: base(self).fillColor(fc[]); self.diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_circle:            doWhile n != 0: base(self).fillColor(fc[]); self.circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_crossed_circle:    doWhile n != 0: base(self).fillColor(fc[]); self.crossed_circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_semiellipse_left:  doWhile n != 0: base(self).fillColor(fc[]); self.semiellipse_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_semiellipse_right: doWhile n != 0: base(self).fillColor(fc[]); self.semiellipse_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_semiellipse_up:    doWhile n != 0: base(self).fillColor(fc[]); self.semiellipse_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_semiellipse_down:  doWhile n != 0: base(self).fillColor(fc[]); self.semiellipse_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_triangle_left:     doWhile n != 0: base(self).fillColor(fc[]); self.triangle_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_triangle_right:    doWhile n != 0: base(self).fillColor(fc[]); self.triangle_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_triangle_up:       doWhile n != 0: base(self).fillColor(fc[]); self.triangle_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_triangle_down:     doWhile n != 0: base(self).fillColor(fc[]); self.triangle_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_four_rays:         doWhile n != 0: base(self).fillColor(fc[]); self.four_rays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_cross:             doWhile n != 0: base(self).fillColor(fc[]); self.cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_x:                 doWhile n != 0: base(self).fillColor(fc[]); self.xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_dash:              doWhile n != 0: base(self).fillColor(fc[]); self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_dot:               doWhile n != 0: base(self).fillColor(fc[]); self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  of marker_pixel:             doWhile n != 0: base(self).fillColor(fc[]); self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerSquare:           doWhile n != 0: base(self).fillColor(fc[]); self.square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerDiamond:          doWhile n != 0: base(self).fillColor(fc[]); self.diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerCircle:           doWhile n != 0: base(self).fillColor(fc[]); self.circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerCrossedCircle:    doWhile n != 0: base(self).fillColor(fc[]); self.crossedCircle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerSemiEllipseLeft:  doWhile n != 0: base(self).fillColor(fc[]); self.semiEllipseLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerSemiEllipseRight: doWhile n != 0: base(self).fillColor(fc[]); self.semiEllipseRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerSemiEllipseUp:    doWhile n != 0: base(self).fillColor(fc[]); self.semiEllipseUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerSemiEllipseDown:  doWhile n != 0: base(self).fillColor(fc[]); self.semiEllipseDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerTriangleLeft:     doWhile n != 0: base(self).fillColor(fc[]); self.triangleLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerTriangleRight:    doWhile n != 0: base(self).fillColor(fc[]); self.triangleRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerTriangleUp:       doWhile n != 0: base(self).fillColor(fc[]); self.triangleUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerTriangleDown:     doWhile n != 0: base(self).fillColor(fc[]); self.triangleDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerFourRays:         doWhile n != 0: base(self).fillColor(fc[]); self.fourRays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerCross:            doWhile n != 0: base(self).fillColor(fc[]); self.cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerX:                doWhile n != 0: base(self).fillColor(fc[]); self.xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerDash:             doWhile n != 0: base(self).fillColor(fc[]); self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerDot:              doWhile n != 0: base(self).fillColor(fc[]); self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
+  of MarkerPixel:            doWhile n != 0: base(self).fillColor(fc[]); self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
   else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, fc, lc: ptr ColorT, shape: Marker) =
   if n <= 0: return
   case shape
-  of marker_square:            doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_diamond:           doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_circle:            doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_crossed_circle:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); crossed_circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_semiellipse_left:  doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); semiellipse_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_semiellipse_right: doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); semiellipse_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_semiellipse_up:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); semiellipse_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_semiellipse_down:  doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); semiellipse_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_triangle_left:     doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); triangle_left(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_triangle_right:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); triangle_right(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_triangle_up:       doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); triangle_up(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_triangle_down:     doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); triangle_down(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_four_rays:         doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); four_rays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_cross:             doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_x:                 doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_dash:              doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_dot:               doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  of marker_pixel:             doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerSquare:           doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.square(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerDiamond:          doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.diamond(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerCircle:           doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.circle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerCrossedCircle:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.crossedCircle(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerSemiEllipseLeft:  doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.semiEllipseLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerSemiEllipseRight: doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.semiEllipseRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerSemiEllipseUp:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.semiEllipseUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerSemiEllipseDown:  doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.semiEllipseDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerTriangleLeft:     doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.triangleLeft(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerTriangleRight:    doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.triangleRight(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerTriangleUp:       doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.triangleUp(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerTriangleDown:     doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.triangleDown(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerFourRays:         doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.fourRays(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerCross:            doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.cross(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerX:                doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.xing(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerDash:             doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerDot:              doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
+  of MarkerPixel:            doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
   else: discard

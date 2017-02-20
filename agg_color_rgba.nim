@@ -158,12 +158,18 @@ proc initRgba8*(r,g,b:uint): Rgba8 =
   result.b = b.ValueT
   result.a = getBaseMask(Rgba8).ValueT
 
+proc initRgba8*(r,g,b:int): Rgba8 {.inline.} =
+  initRgba8(r.uint,g.uint,b.uint)
+
 proc initRgba8*(r,g,b,a:uint): Rgba8 =
   type ValueT = getValueT(Rgba8)
   result.r = r.ValueT
   result.g = g.ValueT
   result.b = b.ValueT
   result.a = a.ValueT
+
+proc initRgba8*(r,g,b,a:int): Rgba8 {.inline.} =
+  initRgba8(r.uint,g.uint,b.uint,a.uint)
 
 proc initRgba8*(c: Rgba): Rgba8 =
   type ValueT = getValueT(Rgba8)
@@ -179,6 +185,9 @@ proc initRgba8*(c: Rgba8, a: uint): Rgba8 =
   result.g = c.g
   result.b = c.b
   result.a = ValueT(a)
+
+proc initRgba8*(c: Rgba8, a: int): Rgba8 {.inline.} =
+  initRgba8(c, a.uint)
 
 proc initRgba8*(c: Rgba8): Rgba8 = c
 

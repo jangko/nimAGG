@@ -21,7 +21,7 @@ proc `[]`(self: GradientLinearColor, v: int): Rgba8 =
   const baseShift = getBaseShift(Rgba8)
 
   let v = v shl (baseShift - 8)
-  result.r = ValueT(( ((self.mC2.r.int - self.mC1.r.int) * v) + (self.mC1.r.int shl baseShift)) shr baseShift)
+  result.r = ValueT((((self.mC2.r.int - self.mC1.r.int) * v) + (self.mC1.r.int shl baseShift)) shr baseShift)
   result.g = ValueT((((self.mC2.g.int - self.mC1.g.int) * v) + (self.mC1.g.int shl baseShift)) shr baseShift)
   result.b = ValueT((((self.mC2.b.int - self.mC1.b.int) * v) + (self.mC1.b.int shl baseShift)) shr baseShift)
   result.a = ValueT((((self.mC2.a.int - self.mC1.a.int) * v) + (self.mC1.a.int shl baseShift)) shr baseShift)
