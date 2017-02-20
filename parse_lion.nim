@@ -226,4 +226,4 @@ proc parseLion*(width, height: int, scale = 1.0, angle = 0.0, skewX = 0.0, skewY
   result.mtx *= transAffineScaling(scale, scale)
   result.mtx *= transAffineRotation(angle + pi)
   result.mtx *= transAffineSkewing(skewX/1000.0, skewY/1000.0)
-  result.mtx *= transAffineTranslation(width.float64/4, height.float64/2)
+  result.mtx *= transAffineTranslation(width.float64/2, height.float64/2)

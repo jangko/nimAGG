@@ -90,6 +90,7 @@ proc onDraw() =
   
   rb.clear(initRgba(1, 1, 1))
 
+  lion.mtx *= transAffineTranslation(-frameWidth.float64/4, 0)
   #lion.mtx *= transAffineResizing()
 
   renderAllPaths(ras2, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)

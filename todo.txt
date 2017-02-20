@@ -5,15 +5,12 @@ vcgen_contour
 vcgen_dash
 vcgen_smooth_poly1
 vpgen_clip_polyline
-vpgen_segmentator
 vpgen_clip_polygon
 
 conv_unclose_polygon
 conv_concat
 conv_shorten_path
 conv_close_polygon
-conv_adaptor_vpgen
-conv_segmentator
 conv_bspline
 conv_contour
 conv_dash
@@ -27,7 +24,6 @@ path_length
 span_solid
 image_accessors
 pixfmt_transposer
-trans_warp_magnifier
 bspline
 renderer_mclip
 rasterizer_compound_aa
@@ -55,6 +51,10 @@ translate ok:
   bezier_arc
   renderer_scanline
   
+  -vpgen_segmentator
+  -conv_adaptor_vpgen
+  -trans_warp_magnifier
+  -conv_segmentator  
   -dda_line
   -gradient_lut
   -pixfmt_rgba

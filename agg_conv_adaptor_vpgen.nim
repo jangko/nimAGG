@@ -10,7 +10,7 @@ type
 
 proc init*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], source: var VS) =
   self.mSource = source.addr
-  self.mVpgen  = construct(VPGen)
+  self.mVpgen  = construct(VPG)
 
 proc initConvAdaptorVpgen*[VS, VPG](source: var VS): ConvAdaptorVpgen[VS, VPG] =
   result.init(source)
@@ -21,6 +21,7 @@ proc attach*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], source: var VS) =
 proc vpgen*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG]): var VPG = self.mVpgen
 
 proc rewind*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], pathId: int)  =
+  mixin rewind
   self.mSource[].rewind(pathId)
   self.mVpgen.reset()
   self.mStartX    = 0
@@ -34,7 +35,7 @@ proc vertex*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], x, y: var float64): u
     cmd = self.mVpgen.vertex(x, y)
     if not isStop(cmd): break
 
-    if self.mPolyFlags and not VPG.autoUnclose():
+    if self.mPolyFlags != 0 and not VPG.autoUnclose():
       x = 0.0
       y = 0.0
       cmd = self.mPolyFlags
@@ -86,8 +87,3 @@ proc vertex*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], x, y: var float64): u
         break
 
   result = cmd
-
-
-
-
-
