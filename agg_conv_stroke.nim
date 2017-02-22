@@ -13,9 +13,9 @@ proc lineCap*[V,M](self: var ConvStroke[V,M], lc: LineCap) = base[V,M](self).gen
 proc lineJoin*[V,M](self: var ConvStroke[V,M], lj: LineJoin) = base[V,M](self).generator().lineJoin(lj)
 proc innerJoin*[V,M](self: var ConvStroke[V,M], ij: InnerJoin) = base[V,M](self).generator().innerJoin(ij)
 
-proc lineCap*[V,M](self: ConvStroke[V,M]): LineCap = base[V,M](self).generator().lineCap
-proc lineJoin*[V,M](self: ConvStroke[V,M]): LineJoin = base[V,M](self).generator().lineJoin
-proc innerJoin*[V,M](self: ConvStroke[V,M]): InnerJoin = base[V,M](self).generator().innerJoin
+proc lineCap*[V,M](self: var ConvStroke[V,M]): LineCap = base[V,M](self).generator().lineCap
+proc lineJoin*[V,M](self: var ConvStroke[V,M]): LineJoin = base[V,M](self).generator().lineJoin
+proc innerJoin*[V,M](self: var ConvStroke[V,M]): InnerJoin = base[V,M](self).generator().innerJoin
 
 proc width*[V,M](self: var ConvStroke[V,M], w: float64) = base[V,M](self).generator().width(w)
 proc miterLimit*[V,M](self: var ConvStroke[V,M], ml: float64) = base[V,M](self).generator().miterLimit(ml)
@@ -23,10 +23,10 @@ proc miterLimitTheta*[V,M](self: var ConvStroke[V,M], t: float64) = base[V,M](se
 proc innerMiterLimit*[V,M](self: var ConvStroke[V,M], ml: float64) = base[V,M](self).generator().innerMiterLimit(ml)
 proc approximationCcale*[V,M](self: var ConvStroke[V,M], asc: float64) = base[V,M](self).generator().approximationScale(asc)
 
-proc width*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).generator().width()
-proc miterLimit*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).generator().miterLimit()
-proc innerMiterLimit*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).generator().innerMiterLimit()
-proc approximationScale*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).generator().approximationScale()
+proc width*[V,M](self: var ConvStroke[V,M]): float64 = base[V,M](self).generator().width()
+proc miterLimit*[V,M](self: var ConvStroke[V,M]): float64 = base[V,M](self).generator().miterLimit()
+proc innerMiterLimit*[V,M](self: var ConvStroke[V,M]): float64 = base[V,M](self).generator().innerMiterLimit()
+proc approximationScale*[V,M](self: var ConvStroke[V,M]): float64 = base[V,M](self).generator().approximationScale()
 
 proc shorten*[V,M](self: var ConvStroke[V,M], s: float64) = base[V,M](self).shorten(s)
 proc shorten*[V,M](self: ConvStroke[V,M]): float64 = base[V,M](self).shorten()
