@@ -167,14 +167,14 @@ type
     mActiveColor: ColorT
     mColors: array[3, ptr ColorT]
 
-proc initCboxCtrl*[ColorT](x, y: float64, label: string, flipY = false): CboxCtrl[ColorT] =
+proc newCboxCtrl*[ColorT](x, y: float64, label: string, flipY = false): CboxCtrl[ColorT] =
   new(result)
   CboxCtrlImpl(result).init(x, y, label, flipY)
 
   when ColorT is not Rgba:
     result.mTextColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
-    result.mInactiveColor = construct(ColorT,initRgba(0.0, 0.0, 0.0))
-    result.mActiveColor = construct(ColorT,initRgba(0.4, 0.0, 0.0) )
+    result.mInactiveColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mActiveColor = construct(ColorT, initRgba(0.4, 0.0, 0.0) )
   else:
     result.mTextColor = initRgba(0.0, 0.0, 0.0)
     result.mInactiveColor = initRgba(0.0, 0.0, 0.0)
