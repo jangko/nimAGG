@@ -1,6 +1,8 @@
 import ctrl_base, agg_basics, agg_conv_stroke, agg_ellipse
 import agg_vcgen_stroke, agg_color_rgba, math
 
+export ctrl_base
+
 type
   SimplePolygonVertexSource* = object
     mPolygon: ptr float64

@@ -1,6 +1,8 @@
 import agg_basics, agg_conv_stroke, agg_gsv_text, agg_trans_affine
 import agg_color_rgba, ctrl_base
 
+export ctrl_base
+
 type
   CboxCtrlImpl* = ref object of CtrlBase
     mTextThickness: float64

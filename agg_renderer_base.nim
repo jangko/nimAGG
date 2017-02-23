@@ -300,10 +300,12 @@ proc blendColorHspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len:
 proc blendColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: int,
   colors: ptr ColorT, covers: ptr CoverType, cover: CoverType = coverFull) =
   mixin blendColorVSpan
+    
   if x > self.xmax(): return
   if x < self.xmin(): return
 
   var
+    y = y
     len = len
     colors = colors
     covers = covers
@@ -317,7 +319,7 @@ proc blendColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len:
     y = self.ymin()
 
   if y + len > self.ymax():
-    len = ymax() - y + 1
+    len = self.ymax() - y + 1
     if len <= 0: return
 
   self.mRen[].blendColorVspan(x, y, len, colors, covers, cover)

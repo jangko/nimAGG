@@ -1,6 +1,8 @@
 import agg_array, agg_ellipse, agg_conv_stroke, agg_gsv_text, agg_trans_affine
 import agg_color_rgba, ctrl_base, agg_math, agg_basics
 
+export ctrl_base
+
 type
   RboxCtrlImpl* = ref object of CtrlBase
     mBorderWidth: float64

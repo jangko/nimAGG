@@ -2,6 +2,8 @@ import agg_basics, agg_gamma_spline, agg_ellipse, agg_conv_stroke
 import agg_gsv_text, agg_trans_affine, agg_color_rgba, ctrl_base
 import agg_math, strutils
 
+export ctrl_base
+
 type
   GammaCtrlImpl* = ref object of CtrlBase
     mGammaSpline: GammaSpline

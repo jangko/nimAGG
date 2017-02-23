@@ -2,6 +2,8 @@ import agg_basics, agg_math, agg_ellipse, agg_trans_affine
 import agg_color_rgba, agg_gsv_text, agg_conv_stroke
 import agg_path_storage, ctrl_base, strutils
 
+export ctrl_base
+
 type
   SliderCtrlImpl* = ref object of CtrlBase
     mBorderWidth: float64
@@ -37,7 +39,9 @@ proc init(self: SliderCtrlImpl, x1, y1, x2, y2: float64, flipY = false) =
   self.mMax = 1.0
   self.mNumSteps = 0
   self.mDescending = false
+  self.mText = initGsvText()
   self.mTextPoly = initConvStroke(self.mText)
+  self.mStorage = initPathStorage()
   self.mLabel = ""
   self.calcBox()
 
@@ -201,7 +205,7 @@ proc rewind*(self: SliderCtrlImpl, idx: int) =
   of 2:
     self.mText.text(self.mLabel)
     if self.mLabel.len != 0:
-      var buf = self.mLabel % [$self.value()]
+      var buf = self.mLabel % [formatFloat(self.value(), ffDecimal, 2)]
       self.mText.text(buf)
     self.mText.startPoint(self.m.x1, self.m.y1)
     self.mText.size((self.m.y2 - self.m.y1) * 1.2, self.m.y2 - self.m.y1)
@@ -278,16 +282,16 @@ proc newSliderCtrl*[ColorT](x1, y1, x2, y2: float64, flipY = false): SliderCtrl[
 
   when ColorT is not Rgba:
     result.mBackgroundColor = construct(ColorT, initRgba(1.0, 0.9, 0.8))
-    result.mTriangleColor = construct(ColorT, initRrgba(0.7, 0.6, 0.6))
-    result.mTextColor = construct(ColorT, initRrgba(0.0, 0.0, 0.0))
-    result.mPointerPreviewColor = construct(ColorT, initRrgba(0.6, 0.4, 0.4, 0.4))
-    result.mPointerColor = construct(ColorT, initRrgba(0.8, 0.0, 0.0, 0.6))
+    result.mTriangleColor = construct(ColorT, initRgba(0.7, 0.6, 0.6))
+    result.mTextColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mPointerPreviewColor = construct(ColorT, initRgba(0.6, 0.4, 0.4, 0.4))
+    result.mPointerColor = construct(ColorT, initRgba(0.8, 0.0, 0.0, 0.6))
   else:
     result.mBackgroundColor = initRgba(1.0, 0.9, 0.8)
-    result.mTriangleColor = initRrgba(0.7, 0.6, 0.6)
-    result.mTextColor = initRrgba(0.0, 0.0, 0.0)
-    result.mPointerPreviewColor = initRrgba(0.6, 0.4, 0.4, 0.4)
-    result.mPointerColor = initRrgba(0.8, 0.0, 0.0, 0.6)
+    result.mTriangleColor = initRgba(0.7, 0.6, 0.6)
+    result.mTextColor = initRgba(0.0, 0.0, 0.0)
+    result.mPointerPreviewColor = initRgba(0.6, 0.4, 0.4, 0.4)
+    result.mPointerColor = initRgba(0.8, 0.0, 0.0, 0.6)
 
   result.mColors[0] = result.mBackgroundColor.addr
   result.mColors[1] = result.mTriangleColor.addr

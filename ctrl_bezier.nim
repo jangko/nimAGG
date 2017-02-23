@@ -2,6 +2,8 @@ import agg_math, agg_ellipse, agg_trans_affine, agg_color_rgba
 import agg_conv_stroke, agg_conv_curve, ctrl_polygon
 import agg_basics, agg_curves, ctrl_base
 
+export ctrl_base, agg_curves
+
 type
   BezierCtrlImpl* = ref object of CtrlBase
     mCurve: Curve4

@@ -1,6 +1,8 @@
 import agg_basics, agg_math, agg_ellipse, agg_trans_affine
 import agg_color_rgba, ctrl_base
 
+export ctrl_base
+
 type
   Move = enum
     moveNothing

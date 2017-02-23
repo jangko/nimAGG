@@ -97,6 +97,7 @@ proc addVertex*[Renderer](self: var RasterizerOutlineAA[Renderer], x, y: float64
       self.lineToD(x, y, LineCoord)
 
 proc addPath*[Renderer, VertexSource](self: var RasterizerOutlineAA[Renderer], vs: var VertexSource, pathId = 0) =
+  mixin rewind
   var
     x, y: float64
     cmd: uint

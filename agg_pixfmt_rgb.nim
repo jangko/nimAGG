@@ -104,7 +104,7 @@ proc makePix*[Blender, RenBuf, ColorT](x: typedesc[PixfmtAlphaBlendRgb[Blender, 
   cast[ptr ValueT](p)[OrderT.G] = c.g
   cast[ptr ValueT](p)[OrderT.B] = c.b
 
-proc pixel*[Blender, RenBuf](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
+proc pixel*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int): auto =
 
   type

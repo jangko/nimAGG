@@ -1,6 +1,7 @@
 import agg_math, agg_line_aa_basics, agg_dda_line
 import agg_clip_liang_barsky, agg_rendering_buffer
 import agg_basics, agg_color_rgba, agg_pixfmt_rgb
+import agg_pattern_filters_rgba
 
 type
   LineImageScale*[Source] = object
@@ -29,7 +30,7 @@ type
   LineImagePattern*[Filter, ColorT] = object of RootObj
     mBuf: RowPtrCache[ColorT]
     mFilter: ptr Filter
-    mDilation: uint
+    mDilation: int
     mDilationHr: int
     mData: seq[ColorT]
     mWidth, mHeight: int
@@ -40,7 +41,7 @@ type
 proc init[Filter, ColorT](self: var LineImagePattern[Filter, ColorT], filter: var Filter) =
   self.mBuf = initRowPtrCache[ColorT]()
   self.mFilter = filter.addr
-  self.mDilation = filter.dilation() + 1
+  self.mDilation = dilation(Filter) + 1
   self.mDilationHr = self.mDilation shl lineSubpixelShift
   self.mData = @[]
   self.mWidth = 0
@@ -77,10 +78,11 @@ proc initLineImagePattern*[Filter, Source](filter: var Filter, src: var Source):
   result = initLineImagePatternAux[Filter, Source, getColorT(Filter)](filter, src)
 
 proc create[Filter, Source, ColorT](self: var LineImagePattern[Filter, ColorT], src: Source) =
-  self.mHeight  = uceil(src.height())
-  self.mWidth   = uceil(src.width())
-  self.mWidthHr = uround(src.width() * lineSubpixelScale)
-  self.mHalfHeightHr  = uround(src.height() * lineSubpixelScale div 2)
+  self.mHeight  = int(uceil(src.height().float64))
+  self.mWidth   = int(uceil(src.width().float64))
+  
+  self.mWidthHr = uround(src.width().float64 * lineSubpixelScale)
+  self.mHalfHeightHr  = uround(src.height().float64 * lineSubpixelScale / 2)
   self.mOffsetYHr     = self.mDilationHr + self.mHalfHeightHr - lineSubpixelScale div 2
   self.mHalfHeightHr += lineSubpixelScale div 2
   self.mData.setLen((self.mWidth + self.mDilation * 2) * (self.mHeight + self.mDilation * 2))
@@ -137,12 +139,11 @@ proc lineWidth*[Filter, ColorT](self: LineImagePattern[Filter, ColorT]): int =
 proc width*[Filter, ColorT](self: LineImagePattern[Filter, ColorT]): float64 =
   self.mHeight
 
-proc pixel*[Filter, ColorT](self: LineImagePattern[Filter, ColorT], p: ptr ColorT, x, y: int) =
-  self.mFilter[].pixelHighRes(self.mBuf.rows(),
+proc pixel*[Filter, ColorT](self: var LineImagePattern[Filter, ColorT], p: ptr ColorT, x, y: int) =
+  pixelHighRes(Filter, self.mBuf.rows(),
     p, x mod self.mWidthHr + self.mDilationHr, y + self.mOffsetYHr)
 
 proc filter*[Filter, ColorT](self: LineImagePattern[Filter, ColorT]): var Filter = self.mFilter[]
-
 
 type
   LineImagePatternPow2*[Filter, ColorT] = object of LineImagePattern[Filter, ColorT]
@@ -351,22 +352,21 @@ type
     mDistPos: array[MaxHalfWidth + 1, int]
     mColors: array[MaxHalfWidth * 2 + 4, ColorT]
 
-proc initLineInterpolatorImage*[R,C](ren: var R, lp: LineParameters,
+proc initLineInterpolatorImageAux*[R,C](ren: var R, lp: var LineParameters,
   sx, sy, ex, ey, patternStart: int, scaleX: float64): LineInterpolatorImage[R, C] =
-
-  result.mLp = lp
+  mixin patternWidth, y
+  result.mLp = lp.addr
 
   let
-    x = if lp.vertical: lineDblHr(lp.x2 - lp.x1) else: lineDblHr(lp.y2 - lp.y1)
-    y = if lp.vertical: abs(lp.y2 - lp.y1) else: abs(lp.x2 - lp.x1) + 1
+    xx = if lp.vertical: lineDblHr(lp.x2 - lp.x1) else: lineDblHr(lp.y2 - lp.y1)
+    yy = if lp.vertical: abs(lp.y2 - lp.y1) else: abs(lp.x2 - lp.x1) + 1
 
-  result.mLi = initDda2LineInterpolator(x, y)
-
+  result.mLi = initDda2LineInterpolator(xx, yy)
 
   result.mDi = initDistanceInterpolator4(lp.x1, lp.y1, lp.x2, lp.y2, sx, sy, ex, ey,
     lp.len, scaleX, lp.x1 and (not lineSubpixelMask), lp.y1 and (not lineSubpixelMask))
 
-  result.mRen = ren
+  result.mRen = ren.addr
   result.mX = lp.x1 shr lineSubpixelShift
   result.mY = lp.y1 shr lineSubpixelShift
   result.mOldX = result.mX
@@ -384,7 +384,7 @@ proc initLineInterpolatorImage*[R,C](ren: var R, lp: LineParameters,
   result.mStart = patternStart + (result.mMaxExtent + 2) * ren.patternWidth()
   result.mStep = 0
 
-  let
+  var
     dy = lp.dy shl lineSubpixelShift
     dx = lp.dx shl lineSubpixelShift
     li = initDda2LineInterpolator(0, if lp.vertical: dy else: dx, lp.len)
@@ -454,7 +454,13 @@ proc initLineInterpolatorImage*[R,C](ren: var R, lp: LineParameters,
   result.mLi.adjustForward()
   result.mStep -= result.mMaxExtent
 
+proc initLineInterpolatorImage*[R](ren: var R, lp: var LineParameters,
+  sx, sy, ex, ey, patternStart: int, scaleX: float64): auto =
+  initLineInterpolatorImageAux[R, getColorT(R)](ren, lp, sx ,sy, ex, ey, patternStart, scaleX)
+
 proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
+  mixin blendColorVspan
+
   inc self.mLi
   self.mX += self.mLp.inc
   self.mY = (self.mLp.y1 + self.mLi.y()) shr lineSubpixelShift
@@ -465,7 +471,7 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   self.mOldY = self.mY
 
   var
-    s1 = self.mDi.dist() / self.mLp.len
+    s1 = int(self.mDi.dist() / self.mLp.len)
     s2 = -s1
 
   if self.mLp.inc < 0: s1 = -s1
@@ -475,14 +481,14 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
     distStart = self.mDi.distStart()
     distPict  = self.mDi.distPict() + self.mStart
     distEnd   = self.mDi.distEnd()
-    p0 = self.mColors + MaxHalfWidth + 2
+    p0 = self.mColors[0].addr + MaxHalfWidth + 2
     p1 = p0
     npix = 0
 
-  p1.clear()
+  p1[].clear()
   if distEnd > 0:
     if distStart <= 0:
-      self.mRen.pixel(p1, distPict, s2)
+      self.mRen[].pixel(p1, distPict, s2)
     inc npix
   inc p1
 
@@ -492,10 +498,10 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
     distStart -= self.mDi.dxStart()
     distPict  -= self.mDi.dxPict()
     distEnd   -= self.mDi.dxEnd()
-    p1.clear()
+    p1[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
-      self.mRen.pixel(p1, distPict, s2 - dist)
+      self.mRen[].pixel(p1, distPict, s2 - dist)
       inc npix
     inc p1
     inc dy
@@ -511,21 +517,22 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
     distPict  += self.mDi.dxPict()
     distEnd   += self.mDi.dxEnd()
     dec p0
-    p0.clear()
+    p0[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
-      self.mRen.pixel(p0, distPict, s2 + dist)
+      self.mRen[].pixel(p0, distPict, s2 + dist)
       inc npix
     inc dy
     dist = self.mDistPos[dy]
 
-  self.mRen.blendColorVspan(self.mX, self.mY - dy + 1, uint(p1 - p0), p0)
+  self.mRen[].blendColorVspan(self.mX, self.mY - dy + 1, cast[int](p1 - p0), p0)
   inc self.mStep
 
   result = npix != 0 and self.mStep < self.mCount
 
 
 proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
+  mixin blendColorHspan
   inc self.mLi
   self.mY += self.mLp.inc
   self.mX = (self.mLp.x1 + self.mLi.y()) shr lineSubpixelShift
@@ -536,7 +543,7 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   self.mOldX = self.mX
 
   var
-    s1 = self.mDi.dist() / self.mLp.len
+    s1 = int(self.mDi.dist() / self.mLp.len)
     s2 = -s1
 
   if self.mLp.inc > 0: s1 = -s1
@@ -546,27 +553,27 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
     distStart = self.mDi.distStart()
     distPict  = self.mDi.distPict() + self.mStart
     distEnd   = self.mDi.distEnd()
-    p0 = self.mColors + MaxHalfWidth + 2
+    p0 = self.mColors[0].addr + MaxHalfWidth + 2
     p1 = p0
     npix = 0
 
-  p1.clear()
+  p1[].clear()
   if distEnd > 0:
     if distStart <= 0:
-      self.mRen.pixel(p1, distPict, s2)
+      self.mRen[].pixel(p1, distPict, s2.int)
     inc npix
   inc p1
 
-  dx = 1;
+  dx = 1
   dist = self.mDistPos[dx]
   while dist - s1 <= self.mWidth:
     distStart += self.mDi.dyStart()
     distPict  += self.mDi.dyPict()
     distEnd   += self.mDi.dyEnd()
-    p1.clear()
+    p1[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
-      self.mRen.pixel(p1, distPict, s2 + dist)
+      self.mRen[].pixel(p1, distPict, s2 + dist)
       inc npix
     inc p1
     inc dx
@@ -582,15 +589,15 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
     distPict  -= self.mDi.dyPict()
     distEnd   -= self.mDi.dyEnd()
     dec p0
-    p0.clear()
+    p0[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
-      self.mRen.pixel(p0, distPict, s2 - dist)
+      self.mRen[].pixel(p0, distPict, s2 - dist)
       inc npix
     inc dx
     dist = self.mDistPos[dx]
-
-  self.mRen.blendColorHspan(self.mX - dx + 1, self.mY, uint(p1 - p0), p0)
+  
+  self.mRen[].blendColorHspan(self.mX - dx + 1, self.mY, cast[int](p1 - p0), p0)
   inc self.mStep
 
   result = npix != 0 and self.mStep < self.mCount
@@ -610,12 +617,14 @@ proc count*[R,C](self: var LineInterpolatorImage[R, C]): int =
 
 type
   RendererOutlineImage*[BaseRenderer, ImagePattern] = object
-    mRen: var BaseRenderer
-    mPattern: var ImagePattern
+    mRen: ptr BaseRenderer
+    mPattern: ptr ImagePattern
     mStart: int
     mScaleX: float64
     mClipBox: RectI
     mClipping: bool
+
+template getColorT*[B,I](x: typedesc[RendererOutlineImage[B,I]]): typedesc = getColorT(B.type)
 
 proc initRendererOutlineImage*[B, I](ren: var B, patt: var I): RendererOutlineImage[B, I] =
   result.mRen = ren.addr
@@ -657,22 +666,22 @@ proc startX*[B, I](self: RendererOutlineImage[B, I]): float64 =
   float64(self.mStart) / lineSubpixelScale
 
 proc subPixelWidth*[B, I](self: RendererOutlineImage[B, I]): int =
-  self.mPattern.lineWidth()
+  self.mPattern[].lineWidth()
 
 proc patternWidth*[B, I](self: RendererOutlineImage[B, I]): int =
-  self.mPattern.patternWidth()
+  self.mPattern[].patternWidth()
 
 proc width*[B, I](self: RendererOutlineImage[B, I]): float64 =
   float64(self.subPixelWidth()) / lineSubpixelScale
 
 proc pixel*[B, I, ColorT](self: var RendererOutlineImage[B, I], p: ptr ColorT, x, y: int) =
-  self.mPattern.pixel(p, x, y)
+  self.mPattern[].pixel(p, x, y)
 
 proc blendColorHspan*[B, I, ColorT](self: var RendererOutlineImage[B, I], x, y, len: int, colors: ptr ColorT) =
-  self.mRen[].blendColorHspan(x, y, len, colors, 0)
+  self.mRen[].blendColorHspan(x, y, len, colors, nil)
 
 proc blendColorVspan*[B, I, ColorT](self: var RendererOutlineImage[B, I], x, y, len: int, colors: ptr ColorT) =
-  self.mRen[].blendColorVspan(x, y, len, colors, 0)
+  self.mRen[].blendColorVspan(x, y, len, colors, nil)
 
 proc accurateJoinOnly*[B, I](self: RendererOutlineImage[B, I]): bool = true
 
@@ -682,15 +691,22 @@ proc line0*[B, I](self: RendererOutlineImage[B, I], lp: LineParameters) = discar
 proc line1*[B, I](self: RendererOutlineImage[B, I], lp: LineParameters, x,y:int) = discard
 proc line2*[B, I](self: RendererOutlineImage[B, I], lp: LineParameters, x,y:int) = discard
 
-proc line3NoClip*[B, I](self: var RendererOutlineImage[B, I], lp: LineParameters, sx, sy, ex, ey: int) =
+proc line3NoClip*[B, I](self: var RendererOutlineImage[B, I], lp: var LineParameters, sx, sy, ex, ey: int) =
+  var
+    sx = sx
+    sy = sy
+    ex = ex
+    ey = ey
+
   if lp.len > lineMaxLength:
-    var lp1, lp2: LineParameters
+    var
+      lp1, lp2: LineParameters
     lp.divide(lp1, lp2)
     var
       mx = lp1.x2 + (lp1.y2 - lp1.y1)
       my = lp1.y2 - (lp1.x2 - lp1.x1)
-    line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
-    line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
+    self.line3NoClip(lp1, (lp.x1 + sx) shr 1, (lp.y1 + sy) shr 1, mx, my)
+    self.line3NoClip(lp2, mx, my, (lp.x2 + ex) shr 1, (lp.y2 + ey) shr 1)
     return
 
   fixDegenerateBisectrixStart(lp, sx, sy)
@@ -701,9 +717,14 @@ proc line3NoClip*[B, I](self: var RendererOutlineImage[B, I], lp: LineParameters
     while li.stepVer(): discard
   else:
     while li.stepHor(): discard
-  self.mStart += uround(lp.len / self.mScaleX)
+  self.mStart += uround(lp.len.float64 / self.mScaleX)
 
-proc line3*[B, I](self: var RendererOutlineImage[B, I], lp: LineParameters, sx, sy, ex, ey: int) =
+proc line3*[B, I](self: var RendererOutlineImage[B, I], lp: var LineParameters, sx, sy, ex, ey: int) =
+  var
+    sx = sx
+    sy = sy
+    ex = ex
+    ey = ey
   if self.mClipping:
     var
       x1 = lp.x1
@@ -731,9 +752,9 @@ proc line3*[B, I](self: var RendererOutlineImage[B, I], lp: LineParameters, sx, 
           while abs(ex - lp.x2) + abs(ey - lp.y2) > lp2.len:
             ex = (lp.x2 + ex) shr 1
             ey = (lp.y2 + ey) shr 1
-        line3NoClip(lp2, sx, sy, ex, ey)
+        self.line3NoClip(lp2, sx, sy, ex, ey)
       else:
-        line3NoClip(lp, sx, sy, ex, ey)
-    self.mStart = start + uround(lp.len / self.mScaleX)
+        self.line3NoClip(lp, sx, sy, ex, ey)
+    self.mStart = start + uround(lp.len.float64 / self.mScaleX)
   else:
-    line3NoClip(lp, sx, sy, ex, ey)
+    self.line3NoClip(lp, sx, sy, ex, ey)
