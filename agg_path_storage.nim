@@ -230,7 +230,7 @@ proc vlineRel*[VC](self: var PathBase[VC], dy: float64) {.inline.} =
   self.relToAbs(dx, dy)
   self.vertices.addVertex(dx, dy, pathCmdLineTo)
 
-proc concatPath*[VC, VertexSource](self: var PathBase[VC], vs: VertexSource, pathId = 0) =
+proc concatPath*[VC, VertexSource](self: var PathBase[VC], vs: var VertexSource, pathId = 0) =
   var x, y: float64
 
   vs.rewind(pathId)

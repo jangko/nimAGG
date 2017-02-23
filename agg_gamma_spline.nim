@@ -56,7 +56,7 @@ proc values(self: var GammaSpline, kx1, ky1, kx2, ky2: float64) =
   for i in 0.. <256:
     self.mGamma[i] = uint8(self.y(float64(i) / 255.0) * 255.0)
 
-proc values*(self: var GammaSpline, kx1, ky1, kx2, ky2: var float64) =
+proc getValues*(self: var GammaSpline, kx1, ky1, kx2, ky2: var float64) =
   kx1 = self.mX[1] * 4.0
   ky1 = self.mY[1] * 4.0
   kx2 = (1.0 - self.mX[2]) * 4.0
@@ -67,6 +67,9 @@ proc box*(self: var GammaSpline, x1, y1, x2, y2: float64) =
   self.mY1 = y1
   self.mX2 = x2
   self.mY2 = y2
+  
+proc gamma*(self: var GammaSpline): ptr uint8 = 
+  self.mGamma[0].addr
 
 proc rewind*(self: var GammaSpline, idx: int) =
   self.mCurX = 0.0
