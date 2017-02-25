@@ -21,7 +21,7 @@ type
   PatternFilterBilinearRgba*[ColorT] = object
   PatternFilterBilinearRgba8*  = PatternFilterBilinearRgba[Rgba8]
   PatternFilterBilinearRgba16* = PatternFilterBilinearRgba[Rgba16]
-  
+
 template getColorT*[ColorT](x: typedesc[PatternFilterBilinearRgba[ColorT]]): typedesc = ColorT
 
 proc dilation*[ColorT](z: typedesc[PatternFilterBilinearRgba[ColorT]]): int = 1
@@ -46,43 +46,43 @@ proc pixelHighRes*[ColorT](z: typedesc[PatternFilterBilinearRgba[ColorT]],
     y = y
     xLr = sar(x, lineSubpixelShift)
     yLr = sar(y, lineSubpixelShift)
-    p   = addr(buf[yLr][xLr])
+    c   = addr(buf[yLr][xLr])
 
   x = x and lineSubpixelMask
   y = y and lineSubpixelMask
 
   var weight = CalcT((lineSubpixelScale - x) * (lineSubpixelScale - y))
+  
+  r += weight * c.r.CalcT
+  g += weight * c.g.CalcT
+  b += weight * c.b.CalcT
+  a += weight * c.a.CalcT
 
-  r += weight * p.r.CalcT
-  g += weight * p.g.CalcT
-  b += weight * p.b.CalcT
-  a += weight * p.a.CalcT
-
-  inc p
+  inc c
 
   weight = CalcT(x * (lineSubpixelScale - y))
-  r += weight * p.r.CalcT
-  g += weight * p.g.CalcT
-  b += weight * p.b.CalcT
-  a += weight * p.a.CalcT
+  r += weight * c.r.CalcT
+  g += weight * c.g.CalcT
+  b += weight * c.b.CalcT
+  a += weight * c.a.CalcT
 
-  p = addr(buf[yLr + 1][xLr])
+  c = addr(buf[yLr + 1][xLr])
 
   weight = CalcT((lineSubpixelScale - x) * y)
-  r += weight * p.r.CalcT
-  g += weight * p.g.CalcT
-  b += weight * p.b.CalcT
-  a += weight * p.a.CalcT
+  r += weight * c.r.CalcT
+  g += weight * c.g.CalcT
+  b += weight * c.b.CalcT
+  a += weight * c.a.CalcT
 
-  inc p
+  inc c
 
   weight = CalcT(x * y)
-  r += weight * p.r.CalcT
-  g += weight * p.g.CalcT
-  b += weight * p.b.CalcT
-  a += weight * p.a.CalcT
+  r += weight * c.r.CalcT
+  g += weight * c.g.CalcT
+  b += weight * c.b.CalcT
+  a += weight * c.a.CalcT
 
-  p.r = ValueT(r shr lineSubpixelShift * 2)
-  p.g = ValueT(g shr lineSubpixelShift * 2)
-  p.b = ValueT(b shr lineSubpixelShift * 2)
-  p.a = ValueT(a shr lineSubpixelShift * 2)
+  p.r = ValueT(r shr (lineSubpixelShift * 2))
+  p.g = ValueT(g shr (lineSubpixelShift * 2))
+  p.b = ValueT(b shr (lineSubpixelShift * 2))
+  p.a = ValueT(a shr (lineSubpixelShift * 2))

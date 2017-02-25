@@ -24,9 +24,7 @@ path_length
 image_accessors
 pixfmt_transposer
 pixfmt_rgb_packed
-bspline
 rasterizer_compound_aa
-renderer_outline_image
 trans_viewport
 
 span_intepolator_persp
@@ -42,22 +40,26 @@ incomplete:
 
 translate ok:
   conv_curve
-  curve  
+
   bezier_arc
   renderer_scanline
   conv_smooth_poly1
-
+  
+  -pattern_filter_rgba
+  -curves
+  -bspline
+  -renderer_outline_image
   -simul_eq
   -trans_bilinear
   -trans_perspective
-  -span_solid  
+  -span_solid
   -span_gouraud
   -span_gouraud_gray
-  -renderer_mclip  
+  -renderer_mclip
   -vpgen_segmentator
   -conv_adaptor_vpgen
   -trans_warp_magnifier
-  -conv_segmentator  
+  -conv_segmentator
   -dda_line
   -gradient_lut
   -pixfmt_rgba

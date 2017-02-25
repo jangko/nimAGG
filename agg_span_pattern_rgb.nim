@@ -47,10 +47,3 @@ proc generate*[S,A, ColorT](self: var SpanPatternRgb[S,A], span: ColorT, x, y, l
     p = cast[ptr A](self.mSrc[].nextX())
     inc span
     dec len
-
-
-
-
-
-
-

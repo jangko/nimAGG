@@ -66,7 +66,7 @@ proc sameOrthogonalQuadrant*(self, lp: LineParameters): bool =
 proc sameDiagonalQuadrant*(self, lp: LineParameters): bool =
   result = s_diagonalQuadrant[self.octant] == s_diagonalQuadrant[lp.octant]
 
-proc divide*(self, lp1, lp2: var LineParameters) =
+proc divide*(self: LineParameters, lp1, lp2: var LineParameters) =
   let
     xmid = sar(self.x1 + self.x2, 1)
     ymid = sar(self.y1 + self.y2, 1)
@@ -113,14 +113,14 @@ proc bisectrix*(l1, l2: var LineParameters, x, y: var int) =
   x = iround(tx)
   y = iround(ty)
 
-proc fixDegenerateBisectrixStart*(lp: var LineParameters, x, y: var int) {.inline.} =
+proc fixDegenerateBisectrixStart*(lp: LineParameters, x, y: var int) {.inline.} =
   let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:
     x = lp.x1 + (lp.y2 - lp.y1)
     y = lp.y1 - (lp.x2 - lp.x1)
 
-proc fixDegenerateBisectrixEnd*(lp: var LineParameters, x, y: var int) {.inline.} =
+proc fixDegenerateBisectrixEnd*(lp: LineParameters, x, y: var int) {.inline.} =
   let d = iround((float64(x - lp.x2) * float64(lp.y2 - lp.y1) -
                   float64(y - lp.y2) * float64(lp.x2 - lp.x1)) / float64(lp.len))
   if d < lineSubpixelScale div 2:

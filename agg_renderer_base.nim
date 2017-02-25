@@ -1,4 +1,4 @@
-import agg_basics, agg_rendering_buffer, agg_pixfmt_rgb, strutils
+import agg_basics, agg_rendering_buffer, agg_pixfmt_rgb
 
 type
   RendererBase*[PixFmt] = object
@@ -55,12 +55,12 @@ proc inbox*[PixFmt](self: RendererBase[PixFmt], x, y: int): bool =
   result = x >= self.mClipBox.x1 and y >= self.mClipBox.y1 and
            x <= self.mClipBox.x2 and y <= self.mClipBox.y2
 
-proc clipBox*[PixFmt](self: var RendererBase[PixFmt]): var RectI = 
+proc clipBox*[PixFmt](self: var RendererBase[PixFmt]): var RectI =
   self.mClipBox
 
-proc clipBox*[PixFmt](self: var RendererBase[PixFmt], clipBox: RectI) = 
+proc clipBox*[PixFmt](self: var RendererBase[PixFmt], clipBox: RectI) =
   self.mClipBox = clipBox
-  
+
 proc xmin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x1
 proc ymin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y1
 proc xmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x2
@@ -144,7 +144,6 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
   if x1 < self.xmin(): x1 = self.xmin()
   if x2 > self.xmax(): x2 = self.xmax()
 
-  #echo "x1 $1 y $2 x2 $3" % [$x1, $y , $x2]
   self.mRen[].blendHline(x1, y, x2 - x1 + 1, c, cover)
 
 proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: ColorT, cover: CoverType) =
@@ -300,7 +299,7 @@ proc blendColorHspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len:
 proc blendColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: int,
   colors: ptr ColorT, covers: ptr CoverType, cover: CoverType = coverFull) =
   mixin blendColorVSpan
-    
+
   if x > self.xmax(): return
   if x < self.xmin(): return
 

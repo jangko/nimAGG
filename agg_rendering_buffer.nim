@@ -30,7 +30,7 @@ type
   RenderingBuffer16* = RowAccessor[uint16]
   RenderingBufferCached16* = RowPtrCache[uint16]
   
-proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: int, stride: int) =
+proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height, stride: int) =
   self.buf = buf
   self.start = buf
   self.width = width
@@ -39,7 +39,7 @@ proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height: int, stride
   if stride < 0:
     self.start = self.buf - int(height - 1) * stride
   
-proc initRowAccessor*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
+proc initRowAccessor*[T](buf: ptr T, width, height, stride: int): RowAccessor[T] =
   result.buf = nil
   result.start = nil
   result.width = 0
@@ -47,9 +47,12 @@ proc initRowAccessor*[T](buf: ptr T, width, height: int, stride: int): RowAccess
   result.stride = 0
   result.attach(buf, width, height, stride)
 
-proc initRenderingBuffer*[T](buf: ptr T, width, height: int, stride: int): RowAccessor[T] =
+proc initRenderingBuffer*[T](buf: ptr T, width, height, stride: int): RowAccessor[T] =
   result = initRowAccessor[T](buf, width, height, stride)
-
+  
+proc initRenderingBuffer*[T](): RowAccessor[T] =
+  result = initRowAccessor[T](nil, 0, 0, 0)
+  
 proc width*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.width
 
@@ -101,15 +104,15 @@ proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: int, stride
   self.height = height
   self.stride = stride
 
-  if height.int > self.rows.len:
-    self.rows.setLen(height.int)
+  if height > self.rows.len:
+    self.rows.setLen(height)
 
-  var p = cast[ByteAddress](buf)
+  var p = buf
   if stride < 0:
-    p = cast[ByteAddress](buf) - int(height - 1) * stride
+    p = buf - (height - 1) * stride
 
-  for i in 0.. <height.int:
-    self.rows[i] = cast[ptr T](p)
+  for i in 0.. <height:
+    self.rows[i] = p
     inc(p, stride)
     
 proc initRowPtrCache*[T](): RowPtrCache[T] =
@@ -157,6 +160,9 @@ proc row*[T](self: RowPtrCache[T], y: int): RowInfo[T] {.inline.} =
 proc rows*[T](self: var RowPtrCache[T]): var seq[ptr T] {.inline.} =
   self.rows
 
+proc data*[T](self: var RowPtrCache[T]): ptr ptr T =
+  self.rows[0].addr
+  
 proc copyFrom*[T](self: var RowPtrCache[T], src: RowPtrCache[T]) =
   let
     h = min(self.height, src.height).int

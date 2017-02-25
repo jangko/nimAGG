@@ -198,7 +198,7 @@ namespace agg
         //--------------------------------------------------------------------
         void blend_hline(int x1, int y, int x2,
                          const color_type& c, cover_type cover)
-        {            
+        {
             if(x1 > x2) { int t = x2; x2 = x1; x1 = t; }
             if(y  > ymax()) return;
             if(y  < ymin()) return;
@@ -207,7 +207,7 @@ namespace agg
 
             if(x1 < xmin()) x1 = xmin();
             if(x2 > xmax()) x2 = xmax();
-            
+
             m_ren->blend_hline(x1, y, x2 - x1 + 1, c, cover);
         }
 

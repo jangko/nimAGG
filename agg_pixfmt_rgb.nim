@@ -132,10 +132,10 @@ proc row*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], y: int): 
 proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf], x, y: int): auto {.inline.} =
   const pixWidth = getPixWidth(Blender)
   result = self.mRbuf[].rowPtr(y) + x * pixWidth
-  
+
 proc rbuf*[Blender, RenBuf](self: PixfmtAlphaBlendRgb[Blender, RenBuf]): var RenBuf {.inline.} =
   result = self.mRbuf[]
-  
+
 proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   p: ptr T, c: C, cover: uint) {.inline.} =
   type
@@ -164,8 +164,8 @@ proc copyOrBlendPix[Blender, RenBuf, C, T](self: PixfmtAlphaBlendRgb[Blender, Re
       p[OrderT.R] = c.r
       p[OrderT.G] = c.g
       p[OrderT.B] = c.b
-  else:
-    self.blender.blendPix(p, c.r.uint, c.g.uint, c.b.uint, c.a.uint)
+    else:
+      self.blender.blendPix(p, c.r.uint, c.g.uint, c.b.uint, c.a.uint)
 
 proc blendPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, c: ColorT, cover: uint8) =
@@ -528,11 +528,11 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
 
 proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   src: SrcPixelFormatRenderer, color: ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
-  
+
   type
     SrcValueT = getValueT(SrcPixelFormatRenderer)
     ValueT = getValueT(ColorT)
-    
+
   const
     baseShift = getBaseShift(ColorT)
     baseMask  = getBaseMask(ColorT)
@@ -554,7 +554,7 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
   type
     SrcValueT = getValueT(SrcPixelFormatRenderer)
     ValueT = getValueT(ColorT)
-    
+
   var
     psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
     len = len

@@ -25,7 +25,6 @@ template ddaLineInterpolator*(name: untyped, FractionShift: int, Yshift: int = 0
   proc y*(self: name): int =  self.mY + sar(self.mDy, (FractionShift-YShift))
   proc dy*(self: name): int = self.mDy
 
-
 type
   Dda2LineInterpolator* = object
     mCnt, mLft, mRem, mMod, mY: int
