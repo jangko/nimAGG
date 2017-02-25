@@ -77,8 +77,16 @@ proc next*[T](self: var VertexSequence[T], idx: int): var T =
 proc prev*[T](self: var VertexSequence[T], idx: int): var T =
   let size = self.vert.len
   self.vert[(idx + size - 1) mod size]
-
+  
+proc `[]`*[T](self: VertexSequence[T], idx: int): T = self.vert[idx]
 proc `[]`*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx]
+proc `[]=`*[T](self: var VertexSequence[T], idx: int, v: T) = 
+  self.vert[idx] = v
+  
 proc len*[T](self: VertexSequence[T]): int = self.vert.len
 proc removeLast*[T](self: var VertexSequence[T]) = self.vert.removeLast()
 proc removeAll*[T](self: var VertexSequence[T]) = self.vert.setLen(0)
+
+iterator mitems*[T](self: var VertexSequence[T]): var T =
+  for i in 0.. <self.vert.len:
+    yield self.vert[i]
