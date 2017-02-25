@@ -86,11 +86,11 @@ proc initPolyPlainAdaptor*[T](data: ptr T, numPoints: int, closed: bool): PolyPl
   result.mClosed = closed
   result.mStop = false
 
-proc rewind*[T](self: PolyPlainAdaptor[T], x: int) =
+proc rewind*[T](self: var PolyPlainAdaptor[T], x: int) =
   self.mPtr = self.mData
   self.mStop = false
 
-proc vertex*[T](self: PolyPlainAdaptor[T], x, y: var T): uint =
+proc vertex*[T](self: var PolyPlainAdaptor[T], x, y: var T): uint =
   if self.mPtr < self.mEnd:
     let first = self.mPtr == self.mData
     x = self.mPtr[]; inc self.mPtr
@@ -561,10 +561,3 @@ proc translateAllPaths*[VC](self: var PathBase[VC], dx, dy: float64) =
       inc(x, dx)
       inc(y, dy)
       self.vertices.modifyVertex(idx, x, y)
-
-proc print*[VC](self: var PathBase[VC]) =
-  let numVer = self.vertices.totalVertices()
-  var x, y: float64
-  for i in 0.. <numVer:
-    let cmd = self.vertices.vertex(i, x, y)
-    echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]

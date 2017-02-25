@@ -920,7 +920,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
 const
   subPixelShift = lineSubpixelShift
   subPixelScale = 1 shl subPixelShift
-  subPixelMask  = subPixelScale - 1
+  #subPixelMask  = subPixelScale - 1
 
   aaShift = 8
   aaScale = 1 shl aaShift
