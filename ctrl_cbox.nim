@@ -105,7 +105,7 @@ proc rewind*(self: CboxCtrlImpl, idx: int) =
     self.mVy[7] = self.m.y1 + self.mTextThickness
   of 1:                 # Text
     self.mText.text(self.mLabel)
-    self.mText.start_point(self.m.x1 + self.mTextHeight * 2.0, self.m.y1 + self.mTextHeight / 5.0)
+    self.mText.startPoint(self.m.x1 + self.mTextHeight * 2.0, self.m.y1 + self.mTextHeight / 5.0)
     self.mText.size(self.mTextHeight, self.mTextWidth)
     self.mTextPoly.width(self.mTextThickness)
     self.mTextPoly.lineJoin(roundJoin)

@@ -1,6 +1,5 @@
 vcgen_vertex_sequence
 vcgen_markers_term
-vcgen_bspline
 vcgen_contour
 vcgen_dash
 vcgen_smooth_poly1
@@ -11,7 +10,6 @@ conv_unclose_polygon
 conv_concat
 conv_shorten_path
 conv_close_polygon
-conv_bspline
 conv_contour
 conv_dash
 conv_clip_polyline
@@ -40,11 +38,12 @@ incomplete:
 
 translate ok:
   conv_curve
-
   bezier_arc
   renderer_scanline
   conv_smooth_poly1
-  
+
+  -vcgen_bspline
+  -conv_bspline
   -pattern_filter_rgba
   -curves
   -bspline

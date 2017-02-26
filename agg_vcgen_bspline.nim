@@ -44,7 +44,10 @@ proc removeAll*(self: var VcgenBspline) =
 proc addVertex*(self: var VcgenBspline, x, y: float64, cmd: uint) =
   self.mStatus = initial
   if isMoveTo(cmd):
-    self.mSrcVertices.modifyLast(PointD(x: x, y: y))
+    if self.mSrcVertices.len() == 0:
+      self.mSrcVertices.add(PointD(x: x, y: y))
+    else:
+      self.mSrcVertices.modifyLast(PointD(x: x, y: y))
   else:
     if isVertex(cmd):
       self.mSrcVertices.add(PointD(x: x, y: y))
