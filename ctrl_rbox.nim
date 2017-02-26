@@ -35,6 +35,7 @@ proc init(self: RboxCtrlImpl, x1, y1, x2, y2: float64, flipY = false) =
   self.mTextWidth = 0.0
   self.mNumItems = 0
   self.mCurItem = -1
+  self.mText = initGsvText()
   self.mItems = @[]
   self.mEllipsePoly = initConvStroke(self.mEllipse)
   self.mTextPoly = initConvStroke(self.mText)

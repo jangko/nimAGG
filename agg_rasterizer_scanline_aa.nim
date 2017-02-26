@@ -39,7 +39,7 @@ type
     outline: RasterizerCellsAA[CellAA]
     clipper: ClipType
     mGamma: array[aaScale, int]
-    fillingRule: FillingRule
+    mFillingRule: FillingRule
     autoClose: bool
     startX: CoordType
     startY: CoordType
@@ -51,7 +51,7 @@ type
 proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
-  result.fillingRule = fillNonZero
+  result.mFillingRule = fillNonZero
   result.autoClose = true
   result.startX = 0
   result.startY = 0
@@ -65,7 +65,7 @@ proc gamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipTyp
 proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
-  result.fillingRule = fillNonZero
+  result.mFillingRule = fillNonZero
   result.autoClose = true
   result.startX = 0
   result.startY = 0
@@ -98,8 +98,8 @@ proc clipBox*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; x1,
   self.clipper.clipBox(Conv.upscale(x1), Conv.upscale(y1),
                        Conv.upscale(x2), Conv.upscale(y2))
 
-proc setFillingRule*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; fillingRule: FillingRule) =
-  self.fillingRule = fillingRule
+proc fillingRule*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; fillingRule: FillingRule) =
+  self.mFillingRule = fillingRule
 
 proc autoClose*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; flag: bool) =
   self.autoClose = flag
@@ -221,7 +221,7 @@ proc calculateAlpha*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, Coord
   var cover = sar(area, (polySubpixelShift*2 + 1 - aaShift))
 
   if cover < 0: cover = -cover
-  if self.fillingRule == fillEvenOdd:
+  if self.mFillingRule == fillEvenOdd:
     cover = cover and aaMask2
     if cover > aaScale:
       cover = aaScale2 - cover

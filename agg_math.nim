@@ -24,6 +24,17 @@ proc calcIntersection*(ax, ay, bx, by, cx, cy, dx, dy: float64; x, y: var float6
   y = ay + r * (by-ay)
   result = true
 
+proc calcLinePointDistance*(x1, y1, x2, y2, x, y: float64): float64 =
+  let
+    dx = x2-x1
+    dy = y2-y1
+    d = sqrt(dx * dx + dy * dy)
+
+  if d < vertexDistEpsilon:
+    return calcDistance(x1, y1, x, y)
+
+  result = ((x - x2) * dy - (y - y2) * dx) / d
+
 proc crossProduct*(x1, y1, x2, y2, x, y: float64): float64 {.inline.} =
   result = (x - x2) * (y2 - y1) - (y - y2) * (x2 - x1)
 

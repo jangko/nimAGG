@@ -73,9 +73,12 @@ type
   VertexF* = VertexBase[float32]
   VertexD* = VertexBase[float64]
 
-proc modifyLast*(x: var seq[PointD], val: PointD) =
+proc modifyLast*[T](x: var seq[T], val: T) =
+  if x.len == 0:
+    x.add(val)
+    return
   x[x.len-1] = val
-
+  
 proc prev*(x: var seq[PointD], idx: int): var PointD =
   let size = x.len
   x[(idx + size - 1) mod size]

@@ -26,3 +26,5 @@ proc shorten*[VS, M](self: ConvDash[VS, M]): float64 = base[VS,M](self).generato
 
 proc rewind*[V,M](self: var ConvDash[V,M], pathId: int) {.inline.} = base[V,M](self).rewind(pathId)
 proc vertex*[V,M](self: var ConvDash[V,M], x, y: var float64): uint {.inline.} = base[V,M](self).vertex(x, y)
+
+proc markers*[V,M](self: var ConvDash[V,M]): var M {.inline.} = base[V,M](self).markers()

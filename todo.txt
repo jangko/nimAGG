@@ -1,8 +1,4 @@
 vcgen_vertex_sequence
-vcgen_markers_term
-vcgen_contour
-vcgen_dash
-vcgen_smooth_poly1
 vpgen_clip_polyline
 vpgen_clip_polygon
 
@@ -10,12 +6,9 @@ conv_unclose_polygon
 conv_concat
 conv_shorten_path
 conv_close_polygon
-conv_contour
-conv_dash
 conv_clip_polyline
 conv_clip_polygon
 conv_adaptor_marker
-conv_marker
 
 bitset_iterator
 path_length
@@ -33,15 +26,22 @@ span_interpolator_trans
 span_subdiv_adaptor
 
 incomplete:
-  path_storage
   agg_math
 
-translate ok:
-  conv_curve
+translate ok:  
   bezier_arc
   renderer_scanline
-  conv_smooth_poly1
 
+  -conv_smooth_poly1
+  -conv_marker
+  -vcgen_markers_term
+  -vcgen_smooth_poly1
+  -conv_curve
+  -vcgen_contour
+  -vcgen_dash
+  -conv_contour
+  -conv_dash
+  -path_storage
   -vcgen_bspline
   -conv_bspline
   -pattern_filter_rgba

@@ -20,6 +20,8 @@ proc initConvMarker*[ML,MS](ml: var ML, ms: var MS): ConvMarker[ML, MS] =
   result.mStatus = initial
   result.mMarker = 0
   result.mNumMarkers = 1
+  result.mTransform = initTransAffine()
+  result.mMtx = initTransAffine()
 
 proc transform*[ML,MS](self: var ConvMarker[ML, MS]): var TransAffine = self.mTransform
 
@@ -29,6 +31,7 @@ proc rewind*[ML,MS](self: var ConvMarker[ML, MS], pathId: int) =
   self.mNumMarkers = 1
 
 proc vertex*[ML,MS](self: var ConvMarker[ML, MS], x, y: var float64): uint =
+  mixin rewind, vertex
   var
     cmd: uint = pathCmdMoveTo
     x1, y1, x2, y2: float64

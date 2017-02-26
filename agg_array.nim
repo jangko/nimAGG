@@ -17,6 +17,42 @@ proc `[]`*[T](self: var PodBVector[T], idx: int): var T = self.data[idx]
 
 template getValueT*[T](x: typedesc[PodBVector[T]]): typedesc = T
 
+
+template podAutoVector*(name: untyped, T: typed, Size: int) =
+  type
+    name* = object
+      mArray: array[Size, T]
+      mSize: int
+
+  proc `init name`*(): name =
+    result.mSize = 0
+
+  proc removeAll*(self: var name) =
+    self.mSize = 0
+
+  proc clear*(self: var name) =
+    self.mSize = 0
+
+  proc add*(self: var name, v: T) =
+    self.mArray[self.mSize] = v
+    inc self.mSize
+
+  proc incSize*(self: var name, size: int)  =
+    self.mSize += size
+
+  proc len*(self: name): int =
+    self.mSize
+
+  proc `[]`*(self: name, i: int): T =
+    self.mArray[i]
+
+  proc `[]`*(self: var name, i: int): var T =
+    self.mArray[i]
+
+  proc `[]=`*(self: var name, i: int, v: T) =
+    self.mArray[i] = v
+
+
 # Remove duplicates from a sorted array. It doesn't cut the
 # tail of the array, it just returns the number of remaining elements.
 proc removeDuplicates*[T, Equal](arr: var openArray[T], equal: Equal): int =

@@ -94,7 +94,7 @@ proc onDraw() =
 
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     pf     = initPixFmtRgb24(rbuf)
     ren    = initRendererBase(pf)
     sl     = initScanlineU8()
@@ -120,7 +120,7 @@ proc onDraw() =
 
   var ps = initPathStorage()
   var pg = initConvStroke(ps)
-  pg.width(5.0)
+  pg.width(2.0)
   #pg.lineCap(roundCap)
 
   ps.removeAll()
@@ -142,7 +142,7 @@ proc onDraw() =
   ps.moveTo(mx[2], my[2])
   ps.lineTo(mx[0], my[0])
   ras.addPath(pg)
-  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 100))
+  renderScanlinesAASolid(ras, sl, ren, initRgba8(0,150,160, 255))
 
   saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)
 onDraw()

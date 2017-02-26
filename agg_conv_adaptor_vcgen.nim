@@ -9,6 +9,8 @@ proc prepareSrc*(self: NullMarkers) = discard
 proc rewind*(self: NullMarkers, pathId: int) = discard
 proc vertex*(self: NullMarkers, x, y: var float64): uint = pathCmdStop
 
+template construct*(x: typedesc[NullMarkers]): untyped = NullMarkers()
+
 type
   Status = enum
     initial
@@ -28,6 +30,7 @@ proc init*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], source: var V) =
   self.mSource = source.addr
   self.mStatus = initial
   self.mGenerator = construct(G)
+  self.mMarkers = construct(M)
 
 proc initConvAdaptorVcgen*[V,G,M](source: var V): ConvAdaptorVcGen[V,G,M] =
   result.init(source)
@@ -39,7 +42,7 @@ proc generator*[V,G,M](self: var ConvAdaptorVcGen[V,G,M]): var G =
   result = self.mGenerator
 
 proc markers*[V,G,M](self: var ConvAdaptorVcGen[V,G,M]): var M =
-  result = self.mMarker
+  result = self.mMarkers
 
 proc rewind*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], pathId: int)  =
   mixin rewind

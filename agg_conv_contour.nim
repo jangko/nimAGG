@@ -1,5 +1,7 @@
 import agg_basics, agg_vcgen_contour, agg_conv_adaptor_vcgen, agg_math_stroke
 
+export agg_vcgen_contour
+
 type
   ConvContour*[VertexSource] = object of ConvAdaptorVcgen[VertexSource, VcgenContour, NullMarkers]
   base[VS] = ConvAdaptorVcgen[VS, VcgenContour, NullMarkers]
@@ -23,3 +25,6 @@ proc miterLimit*[VS](self: ConvContour[VS]): float64 = base[VS](self).generator(
 proc innerMiterLimit*[VS](self: ConvContour[VS]): float64 = base[VS](self).generator().innerMiterLimit()
 proc approximationScale*[VS](self: ConvContour[VS]): float64 = base[VS](self).generator().approximationScale()
 proc autoDetectOrientation*[VS](self: ConvContour[VS]): bool = base[VS](self).generator().autoDetectOrientation()
+
+proc rewind*[VS](self: var ConvContour[VS], pathId: int) {.inline.} = base[VS](self).rewind(pathId)
+proc vertex*[VS](self: var ConvContour[VS], x, y: var float64): uint {.inline.} = base[VS](self).vertex(x, y)

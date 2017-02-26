@@ -19,9 +19,6 @@ template construct*(x: typedesc[VcgenMarkersTerm]): untyped = initVcgenMarkersTe
 proc removeAll*(self: var VcgenMarkersTerm) =
   self.mMarkers.setLen(0)
 
-proc modifyLast(x: var seq[CoordType], val: CoordType) =
-  x[x.len-1] = val
-
 proc addVertex*(self: var VcgenMarkersTerm, x, y: float64, cmd: uint) =
   if isMoveTo(cmd):
     if (self.mMarkers.len and 1) != 0:
@@ -46,7 +43,7 @@ proc addVertex*(self: var VcgenMarkersTerm, x, y: float64, cmd: uint) =
           self.mMarkers[self.mMarkers.len - 2] = CoordType(x: x, y: y)
 
 proc rewind*(self: var VcgenMarkersTerm, pathId: int) =
-  self.mCurrId = path_id * 2
+  self.mCurrId = pathId * 2
   self.mCurrIdx = self.mCurrId
 
 proc vertex*(self: var VcgenMarkersTerm, x, y: var float64): uint =

@@ -51,8 +51,10 @@ proc add*[T](self: var VertexSequence[T], val: T) =
   self.vert.add(val)
 
 proc modifyLast*[T](self: var VertexSequence[T], val: T) =
-  self.vert.removeLast()
-  self.add(val)
+  if self.vert.len == 0:
+    self.vert.add(val)
+    return
+  self.vert[self.vert.len-1] = val
 
 proc close*[T](self: var VertexSequence[T], closed: bool) =
   while self.vert.len > 1:
