@@ -4,6 +4,7 @@ import agg_pixfmt_rgba, agg_span_allocator, agg_span_gradient
 import agg_gsv_text, agg_span_interpolator_linear, agg_color_rgba
 import nimBMP, math, agg_trans_affine, agg_math, agg_ellipse
 import agg_comp_op, times, strutils, os, agg_pixfmt_rgb, agg_basics
+import ctrl_rbox, ctrl_slider
 
 type
   GradientLinearColor = object
@@ -82,13 +83,32 @@ const
   frameWidth = 600
   frameHeight = 400
   pixWidth = 4
-  alphaDst = 1.0
-  alphaSrc = 0.75
+  flipY = true
 
 type
   ValueT = uint8
-
-proc renderScene(rbuf, rbuf1: var RenderingBuffer, pixf: var PixfmtRgba32, compOp: int) =
+  
+type
+  App = object
+    compOp: RboxCtrl[Rgba8]
+    alphaDst, alphaSrc: SliderCtrl[Rgba8]
+    
+proc initApp(): App =
+  result.alphaDst = newSliderCtrl[Rgba8](5, 5,    400, 11,    not flipY)
+  result.alphaSrc = newSliderCtrl[Rgba8](5, 5+15, 400, 11+15, not flipY)
+  result.compOp = newRboxCtrl[Rgba8](420, 5.0, 420+170.0, 395.0, not flipY)
+  result.alphaDst.label("Dst Alpha=$1")
+  result.alphaDst.value(1.0)
+  result.alphaSrc.label("Src Alpha=$1")
+  result.alphaSrc.value(0.75)
+  result.compOp.textSize(6.8)
+  
+  for mode in 0.. <EndOfCompOp.ord:
+    result.compOp.addItem($CompOp(mode))
+    
+  result.compOp.curItem(3)
+  
+proc renderScene(app: var App, rbuf, rbuf1: var RenderingBuffer, pixf: var PixfmtRgba32, compOp: int) =
   type
     BlenderT = CompOpAdaptorRgba[Rgba8, OrderRgba]
   var
@@ -96,24 +116,24 @@ proc renderScene(rbuf, rbuf1: var RenderingBuffer, pixf: var PixfmtRgba32, compO
     renderer = initRendererBase(renPixf)
     rb       = initRendererBase(pixf)
     pf       = initPixfmtRgba32(rbuf1)
-    a        = (alphaDst * 255).uint8
+    a        = (app.alphaDst.value() * 255).uint8
 
   rb.blendFrom(pf, nil, 250, 180, a)
 
   circle(rb, initRgba8(0xFD, 0xF0, 0x6F, a),
              initRgba8(0xFE, 0x9F, 0x34, a),
-             70*3, 100+24*3, 37*3, 100+79*3, alphaDst)
+             70*3, 100+24*3, 37*3, 100+79*3, app.alphaDst.value())
 
   renPixf.compOp(compOp)
 
   if compOp == 25: # Contrast
-    let v = alphaSrc
+    let v = app.alphaSrc.value()
     srcShape(renderer,
       initRgba(v, v, v),
       initRgba(v, v, v),
       300.0+50.0, 100.0+24.0*3.0, 107.0+50.0, 100.0+79.0*3.0)
   else:
-    let v = (alphaSrc * 255).uint8
+    let v = (app.alphaSrc.value() * 255).uint8
     srcShape(renderer,
       initRgba8(0x7F, 0xC1, 0xFF, v),
       initRgba8(0x05, 0x00, 0x5F, v),
@@ -126,6 +146,7 @@ proc renderScene(rbuf, rbuf1: var RenderingBuffer, pixf: var PixfmtRgba32, compO
 
 proc onDraw() =
   var
+    app    = initApp()
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     pf     = initPixfmtRgba32(rbuf)
@@ -144,50 +165,53 @@ proc onDraw() =
 
     bmp = loadBMP32("resources" & DirSep & "compositing.bmp")
     rbuf1 = initRenderingBuffer(cast[ptr ValueT](bmp.data[0].addr), bmp.width, bmp.height, -bmp.width * pixWidth)
+    mode   = app.compOp.curItem()
 
   # set alpha channel to full opaque
   let numPix = bmp.width*bmp.height
   for i in 0.. <numPix:
     bmp.data[i * 4 + 3] = 255.chr
 
+  
+  # draw checker board
+  rb.clear(initRgba8(255, 255, 255))
+  for y in countup(0, rb.height() - 1, 8):
+    for x in countup(((y shr 3) and 1) shl 3, rb.width() - 1, 16):
+      rb.copyBar(x, y, x+7, y+7, initRgba8(0xdf, 0xdf, 0xAA))
 
-  for mode in 0.. <EndOfCompOp.ord:
-    # draw checker board
-    rb.clear(initRgba8(255, 255, 255))
-    for y in countup(0, rb.height() - 1, 8):
-      for x in countup(((y shr 3) and 1) shl 3, rb.width() - 1, 16):
-        rb.copyBar(x, y, x+7, y+7, initRgba8(0xdf, 0xdf, 0xAA))
+  rb2.clear(initRgba8(0,0,0,0))
 
-    rb2.clear(initRgba8(0,0,0,0))
+  let startTime = cpuTime()
+  app.renderScene(rbuf0, rbuf1, pixf2, mode)
+  let t2 = cpuTime() - startTime
 
-    let startTime = cpuTime()
-    renderScene(rbuf0, rbuf1, pixf2, mode)
-    let t2 = cpuTime() - startTime
+  rbPre.blendFrom(pixf2)
 
-    rbPre.blendFrom(pixf2)
+  var
+    t = initGsvText()
+    pt = initConvStroke(t)
 
-    var
-      t = initGsvText()
-      pt = initConvStroke(t)
+  t.size(10.0)
+  pt.width(1.5)
+  t.startPoint(10.0, 50.0)
+  t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
 
-    t.size(10.0)
-    pt.width(1.5)
-    t.startPoint(10.0, 35.0)
-    t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
+  ras.addPath(pt)
+  ren.color(initRgba(0,0,0))
+  renderScanlines(ras, sl, ren)
 
-    ras.addPath(pt)
-    ren.color(initRgba(0,0,0))
-    renderScanlines(ras, sl, ren)
+  let co = CompOp(mode)
+  t.startPoint(10.0, 35.0)
+  t.text($co)
 
-    let co = CompOp(mode)
-    t.startPoint(10.0, 20.0)
-    t.text($co)
-
-    ras.addPath(pt)
-    ren.color(initRgba(0,0,0))
-    renderScanlines(ras, sl, ren)
-
-    echo $co
-    saveBMP32("compositing $1.bmp" % [$co], buffer, frameWidth, frameHeight)
+  ras.addPath(pt)
+  ren.color(initRgba(0,0,0))
+  renderScanlines(ras, sl, ren)
+  
+  renderCtrlRs(ras, sl, ren, app.alphaDst)
+  renderCtrlRs(ras, sl, ren, app.alphaSrc)
+  renderCtrlRs(ras, sl, ren, app.compOp)
+    
+  saveBMP32("compositing $1.bmp" % [$co], buffer, frameWidth, frameHeight)
 
 onDraw()

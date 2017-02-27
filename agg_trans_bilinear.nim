@@ -4,30 +4,30 @@ type
   TransBilinear* = object
     mMtx: array[4*2, float64]
     mValid: bool
-
-proc quadToQuad*(self: var TransBilinear, src, dst: array[8, float64])
-proc rectToQuad*(self: var TransBilinear, x1, y1, x2, y2: float64, quad: array[8, float64])
-proc quadToRect*(self: var TransBilinear, quad: array[8, float64], x1, y1, x2, y2: float64)
+  
+proc quadToQuad*(self: var TransBilinear, src, dst: openArray[float64])
+proc rectToQuad*(self: var TransBilinear, x1, y1, x2, y2: float64, quad: openArray[float64])
+proc quadToRect*(self: var TransBilinear, quad: openArray[float64], x1, y1, x2, y2: float64)
 
 proc initTransBilinear*(): TransBilinear =
   result.mValid = false
 
 # Arbitrary quadrangle transformations
-proc initTransBilinear*(src, dst: array[8, float64]): TransBilinear =
+proc initTransBilinear*(src, dst: openArray[float64]): TransBilinear =
   result.quadToQuad(src, dst)
 
 # Direct transformations
-proc initTransBilinear*(x1, y1, x2, y2: float64, quad: array[8, float64]): TransBilinear =
+proc initTransBilinear*(x1, y1, x2, y2: float64, quad: openArray[float64]): TransBilinear =
   result.rectToQuad(x1, y1, x2, y2, quad)
 
 # Reverse transformations
-proc initTransBilinear*(quad: array[8, float64], x1, y1, x2, y2: float64): TransBilinear =
+proc initTransBilinear*(quad: openArray[float64], x1, y1, x2, y2: float64): TransBilinear =
   result.quadToRect(quad, x1, y1, x2, y2)
 
 simulEq(solve, 4, 2)
 
 # Set the transformations using two arbitrary quadrangles.
-proc quadToQuad(self: var TransBilinear, src, dst: array[8, float64]) =
+proc quadToQuad(self: var TransBilinear, src, dst: openArray[float64]) =
   var
     left: array[4 * 4, float64]
     right: array[4 * 2, float64]
@@ -47,7 +47,7 @@ proc quadToQuad(self: var TransBilinear, src, dst: array[8, float64]) =
   self.mValid = solve(left, right, self.mMtx)
 
 # Set the direct transformations, i.e., rectangle -> quadrangle
-proc rectToQuad(self: var TransBilinear, x1, y1, x2, y2: float64, quad: array[8, float64]) =
+proc rectToQuad(self: var TransBilinear, x1, y1, x2, y2: float64, quad: openArray[float64]) =
   var src: array[8, float64]
   src[0] = x1; src[6] = x1
   src[2] = x2; src[4] = x2
@@ -56,7 +56,7 @@ proc rectToQuad(self: var TransBilinear, x1, y1, x2, y2: float64, quad: array[8,
   self.quadToQuad(src, quad)
 
 # Set the reverse transformations, i.e., quadrangle -> rectangle
-proc quadToRect(self: var TransBilinear, quad: array[8, float64], x1, y1, x2, y2: float64) =
+proc quadToRect(self: var TransBilinear, quad: openArray[float64], x1, y1, x2, y2: float64) =
   var dst: array[8, float64]
   dst[0] = x1; dst[6] = x1
   dst[2] = x2; dst[4] = x2

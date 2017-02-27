@@ -11,9 +11,9 @@ type
     mRoundOff: bool
     mClose: bool
 
-proc initSimplePolygonVertexSource*(polygon: ptr float64,
+proc initSimplePolygonVertexSource*(polygon: var openArray[float64],
   np: int, roundOff = false, close = true): SimplePolygonVertexSource =
-  result.mPolygon   = polygon
+  result.mPolygon   = polygon[0].addr
   result.mNumPoints = np
   result.mVertex    = 0
   result.mRoundOff  = roundoff
@@ -62,7 +62,7 @@ proc init*(self: PolygonCtrlImpl, np: int, pointRadius = 5.0) =
   self.mNumPoints = np
   self.mNode = -1
   self.mEdge = -1
-  self.mVs = initSimplePolygonVertexSource(self.mPolygon[0].addr, self.mNumPoints, false)
+  self.mVs = initSimplePolygonVertexSource(self.mPolygon, self.mNumPoints, false)
   self.mStroke = initConvStroke(self.mVs)
   self.mPointRadius = pointRadius
   self.mStatus = 0
@@ -84,8 +84,8 @@ proc xn*(self: PolygonCtrlImpl, n: int): var float64 =
 proc yn*(self: PolygonCtrlImpl, n: int): var float64 =
   self.mPolygon[n * 2 + 1]
 
-proc polygon*(self: PolygonCtrlImpl): ptr float64 =
-  self.mPolygon[0].addr
+proc polygon*(self: PolygonCtrlImpl): var seq[float64] =
+  self.mPolygon
 
 proc lineWidth*(self: PolygonCtrlImpl, w: float64) =
   self.mStroke.width(w)

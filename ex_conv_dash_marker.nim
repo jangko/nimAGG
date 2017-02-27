@@ -96,7 +96,7 @@ proc onDraw() =
     smooth = initConvSmoothPoly1(path)
     smoothOutline = initConvStroke(smooth)
     curve = initConvCurve(smooth)
-    dash = initConvDash1[curve.type, VCgenMarkersTerm](curve)
+    dash = initConvDash(curve, VCgenMarkersTerm)
     stroke = initConvStroke(dash)
     
   smooth.smoothValue(app.smooth.value())
