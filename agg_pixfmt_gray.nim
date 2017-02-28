@@ -59,6 +59,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       mRbuf: ptr RenBuf
 
   template getColorT*(x: typedesc[name]): typedesc = getColorT(Blender)
+  template getValueT*(x: typedesc[name]): typedesc = getValueT(Blender)
   template getPixWidth* (x: typedesc[name]): int = getPixWidth(Blender)
   template getPixStep* (x: typedesc[name]): int = Step
   template getPixOffset* (x: typedesc[name]): int = Offset
@@ -89,8 +90,8 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
     self.mRbuf = rb.addr
 
   proc attach*[PixFmt](self: name, pixf: PixFmt; x1, y1, x2, y2: int): bool =
-    var r = initRectBase[int](x1, y1, x2, y2)
-    let c = initRectBase[int](0, 0, pixf.width()-1, pixf.height()-1)
+    var r = initRectI(x1, y1, x2, y2)
+    let c = initRectI(0, 0, pixf.width()-1, pixf.height()-1)
 
     if r.clip(c):
       let stride = pixf.stride()
@@ -396,7 +397,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       if psrc != nil:
         var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst)
         doWhile len != 0:
-          name.copyOrBlendPix(pdst, colorLut[psrc[]], cover)
+          name.copyOrBlendPix(pdst, colorLut[psrc[].int], cover)
           inc psrc
           inc pdst
           dec len

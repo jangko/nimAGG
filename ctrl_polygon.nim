@@ -322,8 +322,11 @@ proc newPolygonCtrl*[ColorT](np: int, pointRadius = 5.0): PolygonCtrl[ColorT] =
   else:
     result.mColor = initRgba(0.0, 0.0, 0.0)
 
-proc lineColor*[ColorT](self: PolygonCtrl[ColorT], c: ColorT) =
-  self.mColor = c
+proc lineColor*[ColorA, ColorB](self: PolygonCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    self.mColor = construct(ColorA, c)
+  else:
+    self.mColor = c
 
 proc color*[ColorT](self: PolygonCtrl[ColorT], i: int): ColorT =
   self.mColor

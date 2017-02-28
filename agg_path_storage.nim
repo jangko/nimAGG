@@ -403,6 +403,7 @@ proc joinPoly*[VC, T](self: var PathBase[VC], data: ptr T, numPoints: int, close
   self.joinPath(poly)
 
 proc transform*[VC, Trans](self: var PathBase[VC], trans: Trans, pathId = 0) =
+  mixin transform
   let numVer = self.mVert.totalVertices()
   var pathId = pathId
   while pathId < numVer:

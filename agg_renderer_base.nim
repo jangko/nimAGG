@@ -493,7 +493,7 @@ proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererB
     if rdst.y1 > rsrc.y1:
       rsrc.y1 += rc.y2 - 1
       rdst.y1 += rc.y2 - 1
-      dec incy
+      incy = -1
     while rc.y2 > 0:
       var rw = src.row(rsrc.y1)
       if rw.data != nil:
@@ -512,7 +512,7 @@ proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererB
             self.mRen[].blendFromColor(src, color, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
-      inc rc.y2
+      dec rc.y2
 
 proc blendFromLut*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBase[PixFmt], src: SrcPixelFormatRenderer,
   colorLut: ptr ColorT, rectSrcPtr: ptr RectI = nil, dx = 0, dy = 0, cover: CoverType = coverFull) =
@@ -537,7 +537,7 @@ proc blendFromLut*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBas
     if rdst.y1 > rsrc.y1:
       rsrc.y1 += rc.y2 - 1
       rdst.y1 += rc.y2 - 1
-      dec incy
+      incy = -1
     while rc.y2 > 0:
       var rw = src.row(rsrc.y1)
       if rw.data != nil:
@@ -556,4 +556,4 @@ proc blendFromLut*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBas
             self.mRen[].blendFromLut(src, colorLut, x1dst, rdst.y1, x1src, rsrc.y1, len, cover)
       inc(rdst.y1, incy)
       inc(rsrc.y1, incy)
-      inc rc.y2
+      dec rc.y2

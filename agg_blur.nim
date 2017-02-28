@@ -245,24 +245,26 @@ proc blur*[C,CT,Img](self: var StackBlur[C,CT], img: var Img, radius: float64) =
   var img2 = initPixfmtTransposer(img)
   self.blurX(img2, radius)
 
-proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
+proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
   var
-    xp, yp: uint
-    stackPtr, stackStart: uint
+    xp, yp: int
+    stackPtr, stackStart: int
     srcPixPtr, dstPixPtr: ptr uint8
-    pix, stackPix, sum, sumIn, sumOut: uint
+    pix, stackPix, sum, sumIn, sumOut: int
     w   = img.width()
     h   = img.height()
     wm  = w - 1
     hm  = h - 1
-    dv, mulSum, shrSum: uint
+    dv, mulSum, shrSum: int
     stack: seq[uint8]
+    rx = rx
+    ry = ry
 
   if rx > 0:
     if rx > 254: rx = 254
     dv = rx * 2 + 1
-    mulSum = stack_blur8_mul[rx]
-    shrSum = stack_blur8_shr[rx]
+    mulSum = stack_blur8_mul[rx].int
+    shrSum = stack_blur8_shr[rx].int
     stack = newSeq[uint8](dv)
 
     for y in 0.. <h:
@@ -271,16 +273,16 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
       sumOut = 0
 
       srcPixPtr = img.pixPtr(0, y)
-      pix = srcPixPtr[]
+      pix = srcPixPtr[].int
       for i in 0..rx:
-        stack[i] = pix
+        stack[i] = pix.uint8
         sum     += pix * (i + 1)
         sumOut += pix
 
       for i in 1..rx:
         if i <= wm: srcPixPtr += getPixStep(Img)
-        pix = srcPixPtr[]
-        stack[i + rx] = pix
+        pix = srcPixPtr[].int
+        stack[i + rx] = pix.uint8
         sum   += pix * (rx + 1 - i)
         sumIn += pix
 
@@ -290,28 +292,28 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
       srcPixPtr = img.pixPtr(xp, y)
       dstPixPtr = img.pixPtr(0, y)
       for x in 0.. <w:
-        dstPixPtr[] = (sum * mulSum) shr shrSum
+        dstPixPtr[] = ((sum * mulSum) shr shrSum).uint8
         dstPixPtr  += getPixStep(Img)
 
         sum -= sumOut
 
         stackStart = stackPtr + dv - rx
         if stackStart >= dv: stackStart -= dv
-        sumOut -= stack[stackStart]
+        sumOut -= stack[stackStart].int
 
         if xp < wm:
           srcPixPtr += getPixStep(Img)
-          pix = srcPixPtr[]
+          pix = srcPixPtr[].int
           inc xp
 
-        stack[stackStart] = pix
+        stack[stackStart] = pix.uint8
 
         sumIn += pix
         sum   += sumIn
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
-        stackPix = stack[stackPtr]
+        stackPix = stack[stackPtr].int
 
         sumOut += stackPix
         sumIn  -= stackPix
@@ -319,8 +321,8 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
   if ry > 0:
     if ry > 254: ry = 254
     dv = ry * 2 + 1
-    mulSum = stack_blur8_mul[ry]
-    shrSum = stack_blur8_shr[ry]
+    mulSum = stack_blur8_mul[ry].int
+    shrSum = stack_blur8_shr[ry].int
     stack = newSeq[uint8](dv)
 
     let stride = img.stride()
@@ -330,16 +332,16 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
       sumOut = 0
 
       srcPixPtr = img.pixPtr(x, 0)
-      pix = srcPixPtr[]
+      pix = srcPixPtr[].int
       for i in 0..ry:
-        stack[i] = pix
+        stack[i] = pix.uint8
         sum     += pix * (i + 1)
         sumOut  += pix
 
       for i in 1..ry:
         if i <= hm: srcPixPtr += stride
-        pix = srcPixPtr[]
-        stack[i + ry] = pix
+        pix = srcPixPtr[].int
+        stack[i + ry] = pix.uint8
         sum    += pix * (ry + 1 - i)
         sumIn  += pix
 
@@ -349,26 +351,26 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: uint) =
       srcPixPtr = img.pixPtr(x, yp)
       dstPixPtr = img.pixPtr(x, 0)
       for y in 0.. <h:
-        dstPixPtr[] = (sum * mulSum) shr shrSum
+        dstPixPtr[] = ((sum * mulSum) shr shrSum).uint8
         dstPixPtr += stride
         sum -= sumOut
 
         stackStart = stackPtr + dv - ry
         if stackStart >= dv: stackStart -= dv
-        sumOut -= stack[stackStart]
+        sumOut -= stack[stackStart].int
 
         if yp < hm:
           srcPixPtr += stride
-          pix = srcPixPtr[]
+          pix = srcPixPtr[].int
           inc yp
 
-        stack[stackStart] = pix
+        stack[stackStart] = pix.uint8
         sumIn += pix
         sum   += sumIn
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
-        stackPix = stack[stackPtr]
+        stackPix = stack[stackPtr].int
 
         sumOut += stackPix
         sumIn  -= stackPix

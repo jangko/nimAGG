@@ -105,11 +105,6 @@ translate ok:
   -rasterizer_sl_clip
 
 test pending:
-  pixfmt_rgb:
-    blendFrom
-    blendFromColor
-    blendFromLut
-    attach
   pixfmt_gray:
     blendFromColor
     blendFromLut

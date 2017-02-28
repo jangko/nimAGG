@@ -481,7 +481,7 @@ proc copyFrom*[Blender, RenBuf, RenBuf2](self: PixfmtAlphaBlendRgb[Blender, RenB
     p + xsrc * pixWidth, len * pixWidth)
 
 proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc: int, length: uint, cover: uint8) =
+  src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc, length: int, cover: uint8) =
 
   type
     SrcOrder  = getOrderT(SrcPixelFormatRenderer)
@@ -527,30 +527,31 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
       dec len
 
 proc blendFromColor*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  src: SrcPixelFormatRenderer, color: ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
+  src: SrcPixelFormatRenderer, color: ColorT, xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =
 
   type
     SrcValueT = getValueT(SrcPixelFormatRenderer)
     ValueT = getValueT(ColorT)
+    CalcT = getCalcT(ColorT)
 
   const
-    baseShift = getBaseShift(ColorT)
-    baseMask  = getBaseMask(ColorT)
+    baseShift = getBaseShift(ColorT).CalcT
+    baseMask  = getBaseMask(ColorT).CalcT
 
   var
-    len  = length
+    len  = len
     psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
 
   if psrc == nil: return
-  var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len)) + xdst * 3
   doWhile len != 0:
-    self.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
+    self.copyOrBlendPix(pdst, color, (psrc[].CalcT * cover.CalcT + baseMask) shr baseShift)
     inc psrc
     inc(pdst, 3)
     dec len
 
 proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
-  src: SrcPixelFormatRenderer, colorLut: ptr ColorT, xdst, ydst, xsrc, ysrc, length: uint, cover: uint8) =
+  src: SrcPixelFormatRenderer, colorLut: ptr ColorT, xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =
   type
     SrcValueT = getValueT(SrcPixelFormatRenderer)
     ValueT = getValueT(ColorT)
@@ -560,18 +561,18 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
     len = len
 
   if psrc == nil: return
-  var pdst =  cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * 3)
+  var pdst =  cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len)) + xdst * 3
 
   if cover == 255:
     doWhile len != 0:
-      let color = colorLut[psrc[]]
+      let color = colorLut[psrc[].int]
       self.blender.blendPix(pdst, color.r, color.g, color.b, color.a)
       inc psrc
       inc(pdst, 3)
       dec len
   else:
     doWhile len != 0:
-      self.copyOrBlendPix(pdst, colorLut[psrc[]], cover)
+      self.copyOrBlendPix(pdst, colorLut[psrc[].int], cover)
       inc psrc
       inc(pdst, 3)
       dec len
@@ -579,8 +580,8 @@ proc blendFromLut*[Blender, RenBuf, SrcPixelFormatRenderer, ColorT](self: Pixfmt
 proc attach*[Blender, RenBuf, PixFmt](self: PixfmtAlphaBlendRgb[Blender, RenBuf],
   pixf: PixFmt, x1, y1, x2, y2: int): bool =
 
-  var r = initRectBase[int](x1, y1, x2, y2)
-  let c = initRectBase[int](0, 0, pixf.width()-1, pixf.height()-1)
+  var r = initRectI(x1, y1, x2, y2)
+  let c = initRectI(0, 0, pixf.width()-1, pixf.height()-1)
 
   if r.clip(c):
     let stride = pixf.stride()

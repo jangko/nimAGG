@@ -50,8 +50,8 @@ proc initRowAccessor*[T](buf: ptr T, width, height, stride: int): RowAccessor[T]
 proc initRenderingBuffer*[T](buf: ptr T, width, height, stride: int): RowAccessor[T] =
   result = initRowAccessor[T](buf, width, height, stride)
   
-proc initRenderingBuffer*[T](): RowAccessor[T] =
-  result = initRowAccessor[T](nil, 0, 0, 0)
+proc initRenderingBuffer*(): auto =
+  result = initRowAccessor[uint8](nil, 0, 0, 0)
   
 proc width*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.width
