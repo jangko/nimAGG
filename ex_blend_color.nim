@@ -3,7 +3,8 @@ import agg_conv_contour, agg_conv_stroke, agg_scanline_p, agg_renderer_scanline
 import agg_pixfmt_rgb, agg_pixfmt_rgba, agg_pixfmt_gray, agg_bounding_rect
 import agg_trans_perspective, agg_blur, agg_color_rgba, agg_path_storage
 import ctrl_slider, ctrl_rbox, ctrl_cbox, ctrl_polygon, agg_trans_affine
-import agg_renderer_base, nimBMP, agg_color_gray, agg_conv_transform, agg_color_conv, agg_color_conv_rgb8
+import agg_renderer_base, nimBMP, agg_color_gray, agg_conv_transform
+import agg_color_conv, agg_color_conv_rgb8, times, agg_gsv_text, strutils
 
 var
   gradient_colors = [
@@ -433,6 +434,8 @@ proc onDraw() =
   else:
     renb.clear(initRgba(1, 0.95, 0.95))
   
+  let startTime = cpuTime()
+  
   # Render shadow
   app.ras.addPath(shadowTrans)
   renderScanlinesAAsolid(app.ras, app.sl, renbGray8, initGray8(255))
@@ -467,10 +470,22 @@ proc onDraw() =
         renb.blendFromColor(pixf2, initRgba8(0, 100, 0), nil, int(bbox.x1), int(bbox.y1))  
     else:
       renb.blendFromLut(pixf2, app.colorLut[0].addr, nil, int(bbox.x1), int(bbox.y1))
-
-  #renderCtrl(app.ras, app.sl, renb, app.how)
-  #renderCtrl(app.ras, app.sl, renb, app.radius)
-  #renderCtrl(app.ras, app.sl, renb, app.shadow)
+  
+  let endTime = cpuTime() - startTime
+  var
+    t = initGsvText()
+    st = initConvStroke(t)
+    
+  t.size(10.0)
+  st.width(1.5)
+  t.startPoint(140.0, 30.0)
+  t.text(endTime.formatFloat(ffDecimal, 2) & " ms")
+  app.ras.addPath(st)
+  renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0,0,0))
+        
+  renderCtrl(app.ras, app.sl, renb, app.how)
+  renderCtrl(app.ras, app.sl, renb, app.radius)
+  renderCtrl(app.ras, app.sl, renb, app.shadow)
 
   #copyMem(buffer.cstring, buf, buffer.len)
   
