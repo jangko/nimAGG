@@ -16,6 +16,7 @@ proc initGammaSpline*(): GammaSpline =
   result.mX2 = 10.0
   result.mY2 = 10.0
   result.mCurX = 0.0
+  result.mSpline = initBSpline()
   result.values(1.0, 1.0, 1.0, 1.0)
 
 proc y*(self: var GammaSpline, x: float64): float64 =
@@ -25,7 +26,7 @@ proc y*(self: var GammaSpline, x: float64): float64 =
   var val = self.mSpline.get(x)
   if val < 0.0: val = 0.0
   if val > 1.0: val = 1.0
-  val
+  result = val
 
 proc values(self: var GammaSpline, kx1, ky1, kx2, ky2: float64) =
   var

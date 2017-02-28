@@ -47,7 +47,7 @@ proc init(self: GammaCtrlImpl, x1, y1, x2, y2: float64, flipY = false) =
   self.mYt2 = y2
   self.mGammaSpline = initGammaSpline()
   self.mText = initGsvText()
-  self.mCurvePoly = initconvStroke(self.mGammaSpline)
+  self.mCurvePoly = initConvStroke(self.mGammaSpline)
   self.mTextPoly = initConvStroke(self.mText)
   self.mIdx = 0
   self.mVertex = 0
@@ -69,7 +69,7 @@ proc calcSplineBox(self: GammaCtrlImpl) =
 
 proc calcPoints*(self: GammaCtrlImpl) =
   var kx1, ky1, kx2, ky2: float64
-  self.mGammaSpline.values(kx1, ky1, kx2, ky2)
+  self.mGammaSpline.getValues(kx1, ky1, kx2, ky2)
   self.mXp1 = self.mXs1 + (self.mXs2 - self.mXs1) * kx1 * 0.25
   self.mYp1 = self.mYs1 + (self.mYs2 - self.mYs1) * ky1 * 0.25
   self.mXp2 = self.mXs2 - (self.mXs2 - self.mXs1) * kx2 * 0.25
@@ -113,7 +113,9 @@ proc textThickness*(self: GammaCtrlImpl, t: float64) =
 
 proc pointSize*(self: GammaCtrlImpl, s: float64) =
   self.mPointSize = s
-
+proc getGammaValue*(self: GammaCtrlImpl, x :float64): float64 =
+  self.mGammaSpline.y(x)
+ 
 method inRect*(self: GammaCtrlImpl, x, y: float64): bool =
   var
     x = x
@@ -302,7 +304,7 @@ proc rewind*(self: GammaCtrlImpl, idx: int) =
     if self.mP1Active: self.mEllipse.init(self.mXp1, self.mYp1, self.mPointSize, self.mPointSize, 32)
     else:              self.mEllipse.init(self.mXp2, self.mYp2, self.mPointSize, self.mPointSize, 32)
   of 6:                 # Text
-    self.mGammaSpline.values(kx1, ky1, kx2, ky2)
+    self.mGammaSpline.getValues(kx1, ky1, kx2, ky2)
     var tbuf = "$1 $2 $3 $4" % [kx1.formatFloat(ffDecimal, 3),
       ky1.formatFloat(ffDecimal, 3),
       kx2.formatFloat(ffDecimal, 3),
@@ -366,17 +368,18 @@ type
     mTextColor: ColorT
     mColors: array[7, ptr ColorT]
 
-proc newGammaCtrl*[ColorT](x1, y1, x2, y2: float64, flipY = false): GammaCtrl =
+proc newGammaCtrl*[ColorT](x1, y1, x2, y2: float64, flipY = false): GammaCtrl[ColorT] =
+  new(result)
   GammaCtrlImpl(result).init(x1, y1, x2, y2, flipY)
 
   when ColorT is not Rgba:
-    result.mBackgroundColor = construct(ColorT, Rgba(1.0, 1.0, 0.9))
-    result.mBorderColor = construct(ColorT, Rgba(0.0, 0.0, 0.0))
-    result.mCurveColor = construct(ColorT, Rgba(0.0, 0.0, 0.0))
-    result.mGridColor = construct(ColorT, Rgba(0.2, 0.2, 0.0))
-    result.mInactivePntColor = construct(ColorT, Rgba(0.0, 0.0, 0.0))
-    result.mActivePntColor = construct(ColorT, Rgba(1.0, 0.0, 0.0))
-    result.mTextColor = construct(ColorT, Rgba(0.0, 0.0, 0.0))
+    result.mBackgroundColor = construct(ColorT, initRgba(1.0, 1.0, 0.9))
+    result.mBorderColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mCurveColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mGridColor = construct(ColorT, initRgba(0.2, 0.2, 0.0))
+    result.mInactivePntColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mActivePntColor = construct(ColorT, initRgba(1.0, 0.0, 0.0))
+    result.mTextColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
   else:
     result.mBackgroundColor = initRgba(1.0, 1.0, 0.9)
     result.mBorderColor = initRgba(0.0, 0.0, 0.0)
@@ -395,26 +398,26 @@ proc newGammaCtrl*[ColorT](x1, y1, x2, y2: float64, flipY = false): GammaCtrl =
   result.mColors[6] = result.mTextColor.addr
 
 # Set colors
-proc backgroundColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc backgroundColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mBackgroundColor = c
 
-proc borderColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc borderColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mBorderColor = c
 
-proc curveColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc curveColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mCurveColor = c
 
-proc gridColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc gridColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mGridColor = c
 
-proc inactivePntColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc inactivePntColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mInactivePntColor = c
 
-proc activePntColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc activePntColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mActivePntColor = c
 
-proc textColor*[ColorT](self: GammaCtrl, c: ColorT) =
+proc textColor*[ColorT](self: GammaCtrl[ColorT], c: ColorT) =
   self.mTextColor = c
 
-proc color*[ColorT](self: GammaCtrl, i: int): ColorT =
+proc color*[ColorT](self: GammaCtrl[ColorT], i: int): ColorT =
   self.mColors[i][]
