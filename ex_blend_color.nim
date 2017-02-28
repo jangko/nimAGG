@@ -3,7 +3,7 @@ import agg_conv_contour, agg_conv_stroke, agg_scanline_p, agg_renderer_scanline
 import agg_pixfmt_rgb, agg_pixfmt_rgba, agg_pixfmt_gray, agg_bounding_rect
 import agg_trans_perspective, agg_blur, agg_color_rgba, agg_path_storage
 import ctrl_slider, ctrl_rbox, ctrl_cbox, ctrl_polygon, agg_trans_affine
-import agg_renderer_base, nimBMP, agg_color_gray, agg_conv_transform
+import agg_renderer_base, nimBMP, agg_color_gray, agg_conv_transform, agg_color_conv, agg_color_conv_rgb8
 
 var
   gradient_colors = [
@@ -267,9 +267,15 @@ var
 const
   frameWidth = 440
   frameHeight = 330
-  pixWidth = 3
   flipY = true
 
+when defined(grayMode):
+  type LutType = Gray8
+  const pixWidth = 1
+else:
+  type LutType = Rgba8
+  const pixWidth = 3
+  
 type
   ValueT = uint8
 
@@ -286,7 +292,7 @@ type
     gray8Buf: seq[uint8]
     gray8Rbuf: RenderingBuffer
     gray8Rbuf2: RenderingBuffer
-    colorLut: seq[Rgba8]
+    colorLut: seq[LutType]
 
 proc initApp(): App =
   result.how = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 55.0, not flipY)
@@ -371,10 +377,13 @@ proc initApp(): App =
   result.shadow.yn(3) = result.shapeBounds.y2
   result.shadow.lineColor(initRgba(0, 0.3, 0.5, 0.3))
 
-  result.colorLut = newSeq[Rgba8](256)
+  result.colorLut = newSeq[LutType](256)
   var p = gradient_colors[0].addr
   for i in 0..255:
-    result.colorLut[i] = initRgba8(p[0], p[1], p[2], if i > 63: 255 else: i * 4) #p[3])
+    when defined(grayMode):
+      result.colorLut[i] = initGray8(p[0])
+    else:
+      result.colorLut[i] = initRgba8(p[0], p[1], p[2], if i > 63: 255 else: i * 4) #p[3])
     #result.colorLut[i].premultiply()
     inc(p, 4)
 
@@ -397,7 +406,13 @@ proc onDraw() =
     app    = initApp()
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pixf   = initPixfmtRgb24(rbuf)
+  
+  when defined(grayMode):
+    var pixf   = initPixfmtGray8(rbuf)
+  else:
+    var pixf   = initPixfmtRgb24(rbuf)
+    
+  var
     renb   = initRendererBase(pixf)
     shadowPersp = initTransPerspective(app.shapeBounds.x1, app.shapeBounds.y1,
                                        app.shapeBounds.x2, app.shapeBounds.y2,
@@ -412,8 +427,12 @@ proc onDraw() =
     renbGray8 = initRendererBase(pixfGray8)
 
   renbGray8.clear(initGray8(0))
-  renb.clear(initRgba(1, 0.95, 0.95))
-
+  
+  when defined(grayMode):
+    renb.clear(initGray8(150))
+  else:
+    renb.clear(initRgba(1, 0.95, 0.95))
+  
   # Render shadow
   app.ras.addPath(shadowTrans)
   renderScanlinesAAsolid(app.ras, app.sl, renbGray8, initGray8(255))
@@ -442,15 +461,27 @@ proc onDraw() =
       stackBlurGray8(pixf2, uround(app.radius.value()), uround(app.radius.value()))
 
     if app.how.curItem() == 0:
-      renb.blendFromColor(pixf2, initRgba8(0, 100, 0), nil, int(bbox.x1), int(bbox.y1))
+      when defined(grayMode):
+        renb.blendFromColor(pixf2, initGray8(100), nil, int(bbox.x1), int(bbox.y1))
+      else:
+        renb.blendFromColor(pixf2, initRgba8(0, 100, 0), nil, int(bbox.x1), int(bbox.y1))  
     else:
       renb.blendFromLut(pixf2, app.colorLut[0].addr, nil, int(bbox.x1), int(bbox.y1))
 
-  renderCtrl(app.ras, app.sl, renb, app.how)
-  renderCtrl(app.ras, app.sl, renb, app.radius)
-  renderCtrl(app.ras, app.sl, renb, app.shadow)
+  #renderCtrl(app.ras, app.sl, renb, app.how)
+  #renderCtrl(app.ras, app.sl, renb, app.radius)
+  #renderCtrl(app.ras, app.sl, renb, app.shadow)
 
   #copyMem(buffer.cstring, buf, buffer.len)
-  saveBMP24("blend_color.bmp", buffer, frameWidth, frameHeight)
+  
+  when defined(grayMode):
+    var
+      target = newString(frameWidth * frameHeight * 3)
+      rbuf2  = initRenderingBuffer(cast[ptr ValueT](target[0].addr), frameWidth, frameHeight, -frameWidth * 3)
 
+    colorConv(rbuf2, rbuf, color_conv_gray8_to_rgb24)
+    saveBMP24("blend_color.bmp", target, frameWidth, frameHeight)
+  else:
+    saveBMP24("blend_color.bmp", buffer, frameWidth, frameHeight)
+    
 onDraw()

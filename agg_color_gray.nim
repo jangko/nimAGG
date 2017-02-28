@@ -9,8 +9,8 @@ template getValueT*(x: typedesc[Gray8]): typedesc = uint8
 template getCalcT*(x: typedesc[Gray8]): typedesc = uint32
 template getLongT*(x: typedesc[Gray8]): typedesc = int32
 template getBaseShift*(x: typedesc[Gray8]): int = 8
-template getBaseScale*(x: typedesc[Gray8]): int = 1 shl getBaseShift(x)
-template getBaseMask*(x: typedesc[Gray8]): int = getBaseScale(x) - 1
+template getBaseScale*(x: typedesc[Gray8]): int = (1 shl getBaseShift(x))
+template getBaseMask*(x: typedesc[Gray8]): int = (getBaseScale(x) - 1)
 template construct*(x: typedesc[Gray8], v: typed): untyped = initGray8(v)
 
 proc initGray8*(v: uint): Gray8 =
@@ -196,8 +196,8 @@ template getValueT*(x: typedesc[Gray16]): typedesc = uint16
 template getCalcT*(x: typedesc[Gray16]): typedesc = uint32
 template getLongT*(x: typedesc[Gray16]): typedesc = int64
 template getBaseShift*(x: typedesc[Gray16]): int = 16
-template getBaseScale*(x: typedesc[Gray16]): int = 1 shl getBaseShift(x)
-template getBaseMask*(x: typedesc[Gray16]): int = getBaseScale(x) - 1
+template getBaseScale*(x: typedesc[Gray16]): int = (1 shl getBaseShift(x))
+template getBaseMask*(x: typedesc[Gray16]): int = (getBaseScale(x) - 1)
 template construct*(x: typedesc[Gray16], v: typed): untyped = initGray16(v)
 
 proc initGray16*(v: uint): Gray16 =

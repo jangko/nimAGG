@@ -379,11 +379,16 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       type
         SrcValueT = getValueT(SrcPixelFormatRenderer)
         ValueT = getValueT(ColorT)
+        CalcT = getCalcT(ColorT)
+      const
+        baseMask = CalcT(getBaseMask(ColorT))
+        baseShift = CalcT(getBaseShift(ColorT))
+      var len = len
       var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
       if psrc != nil:
-        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len)) + xdst
         doWhile len != 0:
-          name.copyOrBlendPix(pdst, color, (psrc[] * cover + baseMask) shr baseShift)
+          name.copyOrBlendPix(pdst, color, (CalcT(psrc[]) * CalcT(cover) + baseMask) shr baseShift)
           inc psrc
           inc pdst
           dec len
@@ -393,9 +398,11 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
       type
         SrcValueT = getValueT(SrcPixelFormatRenderer)
         ValueT = getValueT(ColorT)
-      var psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
+      var 
+        psrc = cast[ptr SrcValueT](src.rowPtr(ysrc))
+        len = len
       if psrc != nil:
-        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len) + xdst)
+        var pdst = cast[ptr ValueT](self.mRbuf[].rowPtr(xdst, ydst, len)) + xdst
         doWhile len != 0:
           name.copyOrBlendPix(pdst, colorLut[psrc[].int], cover)
           inc psrc

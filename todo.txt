@@ -103,8 +103,3 @@ translate ok:
   -rasterizer_scanline_aa
   -rasterizer_cells_aa
   -rasterizer_sl_clip
-
-test pending:
-  pixfmt_gray:
-    blendFromColor
-    blendFromLut
