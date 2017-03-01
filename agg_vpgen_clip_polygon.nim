@@ -114,4 +114,3 @@ proc vertex*(self: var VpgenClipPolygon, x, y: var float64): uint =
     return cmd
 
   result = pathCmdStop
-

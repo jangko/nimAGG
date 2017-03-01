@@ -14,3 +14,9 @@ proc x1*[VS](self: ConvClipPolyline[VS]): float64 = base[VS](self).vpgen().x1()
 proc y1*[VS](self: ConvClipPolyline[VS]): float64 = base[VS](self).vpgen().y1()
 proc x2*[VS](self: ConvClipPolyline[VS]): float64 = base[VS](self).vpgen().x2()
 proc y2*[VS](self: ConvClipPolyline[VS]): float64 = base[VS](self).vpgen().y2()
+
+proc rewind*[VS](self: var ConvClipPolyline[VS], pathId: int) {.inline.} = 
+  base[V,M](self).rewind(pathId)
+  
+proc vertex*[VS](self: var ConvClipPolyline[VS], x, y: var float64): uint {.inline.} = 
+  base[V,M](self).vertex(x, y)

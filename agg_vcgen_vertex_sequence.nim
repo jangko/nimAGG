@@ -21,10 +21,10 @@ proc shorten*(self: var VcgenVertexSequence, s: float64) = self.mShorten = s
 proc shorten*(self: var VcgenVertexSequence): float64 = self.mShorten
 
 proc removeAll*(self: var VcgenVertexSequence) {.inline.} =
-  self.mReady = false;
+  self.mReady = false
   self.mSrcVertices.removeAll()
-  self.mCurVertex = 0;
-  self.mFlags = 0;
+  self.mCurVertex = 0
+  self.mFlags = 0
 
 proc addVertex*(self: var VcgenVertexSequence, x, y: float64, cmd: uint) {.inline.} =
   self.mReady = false
@@ -41,7 +41,7 @@ proc rewind*(self: var VcgenVertexSequence, pathId: int) {.inline.} =
     self.mSrcVertices.close(isClosed(self.mFlags))
     shortenPath(self.mSrcVertices, self.mShorten, getCloseFlag(self.mFlags))
   self.mReady = true
-  self.mCurVertex = 0;
+  self.mCurVertex = 0
 
 proc vertex*(self: var VcgenVertexSequence, x, y: var float64): uint {.inline.} =
   if not self.mReady:

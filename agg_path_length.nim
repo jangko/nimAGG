@@ -21,9 +21,9 @@ proc pathLength*[VertexSource](vs: var VertexSource, pathId = 0): float64 =
         startY = y2
       else:
         len += calcDistance(x1, y1, x2, y2)
-      x1 = x2;
-      y1 = y2;
-      first = false;
+      x1 = x2
+      y1 = y2
+      first = false
     else:
       if isClose(cmd) and not first:
         len += calcDistance(x1, y1, startX, startY)

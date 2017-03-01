@@ -12,3 +12,9 @@ proc shorten*[VS](self: var ConvShortenPath[VS], s: float64) =
 
 proc shorten*[VS](self: var ConvShortenPath[VS]): float64 =
   base[VS](self)generator().shorten()
+
+proc rewind*[VS](self: var ConvShortenPath[VS], pathId: int) =
+  base[VS](self).rewind(pathId)
+
+proc vertex*[VS](self: var ConvShortenPath[VS], x, y: var float64): uint =
+  base[VS](self).vertex(x, y)

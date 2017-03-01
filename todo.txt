@@ -8,12 +8,10 @@ conv_shorten_path
 conv_close_polygon
 conv_clip_polyline
 conv_clip_polygon
-conv_adaptor_marker
+conv_marker_adaptor
 
 bitset_iterator
-path_length
 image_accessors
-pixfmt_transposer
 pixfmt_rgb_packed
 rasterizer_compound_aa
 trans_viewport
@@ -31,7 +29,9 @@ incomplete:
 translate ok:  
   bezier_arc
   renderer_scanline
-
+  
+  -path_length  
+  -pixfmt_transposer
   -conv_smooth_poly1
   -conv_marker
   -vcgen_markers_term
