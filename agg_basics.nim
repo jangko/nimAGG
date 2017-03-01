@@ -78,7 +78,7 @@ proc modifyLast*[T](x: var seq[T], val: T) =
     x.add(val)
     return
   x[x.len-1] = val
-  
+
 proc prev*(x: var seq[PointD], idx: int): var PointD =
   let size = x.len
   x[(idx + size - 1) mod size]
@@ -99,10 +99,10 @@ proc uround*(x: float64): int {.inline.} =
 
 proc ufloor*(x: float64): uint {.inline.} =
   result = uint(math.floor(x))
-  
+
 proc uceil*(x: float64): uint {.inline.} =
   result = uint(math.ceil(x))
-    
+
 proc iround*(v: float64, Limit: static[int]): int {.inline.} =
   if v < float64(-Limit): return -Limit
   if v > float64( Limit): return  Limit
@@ -112,11 +112,11 @@ type
   CoverType* = uint8
 
 const
-  coverShift* = 8                  #----cover_shift
-  coverSize*  = 1 shl cover_shift  #----cover_size
-  coverMask*  = cover_size - 1     #----cover_mask
-  coverNone*  = 0                  #----cover_none
-  coverFull*  = cover_mask         #----cover_full
+  coverShift* = 8                 #----cover_shift
+  coverSize*  = 1 shl coverShift  #----cover_size
+  coverMask*  = coverSize - 1     #----cover_mask
+  coverNone*  = 0                 #----cover_none
+  coverFull*  = coverMask         #----cover_full
 
   polySubpixelShift* = 8
   polySubpixelScale* = 1 shl polySubpixelShift
@@ -260,6 +260,6 @@ proc getOrientation*(c: uint): uint {.inline.} =
 
 proc setOrientation*(c, o: uint): uint {.inline.} =
   result = clearOrientation(c) or o
-  
+
 proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
   result = abs(v1 - v2) <= float64(epsilon)

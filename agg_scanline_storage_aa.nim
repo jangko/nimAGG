@@ -62,6 +62,9 @@ type
     mSpanIdx: int
     mSpan: spanAA[T]
 
+template getCoverT*[T](x: typedesc[ConstIteratorAA[T]]): typedesc = T
+template getIterT*[T](x: typedesc[ScanlineStorageAA[T]]): typedesc = ConstIteratorAA[T]
+
 proc initSpan[T](self: var ConstIteratorAA[T]) =
   var s = self.mStorage[].spanByIndex(self.mSpanIdx)
   self.mSpan.x      = s.x
@@ -341,6 +344,9 @@ type
     mPtr: ptr uint8
     mSpan: SpanIteratorAdaptorAA[T]
     mDx: int
+    
+template getCoverT*[T](x: typedesc[ConstIteratorAdaptorAA[T]]): typedesc = T
+template getIterT*[T](x: typedesc[SerializedScanlinesAdaptorAA[T]]): typedesc = ConstIteratorAdaptorAA[T]
 
 proc readInt32*[T](self: var ConstIteratorAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
