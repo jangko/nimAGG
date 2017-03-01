@@ -47,10 +47,10 @@ proc prepare*(self: var ScanlineStorageBin) =
   self.mMaxY = -0x7FFFFFFF
   self.mCurScanline = 0
 
-proc render*[Scanline](self: var ScanlineStorageBin, sl: Scanline) =
+proc render*[Scanline](self: var ScanlineStorageBin, sl: var Scanline) =
   var
-    y = sl.y()
-    slThis = ScanlineDataBin
+    y = sl.getY()
+    slThis: ScanlineDataBin
 
   if y < self.mMinY: self.mMinY = y
   if y > self.mMaxY: self.mMaxY = y
@@ -339,7 +339,7 @@ proc readInt32(self: var SerializedScanlinesAdaptorBin): int =
   cast[ptr uint8](result.addr)[3] = self.mPtr[]; inc self.mPtr
 
 # Iterate scanlines interface
-proc rewindScanlines(self: var SerializedScanlinesAdaptorBin): bool =
+proc rewindScanlines*(self: var SerializedScanlinesAdaptorBin): bool =
   self.mPtr = self.mData
   if self.mPtr < self.mEnd:
     self.mMinX = self.readInt32() + self.mDx

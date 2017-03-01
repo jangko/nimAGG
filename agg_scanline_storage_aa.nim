@@ -137,19 +137,20 @@ proc prepare*[T](self: var ScanlineStorageAA[T]) =
   self.mCurScanline = 0
 
 proc render*[T, Scanline](self: var ScanlineStorageAA[T], sl: var Scanline) =
+  mixin getY, numSpans, begin
   var
     slThis: ScanlineDataAA
-    y = sl.y()
+    y = sl.getY()
 
   if y < self.mMinY: self.mMinY = y
   if y > self.mMaxY: self.mMaxY = y
 
   slThis.y = y
-  slThis.numSpans = sl.numSpans()
+  slThis.numSpans  = sl.numSpans()
   slThis.startSpan = self.mSpans.len
   var
     span = sl.begin()
-    numSpans = slThis.numSpans
+    numSpan = slThis.numSpans
 
   while true:
     var sp: SpanDataAA
@@ -166,8 +167,8 @@ proc render*[T, Scanline](self: var ScanlineStorageAA[T], sl: var Scanline) =
 
     if x1 < self.mMinX: self.mMinX = x1
     if x2 > self.mMaxX: self.mMaxX = x2
-    dec numSpans
-    if numSpans == 0: break
+    dec numSpan
+    if numSpan == 0: break
     inc span
 
   self.mScanlines.add(slThis)
@@ -183,6 +184,7 @@ proc rewindScanlines*[T](self: var ScanlineStorageAA[T]): bool =
   result = self.mScanlines.len > 0
 
 proc sweepScanline*[T, Scanline](self: var ScanlineStorageAA[T], sl: var Scanline): bool =
+  mixin addCells
   sl.resetSpans()
   while true:
     if self.mCurScanline >= self.mScanlines.len: return false

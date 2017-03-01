@@ -50,6 +50,7 @@ proc initApp(): App =
   result.smooth.label("Smooth=$1")
   result.smooth.noTransform()
   result.close.noTransform()
+  result.evenOdd.status(true)
   result.evenOdd.noTransform()
   
 podAutoVector(AutoVec, VertexD, 20)

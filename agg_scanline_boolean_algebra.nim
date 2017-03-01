@@ -4,17 +4,17 @@ template sbool_combine_spans_bin(name: untyped, Span1, Span2, Scanline: typed): 
   proc name(span1: var Span1, span2: var Span2, x, len: int, sl: var Scanline) =
     sl.addSpan(x, len, coverFull)
   name
-  
+
 template sbool_combine_spans_empty(name: untyped, Span1, Span2, Scanline: typed): untyped =
   proc name(span1: var Span1, span2: var Span2, x, len: int, sl: var Scanline) =
     discard
   name
-  
+
 template sbool_add_span_empty(name: untyped, Span, Scanline: typed): untyped =
   proc name(span: var Span, x, len: int, sl: var Scanline) =
     discard
   name
-  
+
 template sbool_add_span_bin(name: untyped, Span, Scanline: typed): untyped =
   proc name(span: var Span, x, len: int, sl: var Scanline) =
     sl.addSpan(x, len, coverFull)
@@ -31,7 +31,7 @@ template sbool_add_span_aa(name: untyped, Span, Scanline: typed): untyped =
   name
 
 template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = coverShift): untyped =
-  proc sbool_intersect_spans_aa_impl(span1: var Span1, span2: var Span2,  x, len: int, sl: var Scanline) =
+  proc sbool_intersect_spans_aa_impl(span1: var Span1, span2: var Span2, x, len: int, sl: var Scanline) =
     const
       coverShift = CoverShift
       coverSize  = 1 shl coverShift
@@ -59,7 +59,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
       if span1.x < x: covers1 += x - span1.x
       if span2.x < x: covers2 += x - span2.x
       doWhile len != 0:
-        cover = covers1[] * covers2[]
+        cover = covers1[].uint * covers2[].uint
         inc covers1
         inc covers2
         if cover == coverFull * coverFull:
@@ -75,7 +75,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
         sl.addCells(x, len, covers2)
       else:
         doWhile len != 0:
-          cover = span1.covers[] * covers2[]
+          cover = span1.covers[].uint * covers2[].uint
           inc covers2
           if cover == coverFull * coverFull:
             sl.addCell(x, coverFull)
@@ -90,7 +90,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
         sl.addCells(x, len, covers1)
       else:
         doWhile len != 0:
-          cover = covers1[] * span2.covers[]
+          cover = covers1[].uint * span2.covers[].uint
           inc covers1
           if cover == coverFull * coverFull:
             sl.addCell(x, coverFull)
@@ -99,7 +99,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
           inc x
           dec len
     of 3:      # Both are solid spans
-      cover = span1.covers[] * span2.covers[]
+      cover = span1.covers[].uint * span2.covers[].uint
       if cover == coverFull * coverFull:
         sl.addCell(x, coverFull)
       else:
@@ -458,7 +458,6 @@ proc sbool_intersect_shapes[ScanlineGen1, ScanlineGen2, Scanline1,
   sl2.reset(sg2.minX(), sg2.maxX())
   if not sg1.sweepScanline(sl1): return
   if not sg2.sweepScanline(sl2): return
-
   ren.prepare()
 
   # The main loop

@@ -64,8 +64,7 @@ proc getY*(self: ScanlineBin): int = self.y
 proc numSpans*(self: var ScanlineBin): int = self.curSpan - self.spans[0].addr
 proc begin*(self: var ScanlineBin): ptr SpanBin16 = self.spans[1].addr
 
-
-
+template getIterT*(x: typedesc[ScanlineBin]): typedesc = ptr SpanBin16
 
 proc initScanline32bin*(): Scanline32Bin =
   result.maxLen = 0
