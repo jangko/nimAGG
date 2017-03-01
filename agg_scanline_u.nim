@@ -32,6 +32,9 @@ type
   Scanline32U8Am*[AlphaMask] = object of Scanline32U8
     alphaMask: var AlphaMask
 
+template getIterT*(x: typedesc[ScanlineU8]): typedesc = ptr Span16U8
+template getCoverT*(x: typedesc[ptr Span16U8]): typedesc = uint8
+
 proc init(self: var ScanlineU8) =
   self.minX = 0
   self.lastX = 0x7FFFFFF0

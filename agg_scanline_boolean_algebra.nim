@@ -1,31 +1,34 @@
 import agg_basics, agg_scanline_storage_aa
 
-template sbool_combine_spans_bin(name: untyped, Span1, Span2, Scanline: typed) =
+template sbool_combine_spans_bin(name: untyped, Span1, Span2, Scanline: typed): untyped =
   proc name(span1: var Span1, span2: var Span2, x, len: int, sl: var Scanline) =
     sl.addSpan(x, len, coverFull)
-
-template sbool_combine_spans_empty(name: untyped, Span1, Span2, Scanline: typed) =
+  name
+  
+template sbool_combine_spans_empty(name: untyped, Span1, Span2, Scanline: typed): untyped =
   proc name(span1: var Span1, span2: var Span2, x, len: int, sl: var Scanline) =
     discard
-
-template sbool_add_span_empty(name: untyped, Span, Scanline: typed) =
+  name
+  
+template sbool_add_span_empty(name: untyped, Span, Scanline: typed): untyped =
   proc name(span: var Span, x, len: int, sl: var Scanline) =
     discard
-
+  name
+  
 template sbool_add_span_bin(name: untyped, Span, Scanline: typed): untyped =
-  proc sbool_add_span_bin_impl(span: var Span, x, len: int, sl: var Scanline) =
+  proc name(span: var Span, x, len: int, sl: var Scanline) =
     sl.addSpan(x, len, coverFull)
-  sbool_add_span_bin_impl
+  name
 
-template sbool_add_span_aa(Span, Scanline: typed): untyped =
-  proc sbool_add_span_aa_impl(span: var Span, x, len: int, sl: var Scanline) =
+template sbool_add_span_aa(name: untyped, Span, Scanline: typed): untyped =
+  proc name(span: var Span, x, len: int, sl: var Scanline) =
     if span.len < 0:
       sl.addSpan(x, len, span.covers[])
     elif span.len > 0:
       var covers = span.covers
       if span.x < x: covers += x - span.x
       sl.addCells(x, len, covers)
-  sbool_add_span_aa_impl
+  name
 
 template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = coverShift): untyped =
   proc sbool_intersect_spans_aa_impl(span1: var Span1, span2: var Span2,  x, len: int, sl: var Scanline) =
@@ -37,8 +40,10 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
 
     var
       cover: uint
-      covers1: getCoverT(Span1)
-      covers2: getCoverT(Span2)
+      covers1: ptr getCoverT(Span1)
+      covers2: ptr getCoverT(Span2)
+      x = x
+      len = len
 
     # Calculate the operation code and choose the
     # proper combination algorithm.
@@ -47,7 +52,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
     # 2 = span1 is AA, span2 is solid
     # 3 = Both spans are of solid type
     #-----------------
-    case (span1.len < 0).ord or ((span2.len < 0) shl 1).ord
+    case (span1.len < 0).ord or ((span2.len < 0).ord shl 1)
     of 0:      # Both are AA spans
       covers1 = span1.covers
       covers2 = span2.covers
@@ -81,7 +86,7 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
     of 2:      # span1 is AA, span2 is solid
       covers1 = span1.covers
       if span1.x < x: covers1 += x - span1.x
-      if span2.covers: == coverFull:
+      if span2.covers[] == coverFull:
         sl.addCells(x, len, covers1)
       else:
         doWhile len != 0:
@@ -99,6 +104,8 @@ template sbool_intersect_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int
         sl.addCell(x, coverFull)
       else:
         sl.addCell(x, cover shr coverShift)
+    else:
+      discard
 
   sbool_intersect_spans_aa_impl
 
@@ -107,13 +114,15 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
     const
       coverShift = CoverShift
       coverSize  = 1 shl coverShift
-      coverMask  = coverSize - 1
+      coverMask  = uint(coverSize - 1)
       coverFull  = coverMask
 
     var
       cover: uint
-      covers1: getCoverT(Span1)
-      covers2: getCoverT(Span2)
+      covers1: ptr getCoverT(Span1)
+      covers2: ptr getCoverT(Span2)
+      x = x
+      len = len
 
     # Calculate the operation code and choose the
     # proper combination algorithm.
@@ -122,7 +131,7 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
     # 2 = span1 is AA, span2 is solid
     # 3 = Both spans are of solid type
     #-----------------
-    case (span1.len < 0).ord or ((span2.len < 0) shl 1).ord
+    case (span1.len < 0).ord or ((span2.len < 0).ord shl 1)
     of 0:      # Both are AA spans
       covers1 = span1.covers
       covers2 = span2.covers
@@ -130,8 +139,8 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
       if span2.x < x: covers2 += x - span2.x
       doWhile len != 0:
         cover = coverMask * coverMask -
-               (coverMask - covers1[]) *
-               (coverMask - covers2[])
+               (coverMask - covers1[].uint) *
+               (coverMask - covers2[].uint)
         inc covers1
         inc covers2
         if cover == coverFull * coverFull:
@@ -143,7 +152,7 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
     of 1:      # span1 is solid, span2 is AA
       covers2 = span2.covers
       if span2.x < x: covers2 += x - span2.x
-      if span1.covers[] == coverFull:
+      if span1.covers[].uint == coverFull:
         sl.addSpan(x, len, coverFull)
       else:
         doWhile len != 0:
@@ -160,7 +169,7 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
     of 2:      # span1 is AA, span2 is solid
       covers1 = span1.covers
       if span1.x < x: covers1 += x - span1.x
-      if span2.covers[] == coverFull:
+      if span2.covers[].uint == coverFull:
         sl.addSpan(x, len, coverFull)
       else:
         doWhile len != 0:
@@ -182,6 +191,8 @@ template sbool_unite_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = c
         sl.addCell(x, coverFull)
       else:
         sl.addCell(x, cover shr coverShift)
+    else:
+      discard
   sbool_unite_spans_aa_impl
 
 template sbool_xor_formula_linear(name: untyped, CoverShift: int = coverShift) =
@@ -189,7 +200,7 @@ template sbool_xor_formula_linear(name: untyped, CoverShift: int = coverShift) =
     const
       coverShift = CoverShift
       coverSize  = 1 shl coverShift
-      coverMask  = coverSize - 1
+      coverMask  = uint(coverSize - 1)
 
     var cover = a + b
     if cover > coverMask: cover = coverMask + coverMask - cover
@@ -200,7 +211,7 @@ template sbool_xor_formula_saddle(name: untyped, CoverShift: int = coverShift) =
     const
       coverShift = CoverShift
       coverSize  = 1 shl coverShift
-      coverMask  = coverSize - 1
+      coverMask  = (coverSize - 1).uint
 
     var k = a * b
     if k == coverMask * coverMask: return 0
@@ -223,8 +234,10 @@ template sbool_xor_spans_aa(Span1, Span2, Scanline, XorFormula: typed, CoverShif
 
     var
       cover: uint
-      covers1: getCoverT(Span1)
-      covers2: getCoverT(Span2)
+      covers1: ptr getCoverT(Span1)
+      covers2: ptr getCoverT(Span2)
+      x = x
+      len = len
 
     # Calculate the operation code and choose the
     # proper combination algorithm.
@@ -232,7 +245,7 @@ template sbool_xor_spans_aa(Span1, Span2, Scanline, XorFormula: typed, CoverShif
     # 1 = span1 is solid, span2 is AA
     # 2 = span1 is AA, span2 is solid
     # 3 = Both spans are of solid type
-    case (span1.len < 0).ord or ((span2.len < 0) shl 1).ord
+    case (span1.len < 0).ord or ((span2.len < 0).ord shl 1)
     of 0:      # Both are AA spans
       covers1 = span1.covers
       covers2 = span2.covers
@@ -268,7 +281,7 @@ template sbool_xor_spans_aa(Span1, Span2, Scanline, XorFormula: typed, CoverShif
       if cover != 0: sl.addSpan(x, len, cover)
     else:
       discard
-  sbool_xor_spans_aa
+  sbool_xor_spans_aa_impl
 
 
 template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int = coverShift): untyped =
@@ -276,13 +289,15 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
     const
       coverShift = CoverShift
       coverSize  = 1 shl coverShift
-      coverMask  = coverSize - 1
+      coverMask  = uint(coverSize - 1)
       coverFull  = coverMask
 
     var
       cover: uint
-      covers1: getCoverT(Span1)
-      covers2: getCoverT(Span2)
+      covers1: ptr getCoverT(Span1)
+      covers2: ptr getCoverT(Span2)
+      x = x
+      len = len
 
     # Calculate the operation code and choose the
     # proper combination algorithm.
@@ -290,14 +305,14 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
     # 1 = span1 is solid, span2 is AA
     # 2 = span1 is AA, span2 is solid
     # 3 = Both spans are of solid type
-    case (span1.len < 0).ord or ((span2.len < 0) shl 1).ord
+    case (span1.len < 0).ord or ((span2.len < 0).ord shl 1)
     of 0:      # Both are AA spans
       covers1 = span1.covers
       covers2 = span2.covers
       if span1.x < x: covers1 += x - span1.x
       if span2.x < x: covers2 += x - span2.x
       doWhile len != 0:
-        cover = covers1[] * (coverMask - covers2[])
+        cover = covers1[].uint * (coverMask - covers2[].uint)
         inc covers1
         inc covers2
         if cover != 0:
@@ -311,7 +326,7 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
       covers2 = span2.covers
       if span2.x < x: covers2 += x - span2.x
       doWhile len != 0:
-        cover = span1.covers[] * (coverMask - covers2[])
+        cover = span1.covers[].uint * (coverMask - covers2[].uint)
         inc covers2
         if cover != 0:
           if cover == coverFull * coverFull:
@@ -323,9 +338,9 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
     of 2:      # span1 is AA, span2 is solid
       covers1 = span1.covers
       if span1.x < x: covers1 += x - span1.x
-      if span2.covers[] != coverFull:
+      if span2.covers[].uint != coverFull:
         doWhile len != 0:
-          cover = covers1[] * (coverMask - span2.covers[])
+          cover = covers1[].uint * (coverMask - span2.covers[].uint)
           inc covers1
           if cover != 0:
             if cover == coverFull * coverFull:
@@ -335,7 +350,7 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
           inc x
           dec len
     of 3:      # Both are solid spans
-      cover = span1.covers[] * (coverMask - span2.covers[])
+      cover = span1.covers[].uint * (coverMask - span2.covers[].uint)
       if cover != 0:
         if cover == coverFull * coverFull:
           sl.addCell(x, coverFull)
@@ -349,6 +364,7 @@ template sbool_subtract_spans_aa(Span1, Span2, Scanline: typed, CoverShift: int 
 proc sbool_add_spans_and_render[Scanline1, Scanline, Renderer, AddSpanFunctor](sl1: var Scanline1,
   sl: var Scanline, ren: var Renderer, addSpan: AddSpanFunctor) =
 
+  mixin render
   sl.resetSpans()
   var
     span = sl1.begin()
@@ -359,7 +375,7 @@ proc sbool_add_spans_and_render[Scanline1, Scanline, Renderer, AddSpanFunctor](s
     if numSpans == 0: break
     inc span
 
-  sl.finalize(sl1.y())
+  sl.finalize(sl1.getY())
   ren.render(sl)
 
 proc sbool_intersect_scanlines[Scanline1, Scanline2, Scanline, CombineSpansFunctor](sl1: var Scanline1,
@@ -417,6 +433,7 @@ proc sbool_intersect_shapes[ScanlineGen1, ScanlineGen2, Scanline1,
   sg2: var ScanlineGen2, sl1: var Scanline1, sl2: var Scanline2,
   sl: var Scanline, ren: var Renderer, combineSpans: CombineSpansFunctor) =
 
+  mixin prepare, render
   # Prepare the scanline generators.
   # If anyone of them doesn't contain
   # any scanlines, then return.
@@ -450,18 +467,18 @@ proc sbool_intersect_shapes[ScanlineGen1, ScanlineGen2, Scanline1,
   # Only scanlines having the same Y-coordinate
   # are to be combined.
   while true:
-    while sl1.y() < sl2.y():
+    while sl1.getY() < sl2.getY():
       if not sg1.sweepScanline(sl1): return
-    while sl2.y() < sl1.y():
+    while sl2.getY() < sl1.getY():
       if not sg2.sweepScanline(sl2): return
 
-    if sl1.y() == sl2.y():
+    if sl1.getY() == sl2.getY():
       # The Y coordinates are the same.
       # Combine the scanlines, render if they contain any spans,
       # and advance both generators to the next scanlines
       sbool_intersect_scanlines(sl1, sl2, sl, combineSpans)
       if sl.numSpans() != 0:
-        sl.finalize(sl1.y())
+        sl.finalize(sl1.getY())
         ren.render(sl)
 
       if not sg1.sweepScanline(sl1): return
@@ -582,6 +599,7 @@ proc sbool_unite_shapes[ScanlineGen1, ScanlineGen2, Scanline1, Scanline2,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer,
   addSpan1: AddSpanFunctor1, addSpan2: AddSpanFunctor2, combineSpans: CombineSpansFunctor) =
 
+  mixin prepare, render
   # Prepare the scanline generators.
   # If anyone of them doesn't contain
   # any scanlines, then return.
@@ -622,19 +640,19 @@ proc sbool_unite_shapes[ScanlineGen1, ScanlineGen2, Scanline1, Scanline2,
   # the same Y coordinate.
   while flag1 or flag2:
     if flag1 and flag2:
-      if sl1.y() == sl2.y():
+      if sl1.getY() == sl2.getY():
         # The Y coordinates are the same.
         # Combine the scanlines, render if they contain any spans,
         # and advance both generators to the next scanlines
         #----------------------
         sbool_unite_scanlines(sl1, sl2, sl, addSpan1, addSpan2, combineSpans)
-        if sl.numSpans():
-          sl.finalize(sl1.y())
+        if sl.numSpans() != 0:
+          sl.finalize(sl1.getY())
           ren.render(sl)
         flag1 = sg1.sweepScanline(sl1)
         flag2 = sg2.sweepScanline(sl2)
       else:
-        if sl1.y() < sl2.y():
+        if sl1.getY() < sl2.getY():
           sbool_add_spans_and_render(sl1, sl, ren, addSpan1)
           flag1 = sg1.sweepScanline(sl1)
         else:
@@ -653,13 +671,14 @@ proc sbool_subtract_shapes[ScanlineGen1, ScanlineGen2, Scanline1, Scanline2,
   sg2: var ScanlineGen2, sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline,
   ren: var Renderer, addSpan1: AddSpanFunctor1, combineSpans: CombineSpansFunctor) =
 
+  mixin prepare, render
   # Prepare the scanline generators.
   # Here "sg1" is master, "sg2" is slave.
   if not sg1.rewindScanlines(): return
   var
     flag2 = sg2.rewindScanlines()
     # Get the bounding box
-    r1 = initRectI(sg1.minX(), sg1.minY(), sg1.maxX(), sg1.maxY())
+    #r1 = initRectI(sg1.minX(), sg1.minY(), sg1.maxX(), sg1.maxY())
 
   # Reset the scanlines and get two first ones
   sl.reset(sg1.minX(), sg1.maxX())
@@ -672,7 +691,7 @@ proc sbool_subtract_shapes[ScanlineGen1, ScanlineGen2, Scanline1, Scanline2,
   ren.prepare()
 
   # A fake span2 processor
-  sbool_add_span_empty(addSpan2, Scanline2, Scanline)
+  var addSpan2 = sbool_add_span_empty(asf, getIterT(Scanline2), Scanline)
 
   # The main loop
   # Here we synchronize the scanlines with
@@ -683,15 +702,15 @@ proc sbool_subtract_shapes[ScanlineGen1, ScanlineGen2, Scanline1, Scanline2,
   var flag1 = true
   doWhile flag1:
     # Synchronize "slave" with "master"
-    while flag2 and sl2.y() < sl1.y():
+    while flag2 and sl2.getY() < sl1.getY():
       flag2 = sg2.sweepScanline(sl2)
 
-    if flag2 and sl2.y() == sl1.y():
+    if flag2 and sl2.getY() == sl1.getY():
       # The Y coordinates are the same.
       # Combine the scanlines and render if they contain any spans.
       sbool_unite_scanlines(sl1, sl2, sl, addSpan1, addSpan2, combineSpans)
-      if sl.numSpans():
-        sl.finalize(sl1.y())
+      if sl.numSpans() != 0:
+        sl.finalize(sl1.getY())
         ren.render(sl)
     else:
       sbool_add_spans_and_render(sl1, sl, ren, addSpan1)
@@ -710,7 +729,7 @@ proc sbool_intersect_shapes_bin[ScanlineGen1, ScanlineGen2, Scanline1,
   Scanline2, Scanline, Renderer](sg1: var ScanlineGen1, sg2: var ScanlineGen2,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
-  var combine_functor = sbool_combine_spans_bin(getIterT(Scanline1), getIterT(Scanline2), Scanline)
+  var combine_functor = sbool_combine_spans_bin(cf, getIterT(Scanline1), getIterT(Scanline2), Scanline)
   sbool_intersect_shapes(sg1, sg2, sl1, sl2, sl, ren, combine_functor)
 
 proc sbool_unite_shapes_aa[ScanlineGen1, ScanlineGen2, Scanline1,
@@ -718,9 +737,9 @@ proc sbool_unite_shapes_aa[ScanlineGen1, ScanlineGen2, Scanline1,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
   var
-    add_functor1 = sbool_add_span_aa(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_aa(Scanline2, Scanline)
-    combine_functor = sbool_unite_spans_aa(Scanline1, Scanline2, Scanline)
+    add_functor1 = sbool_add_span_aa(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_aa(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_unite_spans_aa(getIterT(Scanline1), getIterT(Scanline2), Scanline)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -729,9 +748,9 @@ proc sbool_unite_shapes_bin[ScanlineGen1, ScanlineGen2, Scanline1,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
   var
-    add_functor1 = sbool_add_span_bin(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_bin(Scanline2, Scanline)
-    combine_functor = sbool_combine_spans_bin(Scanline1, Scanline2, Scanline)
+    add_functor1 = sbool_add_span_bin(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_bin(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_combine_spans_bin(cf, getIterT(Scanline1), getIterT(Scanline2), Scanline)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -742,9 +761,9 @@ proc sbool_xor_shapes_aa[ScanlineGen1, ScanlineGen2, Scanline1,
   sbool_xor_formula_linear(xor_formula)
 
   var
-    add_functor1 = sbool_add_span_aa(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_aa(Scanline2, Scanline)
-    combine_functor = sbool_xor_spans_aa(Scanline1, Scanline2, Scanline, xor_formula)
+    add_functor1 = sbool_add_span_aa(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_aa(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_xor_spans_aa(getIterT(Scanline1), getIterT(Scanline2), Scanline, xor_formula)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -755,9 +774,9 @@ proc sbool_xor_shapes_saddle_aa[ScanlineGen1, ScanlineGen2, Scanline1,
   sbool_xor_formula_saddle(xor_formula)
 
   var
-    add_functor1 = sbool_add_span_aa(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_aa(Scanline2, Scanline)
-    combine_functor = sbool_xor_spans_aa(Scanline1, Scanline2, Scanline, xor_formula)
+    add_functor1 = sbool_add_span_aa(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_aa(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_xor_spans_aa(getIterT(Scanline1), getIterT(Scanline2), Scanline, xor_formula)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -768,9 +787,9 @@ proc sbool_xor_shapes_abs_diff_aa[ScanlineGen1, ScanlineGen2, Scanline1,
   sbool_xor_formula_abs_diff(xor_formula)
 
   var
-    add_functor1 = sbool_add_span_aa(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_aa(Scanline2, Scanline)
-    combine_functor = sbool_xor_spans_aa(Scanline1, Scanline2, Scanline, xor_formula)
+    add_functor1 = sbool_add_span_aa(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_aa(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_xor_spans_aa(getIterT(Scanline1), getIterT(Scanline2), Scanline, xor_formula)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -779,9 +798,9 @@ proc sbool_xor_shapes_bin[ScanlineGen1, ScanlineGen2, Scanline1,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
   var
-    add_functor1 = sbool_add_span_bin(Scanline1, Scanline)
-    add_functor2 = sbool_add_span_bin(Scanline2, Scanline)
-    combine_functor = sbool_combineSpans_empty(Scanline1, Scanline2, Scanline)
+    add_functor1 = sbool_add_span_bin(af1, getIterT(Scanline1), Scanline)
+    add_functor2 = sbool_add_span_bin(af2, getIterT(Scanline2), Scanline)
+    combine_functor = sbool_combineSpans_empty(cf, getIterT(Scanline1), getIterT(Scanline2), Scanline)
 
   sbool_unite_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor1, add_functor2, combine_functor)
 
@@ -790,8 +809,8 @@ proc sbool_subtract_shapes_aa[ScanlineGen1, ScanlineGen2, Scanline1,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
   var
-    add_functor = sbool_add_span_aa(Scanline1, Scanline)
-    combine_functor = sbool_subtract_spans_aa(Scanline1, Scanline2, Scanline)
+    add_functor = sbool_add_span_aa(af1, getIterT(Scanline1), Scanline)
+    combine_functor = sbool_subtract_spans_aa(getIterT(Scanline1), getIterT(Scanline2), Scanline)
 
   sbool_subtract_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor, combine_functor)
 
@@ -800,13 +819,13 @@ proc sbool_subtract_shapes_bin[ScanlineGen1, ScanlineGen2, Scanline1,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
   var
-    add_functor = sbool_add_span_bin(Scanline1, Scanline)
-    combine_functor = sbool_combineSpans_empty(Scanline1, Scanline2, Scanline)
+    add_functor = sbool_add_span_bin(af, getIterT(Scanline1), Scanline)
+    combine_functor = sbool_combineSpans_empty(cf, getIterT(Scanline1), getIterT(Scanline2), Scanline)
 
   sbool_subtract_shapes(sg1, sg2, sl1, sl2, sl, ren, add_functor, combine_functor)
 
 type
-  SboolOp = enum
+  SboolOp* = enum
     sbool_or
     sbool_and
     sbool_xor
@@ -815,7 +834,7 @@ type
     sbool_a_minus_b
     sbool_b_minus_a
 
-proc sbool_combine_shapes_bin*[ScanlineGen1, ScanlineGen2, Scanline1,
+proc sboolCombineShapesBin*[ScanlineGen1, ScanlineGen2, Scanline1,
   Scanline2, Scanline, Renderer](op: SboolOp, sg1: var ScanlineGen1, sg2: var ScanlineGen2,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 
@@ -827,7 +846,7 @@ proc sbool_combine_shapes_bin*[ScanlineGen1, ScanlineGen2, Scanline1,
   of sbool_a_minus_b   : sbool_subtract_shapes_bin(sg1, sg2, sl1, sl2, sl, ren)
   of sbool_b_minus_a   : sbool_subtract_shapes_bin(sg2, sg1, sl2, sl1, sl, ren)
 
-proc sbool_combine_shapes_aa*[ScanlineGen1, ScanlineGen2, Scanline1,
+proc sboolCombineShapesAA*[ScanlineGen1, ScanlineGen2, Scanline1,
   Scanline2, Scanline, Renderer](op: SboolOp, sg1: var ScanlineGen1, sg2: var ScanlineGen2,
   sl1: var Scanline1, sl2: var Scanline2, sl: var Scanline, ren: var Renderer) =
 

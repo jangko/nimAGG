@@ -100,6 +100,9 @@ proc numSpans*(self: var ScanlineP8): int = self.curSpan - self.spans[0].unsafeA
 
 proc begin*(self: var ScanlineP8): ptr Span16P8 = self.spans[1].addr
 
+template getIterT*(x: typedesc[ScanlineP8]): typedesc = ptr Span16P8
+template getCoverT*(x: typedesc[ptr Span16P8]): typedesc = uint8
+
 proc initScanline32P8*(): Scanline32P8 =
   result.maxLen = 0
   result.lastX = 0x7FFFFFF0
