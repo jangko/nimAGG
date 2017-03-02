@@ -11,20 +11,24 @@ type
 proc initLineImageScale*[Source](src: var Source, height: float64): LineImageScale[Source] =
   result.mSource = src.addr
   result.mHeight = height
-  result.mScale  = src.height() / height
+  result.mScale  = src.height().float64 / height
 
-proc width*[Source](self: LineImageScale[Source]): float64 = self.mSource.width()
-proc height*[Source](self: LineImageScale[Source]): float64 = self.mHeight
+proc width*[Source](self: LineImageScale[Source]): float64 =
+  float64(self.mSource[].width())
+
+proc height*[Source](self: LineImageScale[Source]): float64 =
+  self.mHeight
 
 proc pixel*[Source](self: LineImageScale[Source], x, y: int): auto =
+  mixin pixel
   let
-    srcY = (y + 0.5) * self.mScale - 0.5
-    h  = self.mSource.height() - 1
-    y1 = ufloor(srcY)
+    srcY = (y.float64 + 0.5) * self.mScale - 0.5
+    h  = self.mSource[].height() - 1
+    y1 = ufloor(srcY).int
     y2 = y1 + 1
-    pix1 = if y1 < 0: noColor(getColorT(Source)) else: self.mSource.pixel(x, y1)
-    pix2 = if y2 > h: noColor(getColorT(Source)) else: self.mSource.pixel(x, y2)
-  result = pix1.gradient(pix2, srcY - y1)
+    pix1 = if y1 < 0: noColor(getColorT(Source)) else: self.mSource[].pixel(x, y1)
+    pix2 = if y2 > h: noColor(getColorT(Source)) else: self.mSource[].pixel(x, y2)
+  result = pix1.gradient(pix2, srcY - y1.float64)
 
 type
   LineImagePattern*[Filter, ColorT] = object of RootObj
@@ -151,7 +155,7 @@ proc data*[Filter, ColorT](self: var LineImagePattern[Filter, ColorT]): ptr ptr 
 
 type
   LineImagePatternPow2*[Filter, ColorT] = object of LineImagePattern[Filter, ColorT]
-    mMask: uint
+    mMask: int
 
 proc create*[Filter, ColorT, Source](self: var LineImagePatternPow2[Filter, ColorT], src: Source)
 
@@ -160,7 +164,7 @@ proc initLineImagePatternPow2Aux*[Filter, ColorT](filter: var Filter): LineImage
   base(result).init(filter)
   result.mMask = lineSubpixelMask
 
-proc initLineImagePatternPow2*[Filter, ColorT](filter: var Filter): LineImagePatternPow2[Filter, ColorT] =
+proc initLineImagePatternPow2*[Filter](filter: var Filter): auto =
   result = initLineImagePatternPow2Aux[Filter, getColorT(Filter)](filter)
 
 proc initLineImagePatternPow2Aux*[Filter, ColorT, Source](filter: var Filter,
@@ -183,13 +187,13 @@ proc create[Filter, ColorT, Source](self: var LineImagePatternPow2[Filter, Color
     self.mMask = self.mMask shl 1
     self.mMask = self.mMask or 1
 
-  self.mMask = self.mMask shl lineSubpixelShift - 1
+  self.mMask = self.mMask shl (lineSubpixelShift - 1)
   self.mMask = self.mMask or lineSubpixelMask
   self.mWidthHr = self.mMask + 1
 
-proc pixel*[Filter, ColorT](self: LineImagePatternPow2[Filter, ColorT], p: ptr ColorT, x, y: int) =
+proc pixel*[Filter, ColorT](self: var LineImagePatternPow2[Filter, ColorT], p: ptr ColorT, x, y: int) =
   type base = LineImagePattern[Filter, ColorT]
-  pixelHighRes(Filter, base(self).self.mBuf.rows(),
+  pixelHighRes(Filter, base(self).mBuf.rows(),
     p, (x and self.mMask) + self.mDilationHr, y + self.mOffsetYHr)
 
 type

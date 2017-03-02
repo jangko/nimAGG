@@ -602,6 +602,12 @@ type
   PixfmtRgb48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderRgb], RenderingBuffer16]
   PixfmtBgr48Pre* = PixfmtAlphaBlendRgb[BlenderRgbPre[Rgba16, OrderBgr], RenderingBuffer16]
 
+proc initPixfmtAlphaBlendRgb[B,R](rbuf: var R): PixfmtAlphaBlendRgb[B,R] =
+  result.mRbuf = rbuf.addr
+
+template construct*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]], rbuf: typed): untyped =
+  initPixfmtAlphaBlendRgb[B,R](rbuf)
+  
 proc initPixFmtRgb24*(rbuf: var RenderingBuffer): PixfmtRgb24 =
   result.mRbuf = rbuf.addr
 

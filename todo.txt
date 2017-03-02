@@ -12,7 +12,6 @@ conv_marker_adaptor
 
 bitset_iterator
 image_accessors
-pixfmt_rgb_packed
 rasterizer_compound_aa
 trans_viewport
 
@@ -30,6 +29,7 @@ translate ok:
   bezier_arc
   renderer_scanline
   
+  -pixfmt_rgb_packed  
   -path_length  
   -pixfmt_transposer
   -conv_smooth_poly1

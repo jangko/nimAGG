@@ -21,7 +21,7 @@ proc cmp*(self, val: var LineAAVertex): bool =
   result =  self.len > (lineSubpixelScale + lineSubpixelScale div 2)
 
 type
-  OutlineAAJoin = enum
+  OutlineAAJoin* = enum
     outlineNoJoin
     outlineMiterJoin
     outlineRoundJoin

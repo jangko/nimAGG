@@ -68,12 +68,12 @@ type
     mRen: ptr BaseRenderer
     mColor: ColorT
 
-proc initRendererSAAS[B,C](ren: var B): RendererScanlineAASolid[B, C] =
+proc initRendererScanlineAASolidAux[B,C](ren: var B): RendererScanlineAASolid[B, C] =
   result.mRen = ren.addr
 
 proc initRendererScanlineAASolid*[BaseRenderer](ren: var BaseRenderer): auto =
   mixin getColorT
-  result = initRendererSAAS[BaseRenderer, getColorT(BaseRenderer)](ren)
+  result = initRendererScanlineAASolidAux[BaseRenderer, getColorT(BaseRenderer)](ren)
 
 proc attach*[B, C](self: var RendererScanlineAASolid[B, C], ren: var B) =
   self.mRen = ren.addr

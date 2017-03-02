@@ -55,6 +55,12 @@ proc initGray8*(c: Rgba8, a: uint): Gray8 =
   result.v = ((c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29) shr 8).ValueT
   result.a = a.ValueT
 
+proc initRgba8*(c: Gray8): Rgba8 =
+  result.r = c.v
+  result.g = c.v
+  result.b = c.v
+  result.a = c.a
+
 proc clear*(self: var Gray8) =
   self.v = 0
   self.a = 0
@@ -238,12 +244,25 @@ proc initGray16*(c: Rgba8): Gray16 =
   result.v = (c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29).ValueT
   result.a = (ValueT(c.a) shl 8) or c.a
 
+proc initGray16*(c: Rgba16): Gray16 =
+  type
+    ValueT = getValueT(Gray16)
+    CalcT = getCalcT(Gray16)
+  result.v = (c.r.CalcT*19595 + c.g.CalcT*36469 + c.b.CalcT*7471).ValueT
+  result.a = c.a
+
 proc initGray16*(c: Rgba8, a: uint): Gray16 =
   type
     ValueT = getValueT(Gray16)
     CalcT = getCalcT(Gray16)
   result.v = (c.r.CalcT*77 + c.g.CalcT*150 + c.b.CalcT*29).ValueT
   result.a = (ValueT(a) shl 8) or c.a
+
+proc initRgba16*(c: Gray16): Rgba16 =
+  result.r = c.v
+  result.g = c.v
+  result.b = c.v
+  result.a = c.a
 
 proc clear*(self: var Gray16) =
   self.v = 0

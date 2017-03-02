@@ -1071,9 +1071,12 @@ proc initRendererOutlineAA*[R](ren: var R, prof: var LineProfileAA): auto =
 proc attach*[R,C](self: var RendererOutlineAA[R,C], ren: var R) =
   self.mRen = ren.addr
 
-proc color*[R,ColorT](self: var RendererOutlineAA[R,ColorT], c: ColorT) =
-  self.mColor = c
-
+proc color*[R,ColorA, ColorB](self: var RendererOutlineAA[R,ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    self.mColor = construct(ColorA, c)
+  else:
+    self.mColor = c
+  
 proc color*[R,C](self: RendererOutlineAA[R,C]): C =
   self.mColor
 

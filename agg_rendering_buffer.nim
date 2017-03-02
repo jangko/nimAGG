@@ -69,10 +69,10 @@ proc strideAbs*[T](self: RowAccessor[T]): int {.inline.} =
   result = if self.stride < 0: -self.stride else: self.stride
 
 proc rowPtr*[T](self: RowAccessor[T], y: int): ptr T {.inline.} =
-  result = cast[ptr T](cast[ByteAddress](self.start) + y * self.stride)
+  result = self.start + y * self.stride
 
 proc rowPtr*[T](self: RowAccessor[T], x, y, len: int): ptr T {.inline.} =
-  result = cast[ptr T](cast[ByteAddress](self.start) + y * self.stride)
+  result = self.start + y * self.stride
 
 proc row*[T](self: RowAccessor[T], y: int): RowInfo[T] {.inline.} =
   result = RowInfo[T](x1:0, x2:(self.width-1).int, data: self.rowPtr(y))
