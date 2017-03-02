@@ -248,7 +248,7 @@ proc initGray16*(c: Rgba16): Gray16 =
   type
     ValueT = getValueT(Gray16)
     CalcT = getCalcT(Gray16)
-  result.v = (c.r.CalcT*19595 + c.g.CalcT*36469 + c.b.CalcT*7471).ValueT
+  result.v = ((c.r shr 8)*77 + (c.g shr 8)*150 + (c.b shr 8)*29).ValueT
   result.a = c.a
 
 proc initGray16*(c: Rgba8, a: uint): Gray16 =

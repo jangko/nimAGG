@@ -922,33 +922,33 @@ proc initPixFmtRgb565Gamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): P
   result.blender().gamma(gamma)
 
 type
-  PixFmtRgbAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer]
+  PixFmtRgbAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer16]
 
 proc initPixFmtRgbAAAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgbAAAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer]
+  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer16]
   base(result).init(rb)
   result.blender().gamma(gamma)
 
 type
-  PixFmtBgrAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer]
+  PixFmtBgrAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer16]
 
 proc initPixFmtBgrAAAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtBgrAAAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer]
+  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer16]
   base(result).init(rb)
   result.blender().gamma(gamma)
 
 type
-  PixFmtRgbBBAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer]
+  PixFmtRgbBBAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer16]
 
 proc initPixFmtRgbBBAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgbBBAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer]
+  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer16]
   base(result).init(rb)
   result.blender().gamma(gamma)
 
 type
-  PixFmtBgrABBGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer]
+  PixFmtBgrABBGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer16]
 
 proc initPixFmtBgrABBGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtBgrABBGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer]
+  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer16]
   base(result).init(rb)
   result.blender().gamma(gamma)

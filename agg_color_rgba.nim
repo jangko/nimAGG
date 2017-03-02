@@ -439,18 +439,22 @@ proc initRgba16*(c: Rgba, a: float64): Rgba16 =
   result.a = ValueT(uround(a   * baseMask))
 
 proc initRgba16*(c: Rgba8): Rgba16 =
-  type ValueT = getValueT(Rgba16)
-  result.r = (ValueT(c.r) shl 8.ValueT) or c.r.ValueT
-  result.g = (ValueT(c.g) shl 8.ValueT) or c.g.ValueT
-  result.b = (ValueT(c.b) shl 8.ValueT) or c.b.ValueT
-  result.a = (ValueT(c.a) shl 8.ValueT) or c.a.ValueT
+  type 
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
+  result.r = ValueT((CalcT(c.r) shl 8) or CalcT(c.r))
+  result.g = ValueT((CalcT(c.g) shl 8) or CalcT(c.g))
+  result.b = ValueT((CalcT(c.b) shl 8) or CalcT(c.b))
+  result.a = ValueT((CalcT(c.a) shl 8) or CalcT(c.a))
 
-proc initRgba16*(c: Rgba8, a: float64): Rgba16 =
-  type ValueT = getValueT(Rgba16)
-  result.r = (ValueT(c.r) shl 8.ValueT) or c.r.ValueT
-  result.g = (ValueT(c.g) shl 8.ValueT) or c.g.ValueT
-  result.b = (ValueT(c.b) shl 8.ValueT) or c.b.ValueT
-  result.a = (ValueT(a)   shl 8.ValueT) or c.a.ValueT
+proc initRgba16*(c: Rgba8, a: uint): Rgba16 =
+  type 
+    ValueT = getValueT(Rgba16)
+    CalcT  = getCalcT(Rgba16)
+  result.r = ValueT((CalcT(c.r) shl 8) or CalcT(c.r))
+  result.g = ValueT((CalcT(c.g) shl 8) or CalcT(c.g))
+  result.b = ValueT((CalcT(c.b) shl 8) or CalcT(c.b))
+  result.a = ValueT((CalcT(a)   shl 8) or CalcT(c.a))
 
 proc clear*(c: var Rgba16) =
   c.r = 0
@@ -626,7 +630,7 @@ proc rgba16Pre*(c: Rgba8): Rgba16 {.inline.} =
   result = initRgba16(c)
   result.premultiply()
 
-proc rgba16Pre*(c: Rgba8, a: float64): Rgba16 {.inline.} =
+proc rgba16Pre*(c: Rgba8, a: uint): Rgba16 {.inline.} =
   result = initRgba16(c,a)
   result.premultiply()
 

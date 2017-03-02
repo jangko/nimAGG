@@ -8,6 +8,8 @@ type
 
 template getOrderT*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getOrderT(P.type)
 template getColorT*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getColorT(P.type)
+template getValueT*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): typedesc = getValueT(P.type)
+template getPixWidth*[P,A](x: typedesc[PixfmtAmaskAdaptor[P,A]]): int = getPixWidth(P.type)
 
 const
   spanExtraTail = 256

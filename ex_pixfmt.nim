@@ -319,8 +319,10 @@ proc onDraw() =
     spanColor: array[frameWidth - 20, Rgba8]
     
   for i in 0.. <spanCover.len:
+    let x = i.float64 / spanCover.len.float64
+    let c = uround(x * 255.0).uint
     spanCover[i] = uint8(i)
-    spanColor[i] = initRgba8(i, i, i, i)
+    spanColor[i] = initRgba8(c, c, c, c)
     
   for y in 250..300:
     ren.blendSolidHSpan(20, y, ren.width() - 20, initRgba8(120, 50, 150, 90), spanCover[0].addr)

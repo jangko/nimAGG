@@ -270,7 +270,7 @@ proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer16): PolymorphicBase =
   of pix_format_bgra64_pre: result = newPolymorphicAdaptor[PixFmtBgra64Pre](rbuf)
   
 const
-  pixFormat = pix_format_abgr64
+  pixFormat = pix_format_gray16_pre
   frameWidth = 400
   frameHeight = 400
   pixWidth = getPixWidth(pixFormat)
@@ -285,7 +285,8 @@ proc onDraw() =
     ren    = pixfFactory(pixFormat, rbuf)
     c      = initRgba16(initRgba(0.5, 0.7, 0.3, 0.5))
    
-  ren.clear(initRgba16(initRgba(1,1,1)))
+  let cc = initRgba16(initRgba(1,1,1))
+  ren.clear(cc)
   
   for x in 0..50:
     for y in 0..50:
@@ -317,8 +318,10 @@ proc onDraw() =
     spanColor: array[frameWidth - 20, Rgba16]
     
   for i in 0.. <spanCover.len:
+    let x = i.float64 / spanCover.len.float64
+    let c = uround(x * 65535.0).uint
     spanCover[i] = uint8(i)
-    spanColor[i] = initRgba16(uint(i shl 8), uint(i shl 8), uint(i shl 8), uint(i shl 8))
+    spanColor[i] = initRgba16(c, c, c, c)
     
   for y in 250..300:
     ren.blendSolidHSpan(20, y, ren.width() - 20, initRgba16(initRgba(0.7, 0.4, 0.3, 0.8)), spanCover[0].addr)
@@ -332,11 +335,11 @@ proc onDraw() =
   for x in 300..350:
     ren.copyColorVSpan(x, 30, ren.height() - 30, spanColor[0].addr)
   
-  for y in 350.. <400:
-    ren.blendColorHSpan(40, y, ren.width() - 40, spanColor[0].addr, spanCover[0].addr, uint8(y - 350))
-    
-  for x in 350.. <400:
-    ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
+  #for y in 350.. <400:
+  #  ren.blendColorHSpan(40, y, ren.width() - 40, spanColor[0].addr, spanCover[0].addr, uint8(y - 350))
+  #  
+  #for x in 350.. <400:
+  #  ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
     
   var
     target = newString(frameWidth * frameHeight * 3)

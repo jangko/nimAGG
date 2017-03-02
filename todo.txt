@@ -14,6 +14,8 @@ bitset_iterator
 image_accessors
 rasterizer_compound_aa
 trans_viewport
+trans_double_path
+trans_single_path
 
 span_intepolator_persp
 span_pattern_rgba
@@ -21,6 +23,7 @@ span_pattern_gray
 span_pattern_rgb
 span_interpolator_trans
 span_subdiv_adaptor
+span_interpolator_adaptor
 
 incomplete:
   agg_math
