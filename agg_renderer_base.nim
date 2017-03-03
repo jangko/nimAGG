@@ -86,7 +86,7 @@ proc boundingXmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x2
 proc boundingYmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y2
 
 proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
-  mixin copyHline
+  mixin copyHline, construct
   when getColorT(PixFmt) isnot ColorT:
     let c = construct(getColorT(PixFmt), c)
   if self.width() != 0:
@@ -94,14 +94,14 @@ proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
       self.mRen[].copyHline(0, y, self.width(), c)
 
 proc copyPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: ColorT) =
-  mixin copyPixel
+  mixin copyPixel, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
   if self.inbox(x, y):
     self.mRen[].copyPixel(x, y, c)
 
 proc blendPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: ColorT, cover: CoverType) =
-  mixin blendPixel
+  mixin blendPixel, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
   if self.inbox(x, y):
@@ -112,7 +112,7 @@ proc pixel*[PixFmt](self: var RendererBase[PixFmt], x, y: int): auto =
   result = if self.inbox(x, y): self.mRen[].pixel(x, y) else: getColorT(PixFmt).noColor()
 
 proc copyHLine*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y, x2: int, c: ColorT) =
-  mixin copyHline
+  mixin copyHline, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
   var
@@ -131,7 +131,7 @@ proc copyHLine*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y, x2: int, 
   self.mRen[].copyHLine(x1, y, x2 - x1 + 1, c)
 
 proc copyVLine*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y1, y2: int, c: ColorT) =
-  mixin copyVline
+  mixin copyVline, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
 
@@ -151,7 +151,7 @@ proc copyVLine*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y1, y2: int, 
   self.mRen[].copyVLine(x, y1, y2 - y1 + 1, c)
 
 proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: ColorT, cover: CoverType) =
-  mixin blendHline
+  mixin blendHline, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
 
@@ -171,7 +171,7 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
   self.mRen[].blendHline(x1, y, x2 - x1 + 1, c, cover)
 
 proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: ColorT, cover: CoverType) =
-  mixin blendVline
+  mixin blendVline, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
 
@@ -191,7 +191,7 @@ proc blendVline*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y1, y2: int, c: 
   self.mRen[].blendVline(x, y1, y2 - y1 + 1, c, cover)
 
 proc copyBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT) =
-  mixin copyHline
+  mixin copyHline, construct
   when getColorT(PixFmt) isnot ColorT:
     var c = construct(getColorT(PixFmt), c)
   var rc = initRectI(x1, y1, x2, y2)
@@ -201,7 +201,7 @@ proc copyBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: in
       self.mRen[].copyHLine(rc.x1, y, rc.x2 - rc.x1 + 1, c)
 
 proc blendBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: int, c: ColorT, cover: CoverType) =
-  mixin blendHline
+  mixin blendHline, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
   var rc = initRectI(x1, y1, x2, y2)
@@ -211,7 +211,7 @@ proc blendBar*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y1, x2, y2: i
       self.mRen[].blendHline(rc.x1, y, rc.x2 - rc.x1 + 1, c, cover)
 
 proc blendSolidHSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int, c: ColorT, covers: ptr CoverType) =
-  mixin blendSolidHSpan
+  mixin blendSolidHSpan, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
 
@@ -236,7 +236,7 @@ proc blendSolidHSpan*[PixFmt, ColorT](self: RendererBase[PixFmt], x, y, len: int
   self.mRen[].blendSolidHSpan(x, y, len, c, covers)
 
 proc blendSolidVSpan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: int, c: ColorT, covers: ptr CoverType) =
-  mixin blendSolidVSpan
+  mixin blendSolidVSpan, construct
   when getColorT(PixFmt) is not ColorT:
     let c = construct(getColorT(PixFmt), c)
 
@@ -472,7 +472,9 @@ proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: var RendererBase[PixFmt], 
 
 proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBase[PixFmt], src: SrcPixelFormatRenderer,
   color: ColorT, rectSrcPtr: ptr RectI = nil,  dx = 0, dy = 0, cover: CoverType = coverFull) =
-  mixin blendFromColor
+  mixin blendFromColor, construct
+  when getColorT(PixFmt) is not ColorT:
+    let c = construct(getColorT(PixFmt), c)
   var rsrc = initRectI(0, 0, src.width(), src.height())
   if rectSrcPtr != nil:
     rsrc.x1 = rectSrcPtr.x1

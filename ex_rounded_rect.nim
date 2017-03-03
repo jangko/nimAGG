@@ -19,7 +19,7 @@ const
   frameHeight = 400
   pixWidth = 3
 
-pixfmtRgb24Gamma(PixFmt, GammaLut8)
+#pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 const
   mGamma = 1.8
@@ -35,7 +35,7 @@ var
   gamma  = initGammaLut8(mGamma)
   buffer = newString(frameWidth * frameHeight * pixWidth)
   rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-  pixf   = initPixFmt(rbuf, gamma)
+  pixf   = initPixfmtRgb24Gamma(rbuf, gamma)
   rb     = initRendererBase(pixf)
   ren    = initRendererScanlineAASolid(rb)
   ras    = initRasterizerScanlineAA()

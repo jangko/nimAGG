@@ -149,7 +149,7 @@ proc testCompOpBlend() =
     x: Rgba8
     y: Rgba8
 
-  const len = EndOfCompOp.ord
+  const len = high(CompOp).ord
 
   for c in 0.. <len:
     var p = table[c]

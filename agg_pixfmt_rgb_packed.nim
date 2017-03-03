@@ -84,9 +84,9 @@ proc blendPix*[G, PixelT](self: BlenderRgb555Gamma[G], p: ptr PixelT, cr, cg, cb
     r = CalcT(self.mGamma[].dir((rgb shr 7) and 0xF8))
     g = CalcT(self.mGamma[].dir((rgb shr 2) and 0xF8))
     b = CalcT(self.mGamma[].dir((rgb shl 3) and 0xF8))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 8)) shr 8) shl 7) and 0x7C00) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 8)) shr 8) shl 2) and 0x03E0) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 8)) shr 8) shr 3) or 0x8000)
+  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr).CalcT - r) * alpha.CalcT + (r shl 8)) shr 8).CalcT shl 7) and 0x7C00) or
+               ((self.mGamma[].inv(((self.mGamma[].dir(cg).CalcT - g) * alpha.CalcT + (g shl 8)) shr 8).CalcT shl 2) and 0x03E0) or
+                (self.mGamma[].inv(((self.mGamma[].dir(cb).CalcT - b) * alpha.CalcT + (b shl 8)) shr 8).CalcT shr 3) or 0x8000)
 
 proc makePix*[G](x: typedesc[BlenderRgb555Gamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
@@ -179,9 +179,9 @@ proc blendPix*[G, PixelT](self: BlenderRgb565Gamma[G], p: ptr PixelT, cr, cg, cb
     r = CalcT(self.mGamma[].dir((rgb shr 8) and 0xF8))
     g = CalcT(self.mGamma[].dir((rgb shr 3) and 0xFC))
     b = CalcT(self.mGamma[].dir((rgb shl 3) and 0xF8))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 8)) shr 8) shl 8) and 0xF800) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 8)) shr 8) shl 3) and 0x07E0) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 8)) shr 8) shr 3))
+  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr).CalcT - r) * alpha.CalcT + (r shl 8)) shr 8).CalcT shl 8) and 0xF800) or
+               ((self.mGamma[].inv(((self.mGamma[].dir(cg).CalcT - g) * alpha.CalcT + (g shl 8)) shr 8).CalcT shl 3) and 0x07E0) or
+                (self.mGamma[].inv(((self.mGamma[].dir(cb).CalcT - b) * alpha.CalcT + (b shl 8)) shr 8).CalcT shr 3))
 
 proc makePix*[G](x: typedesc[BlenderRgb565Gamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
@@ -276,13 +276,13 @@ proc blendPix*[G, PixelT](self: BlenderRgbAAAGamma[G], p: ptr PixelT, cr, cg, cb
     r = CalcT(self.mGamma[].dir((rgb shr 14) and 0xFFC0))
     g = CalcT(self.mGamma[].dir((rgb shr 4)  and 0xFFC0))
     b = CalcT(self.mGamma[].dir((rgb shl 6)  and 0xFFC0))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 16)) shr 16) shl 14) and 0x3FF00000) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 16)) shr 16) shl 4 ) and 0x000FFC00) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 16)) shr 16) shr 6 ) or 0xC0000000)
+  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr).CalcT - r) * alpha.CalcT + (r shl 16)) shr 16).CalcT shl 14) and 0x3FF00000.CalcT) or
+               ((self.mGamma[].inv(((self.mGamma[].dir(cg).CalcT - g) * alpha.CalcT + (g shl 16)) shr 16).CalcT shl 4 ) and 0x000FFC00.CalcT) or
+                (self.mGamma[].inv(((self.mGamma[].dir(cb).CalcT - b) * alpha.CalcT + (b shl 16)) shr 16).CalcT shr 6 ) or 0xC0000000.CalcT)
 
 proc makePix*[G](x: typedesc[BlenderRgbAAAGamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
-  result = PixelT(((r and 0xFFC0) shl 14) or ((g and 0xFFC0) shl 4) or (b shr 6) or 0xC0000000)
+  result = PixelT(((r and 0xFFC0) shl 14) or ((g and 0xFFC0) shl 4) or (b shr 6) or 0xC0000000'u)
 
 proc makeColor*[G,PixelT](x: typedesc[BlenderRgbAAAGamma[G]], p: PixelT): auto {.inline.} =
   result = construct(getColorT(x), (p shr 14) and 0xFFC0, (p shr 4)  and 0xFFC0, (p shl 6)  and 0xFFC0)
@@ -372,13 +372,13 @@ proc blendPix*[G, PixelT](self: BlenderBgrAAAGamma[G], p: ptr PixelT, cr, cg, cb
     b = CalcT(self.mGamma[].dir((bgr shr 14) and 0xFFC0))
     g = CalcT(self.mGamma[].dir((bgr shr 4)  and 0xFFC0))
     r = CalcT(self.mGamma[].dir((bgr shl 6)  and 0xFFC0))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 16)) shr 16) shl 14) and 0x3FF00000) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 16)) shr 16) shl 4 ) and 0x000FFC00) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 16)) shr 16) shr 6 ) or 0xC0000000)
+  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cb).CalcT - b) * alpha.CalcT + (b shl 16)) shr 16).CalcT shl 14) and 0x3FF00000.CalcT) or
+               ((self.mGamma[].inv(((self.mGamma[].dir(cg).CalcT - g) * alpha.CalcT + (g shl 16)) shr 16).CalcT shl 4 ) and 0x000FFC00.CalcT) or
+                (self.mGamma[].inv(((self.mGamma[].dir(cr).CalcT - r) * alpha.CalcT + (r shl 16)) shr 16).CalcT shr 6 )  or 0xC0000000.CalcT)
 
 proc makePix*[G](x: typedesc[BlenderBgrAAAGamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
-  result = PixelT(((b and 0xFFC0) shl 14) or ((g and 0xFFC0) shl 4) or (r shr 6) or 0xC0000000)
+  result = PixelT(((b and 0xFFC0) shl 14) or ((g and 0xFFC0) shl 4) or (r shr 6) or 0xC0000000'u)
 
 proc makeColor*[G, PixelT](x: typedesc[BlenderBgrAAAGamma[G]], p: PixelT): auto {.inline.} =
   result = construct(getColorT(x), (p shl 6)  and 0xFFC0, (p shr 4)  and 0xFFC0, (p shr 14) and 0xFFC0)
@@ -468,9 +468,9 @@ proc blendPix*[G, PixelT](self: BlenderRgbBBAGamma[G], p: ptr PixelT, cr, cg, cb
     r = CalcT(self.mGamma[].dir((rgb shr 16) and 0xFFE0))
     g = CalcT(self.mGamma[].dir((rgb shr 5)  and 0xFFE0))
     b = CalcT(self.mGamma[].dir((rgb shl 6)  and 0xFFC0))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 16)) shr 16) shl 16) and 0xFFE00000) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 16)) shr 16) shl 5 ) and 0x001FFC00) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 16)) shr 16) shr 6 ))
+  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cr).CalcT - r) * alpha.CalcT + (r shl 16)) shr 16).CalcT shl 16) and 0xFFE00000.CalcT) or
+               ((self.mGamma[].inv(((self.mGamma[].dir(cg).CalcT - g) * alpha.CalcT + (g shl 16)) shr 16).CalcT shl 5 ) and 0x001FFC00.CalcT) or
+                (self.mGamma[].inv(((self.mGamma[].dir(cb).CalcT - b) * alpha.CalcT + (b shl 16)) shr 16).CalcT shr 6 ))
 
 proc makePix*[G](x: typedesc[BlenderRgbBBAGamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
@@ -564,9 +564,9 @@ proc blendPix*[G,PixelT](self: BlenderBgrABBGamma[G], p: ptr PixelT, cr, cg, cb,
     b = CalcT(self.mGamma[].dir((bgr shr 16) and 0xFFC0))
     g = CalcT(self.mGamma[].dir((bgr shr 6)  and 0xFFE0))
     r = CalcT(self.mGamma[].dir((bgr shl 5)  and 0xFFE0))
-  p[] = PixelT(((self.mGamma[].inv(((self.mGamma[].dir(cb) - b) * alpha + (b shl 16)) shr 16) shl 16) and 0xFFC00000) or
-               ((self.mGamma[].inv(((self.mGamma[].dir(cg) - g) * alpha + (g shl 16)) shr 16) shl 6 ) and 0x003FF800) or
-                (self.mGamma[].inv(((self.mGamma[].dir(cr) - r) * alpha + (r shl 16)) shr 16) shr 5 ))
+  p[] = PixelT(((CalcT(self.mGamma[].inv(((CalcT(self.mGamma[].dir(cb)) - b) * CalcT(alpha) + (b shl 16)) shr 16)) shl 16) and CalcT(0xFFC00000)) or
+               ((CalcT(self.mGamma[].inv(((CalcT(self.mGamma[].dir(cg)) - g) * CalcT(alpha) + (g shl 16)) shr 16)) shl 6 ) and CalcT(0x003FF800)) or
+                (CalcT(self.mGamma[].inv(((CalcT(self.mGamma[].dir(cr)) - r) * CalcT(alpha) + (r shl 16)) shr 16)) shr 5 ))
 
 proc makePix*[G](x: typedesc[BlenderBgrABBGamma[G]], r, g, b: uint): auto {.inline.} =
   type PixelT = getPixelT(x)
@@ -576,7 +576,7 @@ proc makeColor*[G,PixelT](x: typedesc[BlenderBgrABBGamma[G]], p: PixelT): auto {
   result = construct(getColorT(x), (p shl 5)  and 0xFFE0, (p shr 6)  and 0xFFE0, (p shr 16) and 0xFFC0)
 
 type
-  PixfmtAlphaBlendRgbPacked*[Blender, RenBuf] = object of RootObj
+  PixfmtAlphaBlendRgbPacked*[Blender, RenBuf] = object
     mRbuf: ptr RenBuf
     mBlender: Blender
 
@@ -603,7 +603,7 @@ proc initPixfmtAlphaBlendRgbPacked*[Blender, RenBuf](rb: var RenBuf): PixfmtAlph
 
 template construct*[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]], rbuf: typed): untyped =
   initPixfmtAlphaBlendRgbPacked[B,R](rbuf)
-  
+
 proc init*[Blender, RenBuf](self: var PixfmtAlphaBlendRgbPacked[Blender, RenBuf], rb: var RenBuf) =
   self.mRbuf = rb.addr
 
@@ -620,8 +620,8 @@ proc attach*[PixFmt, Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, R
     return true
   result = false
 
-proc blender*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf]): var Blender =
-  self.mBlender[]
+proc blender*[Blender, RenBuf](self: var PixfmtAlphaBlendRgbPacked[Blender, RenBuf]): var Blender {.inline.} =
+  self.mBlender
 
 proc width*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf]): int {.inline.} =
   self.mRbuf[].width()
@@ -649,7 +649,7 @@ proc makePix*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgbPacked[Blender, 
 
 proc pixel*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf], x, y: int): auto {.inline.} =
   type PixelT = getPixelT(Blender)
-  makeColor[PixelT](Blender, cast[ptr PixelT](self.mRbuf[].rowPtr(y))[x])
+  makeColor(Blender, cast[ptr PixelT](self.mRbuf[].rowPtr(y))[x])
 
 proc copyPixel*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf],
   x, y: int, c: ColorT) {.inline.} =
@@ -906,49 +906,40 @@ type
   PixFmtBgrABBPre* = PixfmtAlphaBlendRgbPacked[BlenderBgrABBPre, RenderingBuffer16]
 
 type
-  PixFmtRgb555Gamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgb555Gamma[Gamma], RenderingBuffer]
+  PixFmtRgb555Gamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderRgb555Gamma[Gamma], RenderingBuffer]
+  PixFmtRgb565Gamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderRgb565Gamma[Gamma], RenderingBuffer]
+  PixFmtRgbAAAGamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer16]
+  PixFmtBgrAAAGamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer16]
+  PixFmtRgbBBAGamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer16]
+  PixFmtBgrABBGamma*[Gamma] = PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer16]
 
-proc initPixFmtRgb555Gamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgb555Gamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgb555Gamma[Gamma], RenderingBuffer]
-  base(result).init(rb)
+proc initPixFmtRgb555Gamma*[Gamma](rbuf: var RenderingBuffer, gamma: var Gamma): PixFmtRgb555Gamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
 
-type
-  PixFmtRgb565Gamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgb565Gamma[Gamma], RenderingBuffer]
-
-proc initPixFmtRgb565Gamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgb565Gamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgb565Gamma[Gamma], RenderingBuffer]
-  base(result).init(rb)
+proc initPixFmtRgb565Gamma*[Gamma](rbuf: var RenderingBuffer, gamma: var Gamma): PixFmtRgb565Gamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
 
-type
-  PixFmtRgbAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer16]
-
-proc initPixFmtRgbAAAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgbAAAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbAAAGamma[Gamma], RenderingBuffer16]
-  base(result).init(rb)
+proc initPixFmtRgbAAAGamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma): PixFmtRgbAAAGamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
 
-type
-  PixFmtBgrAAAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer16]
-
-proc initPixFmtBgrAAAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtBgrAAAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrAAAGamma[Gamma], RenderingBuffer16]
-  base(result).init(rb)
+proc initPixFmtBgrAAAGamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma): PixFmtBgrAAAGamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
 
-type
-  PixFmtRgbBBAGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer16]
-
-proc initPixFmtRgbBBAGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtRgbBBAGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderRgbBBAGamma[Gamma], RenderingBuffer16]
-  base(result).init(rb)
+proc initPixFmtRgbBBAGamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma): PixFmtRgbBBAGamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
 
-type
-  PixFmtBgrABBGamma*[Gamma] = object of PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer16]
-
-proc initPixFmtBgrABBGamma*[Gamma](rb: var RenderingBuffer, gamma: var Gamma): PixFmtBgrABBGamma[Gamma] =
-  type base = PixfmtAlphaBlendRgbPacked[BlenderBgrABBGamma[Gamma], RenderingBuffer16]
-  base(result).init(rb)
+proc initPixFmtBgrABBGamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma): PixFmtBgrABBGamma[Gamma] =
+  result.mRbuf = rbuf.addr
   result.blender().gamma(gamma)
+
+proc initPixfmtAlphaBlendRgbPacked*[B,R,G](rbuf: var R, gamma: var G): PixfmtAlphaBlendRgbPacked[B,R] =
+  result.mRbuf = rbuf.addr
+  result.blender().gamma(gamma)
+
+template construct*[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]], rbuf, gamma: typed): untyped =
+  initPixfmtAlphaBlendRgbPacked[B,R,gamma.type](rbuf, gamma)

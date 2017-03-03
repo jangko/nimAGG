@@ -2,25 +2,24 @@ import agg_basics, agg_renderer_primitives, agg_ellipse_bresenham, agg_renderer_
 
 type
   Marker* = enum
-    MarkerSquare,
-    MarkerDiamond,
-    MarkerCircle,
-    MarkerCrossedCircle,
-    MarkerSemiEllipseLeft,
-    MarkerSemiEllipseRight,
-    MarkerSemiEllipseUp,
-    MarkerSemiEllipseDown,
-    MarkerTriangleLeft,
-    MarkerTriangleRight,
-    MarkerTriangleUp,
-    MarkerTriangleDown,
-    MarkerFourRays,
-    MarkerCross,
-    MarkerX,
-    MarkerDash,
-    MarkerDot,
-    MarkerPixel,
-    EndOfMarkers
+    MarkerSquare
+    MarkerDiamond
+    MarkerCircle
+    MarkerCrossedCircle
+    MarkerSemiEllipseLeft
+    MarkerSemiEllipseRight
+    MarkerSemiEllipseUp
+    MarkerSemiEllipseDown
+    MarkerTriangleLeft
+    MarkerTriangleRight
+    MarkerTriangleUp
+    MarkerTriangleDown
+    MarkerFourRays
+    MarkerCross
+    MarkerX
+    MarkerDash
+    MarkerDot
+    MarkerPixel
 
 type
   RendererMarkers*[BaseRenderer, ColorT] = object of RendererPrimitives[BaseRenderer, ColorT]

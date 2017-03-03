@@ -40,7 +40,7 @@ proc initApp(): App =
   result.g.label("G=$1")
   result.b.label("B=$1")
   
-pixfmtRgb24Gamma(PixfmtRgb24Gamma, GammaLut8)
+#pixfmtRgb24Gamma(PixfmtRgb24Gamma, GammaLut8)
 
 proc onDraw() =
   var

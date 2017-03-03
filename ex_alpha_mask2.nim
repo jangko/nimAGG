@@ -69,7 +69,7 @@ proc onDraw() =
                  markers.coord(random(width)),
                  markers.coord(random(height)))
     markers.marker(random(width).int, random(height).int, random(10) + 5,
-      Marker(random(EndOfMarkers.ord)))
+      Marker(random(high(Marker).ord)))
       
   # Render random anti-aliased lines
   var 

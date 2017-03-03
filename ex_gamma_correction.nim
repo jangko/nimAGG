@@ -12,7 +12,7 @@ const
 type
   ValueT = uint8
 
-pixfmtRgb24Gamma(PixFmt, GammaLut8)
+#pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 proc onDraw() =
   const
@@ -26,7 +26,7 @@ proc onDraw() =
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = initGammaLut8(kGamma)
-    pf     = initPixFmt(rbuf, gamma)
+    pf     = initPixfmtRgb24Gamma(rbuf, gamma)
     rb     = initRendererBase(pf)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()

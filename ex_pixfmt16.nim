@@ -1,7 +1,7 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
 import agg_scanline_p, agg_path_storage, agg_renderer_scanline, agg_pixfmt_rgb, agg_pixfmt_rgb_packed
 import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb16, agg_color_conv
-import nimBMP, agg_renderer_base, agg_pixfmt_gray, agg_color_gray
+import nimBMP, agg_renderer_base, agg_pixfmt_gray, agg_color_gray, agg_gamma_lut
 
 type
   PixFormat = enum
@@ -27,6 +27,12 @@ type
     pix_format_argb64_pre
     pix_format_abgr64_pre
     pix_format_bgra64_pre
+    pix_format_rgb48_gamma
+    pix_format_bgr48_gamma
+    pix_format_rgbAAA_gamma
+    pix_format_bgrAAA_gamma
+    pix_format_rgbBBA_gamma
+    pix_format_bgrABB_gamma
     
   PolymorphicBase = ref object of RootObj
     clear_p: proc(c: Rgba16)
@@ -49,6 +55,7 @@ type
   PolymorphicAdaptor[PixFmt] = ref object of PolymorphicBase
     pixf: PixFmt
     rb: RendererBase[PixFmt]
+    gamma: GammaLut16
     
 proc clear(self: PolymorphicBase, c: Rgba16) =
   self.clear_p(c)
@@ -98,11 +105,7 @@ proc blendColorHspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba16, 
 proc blendColorVspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) =
   self.blendColorVspan_p(x, y, len, colors, covers, cover)
   
-proc newPolymorphicAdaptor[PixFmt](rbuf: var RenderingBuffer16): PolymorphicBase =
-  var ren = new(PolymorphicAdaptor[PixFmt])
-  ren.pixf = construct(PixFmt, rbuf)
-  ren.rb   = initRendererBase(ren.pixf)
-  
+proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) = 
   proc clear_i(c: Rgba16) =
     when getColorT(PixFmt) is not Rgba16:
       var c = construct(getColorT(PixFmt), c)
@@ -216,8 +219,21 @@ proc newPolymorphicAdaptor[PixFmt](rbuf: var RenderingBuffer16): PolymorphicBase
   ren.copyColorVspan_p  = copyColorVspan_i
   ren.blendColorHspan_p = blendColorHspan_i
   ren.blendColorVspan_p = blendColorVspan_i
-    
-  result = ren
+  
+proc newPolymorphicAdaptorGamma[PixFmt](rbuf: var RenderingBuffer16): PolymorphicBase =
+  var ren   = new(PolymorphicAdaptor[PixFmt])
+  ren.gamma = initGammaLut16(0.733)
+  ren.pixf  = construct(PixFmt, rbuf, ren.gamma)
+  ren.rb    = initRendererBase(ren.pixf)
+  ren.init()
+  result    = ren
+
+proc newPolymorphicAdaptor[PixFmt](rbuf: var RenderingBuffer16): PolymorphicBase =
+  var ren  = new(PolymorphicAdaptor[PixFmt])
+  ren.pixf = construct(PixFmt, rbuf)
+  ren.rb   = initRendererBase(ren.pixf)
+  ren.init()
+  result   = ren
   
 proc getPixWidth(x: PixFormat): int =
   case x  
@@ -243,6 +259,13 @@ proc getPixWidth(x: PixFormat): int =
   of pix_format_argb64_pre: result = 4
   of pix_format_abgr64_pre: result = 4
   of pix_format_bgra64_pre: result = 4  
+  of pix_format_rgb48_gamma: result = 3
+  of pix_format_bgr48_gamma: result = 3
+  of pix_format_rgbAAA_gamma: result = 2
+  of pix_format_bgrAAA_gamma: result = 2
+  of pix_format_rgbBBA_gamma: result = 2
+  of pix_format_bgrABB_gamma: result = 2
+  
   
 proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer16): PolymorphicBase =
   case x  
@@ -268,18 +291,24 @@ proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer16): PolymorphicBase =
   of pix_format_argb64_pre: result = newPolymorphicAdaptor[PixFmtArgb64Pre](rbuf)
   of pix_format_abgr64_pre: result = newPolymorphicAdaptor[PixFmtAbgr64Pre](rbuf)
   of pix_format_bgra64_pre: result = newPolymorphicAdaptor[PixFmtBgra64Pre](rbuf)
+  of pix_format_rgb48_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgb48Gamma[GammaLut16]](rbuf)
+  of pix_format_bgr48_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgr48Gamma[GammaLut16]](rbuf)
+  of pix_format_rgbAAA_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgbAAAGamma[GammaLut16]](rbuf)
+  of pix_format_bgrAAA_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgrAAAGamma[GammaLut16]](rbuf)
+  of pix_format_rgbBBA_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgbBBAGamma[GammaLut16]](rbuf)
+  of pix_format_bgrABB_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgrABBGamma[GammaLut16]](rbuf)
   
+ 
 const
-  pixFormat = pix_format_gray16_pre
   frameWidth = 400
   frameHeight = 400
-  pixWidth = getPixWidth(pixFormat)
-
+  
 type
   ValueT = uint16
   
-proc onDraw() =
+proc onDraw(pixFormat: PixFormat) =
   var
+    pixWidth = getPixWidth(pixFormat)
     buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     ren    = pixfFactory(pixFormat, rbuf)
@@ -335,11 +364,11 @@ proc onDraw() =
   for x in 300..350:
     ren.copyColorVSpan(x, 30, ren.height() - 30, spanColor[0].addr)
   
-  #for y in 350.. <400:
-  #  ren.blendColorHSpan(40, y, ren.width() - 40, spanColor[0].addr, spanCover[0].addr, uint8(y - 350))
-  #  
-  #for x in 350.. <400:
-  #  ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
+  for y in 350.. <400:
+    ren.blendColorHSpan(40, y, ren.width() - 40, spanColor[0].addr, spanCover[0].addr, uint8(y - 350))
+    
+  for x in 350.. <400:
+    ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
     
   var
     target = newString(frameWidth * frameHeight * 3)
@@ -368,7 +397,16 @@ proc onDraw() =
   of pix_format_argb64_pre: colorConv(rbuf2, rbuf, color_conv_argb64_to_rgb24)
   of pix_format_abgr64_pre: colorConv(rbuf2, rbuf, color_conv_abgr64_to_rgb24)
   of pix_format_bgra64_pre: colorConv(rbuf2, rbuf, color_conv_bgra64_to_rgb24)
+  of pix_format_rgb48_gamma: colorConv(rbuf2, rbuf, color_conv_rgb48_to_rgb24)
+  of pix_format_bgr48_gamma: colorConv(rbuf2, rbuf, color_conv_bgr48_to_rgb24)
+  of pix_format_rgbAAA_gamma: colorConv(rbuf2, rbuf, color_conv_rgbAAA_to_rgb24)
+  of pix_format_bgrAAA_gamma: colorConv(rbuf2, rbuf, color_conv_bgrAAA_to_rgb24)
+  of pix_format_rgbBBA_gamma: colorConv(rbuf2, rbuf, color_conv_rgbBBA_to_rgb24)
+  of pix_format_bgrABB_gamma: colorConv(rbuf2, rbuf, color_conv_bgrABB_to_rgb24)
   
-  saveBMP24($pixformat & ".bmp", target, frameWidth, frameHeight)
+  let name = $pixformat & ".bmp"
+  echo name
+  saveBMP24(name, target, frameWidth, frameHeight)
   
-onDraw()
+for i in PixFormat:
+  onDraw(PixFormat(i))

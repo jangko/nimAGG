@@ -864,35 +864,34 @@ proc compOpTable*[ColorT, OrderT, ValueT](): CompOpTable[ValueT] =
 
 type
   CompOp* = enum
-    CompOpClear,        #----CompOpclear
-    CompOpSrc,          #----CompOpsrc
-    CompOpDst,          #----CompOpdst
-    CompOpSrcOver,      #----CompOpsrc_over
-    CompOpDstOver,      #----CompOpdst_over
-    CompOpSrcIn,        #----CompOpsrc_in
-    CompOpDstIn,        #----CompOpdst_in
-    CompOpSrcOut,       #----CompOpsrc_out
-    CompOpDstOut,       #----CompOpdst_out
-    CompOpSrcAtop,      #----CompOpsrc_atop
-    CompOpDstAtop,      #----CompOpdst_atop
-    CompOpXor,          #----CompOpxor
-    CompOpPlus,         #----CompOpplus
-    CompOpMinus,        #----CompOpminus
-    CompOpMultiply,     #----CompOpmultiply
-    CompOpScreen,       #----CompOpscreen
-    CompOpOverlay,      #----CompOpoverlay
-    CompOpDarken,       #----CompOpdarken
-    CompOpLighten,      #----CompOplighten
-    CompOpColorDodge,   #----CompOpcolor_dodge
-    CompOpColorBurn,    #----CompOpcolor_burn
-    CompOpHardLight,    #----CompOphard_light
-    CompOpSoftLight,    #----CompOpsoft_light
-    CompOpDifference,   #----CompOpdifference
-    CompOpExclusion,    #----CompOpexclusion
-    CompOpContrast,     #----CompOpcontrast
-    CompOpInvert,       #----CompOpinvert
-    CompOpInvertRgb,    #----CompOpinvert_rgb
-    EndOfCompOp
+    CompOpClear
+    CompOpSrc
+    CompOpDst
+    CompOpSrcOver
+    CompOpDstOver
+    CompOpSrcIn
+    CompOpDstIn
+    CompOpSrcOut
+    CompOpDstOut
+    CompOpSrcAtop
+    CompOpDstAtop
+    CompOpXor
+    CompOpPlus
+    CompOpMinus
+    CompOpMultiply
+    CompOpScreen
+    CompOpOverlay
+    CompOpDarken
+    CompOpLighten
+    CompOpColorDodge
+    CompOpColorBurn
+    CompOpHardLight
+    CompOpSoftLight
+    CompOpDifference
+    CompOpExclusion
+    CompOpContrast
+    CompOpInvert
+    CompOpInvertRgb
 
 type
   CompOpAdaptorRgba*[ColorT, OrderT] = object

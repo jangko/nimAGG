@@ -107,7 +107,7 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
 
   renderScanlines(self.mRas[], self.mSl[], self.mRen[])
 
-pixfmtRgb24Gamma(PixFmt, GammaLut8)
+#pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 type
   ColorT = Rgba8#getColorT(PixFmt)
@@ -121,7 +121,10 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
   mtx *= transAffineRotation(arctan2(dy, dx))
   mtx *= transAffineTranslation(x1 + 0.5, y1 + 0.5)
   mtx.invert()
-
+  
+type
+  PixFmt = PixfmtRgb24Gamma[GammaLut8] 
+  
 # A simple function to form the gradient color array
 # consisting of 3 colors, "begin", "middle", "end"
 proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
@@ -149,7 +152,7 @@ proc onDraw() =
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = initGammaLut8(1.5)
-    pixf   = initPixFmt(rbuf, gamma)
+    pixf   = initPixfmtRgb24Gamma(rbuf, gamma)
     renBase= initRendererBase(pixf)
     renSl  = initRendererScanlineAASolid(renBase)
     sl     = initScanlineU8()
@@ -294,7 +297,7 @@ proc drawRandom() =
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
     gamma  = initGammaLut8(1.5)
-    pixf   = initPixFmt(rbuf, gamma)
+    pixf   = initPixfmtRgb24Gamma(rbuf, gamma)
     renBase= initRendererBase(pixf)
     renSl  = initRendererScanlineAASolid(renBase)
     sl     = initScanlineU8()

@@ -76,8 +76,8 @@ proc initApp(): App =
   result.alphaSrc.value(0.75)
   result.compOp.textSize(6.8)
   
-  for mode in 0.. <EndOfCompOp.ord:
-    result.compOp.addItem($CompOp(mode))
+  for mode in CompOp:
+    result.compOp.addItem($mode)
     
   result.compOp.curItem(3)
         

@@ -109,7 +109,7 @@ proc onDraw() =
     m.lineColor(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
     m.fillColor(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
     m.line(m.coord(random(width)), m.coord(random(height)), m.coord(random(width)), m.coord(random(height)))
-    m.marker(random(width).int, random(height).int, random(10) + 5, Marker(random(EndOfMarkers.ord)))
+    m.marker(random(width).int, random(height).int, random(10) + 5, Marker(random(high(Marker).ord)))
 
   # Render random anti-aliased lines
   var
