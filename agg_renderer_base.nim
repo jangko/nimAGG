@@ -269,6 +269,7 @@ proc copyColorHspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: 
   var
     len = len
     colors = colors
+    x = x
 
   if x < self.xmin():
     let d = self.xmin() - x
@@ -291,6 +292,7 @@ proc copyColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: 
   var
     len = len
     colors = colors
+    y = y
 
   if y < self.ymin():
     let d = self.ymin() - y
@@ -300,7 +302,7 @@ proc copyColorVspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len: 
     y = self.ymin()
 
   if y + len > self.ymax():
-    len = self.ymax() - y + 1;
+    len = self.ymax() - y + 1
     if len <= 0: return
 
   self.mRen[].copyColorVspan(x, y, len, colors)
@@ -326,7 +328,7 @@ proc blendColorHspan*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y, len:
     x = self.xmin()
 
   if x + len > self.xmax():
-    len = self.xmax() - x + 1;
+    len = self.xmax() - x + 1
     if len <= 0: return
 
   self.mRen[].blendColorHspan(x, y, len, colors, covers, cover)

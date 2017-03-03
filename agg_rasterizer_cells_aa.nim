@@ -41,6 +41,7 @@ proc reset*[T](self: RasterizerCellsAA[T]) =
   self.maxY = -0x7FFFFFFF
 
 proc style*[T](self: RasterizerCellsAA[T], styleCell: T) =
+  mixin style
   self.styleCell.style(styleCell)
 
 proc getMinX*[T](self: RasterizerCellsAA[T]): int = self.minX

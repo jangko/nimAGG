@@ -71,10 +71,10 @@ proc initApp(): App =
   result.approximationScale.value(1.0)
   result.approximationScale.noTransform()
 
-  result.cusp_limit.label("Cusp Limit=$1 deg")
-  result.cusp_limit.setRange(0, 90)
-  result.cusp_limit.value(0)
-  result.cusp_limit.noTransform()
+  result.cuspLimit.label("Cusp Limit=$1 deg")
+  result.cuspLimit.setRange(0, 90)
+  result.cuspLimit.value(0)
+  result.cuspLimit.noTransform()
 
   result.width.label("Width=$1")
   result.width.setRange(-50, 100)

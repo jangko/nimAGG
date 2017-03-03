@@ -17,8 +17,8 @@ proc style*(self: var CellStyleAA, c: CellStyleAA) =
   self.left  = c.left
   self.right = c.right
 
-proc notEqual*(self: CellStyleAA, ex, ey: int, c: CellStyleAA): int =
-  result = (ex - self.x) or (ey - self.y) or (self.left - c.left) or (self.right - c.right)
+proc notEqual*(self: CellStyleAA, ex, ey: int, c: CellStyleAA): bool =
+  result = ((ex - self.x) or (ey - self.y) or (self.left - c.left) or (self.right - c.right)) != 0
 
 const
   aaShift  = 8
@@ -28,7 +28,7 @@ const
   aaMask2  = aaScale2 - 1
 
 type
-  LayerOrder = enum
+  LayerOrder* = enum
     layerUnsorted, #------layerUnsorted
     layerDirect,   #------layerDirect
     layerInverse   #------layerInverse
@@ -119,7 +119,7 @@ proc lineToD*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], x, 
   self.mClipper.lineTo(self.mOutline, Conv.upscale(x), Conv.upscale(y))
 
 proc addVertex*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], x, y: float64, cmd: uint) =
-  if self.isMoveTo(cmd):
+  if isMoveTo(cmd):
     self.moveToD(x, y)
   elif isVertex(cmd):
     self.lineToD(x, y)
@@ -140,16 +140,16 @@ proc addPath*[ClipT, CoordT, VertexSource](self: var RasterizerCompoundAA1[ClipT
     cmd = vs.vertex(x, y)
 
 proc minX*[ClipT, CoordT](self: RasterizerCompoundAA1[ClipT, CoordT]): int =
-  self.mOutline.minX()
+  self.mOutline.getMinX()
 
 proc minY*[ClipT, CoordT](self: RasterizerCompoundAA1[ClipT, CoordT]): int =
-  self.mOutline.minY()
+  self.mOutline.getMinY()
 
 proc maxX*[ClipT, CoordT](self: RasterizerCompoundAA1[ClipT, CoordT]): int =
-  self.mOutline.maxX()
+  self.mOutline.getMaxX()
 
 proc maxY*[ClipT, CoordT](self: RasterizerCompoundAA1[ClipT, CoordT]): int =
-  self.mOutline.maxY()
+  self.mOutline.getMaxY()
 
 proc minStyle*[ClipT, CoordT](self: RasterizerCompoundAA1[ClipT, CoordT]): int =
   self.mMinStyle
@@ -166,8 +166,8 @@ proc rewindScanlines*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, Coor
     return false
   if self.mMaxStyle < self.mMinStyle:
     return false
-  self.mScanY = self.mOutline.minY()
-  self.mStyles.allocate(self.mMaxStyle - self.mMinStyle + 2, 128)
+  self.mScanY = self.mOutline.getMinY()
+  self.mStyles.setLen(self.mMaxStyle - self.mMinStyle + 2)
   self.allocateMasterAlpha()
   result = true
 
@@ -185,29 +185,32 @@ proc calculateAlpha*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, Coord
     if cover > aaScale:
       cover = aaScale2 - cover
   if cover > aaMask: cover = aaMask
-  result = sar((cover * masterAlpha + aaMask), aaShift)
+  result = (cover.uint * masterAlpha + aaMask) shr aaShift
 
 # Sweeps one scanline with one style index. The style ID can be
 # determined by calling style().
 proc sweepScanline*[ClipT, CoordT, Scanline](self: var RasterizerCompoundAA1[ClipT, CoordT],
   sl: var Scanline, styleIdx: int): bool =
+  mixin resetSpans, addCell, addSpan, numSpans, finalize
   var scanY = self.mScanY - 1
-  if scanY > self.mOutline.maxY(): return false
+  if scanY > self.mOutline.getMaxY(): return false
 
   sl.resetSpans()
 
-  var masterAlpha: uint = aaMask
+  var 
+    masterAlpha: uint = aaMask
+    styleIdx = styleIdx
 
   if styleIdx < 0:
     styleIdx = 0
   else:
     inc styleIdx
-    masterAlpha = self.mMasterAlpha[self.mAst[styleIdx] + self.mMinStyle - 1]
+    masterAlpha = self.mMasterAlpha[self.mAst[styleIdx].int + self.mMinStyle - 1]
 
   var
-    st = self.mStyles[self.mAst[styleIdx]]
+    st = self.mStyles[self.mAst[styleIdx].int]
     numCells = st.numCells
-    cell = self.mCells[st.startCell].addr
+    cell = self.mCells[st.startCell.int].addr
     cover = 0
 
   while numCells != 0:
@@ -220,12 +223,12 @@ proc sweepScanline*[ClipT, CoordT, Scanline](self: var RasterizerCompoundAA1[Cli
     inc cell
 
     if area != 0:
-      alpha = calculateAlpha((cover shl (polySubPixelShift + 1)) - area, masterAlpha)
-      sl.addAell(x, alpha)
+      alpha = self.calculateAlpha((cover shl (polySubPixelShift + 1)) - area, masterAlpha)
+      sl.addCell(x, alpha)
       inc x
 
     if numCells != 0 and cell.x > x:
-      alpha = calculateAlpha(cover shl (poly_subPixelShift + 1),  masterAlpha)
+      alpha = self.calculateAlpha(cover shl (poly_subPixelShift + 1),  masterAlpha)
       if alpha != 0:
         sl.addSpan(x, cell.x - x, alpha)
     dec numCells
@@ -286,9 +289,9 @@ proc addStyle*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], st
     mask  = 1 shl (styleId and 7)
     style = self.mStyles[styleId].addr
 
-  if (self.mAsm[nbyte] and mask) == 0:
-     self.mAst.add(styleId)
-     self.mAsm[nbyte] = self.mAsm[nbyte] or mask
+  if (self.mAsm[nbyte].int and mask) == 0:
+     self.mAst.add(styleId.uint)
+     self.mAsm[nbyte] = (self.mAsm[nbyte].int or mask).uint8
      style.startCell = 0
      style.numCells = 0
      style.lastX = -0x7FFFFFFF
@@ -296,7 +299,7 @@ proc addStyle*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], st
 
 proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT]): uint =
   while true:
-    if self.mScanY > self.mOutline.maxY(): return 0
+    if self.mScanY > self.mOutline.getMaxY(): return 0
 
     var
       numCells  = self.mOutline.scanlineNumCells(self.mScanY)
@@ -307,10 +310,10 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
       style: ptr StyleInfo
       cell: ptr CellInfo
 
-    self.mCells.allocate(numCells * 2, 256) # Each cell can have two styles
-    self.mAst.capacity(numStyles, 64)
-    self.mAsm.allocate((numStyles + 7) shr 3, 8)
-    self.mAsm.zero()
+    self.mCells.setLen(numCells * 2) # Each cell can have two styles
+    #self.mAst.capacity(numStyles, 64)
+    self.mAsm.setLen((numStyles + 7) shr 3)
+    #self.mAsm.zero()
 
     if numCells != 0:
       # Pre-add zero (for no-fill style, that is, -1).
@@ -334,11 +337,11 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
       # Convert the Y-histogram into the array of starting indexes
       var startCell = 0
       for i in 0.. <self.mAst.len:
-        let
-          st = self.mStyles[self.mAst[i]]
+        var
+          st = self.mStyles[self.mAst[i].int]
           v = st.startCell
-        st.startCell = startCell
-        startCell += v
+        st.startCell = startCell.uint
+        startCell += v.int
 
       cells = self.mOutline.scanlineCells(self.mScanY)
       numCells = self.mOutline.scanlineNumCells(self.mScanY)
@@ -347,14 +350,14 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
         currCell = cells[]
         inc cells
         styleId = if currCell.left < 0: 0 else: currCell.left - self.mMinStyle + 1
-        style = self.mStyles[styleId].addr
+        style = self.mStyles[styleId.int].addr
 
         if currCell.x == style.lastX:
-          cell = self.mCells[style.startCell + style.numCells - 1].addr
+          cell = self.mCells[(style.startCell + style.numCells - 1).int].addr
           cell.area  += currCell.area
           cell.cover += currCell.cover
         else:
-          cell = self.mCells[style.startCell + style.numCells].addr
+          cell = self.mCells[(style.startCell + style.numCells).int].addr
           cell.x       = currCell.x
           cell.area    = currCell.area
           cell.cover   = currCell.cover
@@ -362,14 +365,14 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
           inc style.numCells
 
         styleId = if currCell.right < 0: 0 else: currCell.right - self.mMinStyle + 1
-        style = self.mStyles[styleId].addr
+        style = self.mStyles[styleId.int].addr
 
         if currCell.x == style.lastX:
-          cell = self.mCells[style.startCell + style.numCells - 1].addr
+          cell = self.mCells[(style.startCell + style.numCells - 1).int].addr
           cell.area  -= currCell.area
           cell.cover -= currCell.cover
         else:
-          cell = self.mCells[style.startCell + style.numCells].addr
+          cell = self.mCells[(style.startCell + style.numCells).int].addr
           cell.x       =  currCell.x
           cell.area    = -currCell.area
           cell.cover   = -currCell.cover
@@ -391,10 +394,10 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
       tmp.sort(cmp, Descending)
     copyMem(self.mAst[1].addr, tmp[0].addr, sizeof(uint) * tmp.len)
 
-  result = self.mAst.len - 1
+  result = (self.mAst.len - 1).uint
 
 proc style*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], styleIdx: int): uint {.inline.} =
-  self.mAst[styleIdx + 1] + self.mMinStyle - 1
+  (self.mAst[styleIdx + 1].int + self.mMinStyle - 1).uint
 
 proc navigateScanline*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], y: int): bool =
   self.mOutline.sortCells()
@@ -422,7 +425,7 @@ proc hitTest*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], tx,
   result = sl.hit()
 
 proc allocateCoverBuffer*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], len: int): ptr CoverType =
-  self.mCoverBuf.allocate(len, 256)
+  self.mCoverBuf.setLen(len)
   self.mCoverBuf[0].addr
 
 proc allocateMasterAlpha*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT]) =
@@ -433,4 +436,4 @@ proc masterAlpha*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT],
   if style >= 0:
     while self.mMasterAlpha.len <= style:
       self.mMasterAlpha.add(aaMask)
-    self.mMasterAlpha[style] = uround(alpha * aaMask)
+    self.mMasterAlpha[style] = uround(alpha * aaMask).uint
