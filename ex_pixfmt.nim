@@ -1,6 +1,6 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
 import agg_scanline_p, agg_path_storage, agg_renderer_scanline, agg_pixfmt_rgb, agg_pixfmt_rgb_packed
-import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb8, agg_color_conv
+import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb8, agg_color_conv, blend_type
 import nimBMP, agg_renderer_base, agg_pixfmt_gray, agg_color_gray, agg_gamma_lut
 
 type
@@ -31,7 +31,20 @@ type
     pix_format_bgr24_gamma
     pix_format_rgb555_gamma
     pix_format_rgb565_gamma
-
+    pix_format_custom_a32
+    pix_format_custom_b32
+    pix_format_custom_c32
+    pix_format_custom_d32
+    pix_format_custom_e32
+    pix_format_custom_f32
+    pix_format_custom_g32
+    pix_format_custom_h32
+    pix_format_custom_i32
+    pix_format_custom_j32
+    pix_format_custom_k32
+    pix_format_custom_l32
+    pix_format_custom_m32
+    
   PolymorphicBase = ref object of RootObj
     clear_p: proc(c: Rgba8)
     width_p: proc(): int
@@ -261,7 +274,7 @@ proc getPixWidth(x: PixFormat): int =
   of pix_format_bgr24_gamma: result = 3
   of pix_format_rgb555_gamma: result = 2
   of pix_format_rgb565_gamma: result = 2
-  
+  of pix_format_custom_a32..pix_format_custom_m32: result = 4
 
 proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer): PolymorphicBase =
   case x
@@ -291,7 +304,19 @@ proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer): PolymorphicBase =
   of pix_format_bgr24_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgr24Gamma[GammaLut8]](rbuf)
   of pix_format_rgb555_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgb555Gamma[GammaLut8]](rbuf)
   of pix_format_rgb565_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgb565Gamma[GammaLut8]](rbuf)
-  
+  of pix_format_custom_a32: result = newPolymorphicAdaptor[CustomBlendA32](rbuf)
+  of pix_format_custom_b32: result = newPolymorphicAdaptor[CustomBlendB32](rbuf)
+  of pix_format_custom_c32: result = newPolymorphicAdaptor[CustomBlendC32](rbuf)
+  of pix_format_custom_d32: result = newPolymorphicAdaptor[CustomBlendD32](rbuf)
+  of pix_format_custom_e32: result = newPolymorphicAdaptor[CustomBlendE32](rbuf)
+  of pix_format_custom_f32: result = newPolymorphicAdaptor[CustomBlendF32](rbuf)
+  of pix_format_custom_g32: result = newPolymorphicAdaptor[CustomBlendG32](rbuf)
+  of pix_format_custom_h32: result = newPolymorphicAdaptor[CustomBlendH32](rbuf)
+  of pix_format_custom_i32: result = newPolymorphicAdaptor[CustomBlendI32](rbuf)
+  of pix_format_custom_j32: result = newPolymorphicAdaptor[CustomBlendJ32](rbuf)
+  of pix_format_custom_k32: result = newPolymorphicAdaptor[CustomBlendK32](rbuf)
+  of pix_format_custom_l32: result = newPolymorphicAdaptor[CustomBlendL32](rbuf)
+  of pix_format_custom_m32: result = newPolymorphicAdaptor[CustomBlendM32](rbuf)
   
 const
   frameWidth = 400
@@ -394,6 +419,7 @@ proc onDraw(pixFormat: PixFormat) =
   of pix_format_bgr24_gamma: colorConv(rbuf2, rbuf, color_conv_bgr24_to_rgb24)
   of pix_format_rgb555_gamma: colorConv(rbuf2, rbuf, color_conv_rgb555_to_rgb24)
   of pix_format_rgb565_gamma: colorConv(rbuf2, rbuf, color_conv_rgb565_to_rgb24)
+  of pix_format_custom_a32..pix_format_custom_m32: colorConv(rbuf2, rbuf, color_conv_rgba32_to_rgb24)
   
   let name = $pixformat & ".bmp"
   echo name

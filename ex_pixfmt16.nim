@@ -1,6 +1,6 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
 import agg_scanline_p, agg_path_storage, agg_renderer_scanline, agg_pixfmt_rgb, agg_pixfmt_rgb_packed
-import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb16, agg_color_conv
+import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb16, agg_color_conv, blend_type
 import nimBMP, agg_renderer_base, agg_pixfmt_gray, agg_color_gray, agg_gamma_lut
 
 type
@@ -33,6 +33,16 @@ type
     pix_format_bgrAAA_gamma
     pix_format_rgbBBA_gamma
     pix_format_bgrABB_gamma
+    pix_format_custom_a64
+    pix_format_custom_b64
+    pix_format_custom_c64
+    pix_format_custom_d64
+    pix_format_custom_e64
+    pix_format_custom_f64
+    pix_format_custom_g64
+    pix_format_custom_h64
+    pix_format_custom_i64
+    pix_format_custom_j64
     
   PolymorphicBase = ref object of RootObj
     clear_p: proc(c: Rgba16)
@@ -265,7 +275,7 @@ proc getPixWidth(x: PixFormat): int =
   of pix_format_bgrAAA_gamma: result = 2
   of pix_format_rgbBBA_gamma: result = 2
   of pix_format_bgrABB_gamma: result = 2
-  
+  of pix_format_custom_a64..pix_format_custom_j64: result = 4
   
 proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer16): PolymorphicBase =
   case x  
@@ -297,7 +307,17 @@ proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer16): PolymorphicBase =
   of pix_format_bgrAAA_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgrAAAGamma[GammaLut16]](rbuf)
   of pix_format_rgbBBA_gamma: result = newPolymorphicAdaptorGamma[PixFmtRgbBBAGamma[GammaLut16]](rbuf)
   of pix_format_bgrABB_gamma: result = newPolymorphicAdaptorGamma[PixFmtBgrABBGamma[GammaLut16]](rbuf)
-  
+  of pix_format_custom_a64: result = newPolymorphicAdaptor[CustomBlendA64](rbuf)
+  of pix_format_custom_b64: result = newPolymorphicAdaptor[CustomBlendB64](rbuf)
+  of pix_format_custom_c64: result = newPolymorphicAdaptor[CustomBlendC64](rbuf)
+  of pix_format_custom_d64: result = newPolymorphicAdaptor[CustomBlendD64](rbuf)
+  of pix_format_custom_e64: result = newPolymorphicAdaptor[CustomBlendE64](rbuf)
+  of pix_format_custom_f64: result = newPolymorphicAdaptor[CustomBlendF64](rbuf)
+  of pix_format_custom_g64: result = newPolymorphicAdaptor[CustomBlendG64](rbuf)
+  of pix_format_custom_h64: result = newPolymorphicAdaptor[CustomBlendH64](rbuf)
+  of pix_format_custom_i64: result = newPolymorphicAdaptor[CustomBlendI64](rbuf)
+  of pix_format_custom_j64: result = newPolymorphicAdaptor[CustomBlendJ64](rbuf)
+
  
 const
   frameWidth = 400
@@ -403,6 +423,7 @@ proc onDraw(pixFormat: PixFormat) =
   of pix_format_bgrAAA_gamma: colorConv(rbuf2, rbuf, color_conv_bgrAAA_to_rgb24)
   of pix_format_rgbBBA_gamma: colorConv(rbuf2, rbuf, color_conv_rgbBBA_to_rgb24)
   of pix_format_bgrABB_gamma: colorConv(rbuf2, rbuf, color_conv_bgrABB_to_rgb24)
+  of pix_format_custom_a64..pix_format_custom_j64: colorConv(rbuf2, rbuf, color_conv_rgba64_to_rgb24)
   
   let name = $pixformat & ".bmp"
   echo name

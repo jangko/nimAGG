@@ -47,6 +47,9 @@ const
 
 template sar*(x: int, shift: SomeInteger): int =
   (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
+  
+template sar*(x: int64, shift: SomeInteger): int64 =
+  (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
 
 proc c_memset(p: pointer, value: cint, size: csize): pointer {.
   importc: "memset", header: "<string.h>", discardable.}
