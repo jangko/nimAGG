@@ -1,6 +1,8 @@
 import agg_basics, agg_ellipse, agg_bspline, agg_conv_stroke, agg_math
 import agg_path_storage, agg_trans_affine, agg_color_rgba, ctrl_base
 
+export ctrl_base
+
 type
   SplineCtrlImpl* = ref object of CtrlBase
     mNumPnt: int
@@ -40,6 +42,7 @@ proc init(self: SplineCtrlImpl, x1, y1, x2, y2: float64, numPnt: int, flipY = fa
   self.mMovePnt = -1
   self.mPdx = 0.0
   self.mPdy = 0.0
+  self.mSpline = initBspline()
   if self.mNumPnt < 4:  self.mNumPnt = 4
   if self.mNumPnt > 32: self.mNumPnt = 32
 
@@ -318,17 +321,17 @@ proc newSplineCtrl*[ColorT](x1, y1, x2, y2: float64, numPnt: int, flipY = false)
   SplineCtrlImpl(result).init(x1, y1, x2, y2, numPnt, flipY)
 
   when ColorT is not Rgba:
-    self.mBackgroundColor = construct(ColorT, initRgba(1.0, 1.0, 0.9))
-    self.mBorderColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
-    self.mCurveColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
-    self.mInactivePntColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
-    self.mActivePntColor = construct(ColorT, initRgba(1.0, 0.0, 0.0))
+    result.mBackgroundColor = construct(ColorT, initRgba(1.0, 1.0, 0.9))
+    result.mBorderColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mCurveColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mInactivePntColor = construct(ColorT, initRgba(0.0, 0.0, 0.0))
+    result.mActivePntColor = construct(ColorT, initRgba(1.0, 0.0, 0.0))
   else:
-    self.mBackgroundColor = initRgba(1.0, 1.0, 0.9)
-    self.mBorderColor = initRgba(0.0, 0.0, 0.0)
-    self.mCurveColor = initRgba(0.0, 0.0, 0.0)
-    self.mInactivePntColor = initRgba(0.0, 0.0, 0.0)
-    self.mActivePntColor = initRgba(1.0, 0.0, 0.0)
+    result.mBackgroundColor = initRgba(1.0, 1.0, 0.9)
+    result.mBorderColor = initRgba(0.0, 0.0, 0.0)
+    result.mCurveColor = initRgba(0.0, 0.0, 0.0)
+    result.mInactivePntColor = initRgba(0.0, 0.0, 0.0)
+    result.mActivePntColor = initRgba(1.0, 0.0, 0.0)
 
   result.mColors[0] = result.mBackgroundColor.addr
   result.mColors[1] = result.mBorderColor.addr

@@ -31,6 +31,7 @@ proc generate*[Source, ColorT](self: var SpanPatternRgba[Source], span: ptr Colo
     x = x
     y = y
     len = len
+    span = span
 
   x += self.mOffsetX
   y += self.mOffsetY

@@ -34,6 +34,7 @@ proc generate*[S,A, ColorT](self: var SpanPatternGray[S,A], span: ColorT, x, y, 
     x = x
     y = y
     len = len
+    span = span
 
   x += self.mOffsetX
   y += self.mOffsetY

@@ -21,8 +21,8 @@ proc source*[S,A](self: SpanPatternRgb[S,A]): var S = self.mSrc[]
 
 proc offsetX*[S,A](self: var SpanPatternRgb[S,A], v: int) = self.mOffsetX = v
 proc offsetY*[S,A](self: var SpanPatternRgb[S,A], v: int) = self.mOffsetY = v
-proc offsetX*[S,A](self: SpanPatternRgb[S,A],): int = self.mOffsetX
-proc offsetY*[S,A](self: SpanPatternRgb[S,A],): int = self.mOffsetY
+proc offsetX*[S,A](self: SpanPatternRgb[S,A]): int = self.mOffsetX
+proc offsetY*[S,A](self: SpanPatternRgb[S,A]): int = self.mOffsetY
 proc alpha*[S,A](self: var SpanPatternRgb[S,A], v: A) = self.mAlpha = v
 proc alpha*[S,A](self: SpanPatternRgb[S,A]): A = self.mAlpha
 
@@ -34,6 +34,7 @@ proc generate*[S,A, ColorT](self: var SpanPatternRgb[S,A], span: ColorT, x, y, l
     x = x
     y = y
     len = len
+    span = span
 
   x += self.mOffsetX
   y += self.mOffsetY

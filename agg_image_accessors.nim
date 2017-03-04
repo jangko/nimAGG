@@ -6,8 +6,9 @@ type
     mBkBuf: array[4, uint8]
     mX, mX0, mY: int
     mPixPtr: ptr uint8
-    
+
 template getOrderT*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getOrderT(PixFmt.type)
+template getColorT*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getColorT(PixFmt.type)
 
 proc initImageAccessorClip*[PixFmt, ColorT](pixf: var PixFmt, bk: ColorT): ImageAccessorClip[PixFmt] =
   when getColorT(PixFmt) is not ColorT:
@@ -64,8 +65,9 @@ type
     mPixF: ptr PixFmt
     mX, mY: int
     mPixPtr: ptr uint8
-    
+
 template getOrderT*[PixFmt](x: typedesc[ImageAccessorNoClip[PixFmt]]): typedesc = getOrderT(PixFmt.type)
+template getColorT*[PixFmt](x: typedesc[ImageAccessorNoClip[PixFmt]]): typedesc = getColorT(PixFmt.type)
 
 proc initImageAccessorNoClip*[PixFmt](pixf: var PixFmt): ImageAccessorNoClip[PixFmt] =
   result.mPixF = pixf.addr
@@ -96,6 +98,7 @@ type
     mPixPtr: ptr uint8
 
 template getOrderT*[PixFmt](x: typedesc[ImageAccessorClone[PixFmt]]): typedesc = getOrderT(PixFmt.type)
+template getColorT*[PixFmt](x: typedesc[ImageAccessorClone[PixFmt]]): typedesc = getColorT(PixFmt.type)
 
 proc initImageAccessorClone*[PixFmt](pixf: var PixFmt): ImageAccessorClone[PixFmt] =
   result.mPixF = pixf.addr
@@ -155,32 +158,33 @@ type
     mWrapY: WrapY
 
 template getOrderT*[PixFmt, WrapX, WrapY](x: typedesc[ImageAccessorWrap[PixFmt, WrapX, WrapY]]): typedesc = getOrderT(PixFmt.type)
+template getColorT*[PixFmt, WrapX, WrapY](x: typedesc[ImageAccessorWrap[PixFmt, WrapX, WrapY]]): typedesc = getColorT(PixFmt.type)
 
 proc initImageAccessorWrap*[PixFmt, WrapX, WrapY](pixf: var PixFmt): ImageAccessorWrap[PixFmt, WrapX, WrapY] =
+  mixin width, height
   result.mPixF = pixf.addr
-  result.mWrapX = pixf.width()
-  result.mWrapY = pixf.height()
+  result.mWrapX = construct(WrapX, pixf.width())
+  result.mWrapY = construct(WrapY, pixf.height())
 
 proc attach*[PixFmt, WrapX, WrapY](self: var ImageAccessorWrap[PixFmt, WrapX, WrapY], pixf: var PixFmt) =
   self.mPixF = pixf.addr
 
 proc span*[PixFmt, WrapX, WrapY](self: var ImageAccessorWrap[PixFmt, WrapX, WrapY], x,y,z:int): ptr uint8 {.inline.} =
+  mixin rowPtr
   const pixWidth = getPixWidth(PixFmt)
   self.mX = x
-  self.mRowPtr = self.mPixF[].rowPtr(self.mWrapY(y))
-  result = self.mRowPtr + self.mWrapX(x) * pixWidth
+  self.mRowPtr = self.mPixF[].rowPtr(self.mWrapY.getValue(y))
+  result = self.mRowPtr + self.mWrapX.getValue(x) * pixWidth
 
 proc nextX*[PixFmt, WrapX, WrapY](self: var ImageAccessorWrap[PixFmt, WrapX, WrapY]): ptr uint8 {.inline.} =
   const pixWidth = getPixWidth(PixFmt)
-  inc self.mWrapX
-  let x = self.mWrapX
+  let x = inc self.mWrapX
   result = self.mRowPtr + x * pixWidth
 
 proc nextY*[PixFmt, WrapX, WrapY](self: var ImageAccessorWrap[PixFmt, WrapX, WrapY]): ptr uint8 {.inline.} =
   const pixWidth = getPixWidth(PixFmt)
-  inc self.mWrapY
-  self.mRowPtr = self.mPixF[].rowPtr(self.mWrapY)
-  result = self.mRowPtr + self.mWrapX(self.mX) * pixWidth
+  self.mRowPtr = self.mPixF[].rowPtr(inc self.mWrapY)
+  result = self.mRowPtr + self.mWrapX.getValue(self.mX) * pixWidth
 
 
 type
@@ -191,6 +195,9 @@ proc initWrapModeRepeat*(size: int): WrapModeRepeat =
   result.mSize = size
   result.mAdd = size * (0x3FFFFFFF div size)
   result.mValue = 0
+
+template construct*(x: typedesc[WrapModeRepeat], size: untyped): untyped =
+  initWrapModeRepeat(size)
 
 proc getValue*(self: var WrapModeRepeat, v: int): int {.inline.} =
   self.mValue = (v + self.mAdd) mod self.mSize
@@ -212,6 +219,9 @@ proc initWrapModeRepeatPow2*(size: int): WrapModeRepeatPow2 =
     result.mMask = (result.mMask shl 1) or 1
   result.mMask = result.mMask shr 1
 
+template construct*(x: typedesc[WrapModeRepeatPow2], size: untyped): untyped =
+  initWrapModeRepeatPow2(size)
+
 proc getValue*(self: var WrapModeRepeatPow2, v: int): int {.inline.} =
   self.mValue = v and self.mMask
   self.mValue
@@ -222,7 +232,7 @@ proc inc*(self: var WrapModeRepeatPow2): int {.inline.} =
   self.mValue
 
 type
-  WrapModeRepeatAutoPow2 = object
+  WrapModeRepeatAutoPow2* = object
     mSize, mAdd, mMask, mValue: int
 
 proc initWrapModeRepeatAutoPow2*(size: int): WrapModeRepeatAutoPow2 =
@@ -230,6 +240,9 @@ proc initWrapModeRepeatAutoPow2*(size: int): WrapModeRepeatAutoPow2 =
   result.mAdd = size * (0x3FFFFFFF div size)
   result.mMask = if (result.mSize and (result.mSize-1)) != 0: 0 else: result.mSize-1
   result.mValue = 0
+
+template construct*(x: typedesc[WrapModeRepeatAutoPow2], size: untyped): untyped =
+  initWrapModeRepeatAutoPow2(size)
 
 proc getValue*(self: var WrapModeRepeatAutoPow2, v: int): int {.inline.} =
   if self.mMask != 0:
@@ -252,6 +265,9 @@ proc initWrapModeReflect*(size: int): WrapModeReflect =
   result.mSize2 = size * 2
   result.mAdd = result.mSize2 * (0x3FFFFFFF div result.mSize2)
   result.mValue = 0
+
+template construct*(x: typedesc[WrapModeReflect], size: untyped): untyped =
+  initWrapModeReflect(size)
 
 proc getValue*(self: var WrapModeReflect, v: int): int {.inline.} =
   self.mValue = (v + self.mAdd) mod self.mSize2
@@ -277,6 +293,9 @@ proc initWrapModeReflectPow2*(size: int): WrapModeReflectPow2 =
     result.mMask = (result.mMask shl 1) or 1
     result.mSize = result.mSize shl 1
 
+template construct*(x: typedesc[WrapModeReflectPow2], size: untyped): untyped =
+  initWrapModeReflectPow2(size)
+
 proc getValue*(self: var WrapModeReflectPow2, v: int): int {.inline.} =
   self.mValue = v and self.mMask
   if self.mValue >= self.mSize:
@@ -300,6 +319,9 @@ proc initWrapModeReflectAutoPow2*(size: int): WrapModeReflectAutoPow2 =
   result.mAdd = result.mSize2 * (0x3FFFFFFF div result.mSize2)
   result.mMask = if (result.mSize2 and (result.mSize2-1)) != 0: 0 else: result.mSize2-1
   result.mValue = 0
+
+template construct*(x: typedesc[WrapModeReflectAutoPow2], size: untyped): untyped =
+  initWrapModeReflectAutoPow2(size)
 
 proc getValue*(self: var WrapModeReflectAutoPow2, v: int): int {.inline.} =
   self.mValue = if self.mMask != 0: v and self.mMask else: (v + self.mAdd) mod self.mSize2
