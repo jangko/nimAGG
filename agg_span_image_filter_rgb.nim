@@ -487,16 +487,16 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb[S,I], span: ptr ColorT, 
     dec len
 
 type
-  SpanImageResampleRgbAffine*[Source] = object of SpanImageResampleAffine[Source]
+  SpanImageResampleRgbAffine*[Source,Interpolator] = object of SpanImageResampleAffine[Source,Interpolator]
 
-proc initSpanImageResampleRgbAffine*[S](src: var S,
-  inter: var SpanInterpolatorLinear, filter: var ImageFilterLut): SpanImageResampleRgbAffine[S] =
-  type base = SpanImageResampleAffine[S]
+proc initSpanImageResampleRgbAffine*[S,I](src: var S,
+  inter: var I, filter: var ImageFilterLut): SpanImageResampleRgbAffine[S,I] =
+  type base = SpanImageResampleAffine[S,I]
   base(result).init(src, inter, filter)
 
-proc generate*[S,ColorT](self: var SpanImageResampleRgbAffine[S], span: ptr ColorT, x, y, len: int) =
+proc generate*[S,I,ColorT](self: var SpanImageResampleRgbAffine[S,I], span: ptr ColorT, x, y, len: int) =
   type
-    base = SpanImageResampleAffine[S]
+    base = SpanImageResampleAffine[S,I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
     
@@ -579,7 +579,7 @@ proc generate*[S,ColorT](self: var SpanImageResampleRgbAffine[S], span: ptr Colo
     dec len
 
 type
-  SpanImageResampleRgb[Source, Interpolator] = object of SpanImageResample[Source, Interpolator]
+  SpanImageResampleRgb*[Source, Interpolator] = object of SpanImageResample[Source, Interpolator]
 
 proc initSpanImageResampleRgb*[S,I](src: var S, inter: var I, filter: var ImageFilterLut): SpanImageResampleRgb[S,I] =
   type base = SpanImageResample[S, I]

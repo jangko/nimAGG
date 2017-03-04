@@ -1,6 +1,7 @@
 import agg_basics, agg_dda_line, agg_trans_affine
+export agg_dda_line
 
-template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift: int) =
+template spanInterpolatorLinear*(name: untyped, Transformer: typed, SubpixelShift: int) =
   type
     name* = object
       mTrans: ptr Transformer
@@ -9,7 +10,7 @@ template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift
   template getSubPixelShift*(x: typedesc[name]): int = SubpixelShift
   template getSubPixelScale*(x: typedesc[name]): int = 1 shl SubPixelShift
 
-  proc begin*(self: var name, x, y: float64, len: int)
+  proc begin*(self: var name, xx, yy: float64, len: int)
 
   proc `init name`*(trans: var Transformer): name =
     result.mTrans = trans.addr
@@ -21,19 +22,19 @@ template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift
   proc transformer*(self: var name): var Transformer = self.mTrans[]
   proc transformer*(self: var name, trans: var Transformer) = self.mTrans = trans.addr
 
-  proc begin(self: var name, x, y: float64, len: int) =
+  proc begin(self: var name, xx, yy: float64, len: int) =
     const subPixelScale = getSubPixelScale(name)
     var
-      tx = x
-      ty = y
+      tx = xx
+      ty = yy
 
     self.mTrans[].transform(tx, ty)
     var
       x1 = iround(tx * subPixelScale)
       y1 = iround(ty * subPixelScale)
 
-    tx = x + len.float64
-    ty = y
+    tx = xx + len.float64
+    ty = yy
     self.mTrans[].transform(tx, ty)
     var
       x2 = iround(tx * subPixelScale)
@@ -55,13 +56,11 @@ template spanInterpolatorLinear(name: untyped, Transformer: typed, SubpixelShift
     inc self.mLiX
     inc self.mLiY
 
-  proc coordinates*(self: var name, x, y: var int) =
-    x = self.mLiX.y()
-    y = self.mLiY.y()
+  proc coordinates*(self: var name, xx, yy: var int) =
+    xx = self.mLiX.y()
+    yy = self.mLiY.y()
 
-
-
-template spanInterpolatorLinearSubdiv(name: untyped, Transformer: typed, SubpixelShift: int) =
+template spanInterpolatorLinearSubdiv*(name: untyped, Transformer: typed, SubpixelShift: int) =
   type
     name* = object
       mSubdivShift, mSubdivSize, mSubdivMask: int
@@ -150,9 +149,9 @@ template spanInterpolatorLinearSubdiv(name: untyped, Transformer: typed, Subpixe
     inc self.mPos
     dec self.mLen
 
-  proc coordinates*(self: var name, x, y: var int) =
-    x = self.mLiX.y()
-    y = self.mLiY.y()
+  proc coordinates*(self: var name, xx, yy: var int) =
+    xx = self.mLiX.y()
+    yy = self.mLiY.y()
 
 spanInterpolatorLinear(SpanInterpolatorLinear, TransAffine, 8)
 spanInterpolatorLinearSubdiv(SpanInterpolatorLinearSubdiv, TransAffine, 8)

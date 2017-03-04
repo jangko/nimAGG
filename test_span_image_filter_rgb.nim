@@ -58,9 +58,9 @@ proc onDraw() =
     #sg     = initSpanImageFilterRgbBilinear(source, inter)
     #sg     = initSpanImageFilterRgbBilinearClip(pixf, initRgba8(0,1,0), inter)
     filter  = initImageFilter[ImageFilterKaiser]()
-    sg      = initSpanImageFilterRgb2x2(source, inter, filter)
+    #sg      = initSpanImageFilterRgb2x2(source, inter, filter)
     #sg      = initSpanImageFilterRgb(source, inter, filter)
-    #sg      = initSpanImageResampleRgbAffine(source, inter, filter)
+    sg      = initSpanImageResampleRgbAffine(source, inter, filter)
     
   ras.reset()
   ras.moveToD(para[0], para[1])

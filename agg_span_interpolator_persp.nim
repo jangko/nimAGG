@@ -12,44 +12,40 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
   template getSubPixelShift*(x: typedesc[name]): int = SubpixelShift
   template getSubPixelScale*(x: typedesc[name]): int = 1 shl SubPixelShift
 
-  proc quadToQuad*(self: var name, src, dst: ptr float64)
-  proc rectToQuad*(self: var name, x1, y1, x2, y2: float64, quad: ptr float64)
-  proc quadToRect*(self: var name, quad: ptr float64,  x1, y1, x2, y2: float64)
-
-  # Arbitrary quadrangle transformations
-  proc `init name`*(src, dst: ptr float64): name =
-    result.quadToQuad(src, dst)
-
-  # Direct transformations
-  proc `init name`*(x1, y1, x2, y2: float64, quad: ptr float64): name =
-    result.rectToQuad(x1, y1, x2, y2, quad)
-
-  # Reverse transformations
-  proc `init name`*(quad: ptr float64, x1, y1, x2, y2: float64): name =
-    result.quadToRect(quad, x1, y1, x2, y2)
-
   # Set the transformations using two arbitrary quadrangles.
-  proc quadToQuad(self: var name, src, dst: ptr float64) =
+  proc quadToQuad*(self: var name, src, dst: openArray[float64]) =
     discard self.mTransDir.quadToQuad(src, dst)
     discard self.mTransInv.quadToQuad(dst, src)
 
   # Set the direct transformations, i.e., rectangle -> quadrangle
-  proc rectToQuad(self: var name, x1, y1, x2, y2: float64, quad: ptr float64) =
+  proc rectToQuad*(self: var name, x1, y1, x2, y2: float64, quad: openArray[float64]) =
     var src: array[8, float64]
     src[0] = x1; src[6] = x1
     src[2] = x2; src[4] = x2
     src[1] = y1; src[3] = y1
     src[5] = y2; src[7] = y2
-    self.quadToQuad(src[0].addr, quad)
+    self.quadToQuad(src, quad)
 
   # Set the reverse transformations, i.e., quadrangle -> rectangle
-  proc quadToRect(self: var name, quad: ptr float64,  x1, y1, x2, y2: float64) =
+  proc quadToRect*(self: var name, quad: openArray[float64],  x1, y1, x2, y2: float64) =
     var dst: array[8, float64]
     dst[0] = x1; dst[6] = x1
     dst[2] = x2; dst[4] = x2
     dst[1] = y1; dst[3] = y1
     dst[5] = y2; dst[7] = y2
-    self.quadToQuad(quad, dst[0].addr)
+    self.quadToQuad(quad, dst)
+
+  # Arbitrary quadrangle transformations
+  proc `init name`*(src, dst: openArray[float64]): name =
+    result.quadToQuad(src, dst)
+
+  # Direct transformations
+  proc `init name`*(x1, y1, x2, y2: float64, quad: openArray[float64]): name =
+    result.rectToQuad(x1, y1, x2, y2, quad)
+
+  # Reverse transformations
+  proc `init name`*(quad: openArray[float64], x1, y1, x2, y2: float64): name =
+    result.quadToRect(quad, x1, y1, x2, y2)
 
   # Check if the equations were solved successfully
   proc isValid*(self: name): bool =
@@ -58,10 +54,10 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
   proc begin*(self: var name, x, y: float64, len: int) =
     const
       subPixelShift = getSubPixelShift(name)
-      subPixelScale = getSubPixelScale(name)
+      subPixelScale = float64(getSubPixelScale(name))
 
     var
-      x = y
+      x = x
       y = y
 
     self.mIterator = self.mTransDir.begin(x, y, 1.0)
@@ -69,7 +65,7 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
       xt = self.mIterator.x
       yt = self.mIterator.y
       dx, dy: float64
-      delta = 1.0 / float64(subPixelScale)
+      delta = 1.0 / subPixelScale
 
     dx = xt + delta
     dy = yt
@@ -113,7 +109,7 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
   proc resynchronize*(self: var name, xe, ye: float64, len: int) =
     const
       subPixelShift = getSubPixelShift(name)
-      subPixelScale = getSubPixelScale(name)
+      subPixelScale = float64(getSubPixelScale(name))
 
     var
       # Assume x1,y1 are equal to the ones at the previous end point
@@ -127,7 +123,7 @@ template spanInterpolatorPerspExact(name: untyped, SubpixelShift: int = 8) =
     self.mTransDir.transform(xt, yt)
 
     var
-      delta = 1.0 / float64(subPixelScale)
+      delta = 1.0 / subPixelScale
       dx, dy: float64
 
     # Calculate scale by X at x2,y2
@@ -182,44 +178,40 @@ template spanInterpolatorPerspLerp(name: untyped, SubpixelShift: int = 8) =
   template getSubPixelShift*(x: typedesc[name]): int = SubpixelShift
   template getSubPixelScale*(x: typedesc[name]): int = 1 shl SubPixelShift
 
-  proc quadToQuad*(self: var name, src, dst: ptr float64)
-  proc rectToQuad*(self: var name, x1, y1, x2, y2: float64, quad: ptr float64)
-  proc quadToRect*(self: var name, quad: ptr float64, x1, y1, x2, y2: float64)
-
-  # Arbitrary quadrangle transformations
-  proc `init name`*(src, dst: ptr float64): name =
-    result.quadToQuad(src, dst)
-
-  # Direct transformations
-  proc `init name`*(x1, y1, x2, y2: float64, quad: ptr float64): name =
-    result.rectToQuad(x1, y1, x2, y2, quad)
-
-  # Reverse transformations
-  proc `init name`*(quad: ptr float64, x1, y1, x2, y2: float64): name =
-    result.quadToRect(quad, x1, y1, x2, y2)
-
-  # Set the transformations using two arbitrary quadrangles.
-  proc quadToQuad(self: var name, src, dst: ptr float64) =
+# Set the transformations using two arbitrary quadrangles.
+  proc quadToQuad*(self: var name, src, dst: openArray[float64]) =
     discard self.mTransDir.quadToQuad(src, dst)
     discard self.mTransInv.quadToQuad(dst, src)
 
   # Set the direct transformations, i.e., rectangle -> quadrangle
-  proc rectToQuad(self: var name, x1, y1, x2, y2: float64, quad: ptr float64) =
+  proc rectToQuad*(self: var name, x1, y1, x2, y2: float64, quad: openArray[float64]) =
     var src: array[8, float64]
     src[0] = x1; src[6] = x1
     src[2] = x2; src[4] = x2
     src[1] = y1; src[3] = y1
     src[5] = y2; src[7] = y2
-    self.quadToQuad(src[0].addr, quad)
+    self.quadToQuad(src, quad)
 
   # Set the reverse transformations, i.e., quadrangle -> rectangle
-  proc quadToRect(self: var name, quad: ptr float64, x1, y1, x2, y2: float64) =
+  proc quadToRect*(self: var name, quad: openArray[float64], x1, y1, x2, y2: float64) =
     var dst: array[8, float64]
     dst[0] = x1; dst[6] = x1
     dst[2] = x2; dst[4] = x2
     dst[1] = y1; dst[3] = y1
     dst[5] = y2; dst[7] = y2
-    self.quadToQuad(quad, dst[0].addr)
+    self.quadToQuad(quad, dst)
+
+  # Arbitrary quadrangle transformations
+  proc `init name`*(src, dst: openArray[float64]): name =
+    result.quadToQuad(src, dst)
+
+  # Direct transformations
+  proc `init name`*(x1, y1, x2, y2: float64, quad: openArray[float64]): name =
+    result.rectToQuad(x1, y1, x2, y2, quad)
+
+  # Reverse transformations
+  proc `init name`*(quad: openArray[float64], x1, y1, x2, y2: float64): name =
+    result.quadToRect(quad, x1, y1, x2, y2)
 
   # Check if the equations were solved successfully
   proc isValid*(self: name): bool =

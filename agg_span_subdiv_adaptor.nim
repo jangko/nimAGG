@@ -50,10 +50,12 @@ proc subDivShift*[I](self: var SpanSubdivAdaptor[I], shift: int) =
   self.mSubdivMask  = self.mSubdivSize - 1
 
 proc begin[I](self: var SpanSubdivAdaptor[I], x, y: float64, len: int) =
+  mixin begin
   self.mPos  = 1
   self.mSrcX = iround(x * subPixelScale) + subPixelScale
   self.mSrcY = y
   self.mLen  = len
+  var len = len
   if len > self.mSubdivSize: len = self.mSubdivSize
   self.mInterpolator[].begin(x, y, len)
 
@@ -62,7 +64,7 @@ proc inc*[I](self: var SpanSubdivAdaptor[I]) =
   if self.mPos >= self.mSubdivSize:
     var len = self.mLen
     if len > self.mSubdivSize: len = self.mSubdivSize
-    self.mInterpolator[].resynchronize(float64(self.mSrcX) / float64(subPixelScale) + len,
+    self.mInterpolator[].resynchronize(float64(self.mSrcX) / float64(subPixelScale) + len.float64,
                                     self.mSrcY,
                                     len)
     self.mPos = 0
@@ -72,7 +74,9 @@ proc inc*[I](self: var SpanSubdivAdaptor[I]) =
   dec self.mLen
 
 proc coordinates*[I](self: var SpanSubdivAdaptor[I], x, y: var int) =
+  mixin coordinates
   self.mInterpolator[].coordinates(x, y)
 
 proc localScale*[I](self: var SpanSubdivAdaptor[I], x, y: var int) =
+  mixin localScale
   self.mInterpolator[].localScale(x, y)

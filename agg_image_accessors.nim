@@ -310,7 +310,7 @@ proc inc*(self: var WrapModeReflectPow2): int {.inline.} =
   self.mValue
 
 type
-  WrapModeReflectAutoPow2 = object
+  WrapModeReflectAutoPow2* = object
     mSize, mSize2, mAdd, mMask, mValue: int
 
 proc initWrapModeReflectAutoPow2*(size: int): WrapModeReflectAutoPow2 =
