@@ -120,11 +120,18 @@ type
   SpanImageFilterRgbBilinearClip*[Source, Interpolator, ColorT] = object of SpanImageFilter[Source, Interpolator]
     mBackColor: ColorT
 
-proc initSpanImageFilterRgbBilinearClip*[S,I,ColorT](src: var S,
+proc initSpanImageFilterRgbBilinearClipAux*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): SpanImageFilterRgbBilinearClip[S,I,ColorT] =
   type base = SpanImageFilter[S, I]
   base(result).init(src, inter)
   result.mBackColor = backColor
+  
+proc initSpanImageFilterRgbBilinearClip*[S,I,ColorT](src: var S,
+  backColor: ColorT, inter: var I): auto =
+  when ColorT is not getColorT(S):
+    initSpanImageFilterRgbBilinearClipAux[S,I,getColorT(S)](src, construct(getColorT(S), backColor), inter)
+  else:
+    initSpanImageFilterRgbBilinearClipAux(src, backColor, inter)
 
 proc backgroundColor*[S,I,ColorT](self: SpanImageFilterRgbBilinearClip[S,I,ColorT]): ColorT = self.mBackColor
 proc backgroundColor*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT], v: ColorT) = self.mBackColor = v

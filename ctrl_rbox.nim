@@ -266,19 +266,29 @@ proc newRboxCtrl*[ColorT](x1, y1, x2, y2: float64, flipY = false): RboxCtrl[Colo
   result.mColors[3] = result.mInactiveColor.addr
   result.mColors[4] = result.mActiveColor.addr
 
-proc backgroundColor*[ColorT](self: RboxCtrl[ColorT], c: ColorT) =
+proc backgroundColor*[ColorA, ColorB](self: RboxCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    let c = construct(ColorA, c)
   self.mBackgroundColor = c
 
-proc borderColor*[ColorT](self: RboxCtrl[ColorT], c: ColorT) =
+proc borderColor*[ColorA, ColorB](self: RboxCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    let c = construct(ColorA, c)
   self.mBorderColor = c
 
-proc textColor*[ColorT](self: RboxCtrl[ColorT], c: ColorT) =
+proc textColor*[ColorA, ColorB](self: RboxCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    let c = construct(ColorA, c)
   self.mTextColor = c
 
-proc inactiveColor*[ColorT](self: RboxCtrl[ColorT], c: ColorT) =
+proc inactiveColor*[ColorA, ColorB](self: RboxCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    let c = construct(ColorA, c)
   self.mInactiveColor = c
 
-proc activeColor*[ColorT](self: RboxCtrl[ColorT], c: ColorT) =
+proc activeColor*[ColorA, ColorB](self: RboxCtrl[ColorA], c: ColorB) =
+  when ColorA is not ColorB:
+    let c = construct(ColorA, c)
   self.mActiveColor = c
 
 proc color*[ColorT](self: RboxCtrl[ColorT], i: int): ColorT =

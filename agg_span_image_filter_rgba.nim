@@ -116,12 +116,19 @@ type
   SpanImageFilterRgbaBilinearClip*[Source, Interpolator, ColorT] = object of SpanImageFilter[Source, Interpolator]
     mBackColor: ColorT
 
-proc initSpanImageFilterRgbaBilinearClip*[S,I,ColorT](src: var S,
+proc initSpanImageFilterRgbaBilinearClipAux*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): SpanImageFilterRgbaBilinearClip[S,I,ColorT] =
-  type base = SpanImageFilter[S,I]
+  type base = SpanImageFilter[S, I]
   base(result).init(src, inter)
   result.mBackColor = backColor
-
+  
+proc initSpanImageFilterRgbaBilinearClip*[S,I,ColorT](src: var S,
+  backColor: ColorT, inter: var I): auto =
+  when ColorT is not getColorT(S):
+    initSpanImageFilterRgbaBilinearClipAux[S,I,getColorT(S)](src, construct(getColorT(S), backColor), inter)
+  else:
+    initSpanImageFilterRgbaBilinearClipAux(src, backColor, inter)
+    
 proc backgroundColor*[S,I,ColorT](self: SpanImageFilterRgbaBilinearClip[S,I,ColorT]): ColorT = self.mBackColor
 proc backgroundColor*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT], v: ColorT) = self.mBackColor = v
 
@@ -496,16 +503,16 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
 
 
 type
-  SpanImageResampleRgbaAffine*[Source] = object of SpanImageResampleAffine[Source]
+  SpanImageResampleRgbaAffine*[Source,Interpolator] = object of SpanImageResampleAffine[Source,Interpolator]
 
-proc initSpanImageResampleRgbaAffine*[S](src: var S,
-  inter: var SpanInterpolatorLinear, filter: var ImageFilterLut): SpanImageResampleRgbaAffine[S] =
-  type base = SpanImageResampleAffine[S]
+proc initSpanImageResampleRgbaAffine*[S,I](src: var S,
+  inter: var I, filter: var ImageFilterLut): SpanImageResampleRgbaAffine[S,I] =
+  type base = SpanImageResampleAffine[S,I]
   base(result).init(src, inter, filter)
 
-proc generate*[S,ColorT](self: var SpanImageResampleRgbaAffine[S], span: ptr ColorT, x, y, len: int) =
+proc generate*[S,I,ColorT](self: var SpanImageResampleRgbaAffine[S,I], span: ptr ColorT, x, y, len: int) =
   type
-    base = SpanImageResampleAffine[S]
+    base = SpanImageResampleAffine[S,I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
     

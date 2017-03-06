@@ -397,7 +397,7 @@ proc clipRectArea*[PixFmt](self: var RendererBase[PixFmt], dst, src: var RectI, 
   if rc.y2 > src.y2 - src.y1: rc.y2 = src.y2 - src.y1
   result = rc
 
-proc copyFrom*[PixFmt, RenBuf](self: var RendererBase[PixFmt], src: RenBuf, rectSrcPtr: ptr RectI = nil, dx = 0, dy = 0) =
+proc copyFrom*[PixFmt, RenBuf](self: var RendererBase[PixFmt], src: var RenBuf, rectSrcPtr: ptr RectI = nil, dx = 0, dy = 0) =
   mixin copyFrom
   var rsrc = initRectI(0, 0, src.width(), src.height())
 

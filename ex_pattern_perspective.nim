@@ -35,7 +35,7 @@ proc initApp(): App =
   result.transType.addItem("Affine")
   result.transType.addItem("Bilinear")
   result.transType.addItem("Perspective")
-  result.transType.curItem(2)
+  result.transType.curItem(1)
   
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()

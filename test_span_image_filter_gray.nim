@@ -3,12 +3,13 @@ import agg_rasterizer_scanline_aa, agg_rendering_buffer, agg_scanline_u
 import agg_trans_affine, agg_span_interpolator_linear, agg_span_allocator
 import agg_image_accessors, agg_span_image_filter_gray, agg_renderer_scanline
 import agg_image_filters, agg_pixfmt_rgb, agg_color_rgba
-import nimBMP, agg_color_conv, agg_color_conv_rgb8
+import agg_color_conv, agg_color_conv_rgb8, ctrl_rbox, nimBMP
 
 const
   frameWidth = 500
   frameHeight = 340
   pixWidth = 3
+  flipY = true
 
 type
   ValueT = uint8
@@ -22,17 +23,25 @@ let
            0,150,0,170,
            200,0,V,0]
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_span.cpp".}
-{.compile: "agg_trans_affine2.cpp".}
-{.compile: "agg_image_filters2.cpp".}
-{.passL: "-lstdc++".}
+type
+  App = object
+    filters: RboxCtrl[Rgba8]
 
-proc test_span(): cstring {.importc.}
-proc free_buffer(b: cstring) {.importc.}
+proc initApp(): App =
+  result.filters = newRboxCtrl[Rgba8](1, 1, 170.0, 150.0, not flipY)
+
+  result.filters.addItem("NN")
+  result.filters.addItem("Bilinear")
+  result.filters.addItem("Bilinear Clip")
+  result.filters.addItem("Gaussian")
+  result.filters.addItem("Gray2x2")
+  result.filters.addItem("Gray")
+  result.filters.addItem("Affine")
+  result.filters.curItem(0)
 
 proc onDraw() =
   var
+    app    = initApp()
     buffer = newString(frameWidth * frameHeight)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth)
     pf     = initPixFmtGray8(rbuf)
@@ -48,13 +57,7 @@ proc onDraw() =
     sa     = initSpanAllocator[Gray8]()
     pixf   = initPixFmtGray8(img)
     source = initImageAccessorClone(pixf)
-    #sg     = initSpanImageFilterGrayNN(source, inter)
-    #sg     = initSpanImageFilterGrayBilinear(source, inter)
-    #sg     = initSpanImageFilterGrayBilinearClip(pixf, initGray8(0,1), inter)
     filter  = initImageFilter[ImageFilterKaiser]()
-    sg      = initSpanImageFilterGray2x2(source, inter, filter)
-    #sg      = initSpanImageFilterGray(source, inter, filter)
-    #sg      = initSpanImageResampleGrayAffine(source, inter, filter)
 
   ras.reset()
   ras.moveToD(para[0], para[1])
@@ -63,13 +66,34 @@ proc onDraw() =
   ras.lineToD(para[6], para[7])
   rb.clear(initRgba(1, 1, 1))
 
-  renderScanlinesAA(ras, sl, rb, sa, sg)
+  case app.filters.curItem()
+  of 0:
+    var sg = initSpanImageFilterGrayNN(source, inter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  of 1:
+    var sg = initSpanImageFilterGrayBilinear(source, inter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  of 2:
+    var sg = initSpanImageFilterGrayBilinearClip(pixf, initRgba8(0,1,0), inter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  of 3:
+    var sg = initSpanImageFilterGray2x2(source, inter, filter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  of 4:
+    var sg = initSpanImageFilterGray(source, inter, filter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  of 5:
+    var sg = initSpanImageResampleGrayAffine(source, inter, filter)
+    renderScanlinesAA(ras, sl, rb, sa, sg)
+  else:
+    discard
+  renderCtrl(ras, sl, rb, app.filters)
 
   var
     target = newString(frameWidth * frameHeight * pixWidth)
     rbuf2  = initRenderingBuffer(cast[ptr ValueT](target[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
 
   colorConv(rbuf2, rbuf, color_conv_gray8_to_rgb24)
-  saveBMP24("test_span_image.bmp", target, frameWidth, frameHeight)
+  saveBMP24("test_span_image_filter_gray.bmp", target, frameWidth, frameHeight)
 
 onDraw()
