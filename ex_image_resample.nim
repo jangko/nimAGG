@@ -2,7 +2,7 @@ import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanlin
 import agg_renderer_scanline, agg_path_storage, agg_conv_transform, agg_trans_affine
 import agg_trans_bilinear, agg_trans_perspective, agg_span_interpolator_linear
 import agg_span_interpolator_trans, agg_span_allocator, agg_image_accessors
-import ctrl_rbox, ctrl_polygon, agg_pixfmt_rgb, agg_span_image_filter_rgb
+import ctrl_rbox, ctrl_polygon, agg_pixfmt_rgba, agg_span_image_filter_rgba
 import agg_renderer_base, agg_color_rgba, nimBMP, strutils, os, math
 import agg_image_filters, agg_span_subdiv_adaptor, agg_gamma_lut, ctrl_slider
 import agg_span_interpolator_persp, times, agg_gsv_text, agg_conv_stroke
@@ -10,7 +10,7 @@ import agg_span_interpolator_persp, times, agg_gsv_text, agg_conv_stroke
 const
   frameWidth = 600
   frameHeight = 600
-  pixWidth = 3
+  pixWidth = 4
   flipY = true
 
 type
@@ -63,12 +63,17 @@ proc initApp(): App =
   result.sl  = initScanlineU8()
 
 proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
+  app.bmp[idx] = loadBMP32("resources$1$2.bmp" % [$DirSep, name])
   if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
     echo "failed to load $1.bmp" % [name]
     quit(0)
+
+  let numPix = app.bmp[idx].width*app.bmp[idx].height
+  for i in 0.. <numPix:
+    app.bmp[idx].data[i * 4 + 3] = 255.chr
+
   app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
+    app.bmp[idx].width, app.bmp[idx].height, -app.bmp[idx].width * pixWidth)
 
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
@@ -77,29 +82,29 @@ proc getBmp(app: var App, idx: int): var BmpResult =
   app.bmp[idx]
 
 proc init(app: var App) =
-  app.x1  = -150.0
-  app.y1  = -150.0
-  app.x2  = 150.0
-  app.y2  = 150.0
+  app.x1 = 0.0
+  app.y1 = 0.0
+  app.x2 = app.rbufImage(0).width().float64
+  app.y2 = app.rbufImage(0).height().float64
 
   var
-    trans_x1 = -200.0
-    trans_y1 = -200.0
-    trans_x2 =  200.0
-    trans_y2 =  200.0
-    dx = frameWidth.float64  / 2.0 - (trans_x2 + trans_x1) / 2.0
-    dy = frameHeight.float64 / 2.0 - (trans_y2 + trans_y1) / 2.0
+    x1 = app.x1
+    y1 = app.y1
+    x2 = app.x2
+    y2 = app.y2
+    dx = frameWidth.float64 / 2.0 - (x2 - x1) / 2.0
+    dy = frameHeight.float64 / 2.0 - (y2 - y1) / 2.0
 
-  app.quad.xn(0) = floor(trans_x1 + dx)
-  app.quad.yn(0) = floor(trans_y1 + dy)
-  app.quad.xn(1) = floor(trans_x2 + dx)
-  app.quad.yn(1) = floor(trans_y1 + dy)
-  app.quad.xn(2) = floor(trans_x2 + dx)
-  app.quad.yn(2) = floor(trans_y2 + dy)
-  app.quad.xn(3) = floor(trans_x1 + dx)
-  app.quad.yn(3) = floor(trans_y2 + dy)
+  app.quad.xn(0) = floor(x1 + dx)
+  app.quad.yn(0) = floor(y1 + dy)
+  app.quad.xn(1) = floor(x2 + dx)
+  app.quad.yn(1) = floor(y1 + dy)
+  app.quad.xn(2) = floor(x2 + dx)
+  app.quad.yn(2) = floor(y2 + dy)
+  app.quad.xn(3) = floor(x1 + dx)
+  app.quad.yn(3) = floor(y2 + dy)
 
-  var pixf = initPixfmtRgb24(app.rbufImage(0))
+  var pixf = initPixfmtRgba32(app.rbufImage(0))
   pixf.applyGammaDir(app.gammaLut)
 
 spanInterpolatorLinear(SpanInterpolatorBilinear, TransBilinear, 8)
@@ -107,7 +112,7 @@ spanInterpolatorLinearSubdiv(SpanInterpolatorSubdivPerspective, TransPerspective
 
 proc onDraw() =
   var app     = initApp()
-  app.loadImage(0, "agg")
+  app.loadImage(0, "spheres")
   app.init()
 
   var
@@ -115,16 +120,16 @@ proc onDraw() =
     rbuf    = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
     width   = frameWidth.float64
     height  = frameHeight.float64
-    pixf    = initPixfmtRgb24(rbuf)
-    pixfPre = initPixfmtRgb24Pre(rbuf)
+    pixf    = initPixfmtRgba32(rbuf)
+    pixfPre = initPixfmtRgba32Pre(rbuf)
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
     ren     = initRendererScanlineAASolid(rb)
 
   if app.gamma.value() != app.oldGamma:
      app.gammaLut.gamma(app.gamma.value())
-     app.loadImage(0, "agg")
-     var pixf = initPixfmtRgb24(app.rbufImage(0))
+     app.loadImage(0, "spheres")
+     var pixf = initPixfmtRgba32(app.rbufImage(0))
      pixf.applyGammaDir(app.gammaLut)
      app.oldGamma = app.gamma.value()
 
@@ -144,7 +149,7 @@ proc onDraw() =
 
   # Prepare the polygon to rasterize. Here we need to fill
   # the destination (transformed) polygon.
-  app.ras.clip_box(0, 0, width, height)
+  app.ras.clipBox(0, 0, width, height)
   app.ras.reset()
 
   var b = 0.0
@@ -153,15 +158,12 @@ proc onDraw() =
   app.ras.lineToD(app.quad.xn(2)+b, app.quad.yn(2)+b)
   app.ras.lineToD(app.quad.xn(3)-b, app.quad.yn(3)+b)
 
-  type
-    WrapT = WrapModeReflectAutoPow2
-
   var
     sa = initSpanAllocator[Rgba8]()
-    filterKernel: ImageFilterHanning
-    filter  = initImageFilterLut(filterKernel, true)
-    imgPixf = initPixfmtRgb24(app.rbufImage(0))
-    imgSrc  = initImageAccessorWrap[PixfmtRgb24, WrapT, WrapT](imgPixf)
+    filterKernel: ImageFilterBilinear
+    filter  = initImageFilterLut(filterKernel, false)
+    pixfImg = initPixfmtRgba32(app.rbufImage(0))
+    imgSrc  = initImageAccessorClone(pixfImg)
 
   let startTime = cpuTime()
   case app.transType.curItem()
@@ -169,14 +171,14 @@ proc onDraw() =
     var
       mtx   = initTransAffine(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
       inter = initSpanInterpolatorLinear(mtx)
-      sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
+      sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
 
     renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 1:
     var
       mtx   = initTransAffine(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
       inter = initSpanInterpolatorLinear(mtx)
-      sg    = initSpanImageResampleRgbAffine(imgSrc, inter, filter)
+      sg    = initSpanImageResampleRgbaAffine(imgSrc, inter, filter)
 
     sg.blur(app.blur.value())
     renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
@@ -184,14 +186,14 @@ proc onDraw() =
     var
       mtx   = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
       inter = initSpanInterpolatorSubdivPerspective(mtx)
-      sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
+      sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
     renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 3:
     var mtx   = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
     if mtx.isValid():
       var
         inter = initSpanInterpolatorTrans(mtx)
-        sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
+        sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
 
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 4:
@@ -200,7 +202,7 @@ proc onDraw() =
       subdivAdaptor = initSpanSubdivAdaptor(inter)
 
     if inter.isValid():
-      var sg = initSpanImageResampleRgb(imgSrc, subdivAdaptor, filter)
+      var sg = initSpanImageResampleRgba(imgSrc, subdivAdaptor, filter)
       sg.blur(app.blur.value())
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 5:
@@ -209,7 +211,7 @@ proc onDraw() =
       subdivAdaptor = initSpanSubdivAdaptor(inter)
 
     if inter.isValid():
-      var sg = initSpanImageResampleRgb(imgSrc, subdivAdaptor, filter)
+      var sg = initSpanImageResampleRgba(imgSrc, subdivAdaptor, filter)
       sg.blur(app.blur.value())
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else: discard
@@ -234,6 +236,6 @@ proc onDraw() =
   renderCtrl(app.ras, app.sl, rb, app.transType)
   renderCtrl(app.ras, app.sl, rb, app.gamma)
   renderCtrl(app.ras, app.sl, rb, app.blur)
-  saveBMP24("pattern_resample.bmp", buffer, frameWidth, frameHeight)
+  saveBMP32("pattern_resample.bmp", buffer, frameWidth, frameHeight)
 
 onDraw()
