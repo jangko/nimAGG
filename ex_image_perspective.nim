@@ -82,9 +82,6 @@ proc init(app: var App) =
   app.quad.xn(3) = 100
   app.quad.yn(3) = height - 100
 
-spanInterpolatorLinear(SpanInterpolatorBilinear, TransBilinear, 8)
-spanInterpolatorLinear(SpanInterpolatorPerspective, TransPerspective, 8)
-
 proc onDraw() =
   var app = initApp()
   app.loadImage(0, "spheres")
@@ -148,7 +145,7 @@ proc onDraw() =
     var mtx = initTransBilinear(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
     if mtx.isValid():
       var
-        inter = initSpanInterpolatorBilinear(mtx)
+        inter = initSpanInterpolatorLinear(mtx)
         sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 2:
@@ -167,7 +164,7 @@ proc onDraw() =
 
       # Direct calculations of the coordinates
       var
-        inter = initSpanInterpolatorPerspective(mtx)
+        inter = initSpanInterpolatorLinear(mtx)
         sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else: discard

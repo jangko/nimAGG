@@ -102,9 +102,6 @@ proc init(app: var App) =
   var pixf = initPixfmtRgb24(app.rbufImage(0))
   pixf.applyGammaDir(app.gammaLut)
 
-spanInterpolatorLinear(SpanInterpolatorBilinear, TransBilinear, 8)
-spanInterpolatorLinearSubdiv(SpanInterpolatorSubdivPerspective, TransPerspective, 8)
-
 proc onDraw() =
   var app     = initApp()
   app.loadImage(0, "agg")
@@ -183,7 +180,7 @@ proc onDraw() =
   of 2:
     var
       mtx   = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
-      inter = initSpanInterpolatorSubdivPerspective(mtx)
+      inter = initSpanInterpolatorLinearSubdiv(mtx)
       sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
     renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 3:

@@ -77,9 +77,6 @@ proc rbufImage(app: var App, idx: int): var RenderingBuffer =
 proc getBmp(app: var App, idx: int): var BmpResult =
   app.bmp[idx]
 
-spanInterpolatorLinear(SpanInterpolatorBilinear, TransBilinear, 8)
-spanInterpolatorLinear(SpanInterpolatorPerspective, TransPerspective, 8)
-
 proc onDraw() =
   var
     app    = initApp()
@@ -151,7 +148,7 @@ proc onDraw() =
     var mtx = initTransBilinear(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2);
     if mtx.isValid():
       var
-        inter = initSpanInterpolatorBilinear(mtx)
+        inter = initSpanInterpolatorLinear(mtx)
         sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
 
@@ -159,7 +156,7 @@ proc onDraw() =
     var mtx = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2);
     if mtx.isValid():
       var
-        inter = initSpanInterpolatorPerspective(mtx)
+        inter = initSpanInterpolatorLinear(mtx)
         sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else:

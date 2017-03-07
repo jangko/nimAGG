@@ -1,29 +1,18 @@
 import agg_basics, agg_dda_line, agg_trans_affine
 export agg_dda_line
 
-template spanInterpolatorLinear*(name: untyped, Transformer: typed, SubpixelShift: int) =
+template spanInterpolatorLinear*(name: untyped, SubpixelShift: int) =
   type
-    name* = object
-      mTrans: ptr Transformer
+    name*[T] = object
+      mTrans: ptr T
       mLiX, mLiY: Dda2LineInterpolator
 
-  template getSubPixelShift*(x: typedesc[name]): int = SubpixelShift
-  template getSubPixelScale*(x: typedesc[name]): int = 1 shl SubPixelShift
+  template getSubPixelShift*[T](x: typedesc[name[T]]): int = SubpixelShift
+  template getSubPixelScale*[T](x: typedesc[name[T]]): int = 1 shl SubPixelShift
 
-  proc begin*(self: var name, xx, yy: float64, len: int)
-
-  proc `init name`*(trans: var Transformer): name =
-    result.mTrans = trans.addr
-
-  proc `init name`*(trans: var Transformer, x, y: float64, len: int): name =
-    result.mTrans = trans.addr
-    result.begin(x, y, len)
-
-  proc transformer*(self: var name): var Transformer = self.mTrans[]
-  proc transformer*(self: var name, trans: var Transformer) = self.mTrans = trans.addr
-
-  proc begin(self: var name, xx, yy: float64, len: int) =
-    const subPixelScale = getSubPixelScale(name)
+  proc begin*[T](self: var name[T], xx, yy: float64, len: int) =
+    mixin transform
+    const subPixelScale = getSubPixelScale(name[T])
     var
       tx = xx
       ty = yy
@@ -43,8 +32,18 @@ template spanInterpolatorLinear*(name: untyped, Transformer: typed, SubpixelShif
     self.mLiX = initDda2LineInterpolator(x1, x2, len)
     self.mLiY = initDda2LineInterpolator(y1, y2, len)
 
-  proc resynchronize*(self: var name, xee, yee: float64, len: int) =
-    const subPixelScale = getSubPixelScale(name)
+  proc `init name`*[T](trans: var T): name[T] =
+    result.mTrans = trans.addr
+
+  proc `init name`*[T](trans: var T, x, y: float64, len: int): name[T] =
+    result.mTrans = trans.addr
+    result.begin(x, y, len)
+
+  proc transformer*[T](self: var name[T]): var T = self.mTrans[]
+  proc transformer*[T](self: var name[T], trans: var T) = self.mTrans = trans.addr
+
+  proc resynchronize*[T](self: var name[T], xee, yee: float64, len: int) =
+    const subPixelScale = getSubPixelScale(name[T])
     var
       xe = xee
       ye = yee
@@ -52,60 +51,30 @@ template spanInterpolatorLinear*(name: untyped, Transformer: typed, SubpixelShif
     self.mLiX = initDda2LineInterpolator(self.mLiX.y(), iround(xe * subPixelScale), len)
     self.mLiY = initDda2LineInterpolator(self.mLiY.y(), iround(ye * subPixelScale), len)
 
-  proc inc*(self: var name) =
+  proc inc*[T](self: var name[T]) =
     inc self.mLiX
     inc self.mLiY
 
-  proc coordinates*(self: var name, xx, yy: var int) =
+  proc coordinates*[T](self: var name[T], xx, yy: var int) =
     xx = self.mLiX.y()
     yy = self.mLiY.y()
 
-template spanInterpolatorLinearSubdiv*(name: untyped, Transformer: typed, SubpixelShift: int) =
+template spanInterpolatorLinearSubdiv*(name: untyped, SubpixelShift: int) =
   type
-    name* = object
+    name*[T] = object
       mSubdivShift, mSubdivSize, mSubdivMask: int
-      mTrans: ptr Transformer
+      mTrans: ptr T
       mLiX, mLiY: Dda2LineInterpolator
       mSrcX: int
       mSrcY: float
       mPos, mLen: int
 
-  template getSubPixelShift*(x: typedesc[name]): int = SubpixelShift
-  template getSubPixelScale*(x: typedesc[name]): int = 1 shl SubPixelShift
+  template getSubPixelShift*[T](x: typedesc[name[T]]): int = SubpixelShift
+  template getSubPixelScale*[T](x: typedesc[name[T]]): int = 1 shl SubPixelShift
 
-  proc begin*(self: var name, x, y: float64, lenx: int)
-
-  proc `init name`*(): name =
-    result.mSubdivShift = 4
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
-
-  proc `init name`*(trans: var Transformer, subdivShift = 4): name =
-    result.mSubdivShift = subdivShift
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
-    result.mTrans = trans.addr
-
-  proc `init name`*(trans: var Transformer,
-    x, y: float64, len: int, subdivShift = 4): name =
-    result.mSubdivShift = subdivShift
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
-    result.mTrans = trans.addr
-    result.begin(x, y, len)
-
-  proc transformer*(self: var name): var Transformer = self.mTrans[]
-  proc transformer*(self: var name, trans: var Transformer) = self.mTrans = trans.addr
-
-  proc subdivShift*(self: name): int = self.mSubdivShift
-
-  proc subdivShift*(self: var name, shift: int) =
-    self.mSubdivShift = shift
-    self.mSubdivSize = 1 shl self.mSubdivShift
-    self.mSubdivMask = self.mSubdivSize - 1
-
-  proc begin(self: var name, x, y: float64, lenx: int) =
-    const subPixelScale = getSubPixelScale(name)
+  proc begin*[T](self: var name[T], x, y: float64, lenx: int) =
+    mixin transform
+    const subPixelScale = getSubPixelScale(name[T])
     var
       tx, ty: float64
       len = lenx
@@ -130,8 +99,37 @@ template spanInterpolatorLinearSubdiv*(name: untyped, Transformer: typed, Subpix
     self.mLiX = initDda2LineInterpolator(x1, iround(tx * subPixelScale), len)
     self.mLiY = initDda2LineInterpolator(y1, iround(ty * subPixelScale), len)
 
-  proc inc*(self: var name) =
-    const subPixelScale = getSubPixelScale(name)
+  proc `init name`*[T](): name[T] =
+    result.mSubdivShift = 4
+    result.mSubdivSize  = 1 shl result.mSubdivShift
+    result.mSubdivMask  = result.mSubdivSize - 1
+
+  proc `init name`*[T](trans: var T, subdivShift = 4): name[T] =
+    result.mSubdivShift = subdivShift
+    result.mSubdivSize  = 1 shl result.mSubdivShift
+    result.mSubdivMask  = result.mSubdivSize - 1
+    result.mTrans = trans.addr
+
+  proc `init name`*[T](trans: var T, x, y: float64, len: int, subdivShift = 4): name[T] =
+    result.mSubdivShift = subdivShift
+    result.mSubdivSize  = 1 shl result.mSubdivShift
+    result.mSubdivMask  = result.mSubdivSize - 1
+    result.mTrans = trans.addr
+    result.begin(x, y, len)
+
+  proc transformer*[T](self: var name[T]): var T = self.mTrans[]
+  proc transformer*[T](self: var name[T], trans: var T) = self.mTrans = trans.addr
+
+  proc subdivShift*[T](self: name[T]): int = self.mSubdivShift
+
+  proc subdivShift*[T](self: var name[T], shift: int) =
+    self.mSubdivShift = shift
+    self.mSubdivSize = 1 shl self.mSubdivShift
+    self.mSubdivMask = self.mSubdivSize - 1
+
+  proc inc*[T](self: var name[T]) =
+    mixin transform
+    const subPixelScale = getSubPixelScale(name[T])
     inc self.mLiX
     inc self.mLiY
     if self.mPos >= self.mSubdivSize:
@@ -149,10 +147,10 @@ template spanInterpolatorLinearSubdiv*(name: untyped, Transformer: typed, Subpix
     inc self.mPos
     dec self.mLen
 
-  proc coordinates*(self: var name, xx, yy: var int) =
+  proc coordinates*[T](self: var name[T], xx, yy: var int) =
     xx = self.mLiX.y()
     yy = self.mLiY.y()
 
-spanInterpolatorLinear(SpanInterpolatorLinear, TransAffine, 8)
-spanInterpolatorLinearSubdiv(SpanInterpolatorLinearSubdiv, TransAffine, 8)
+spanInterpolatorLinear(SpanInterpolatorLinear, 8)
+spanInterpolatorLinearSubdiv(SpanInterpolatorLinearSubdiv, 8)
 
