@@ -31,13 +31,13 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       result = ((name.coverFull + val.uint * MaskF(self.rbuf[].rowPtr(y) + x * Step + Offset)) shr name.coverShift).CoverType
     result = 0
 
-  proc fillHspan*(self: var name; xx, y: int, dst: ptr CoverType, numPix: int) =
+  proc fillHspan*(self: var name; x, y: int, dst: ptr CoverType, numPix: int) =
     var
       xmax = self.rbuf[].width() - 1
       ymax = self.rbuf[].height() - 1
       count = numPix
       covers = dst
-      x = xx
+      x = x
 
     if y < 0 or y > ymax:
       setMem(dst, 0, numPix * sizeof(CoverType))
@@ -67,13 +67,13 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       inc(mask, Step)
       dec count
 
-  proc combineHspan*(self: var name, xx, y: int, dst: ptr CoverType, numPix: int) =
+  proc combineHspan*(self: var name, x, y: int, dst: ptr CoverType, numPix: int) =
     var
       xmax = self.rbuf[].width() - 1
       ymax = self.rbuf[].height() - 1
       count = numPix
       covers = dst
-      x = xx
+      x = x
 
     if y < 0 or y > ymax:
       setMem(dst, 0, numPix * sizeof(CoverType))
@@ -235,11 +235,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
   proc combinePixel*(self: var name, x, y: int, val: CoverType): CoverType =
     result = CoverType((name.coverFull + val.uint * MaskF(self.rbuf[].rowPtr(y) + x * Step + Offset)) shr name.coverShift)
 
-  proc fillHspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
+  proc fillHspan*(self: var name, x, y: int, dst: ptr CoverType, numPix: int) =
     var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
-      numPix = numPixx
-      dst = dstx
+      numPix = numPix
+      dst = dst
 
     doWhile numPix != 0:
       dst[] = CoverType(MaskF(mask))
@@ -247,11 +247,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       inc(mask, Step)
       dec numPix
 
-  proc combineHspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
+  proc combineHspan*(self: var name, x, y: int, dst: ptr CoverType, numPix: int) =
     var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
-      dst = dstx
-      numPix = numPixx
+      dst = dst
+      numPix = numPix
 
     doWhile numPix != 0:
       dst[] = CoverType((name.coverFull + dst[].uint * MaskF(mask)) shr name.coverShift)
@@ -259,11 +259,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       inc(mask, Step)
       dec numPix
 
-  proc fillVspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
+  proc fillVspan*(self: var name, x, y: int, dst: ptr CoverType, numPix: int) =
     var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
-      dst = dstx
-      numPix = numPixx
+      dst = dst
+      numPix = numPix
 
     doWhile numPix != 0:
       dst[] = CoverType(MaskF(mask))
@@ -271,11 +271,11 @@ template amaskNoClipU8*(Step: int, Offset: int, name: untyped, MaskF: typed = on
       inc(mask, self.rbuf[].stride())
       dec numPix
 
-  proc combineVspan*(self: var name, x, y: int, dstx: ptr CoverType, numPixx: int) =
+  proc combineVspan*(self: var name, x, y: int, dst: ptr CoverType, numPix: int) =
     var
       mask = self.rbuf[].rowPtr(y) + x * Step + Offset
-      dst = dstx
-      numPix = numPixx
+      dst = dst
+      numPix = numPix
 
     doWhile numPix != 0:
       dst[] = CoverType((name.coverFull + dst[].uint * MaskF(mask)) shr name.coverShift)
@@ -302,10 +302,10 @@ amaskNoClipU8(4, 2, AmaskNoClipaRgb32g)
 amaskNoClipU8(4, 3, AmaskNoClipaRgb32b)
 amaskNoClipU8(4, 0, AmaskNoClipaRgb32a)
 
-amaskNoClipU8(4, 2, AmaskNoClipbgRa32r)
-amaskNoClipU8(4, 1, AmaskNoClipbgRa32g)
-amaskNoClipU8(4, 0, AmaskNoClipbgRa32b)
-amaskNoClipU8(4, 3, AmaskNoClipbgRa32a)
+amaskNoClipU8(4, 2, AmaskNoClipBgra32r)
+amaskNoClipU8(4, 1, AmaskNoClipBgra32g)
+amaskNoClipU8(4, 0, AmaskNoClipBgra32b)
+amaskNoClipU8(4, 3, AmaskNoClipBgra32a)
 
 amaskNoClipU8(4, 3, AmaskNoClipAbgr32r)
 amaskNoClipU8(4, 2, AmaskNoClipAbgr32g)

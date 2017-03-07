@@ -480,12 +480,12 @@ type
     mW, mH: float64
 
 proc value(p: ptr uint8): uint16 =
-  #when system.cpuEndian == bigEndian:
+  when system.cpuEndian == littleEndian:
     result = p[1].uint16 shl 8
     result = result or p[0].uint16
-  #else:
-    #result = p[0].uint16 shl 8
-    #result = result or p[1].uint16
+  else:
+    result = p[0].uint16 shl 8
+    result = result or p[1].uint16
 
 proc initGsvText*(): GsvText =
   result.mX = 0.0

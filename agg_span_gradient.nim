@@ -79,6 +79,9 @@ type
   GradientLinearColor*[ColorT] = object
     mC1, mC2: ColorT
     mSize: int
+    
+proc initGradientLinearColor*[ColorT](): GradientLinearColor[ColorT] =
+  discard
 
 proc initGradientLinearColor*[ColorT](c1, c2: ColorT, size = 256): GradientLinearColor[ColorT] =
   result.mC1 = c1
@@ -90,9 +93,13 @@ proc len*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
 proc `[]`*[ColorT](self: var GradientLinearColor[ColorT], v: int): ColorT =
   self.mC1.gradient(self.mC2, v.float64 / float64(self.mSize - 1))
 
-proc colors*[ColorT](self: var GradientLinearColor[ColorT], c1, c2: ColorT, size = 256) =
-  self.mC1 = c1
-  self.mC2 = c2
+proc colors*[ColorA, ColorB](self: var GradientLinearColor[ColorA], c1, c2: ColorB, size = 256) =
+  when ColorA is not ColorB:
+    self.mC1 = construct(ColorA, c1)
+    self.mC2 = construct(ColorA, c2)
+  else:
+    self.mC1 = c1
+    self.mC2 = c2
   self.mSize = size
 
 type

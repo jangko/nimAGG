@@ -163,8 +163,8 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
     backB = CalcT(self.mBackColor.b)
     backA = CalcT(self.mBackColor.a)
     fgPtr: ptr ValueT
-    maxx = base(self).source().width() - 1
-    maxy = base(self).source().height() - 1
+    maxX = base(self).source().width() - 1
+    maxY = base(self).source().height() - 1
     span = span
     len = len
 
@@ -179,7 +179,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
       xLr = sar(xHr, imageSubpixelShift)
       yLr = sar(yHr, imageSubpixelShift)
 
-    if xLr >= 0 and yLr >= 0 and xLr < maxx and yLr < maxy:
+    if xLr >= 0 and yLr >= 0 and xLr < maxX and yLr < maxY:
       fg[0] = imageSubpixelScale * imageSubpixelScale div 2
       fg[1] = fg[0]
       fg[2] = fg[0]
@@ -215,7 +215,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
       fg[2] = fg[2] shr (imageSubpixelShift * 2)
       srcAlpha = baseMask
     else:
-      if xLr < -1 or yLr < -1 or xLr > maxx or yLr > maxy:
+      if xLr < -1 or yLr < -1 or xLr > maxX or yLr > maxY:
         fg[OrderT.R.ord] = backR
         fg[OrderT.G.ord] = backG
         fg[OrderT.B.ord] = backB
@@ -230,7 +230,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
         yHr = yHr and imageSubpixelMask
 
         var weight = CalcT((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
-        if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
+        if xLr >= 0 and yLr >= 0 and xLr <= maxX and yLr <= maxY:
           fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr + xLr + xLr)
           fg[0] += weight * fgPtr[].CalcT; inc fgPtr
           fg[1] += weight * fgPtr[].CalcT; inc fgPtr
@@ -245,7 +245,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
         inc xLr
 
         weight = CalcT(xHr * (imageSubpixelScale - yHr))
-        if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
+        if xLr >= 0 and yLr >= 0 and xLr <= maxX and yLr <= maxY:
           fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr + xLr + xLr)
           fg[0]    += weight * fgPtr[].CalcT; inc fgPtr
           fg[1]    += weight * fgPtr[].CalcT; inc fgPtr
@@ -261,7 +261,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
         inc yLr
 
         weight = CalcT((imageSubpixelScale - xHr) * yHr)
-        if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
+        if xLr >= 0 and yLr >= 0 and xLr <= maxX and yLr <= maxY:
           fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr + xLr + xLr)
           fg[0] += weight * fgPtr[].CalcT; inc fgPtr
           fg[1] += weight * fgPtr[].CalcT; inc fgPtr
@@ -275,7 +275,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
 
         inc xLr
         weight = CalcT(xHr * yHr)
-        if xLr >= 0 and yLr >= 0 and xLr <= maxx and yLr <= maxy:
+        if xLr >= 0 and yLr >= 0 and xLr <= maxX and yLr <= maxY:
           fgPtr = cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr + xLr + xLr)
           fg[0] += weight * fgPtr[].CalcT; inc fgPtr
           fg[1] += weight * fgPtr[].CalcT; inc fgPtr

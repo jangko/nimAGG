@@ -536,11 +536,11 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
           setMem(mixBuffer + slStart - minX, 0, slLen * sizeof(getColorT(BaseRenderer)))
           setMem(coverBuffer + slStart - minX, 0, slLen * sizeof(getColorT(BaseRenderer)))
           var slY = 0x7FFFFFFF
-      
+
           for i in 0.. <numStyles:
             style = ras.style(i)
             solid = sh.isSolid(style.int)
-      
+
             if ras.sweepScanline(slAA, i):
               var
                 cover: uint
@@ -560,7 +560,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
                     cover = srcCovers[]
                     if dstCovers[].uint + cover > coverFull.uint:
                       cover = coverFull.uint - dstCovers[].uint
-      
+
                     if cover != 0:
                       colors[].add(c, cover)
                       dstCovers[] += cover.CoverType
@@ -578,22 +578,22 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
                   var
                     colors = mixBuffer + spanAA.x - minX
                     cspan  = colorSpan
-      
+
                   sh.generateSpan(cspan, spanAA.x, slAA.getY(), len, style.int)
-      
+
                   var
                     srcCovers = spanAA.covers
                     dstCovers = coverBuffer + spanAA.x - minX
-      
+
                   doWhile len != 0:
                     cover = srcCovers[]
                     if dstCovers[].uint + cover > coverFull.uint:
                       cover = coverFull.uint - dstCovers[].uint
-      
+
                     if cover != 0:
                       colors[].add(cspan[], cover)
                       dstCovers[] += cover.CoverType
-      
+
                     inc cspan
                     inc colors
                     inc srcCovers
