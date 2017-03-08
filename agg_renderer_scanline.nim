@@ -166,7 +166,8 @@ proc renderScanlineBinSolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
 
 proc renderScanlinesBinSolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: var Rasterizer,
   sl: var Scanline, ren: var BaseRenderer, color: ColorT) =
-
+  mixin reset
+  
   if ras.rewindScanlines():
     # Explicitly convert "color" to the BaseRenderer color type.
     # For example, it can be called with color type "rgba", while
@@ -188,7 +189,7 @@ proc renderScanlinesBinSolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: v
       while true:
         let len = if span.len < 0: -span.len else: span.len
         ren.blendHline(span.x,
-                       sl.y(),
+                       sl.getY(),
                        span.x - 1 + len,
                        renColor,
                        coverFull)
@@ -197,7 +198,7 @@ proc renderScanlinesBinSolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: v
         inc span
 
 type
-  RendererScanlineBinSolid[BaseRenderer, ColorT] = object
+  RendererScanlineBinSolid*[BaseRenderer, ColorT] = object
     mRen: ptr BaseRenderer
     mColor: ColorT
 

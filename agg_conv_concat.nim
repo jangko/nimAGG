@@ -15,11 +15,13 @@ proc attach1*[VS1, VS2](self: var ConvConcat[VS1, VS2], source: var VS1) = self.
 proc attach2*[VS1, VS2](self: var ConvConcat[VS1, VS2], source: var VS2) = self.mSource2 = source.addr
 
 proc rewind*[VS1, VS2](self: var ConvConcat[VS1, VS2], pathId: int) =
+  mixin rewind
   self.mSource1[].rewind(pathId)
   self.mSource2[].rewind(0)
   self.mStatus = 0
 
 proc vertex*[VS1, VS2](self: var ConvConcat[VS1, VS2], x, y: var float64): uint =
+  mixin vertex
   var cmd: uint
   if self.mStatus == 0:
     cmd = self.mSource1[].vertex(x, y)

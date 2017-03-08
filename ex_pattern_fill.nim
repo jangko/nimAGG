@@ -4,7 +4,6 @@ import agg_scanline_p, agg_renderer_scanline, agg_span_allocator, agg_span_patte
 import agg_span_pattern_rgb, agg_span_pattern_rgba, agg_image_accessors
 import ctrl_slider, ctrl_rbox, ctrl_cbox, agg_pixfmt_rgba, agg_renderer_base
 import agg_color_rgba, nimBMP, math, agg_basics, agg_conv_stroke
-import agg_image_accessors, agg_span_pattern_rgb, agg_span_pattern_gray
 
 const
   frameWidth = 640
