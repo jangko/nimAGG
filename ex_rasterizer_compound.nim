@@ -24,7 +24,7 @@ proc color(self: StyleHandler, style: int): Rgba8 =
     return self.styles[style]
 
   result = self.transparent
-  
+
 proc generateSpan(self: StyleHandler, span: ptr Rgba8, x, y, len, style: int) =
   discard
 
@@ -36,7 +36,7 @@ const
 
 type
   ValueT = uint8
-  
+
 type
   App = object
     width : SliderCtrl[Rgba8]
@@ -46,7 +46,7 @@ type
     alpha4: SliderCtrl[Rgba8]
     invertOrder: CboxCtrl[Rgba8]
     path: PathStorage
-    
+
 proc initApp(): App =
   result.width = newSliderCtrl[Rgba8](180 + 10.0, 5.0, 130 + 300.0, 12, not flipY)
   result.alpha1 = newSliderCtrl[Rgba8](5, 5,  180, 12, not flipY)
@@ -54,6 +54,7 @@ proc initApp(): App =
   result.alpha3 = newSliderCtrl[Rgba8](5, 45, 180, 52, not flipY)
   result.alpha4 = newSliderCtrl[Rgba8](5, 65, 180, 72, not flipY)
   result.invertOrder = newCboxCtrl[Rgba8](190, 25, "Invert Z-Order")
+  result.invertOrder.status(false)
   result.width.setRange(-20.0, 50.0)
   result.width.value(10.0)
   result.width.label("Width=$1")
@@ -117,7 +118,16 @@ proc composePath(app: var App) =
   app.path.curve3(15.97, 4.74, 18.70, 4.74)
   app.path.curve3(22.41, 4.74, 28.47, 9.62)
   app.path.closePolygon()
-    
+
+#{.passC: "-I./agg-2.5/include".}
+#{.compile: "rasterizer_compound.cpp".}
+#{.compile: "agg_curves2.cpp".}
+#{.compile: "agg_trans_affine2.cpp".}
+#{.compile: "agg_vcgen_stroke2.cpp".}
+#{.passL: "-lstdc++".}
+#
+#proc test_compound(): cstring {.importc.}
+
 proc onDraw() =
   var
     app    = initApp()
@@ -135,17 +145,17 @@ proc onDraw() =
     rasc   = initRasterizerCompoundAA(RasterizerSlClipDbl)
     width  = frameWidth.float64
     height = frameHeight.float64
-         
+
   # Clear the window with a gradient
   for i in 0.. <pixf.width():
     var c = initRgba8(255, 255, 0)
     gr[i] = c.gradient(initRgba8(0, 255, 255), float64(i) / float64(pixf.width()))
-    
+
   for i in 0.. <pixf.height():
     renb.copyColorHspan(0, i, pixf.width(), gr[0].addr)
-        
+
   pixf.applyGammaDir(lut)
-  
+
   # Draw two triangles
   ras.moveToD(0, 0)
   ras.lineToD(width, 0)
@@ -156,70 +166,70 @@ proc onDraw() =
   ras.lineToD(0, height)
   ras.lineToD(width, 0)
   renderScanlinesAASolid(ras, sl, renb, initRgba8(lut.dir(0), lut.dir(100), lut.dir(100)))
-  
-  var 
+
+  var
     mtx    = initTransAffine()
     trans  = initConvTransform(app.path, mtx)
     curve  = initConvCurve(trans)
     stroke = initConvStroke(curve)
     styles: array[4, Rgba8]
     sh     = initStyleHandler(styles[0].addr, 4)
-    
+
   mtx *= transAffineScaling(4.0)
   mtx *= transAffineTranslation(150, 100)
-  
+
   app.composePath()
-  
+
   if app.invertOrder.status():
     rasc.layerOrder(layerInverse)
   else:
     rasc.layerOrder(layerDirect)
-  
+
   styles[3] = initRgba8(lut.dir(255), lut.dir(0), lut.dir(108), 200)
   styles[2] = initRgba8(lut.dir(51), lut.dir(0), lut.dir(151), 180)
   styles[1] = initRgba8(lut.dir(143), lut.dir(90), lut.dir(6), 200)
   styles[0] = initRgba8(lut.dir(0), lut.dir(0), lut.dir(255), 220)
-  
+
   styles[3].premultiply()
   styles[2].premultiply()
   styles[1].premultiply()
   styles[0].premultiply()
-  
+
   stroke.width(app.width.value())
-  
+
   rasc.reset()
   rasc.masterAlpha(3, app.alpha1.value())
   rasc.masterAlpha(2, app.alpha2.value())
   rasc.masterAlpha(1, app.alpha3.value())
   rasc.masterAlpha(0, app.alpha4.value())
-  
-  var 
+
+  var
     ell = initEllipse(220.0, 180.0, 120.0, 10.0, 128, false)
     strokeEll = initConvStroke(ell)
-  
+
   strokeEll.width(app.width.value() / 2)
   rasc.styles(3, -1)
   rasc.addPath(strokeEll)
-  
+
   rasc.styles(2, -1)
   rasc.addPath(ell)
-  
+
   rasc.styles(1, -1)
   rasc.addPath(stroke)
-  
+
   rasc.styles(0, -1)
   rasc.addPath(curve)
-  
-  #renderScanlinesCompoundLayered(rasc, sl, rbpre, sa, sh)
+
+  renderScanlinesCompoundLayered(rasc, sl, rbpre, sa, sh)
   renderCtrl(ras, sl, renb, app.width)
   renderCtrl(ras, sl, renb, app.alpha1)
   renderCtrl(ras, sl, renb, app.alpha2)
   renderCtrl(ras, sl, renb, app.alpha3)
   renderCtrl(ras, sl, renb, app.alpha4)
   renderCtrl(ras, sl, renb, app.invertOrder)
-  
+
   pixf.applyGammaInv(lut)
-    
+
   saveBMP32("rasterizer_compound.bmp", buffer, frameWidth, frameHeight)
 
 onDraw()

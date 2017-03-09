@@ -101,7 +101,14 @@ namespace agg
         }
 
         bool sorted() const { return m_sorted; }
-
+        
+        void print() {
+          printf("rascel %d %d %d %d\n", m_num_blocks, m_max_blocks, m_curr_block, m_num_cells);
+          printf("%d %d %d %d %s\n", m_min_x, m_min_y, m_max_x, m_max_y, m_sorted ? "true" : "false");
+          m_curr_cell.print();
+          m_style_cell.print();
+        }
+        
     private:
         rasterizer_cells_aa(const self_type&);
         const self_type& operator = (const self_type&);
@@ -111,6 +118,8 @@ namespace agg
         void render_hline(int ey, int x1, int y1, int x2, int y2);
         void allocate_block();
 
+
+  
     private:
         unsigned                m_num_blocks;
         unsigned                m_max_blocks;

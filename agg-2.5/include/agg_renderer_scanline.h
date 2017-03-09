@@ -682,6 +682,7 @@ namespace agg
                                            SpanAllocator& alloc,
                                            StyleHandler& sh)
     {
+
         if(ras.rewind_scanlines())
         {
             int min_x = ras.min_x();
@@ -697,6 +698,7 @@ namespace agg
             unsigned num_styles;
             unsigned style;
             bool     solid;
+
             while((num_styles = ras.sweep_styles()) > 0)
             {
                 typename ScanlineAA::const_iterator span_aa;

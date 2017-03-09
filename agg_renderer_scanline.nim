@@ -275,99 +275,10 @@ proc prepare*[BR,SA,SG](self: var RendererScanlineBin[BR,SA,SG]) =
 proc render*[BR,SA,SG,Scanline](self: var RendererScanlineBin[BR,SA,SG], sl: var Scanline) =
   renderScanlineBin(sl, self.mRen[], self.mAlloc[], self.mSpanGen[])
 
-template singleStyle(): untyped =
-  # Optimization for a single style. Happens often
-  if ras.sweepScanline(slAA, 0):
-    style = ras.style(0)
-    if sh.isSolid(style):
-      # Just solid fill
-      renderScanlineAAsolid(slAA, ren, sh.color(style))
-    else:
-      # Arbitrary span generator
-      var spanAA = slAA.begin()
-      numSpans = slAA.numSpans()
-      while true:
-        len = spanAA.len
-        sh.generateSpan(colorSpan, spanAA.x, slAA.getY(), len, style)
-        ren.blendColorHspan(spanAA.x, slAA.getY(), spanAA.len, colorSpan, spanAA.covers)
-        dec numSpans
-        if numSpans == 0: break
-        inc spanAA
-
-template multiStyle(): untyped =
-  if ras.sweepScanline(slBin, -1):
-    # Clear the spans of the mixBufer
-    var spanBin = slBin.begin()
-    numSpans = slBin.numSpans()
-    while true:
-      setMem(mixBufer + spanBin.x - minX, 0, spanBin.len * sizeof(getColorT(BaseRenderer)))
-      dec numSpans
-      if numSpans == 0: break
-      inc spanBin
-
-    for i in 0.. <numStyles:
-      style = ras.style(i)
-      solid = sh.isSolid(style)
-
-      if ras.sweepScanline(slAA, i):
-        var spanAA   = slAA.begin()
-        numSpans = slAA.numSpans()
-        if solid:
-          # Just solid fill
-          while true:
-            var
-              c = sh.color(style)
-              colors = mixBufer + spanAA.x - minX
-              covers = spanAA.covers
-            len = spanAA.len
-            doWhile len != 0:
-              if covers[] == coverFull:
-                colors[] = c
-              else:
-                colors[].add(c, covers[])
-              inc colors
-              inc covers
-              dec len
-            dec numSpans
-            if numSpans == 0: break
-            inc spanAA
-        else:
-          # Arbitrary span generator
-          while true:
-            len = spanAA.len;
-            var
-              colors = mixBufer + spanAA.x - minX
-              cspan  = colorSpan
-
-            sh.generateSpan(cspan, spanAA.x, slAA.y(), len, style)
-            var covers = spanAA.covers
-            doWhile len != 0:
-              if covers[] == coverFull:
-                colors[] = cspan[]
-              else:
-                colors[].add(cspan[], covers[])
-              inc cspan
-              inc colors
-              inc covers
-              dec len
-            dec numSpans
-            if numSpans == 0: break
-            inc spanAA
-
-    # Emit the blended result as a color hspan
-    spanBin = slBin.begin()
-    numSpans = slBin.numSpans()
-    while true:
-      ren.blendColorHspan(spanBin.x, slBin.y(), spanBin.len,
-        mixBufer + spanBin.x - minX, 0, coverFull)
-      dec numSpans
-      if numSpans == 0: break
-      inc spanBin
-
 proc renderScanlinesCompound*[Rasterizer, ScanlineAA, ScanlineBin,
   BaseRenderer, SpanAllocator, StyleHandler](ras: var Rasterizer, slAA: var ScanlineAA,
   slBin: var ScanlineBin, ren: var BaseRenderer, alloc: var SpanAllocator, sh: var StyleHandler) =
-  mixin isSolid
+  mixin isSolid, reset
   if ras.rewindScanlines():
     var
       minX = ras.minX()
@@ -381,15 +292,98 @@ proc renderScanlinesCompound*[Rasterizer, ScanlineAA, ScanlineBin,
       mixBufer = colorSpan + len
       numSpans: int
       numStyles: int
-      style: uint
+      style: int
       solid: bool
 
     numStyles = ras.sweepStyles()
     while numStyles > 0:
       if numStyles == 1:
-        singleStyle()
+          # Optimization for a single style. Happens often
+        if ras.sweepScanline(slAA, 0):
+          style = ras.style(0)
+          if sh.isSolid(style):
+            # Just solid fill
+            renderScanlineAAsolid(slAA, ren, sh.color(style))
+          else:
+            # Arbitrary span generator
+            var spanAA = slAA.begin()
+            numSpans = slAA.numSpans()
+            while true:
+              len = spanAA.len
+              sh.generateSpan(colorSpan, spanAA.x, slAA.getY(), len, style)
+              ren.blendColorHspan(spanAA.x, slAA.getY(), spanAA.len, colorSpan, spanAA.covers)
+              dec numSpans
+              if numSpans == 0: break
+              inc spanAA
       else:
-        multiStyle()
+        if ras.sweepScanline(slBin, -1):
+          # Clear the spans of the mixBufer
+          var spanBin = slBin.begin()
+          numSpans = slBin.numSpans()
+          while true:
+            setMem(mixBufer + spanBin.x - minX, 0, spanBin.len * sizeof(getColorT(BaseRenderer)))
+            dec numSpans
+            if numSpans == 0: break
+            inc spanBin
+      
+          for i in 0.. <numStyles:
+            style = ras.style(i)
+            solid = sh.isSolid(style)
+      
+            if ras.sweepScanline(slAA, i):
+              var spanAA   = slAA.begin()
+              numSpans = slAA.numSpans()
+              if solid:
+                # Just solid fill
+                while true:
+                  var
+                    c = sh.color(style)
+                    colors = mixBufer + spanAA.x - minX
+                    covers = spanAA.covers
+                  len = spanAA.len
+                  doWhile len != 0:
+                    if covers[] == coverFull:
+                      colors[] = c
+                    else:
+                      colors[].add(c, covers[])
+                    inc colors
+                    inc covers
+                    dec len
+                  dec numSpans
+                  if numSpans == 0: break
+                  inc spanAA
+              else:
+                # Arbitrary span generator
+                while true:
+                  len = spanAA.len;
+                  var
+                    colors = mixBufer + spanAA.x - minX
+                    cspan  = colorSpan
+      
+                  sh.generateSpan(cspan, spanAA.x, slAA.getY(), len, style)
+                  var covers = spanAA.covers
+                  doWhile len != 0:
+                    if covers[] == coverFull:
+                      colors[] = cspan[]
+                    else:
+                      colors[].add(cspan[], covers[])
+                    inc cspan
+                    inc colors
+                    inc covers
+                    dec len
+                  dec numSpans
+                  if numSpans == 0: break
+                  inc spanAA
+      
+          # Emit the blended result as a color hspan
+          spanBin = slBin.begin()
+          numSpans = slBin.numSpans()
+          while true:
+            ren.blendColorHspan(spanBin.x, slBin.getY(), spanBin.len,
+              mixBufer + spanBin.x - minX, nil, coverFull)
+            dec numSpans
+            if numSpans == 0: break
+            inc spanBin
       numStyles = ras.sweepStyles()
 
 template singleStyleLayered(): untyped =
@@ -492,7 +486,8 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
   SpanAllocator, StyleHandler](ras: var Rasterizer, slAA: var ScanlineAA,
   ren: var BaseRenderer, alloc: var SpanAllocator, sh: var StyleHandler) =
   mixin reset, isSolid
-  if ras.rewindScanlines():
+    
+  if ras.rewindScanlines():    
     var
       minX = ras.minX()
       len = ras.maxX() - minX + 2
@@ -505,29 +500,30 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
       coverBuffer = ras.allocateCoverBuffer(len)
       numSpans: int
       numStyles: int
-      style: uint
+      style: int
       solid: bool
-
-    numStyles = ras.sweepStyles().int
+    
+    numStyles = ras.sweepStyles()
+    
     while numStyles > 0:
       if numStyles == 1:
-          # Optimization for a single style. Happens often
-        if ras.sweepScanline(slAA, 0):
+        # Optimization for a single style. Happens often
+        if ras.sweepScanline(slAA, 0):          
           style = ras.style(0)
-          if sh.isSolid(style.int):
+          if sh.isSolid(style):
             # Just solid fill
-            renderScanlineAASolid(slAA, ren, sh.color(style.int))
+            renderScanlineAASolid(slAA, ren, sh.color(style))
           else:
             # Arbitrary span generator
             var spanAA   = slAA.begin()
             numSpans = slAA.numSpans()
             while true:
               len = spanAA.len
-              sh.generateSpan(colorSpan, spanAA.x, slAA.getY(), len, style.int)
+              sh.generateSpan(colorSpan, spanAA.x, slAA.getY(), len, style)
               ren.blendColorHspan(spanAA.x, slAA.getY(), spanAA.len, colorSpan, spanAA.covers)
               dec numSpans
               if numSpans == 0: break
-              inc spanAA
+              inc spanAA        
       else:
         var
           slStart = ras.scanlineStart()
@@ -540,7 +536,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
 
           for i in 0.. <numStyles:
             style = ras.style(i)
-            solid = sh.isSolid(style.int)
+            solid = sh.isSolid(style)
 
             if ras.sweepScanline(slAA, i):
               var
@@ -551,7 +547,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
               if solid:
                 # Just solid fill
                 while true:
-                  let c = sh.color(style.int)
+                  let c = sh.color(style)
                   len    = spanAA.len
                   var
                     colors = mixBuffer + spanAA.x - minX
@@ -580,7 +576,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
                     colors = mixBuffer + spanAA.x - minX
                     cspan  = colorSpan
 
-                  sh.generateSpan(cspan, spanAA.x, slAA.getY(), len, style.int)
+                  sh.generateSpan(cspan, spanAA.x, slAA.getY(), len, style)
 
                   var
                     srcCovers = spanAA.covers
@@ -603,5 +599,5 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
                   dec numSpans
                   if numSpans == 0: break
                   inc spanAA
-          ren.blendColorHspan(slStart, slY, slLen, mixBuffer + slStart - minX, nil, coverFull)
-      numStyles = ras.sweepStyles().int
+          ren.blendColorHspan(slStart, slY, slLen, mixBuffer + slStart - minX, nil, coverFull)          
+      numStyles = ras.sweepStyles()

@@ -2,9 +2,9 @@ import agg_trans_affine, agg_basics
 
 type
   AspectRatio* = enum
-    AspectRatioStretch
-    AspectRatioMeet
-    AspectRatioSlice
+    aspectRatioStretch
+    aspectRatioMeet
+    aspectRatioSlice
 
   TransViewport* = object
     mWorld: RectD
@@ -19,7 +19,7 @@ type
 proc initTransViewport*(): TransViewport =
   result.mWorld   = initRectD(0.0, 0.0, 1.0, 1.0)
   result.mDevice  = initRectD(0.0, 0.0, 1.0, 1.0)
-  result.mAspect  = AspectRatioStretch
+  result.mAspect  = aspectRatioStretch
   result.mIsValid = true
   result.mAlignX  = 0.5
   result.mAlignY  = 0.5
@@ -183,11 +183,11 @@ proc update*(self: var TransViewport) =
     device_x2 = self.mDevice.x2
     device_y2 = self.mDevice.y2
 
-  if self.mAspect != AspectRatioStretch:
+  if self.mAspect != aspectRatioStretch:
     self.mKx = (device_x2 - device_x1) / (world_x2 - world_x1)
     self.mKy = (device_y2 - device_y1) / (world_y2 - world_y1)
 
-    if (self.mAspect == AspectRatioMeet) == (self.mKx < self.mKy):
+    if (self.mAspect == aspectRatioMeet) == (self.mKx < self.mKy):
       let d     = (world_y2 - world_y1) * self.mKy / self.mKx
       world_y1 += (world_y2 - world_y1 - d) * self.mAlignY
       world_y2  =  world_y1 + d

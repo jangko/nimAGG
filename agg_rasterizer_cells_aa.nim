@@ -17,10 +17,12 @@ type
     maxBlocks: int
     currBlock: int
     numCells: int
+    
     cells: seq[ptr CellType]
     currCellPtr: ptr CellType
     #sortedCells: seq[ptr CellType]
     sortedY: seq[SortedY[CellType]]
+    
     currCell: CellType
     styleCell: CellType
     minX: int
@@ -28,7 +30,14 @@ type
     maxX: int
     maxY: int
     sorted: bool
-
+    
+proc print*[T](self: RasterizerCellsAA[T]) =
+  mixin print
+  echo "rascel $1 $2 $3 $4" % [$self.numBlocks, $self.maxBlocks, $self.currBlock, $self.numCells]
+  echo "$1 $2 $3 $4 $5" % [$self.minX, $self.minY, $self.maxX, $self.maxY, $self.sorted]
+  self.currCell.print()
+  self.styleCell.print()
+  
 proc reset*[T](self: RasterizerCellsAA[T]) =
   self.numCells = 0
   self.currBlock = 0
@@ -513,10 +522,10 @@ proc initScanlineHitTest*(x: int): ScanlineHitTest =
 
 proc resetSpans*(self: ScanlineHitTest) = discard
 proc finalize*(self: ScanlineHitTest, x: int) = discard
-proc addCell*(self: var ScanlineHitTest, x, y: int) =
+proc addCell*(self: var ScanlineHitTest, x: int, cover: uint) =
   if self.x == x: self.hit = true
 
-proc addSpan*(self: var ScanlineHitTest, x, len, z: int) =
+proc addSpan*(self: var ScanlineHitTest, x, len: int, cover: uint) =
   if self.x >= x and self.x < (x+len): self.hit = true
 
 proc numSpans*(self: ScanlineHitTest): int = 1
