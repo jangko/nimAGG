@@ -1,6 +1,6 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
 import agg_conv_stroke, agg_conv_dash, agg_conv_curve, agg_conv_contour, agg_conv_marker
-import agg_conv_shorten_path, agg_conv_marker_adaptor, agg_conv_concat, agg_arrowhead
+import agg_conv_marker_adaptor, agg_conv_concat, agg_arrowhead
 import agg_vcgen_markers_term, agg_scanline_p, agg_scanline_u, agg_renderer_scanline
 import agg_renderer_primitives, agg_span_allocator, agg_span_gradient, agg_span_interpolator_linear
 import agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox, nimBMP, random, agg_curves

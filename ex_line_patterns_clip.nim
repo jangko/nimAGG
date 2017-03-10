@@ -1,5 +1,5 @@
 import agg_basics, agg_rendering_buffer, agg_conv_transform, agg_conv_stroke
-import agg_conv_clip_polyline, agg_scanline_p, agg_renderer_scanline
+import agg_scanline_p, agg_renderer_scanline
 import agg_rasterizer_outline_aa, agg_rasterizer_scanline_aa, agg_pattern_filters_rgba
 import agg_renderer_outline_aa, agg_renderer_outline_image, agg_pixfmt_rgb
 import ctrl_slider, ctrl_polygon, nimBMP, agg_color_rgba, agg_renderer_base
