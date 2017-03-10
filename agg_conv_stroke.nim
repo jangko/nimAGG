@@ -56,7 +56,7 @@ proc innerMiterLimit*[V,M](self: var ConvStroke[V,M], ml: float64) =
   type base = ConvAdaptorVcgen[V, VcgenStroke, M]
   base(self).generator().innerMiterLimit(ml)
   
-proc approximationCcale*[V,M](self: var ConvStroke[V,M], asc: float64) = 
+proc approximationScale*[V,M](self: var ConvStroke[V,M], asc: float64) = 
   type base = ConvAdaptorVcgen[V, VcgenStroke, M]
   base(self).generator().approximationScale(asc)
 

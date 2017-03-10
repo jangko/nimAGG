@@ -58,7 +58,7 @@ proc calcPolygonArea*[Storage](st: var Storage): float64 =
     y = v.y
   result = (sum + x * ys - y * xs) * 0.5
 
-proc calcOrthogonal(thickness, x1, y1, x2, y2: float64, x, y: var float64) =
+proc calcOrthogonal*(thickness, x1, y1, x2, y2: float64, x, y: var float64) =
   var
     dx = x2 - x1
     dy = y2 - y1

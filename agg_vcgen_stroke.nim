@@ -52,7 +52,7 @@ proc width*(self: var VcgenStroke, w: float64) = self.mStroker.width(w)
 proc miterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.miterLimit(ml)
 proc miterLimitTheta*(self: var VcgenStroke, t: float64) = self.mStroker.miterLimitTheta(t)
 proc innerMiterLimit*(self: var VcgenStroke, ml: float64) = self.mStroker.innerMiterLimit(ml)
-proc approximationCcale*(self: var VcgenStroke, asc: float64) = self.mStroker.approximationScale(asc)
+proc approximationScale*(self: var VcgenStroke, asc: float64) = self.mStroker.approximationScale(asc)
 
 proc width*(self: VcgenStroke): float64 = self.mStroker.width()
 proc miterLimit*(self: VcgenStroke): float64 = self.mStroker.miterLimit()
