@@ -1,4 +1,4 @@
-import agg_trans_affine, agg_basics
+import agg_trans_affine, agg_basics, strutils
 
 type
   AspectRatio* = enum
@@ -29,6 +29,16 @@ proc initTransViewport*(): TransViewport =
   result.mKx  = 1.0
   result.mKy  = 1.0
 
+proc f(x: float64): string =
+  result = x.formatFloat(ffDecimal, 3)
+  
+proc print*(m: TransViewport) =
+  echo "$1 $2 $3 $4" % [m.mWorld.x1.f, m.mWorld.y1.f, m.mWorld.x2.f, m.mWorld.y2.f]
+  echo "$1 $2 $3 $4" % [m.mDevice.x1.f, m.mDevice.y1.f, m.mDevice.x2.f, m.mDevice.y2.f]
+  echo "$1 $2 $3 $4" % [m.mW.x1.f, m.mW.y1.f, m.mW.x2.f, m.mW.y2.f]
+  echo "$1 $2 $3 $4" % [m.mDx1.f, m.mDy1.f, m.mKx.f, m.mKy.f]
+  echo "$1 $2 $3 $4" % [m.mAlignX.f, m.mAlignY.f, $m.mIsValid.ord, $m.mAspect.ord]
+        
 proc update*(self: var TransViewport)
 
 proc preserveAspectRatio*(self: var TransViewport, alignx, aligny: float64, aspect: AspectRatio) =
@@ -37,7 +47,7 @@ proc preserveAspectRatio*(self: var TransViewport, alignx, aligny: float64, aspe
   self.mAspect = aspect
   self.update()
 
-proc deviceViewport*(self: var TransViewport, x1, y1, x2, y2: float64) =
+proc setDeviceViewport*(self: var TransViewport, x1, y1, x2, y2: float64) =
   self.mDevice.x1 = x1
   self.mDevice.y1 = y1
   self.mDevice.x2 = x2
@@ -48,7 +58,7 @@ proc deviceViewport*(self: var TransViewport, v: RectD) =
   self.mDevice = v
   self.update()
 
-proc worldViewport*(self: var TransViewport, x1, y1, x2, y2: float64) =
+proc setWorldViewport*(self: var TransViewport, x1, y1, x2, y2: float64) =
   self.mWorld.x1 = x1
   self.mWorld.y1 = y1
   self.mWorld.x2 = x2
@@ -59,7 +69,7 @@ proc worldViewport*(self: var TransViewport, v: RectD) =
   self.mWorld = v
   self.update()
 
-proc deviceViewport*(self: TransViewport, x1, y1, x2, y2: var float64) =
+proc getDeviceViewport*(self: TransViewport, x1, y1, x2, y2: var float64) =
   x1 = self.mDevice.x1
   y1 = self.mDevice.y1
   x2 = self.mDevice.x2
@@ -71,7 +81,7 @@ proc deviceViewport*(self: TransViewport, v: var RectD) =
 proc deviceViewport*(self: var TransViewport): RectD =
   self.mDevice
 
-proc worldViewport*(self: var TransViewport, x1, y1, x2, y2: var float64) =
+proc getWorldViewport*(self: var TransViewport, x1, y1, x2, y2: var float64) =
   x1 = self.mWorld.x1
   y1 = self.mWorld.y1
   x2 = self.mWorld.x2
@@ -162,8 +172,8 @@ proc update*(self: var TransViewport) =
      abs(self.mWorld.y1  - self.mWorld.y2)  < epsilon or
      abs(self.mDevice.x1 - self.mDevice.x2) < epsilon or
      abs(self.mDevice.y1 - self.mDevice.y2) < epsilon:
-     self.mW.x1 = self.mWorld.x1;
-     self.mW.y1 = self.mWorld.y1;
+     self.mW.x1 = self.mWorld.x1
+     self.mW.y1 = self.mWorld.y1
      self.mW.x2 = self.mWorld.x1 + 1.0
      self.mW.y2 = self.mWorld.y2 + 1.0
      self.mDx1 = self.mDevice.x1

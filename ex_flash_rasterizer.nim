@@ -65,21 +65,21 @@ proc readNext(self: var CompoundShape): bool =
         style.leftFill = parseInt(parts[1])
         style.rightFill = parseInt(parts[2])
         style.line = parseInt(parts[3])
-        ax = parseFloat(parts[4])
-        ay = parseFloat(parts[5])
+        ax = parseInt(parts[4]).float64
+        ay = parseInt(parts[5]).float64
         self.path.moveTo(ax, ay)
         self.styles.add(style)
       of 'C':
         var parts = buf.split(WhiteSpace)
-        cx = parseFloat(parts[1])
-        cy = parseFloat(parts[2])
-        ax = parseFloat(parts[3])
-        ay = parseFloat(parts[4])
+        cx = parseInt(parts[1]).float64
+        cy = parseInt(parts[2]).float64
+        ax = parseInt(parts[3]).float64
+        ay = parseInt(parts[4]).float64
         self.path.curve3(cx, cy, ax, ay)
       of 'L':
         var parts = buf.split(WhiteSpace)
-        ax = parseFloat(parts[1])
-        ay = parseFloat(parts[2])
+        ax = parseInt(parts[1]).float64
+        ay = parseInt(parts[2]).float64
         self.path.lineTo(ax, ay)
       of '<':
         # EndPath
@@ -111,13 +111,17 @@ proc scale(self: var CompoundShape, w, h: float64) =
   self.affine.reset()
   var x1, y1, x2, y2: float64
   discard boundingRect(self.path, self, 0, self.styles.len, x1, y1, x2, y2)
+  #echo "$1 $2 $3 $4" % [x1.formatFloat(ffDecimal, 3), y1.formatFloat(ffDecimal, 3), x2.formatFloat(ffDecimal, 3), y2.formatFloat(ffDecimal, 3)]
   if x1 < x2 and y1 < y2:
     var vp = initTransViewport()
     vp.preserveAspectRatio(0.5, 0.5, aspectRatioMeet)
-    vp.worldViewport(x1, y1, x2, y2)
-    vp.deviceViewport(0, 0, w, h)
+    vp.setWorldViewport(x1, y1, x2, y2)
+    #vp.print()
+    vp.setDeviceViewport(0, 0, w, h)
     self.affine = vp.toAffine()
-  self.curve.approximationScale(0.03)
+
+  #echo self.affine.scale()
+  self.curve.approximationScale(self.affine.scale())
 
 proc approximationScale(self: var CompoundShape, s: float64) =
   self.curve.approximationScale(self.affine.scale() * s)
@@ -149,7 +153,7 @@ type
   TestStyles = object
     solidColors: ptr Rgba8
     gradient: ptr Rgba8
-        
+
 proc initTestStyles(solidColors, gradient: ptr Rgba8): TestStyles =
   result.solidColors = solidColors
   result.gradient = gradient
@@ -159,10 +163,10 @@ proc isSolid(self: TestStyles, style: int): bool =
 
 proc color(self: TestStyles, style: int): Rgba8 =
   self.solidColors[style]
-    
+
 proc generateSpan(self: TestStyles, span: ptr Rgba8, x, y, len: int, style: int) =
   copyMem(span, self.gradient + x, sizeof(Rgba8) * len)
-      
+
 type
   App = object
     shape: CompoundShape
@@ -171,7 +175,7 @@ type
     gamma: GammaLut8
     gradient: seq[Rgba8]
     pointIdx, hitX, hitY: int
-    
+
 proc initApp(): App =
   result.shape = initCompoundShape()
   result.scale = initTransAffine()
@@ -182,11 +186,18 @@ proc initApp(): App =
   result.gamma.gamma(2.0)
   result.gradient = @[]
 
+  randomize()
   for i in 0.. <100:
     result.colors[i] = initRgba8(random(0xFF), random(0xFF), random(0xFF), 230)
     result.colors[i].applyGammaDir(result.gamma)
     result.colors[i].premultiply()
-        
+
+  #for i in 0..255:
+   # echo $result.gamma.dir(i.uint)
+
+  #for c in result.colors:
+  #  echo "$1 $2 $3 $4" % [$c.r, $c.g, $c.b, $c.a]
+
 proc open(app: var App, name: string): bool =
   app.shape.open("resources$1$2" % [$DirSep, name])
 
@@ -194,15 +205,24 @@ proc readNext(app: var App) =
   discard app.shape.readNext()
   app.shape.scale(frameWidth.float64, frameHeight.float64)
 
+#{.passC: "-I./agg-2.5/include".}
+#{.compile: "test_flash.cpp".}
+#{.compile: "agg_trans_affine2.cpp".}
+#{.compile: "agg_curves2.cpp".}
+#{.passL: "-lstdc++".}
+#
+#proc test_flash() {.importc.}
+
 proc onDraw() =
   var app    = initApp()
   discard app.open("shapes.txt")
   app.readNext()
-  
+  app.readNext()
+
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)
     rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    pixf   = initPixfmtRgba32(rbuf)
+    pixf   = initPixfmtBgra32Pre(rbuf)
     rb     = initRendererBase(pixf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineU8()
@@ -210,46 +230,46 @@ proc onDraw() =
     ras    = initRasterizerScanlineAA()
     rasc   = initRasterizerCompoundAA()
     shape  = initConvTransform(app.shape, app.scale)
-    stroke = initConvStroke(shape)    
+    stroke = initConvStroke(shape)
     sa     = initSpanAllocator[Rgba8]()
     width  = frameWidth.float64
     height = frameHeight.float64
-  
+
   rb.clear(initRgba(1.0, 1.0, 0.95))
   app.gradient.setLen(frameWidth)
   var styleHandler = initTestStyles(app.colors[0].addr, app.gradient[0].addr)
-  
+
   var
     c1 = initRgba(255, 0, 0, 180)
     c2 = initRgba(0, 0, 255, 180)
-    
+
   for i in 0.. <width.int:
     app.gradient[i] = initRgba8(c1.gradient(c2, i.float64 / width))
     app.gradient[i].premultiply()
-  
+
   app.shape.approximationScale(app.scale.scale())
-    
+
   # Fill shape
   rasc.clipBox(0, 0, width, height)
   rasc.reset()
-  
-  rasc.fillingRule(fillEvenOdd)
+
+  #rasc.fillingRule(fillEvenOdd)
   #start_timer()
-  
+
   for i in 0.. <app.shape.paths():
     if app.shape.style(i).leftFill >= 0 or app.shape.style(i).rightFill >= 0:
       rasc.styles(app.shape.style(i).leftFill, app.shape.style(i).rightFill)
       rasc.addPath(shape, app.shape.style(i).pathId)
   renderScanlinesCompound(rasc, sl, slBin, rb, sa, styleHandler)
-  
+
   #double tfill = elapsed_time()
-  
+
   # Hit-test test
   var drawStrokes = true
   if app.hitX >= 0 and app.hitY >= 0:
     if rasc.hitTest(app.hitX, app.hitY):
       drawStrokes = false
-    
+
   # Draw strokes
   #start_timer()
   if draw_strokes:
@@ -265,35 +285,35 @@ proc onDraw() =
         renderScanlines(ras, sl, ren)
   #[
   double tstroke = elapsed_time()
-  
-  
+
+
   char buf[256];
   agg::gsv_text t;
   t.size(8.0)
   t.flip(true)
-  
+
   agg::conv_stroke<agg::gsv_text> ts(t)
   ts.width(1.6)
   ts.line_cap(agg::round_cap)
-  
+
   sprintf(buf, "Fill=%.2fms (%dFPS) Stroke=%.2fms (%dFPS) Total=%.2fms (%dFPS)\n\n"
               "Space: Next Shape\n\n"
               "+/- : ZoomIn/ZoomOut (with respect to the mouse pointer)",
               tfill, int(1000.0 / tfill),
               tstroke, int(1000.0 / tstroke),
               tfill+tstroke, int(1000.0 / (tfill+tstroke)))
-  
+
   t.start_point(10.0, 20.0)
   t.text(buf)
-  
+
   ras.add_path(ts)
   ren.color(agg::rgba(0,0,0))
   agg::render_scanlines(ras, sl, ren)
-  
-  if(m_gamma.gamma() != 1.0)
-      pixf.apply_gamma_inv(m_gamma)
   ]#
-  
+
+  if app.gamma.gamma() != 1.0:
+    pixf.applyGammaInv(app.gamma)
+
   saveBMP32("flash_rasterizer.bmp", buffer, frameWidth, frameHeight)
 
 onDraw()

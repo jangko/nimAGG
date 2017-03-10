@@ -219,6 +219,13 @@ namespace agg
             memcpy(this,  ptr, sizeof(*this));
         }
 
+        void print() {
+          printf("%.3f %.3f %.3f %.3f\n", m_world_x1, m_world_y1, m_world_x2, m_world_y2);
+          printf("%.3f %.3f %.3f %.3f\n", m_device_x1, m_device_y1, m_device_x2, m_device_y2);
+          printf("%.3f %.3f %.3f %.3f\n", m_wx1, m_wy1, m_wx2, m_wy2);
+          printf("%.3f %.3f %.3f %.3f\n", m_dx1, m_dy1, m_kx, m_ky);
+          printf("%.3f %.3f %d %d\n", m_align_x, m_align_y, m_is_valid, m_aspect);
+        }
     private:
         void update();
 
