@@ -615,6 +615,9 @@ proc textWidth*(self: var GsvText): float64 =
   discard self.boundingRectSingle(0, x1, y1, x2, y2)
   result = x2 - x1
 
+proc flip*(self: var GsvText, flip: bool) =
+  self.mFlip = flip
+  
 type
   GsvTextOutline*[Transformer] = object
     poly: ConvStroke[GsvText, NullMarkers]

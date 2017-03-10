@@ -1,7 +1,7 @@
 import agg_rendering_buffer, agg_trans_viewport, agg_path_storage, agg_conv_transform
-import agg_conv_curve, agg_conv_stroke, agg_gsv_text, agg_scanline_u, agg_scanline_bin
-import agg_renderer_scanline, agg_rasterizer_scanline_aa, agg_rasterizer_compound_aa
-import agg_span_allocator, agg_gamma_lut, agg_pixfmt_rgba, agg_bounding_rect, agg_color_gray
+import agg_conv_curve, agg_conv_stroke, agg_gsv_text, agg_scanline_u
+import agg_renderer_scanline, agg_rasterizer_scanline_aa
+import agg_span_allocator, agg_gamma_lut, agg_pixfmt_rgba, agg_bounding_rect
 import agg_color_rgba, nimBMP, agg_trans_affine, strutils, agg_basics, agg_math
 import random, os, strutils, agg_renderer_base, math, times
 
@@ -26,6 +26,7 @@ type
     trans: ConvTransform[ConvCurve[PathStorage], TransAffine]
     styles: seq[PathStyle]
     x1, y1, x2, y2: float64
+    minStyle, maxStyle: int
     fd: File
 
 proc initCompoundShape(): CompoundShape =
@@ -34,6 +35,8 @@ proc initCompoundShape(): CompoundShape =
   result.curve  = initConvCurve(result.path)
   result.trans  = initConvTransform(result.curve, result.affine)
   result.styles = @[]
+  result.minStyle = 0x7FFFFFFF
+  result.maxStyle = -0x7FFFFFFF
 
 proc open(self: var CompoundShape, name: string) =
   self.fd = open(name, fmRead)
@@ -44,6 +47,9 @@ proc readNext(self: var CompoundShape): bool =
 
   var
     ax, ay, cx, cy: float64
+
+  self.minStyle = 0x7FFFFFFF
+  self.maxStyle = -0x7FFFFFFF
 
   if self.fd != nil:
     var
@@ -69,6 +75,12 @@ proc readNext(self: var CompoundShape): bool =
         ay = parseInt(parts[5]).float64
         self.path.moveTo(ax, ay)
         self.styles.add(style)
+        if style.leftFill >= 0:
+          if style.leftFill < self.minStyle: self.minStyle = style.leftFill
+          if style.leftFill > self.maxStyle: self.maxStyle = style.leftFill
+        if style.rightFill >= 0:
+          if style.rightFill < self.minStyle: self.minStyle = style.rightFill
+          if style.rightFill > self.maxStyle: self.maxStyle = style.rightFill
       of 'C':
         var parts = buf.split(WhiteSpace)
         cx = parseInt(parts[1]).float64
@@ -111,16 +123,12 @@ proc scale(self: var CompoundShape, w, h: float64) =
   self.affine.reset()
   var x1, y1, x2, y2: float64
   discard boundingRect(self.path, self, 0, self.styles.len, x1, y1, x2, y2)
-  #echo "$1 $2 $3 $4" % [x1.formatFloat(ffDecimal, 3), y1.formatFloat(ffDecimal, 3), x2.formatFloat(ffDecimal, 3), y2.formatFloat(ffDecimal, 3)]
   if x1 < x2 and y1 < y2:
     var vp = initTransViewport()
     vp.preserveAspectRatio(0.5, 0.5, aspectRatioMeet)
     vp.setWorldViewport(x1, y1, x2, y2)
-    #vp.print()
     vp.setDeviceViewport(0, 0, w, h)
     self.affine = vp.toAffine()
-
-  #echo self.affine.scale()
   self.curve.approximationScale(self.affine.scale())
 
 proc approximationScale(self: var CompoundShape, s: float64) =
@@ -150,41 +158,19 @@ proc modify_vertex(self: var CompoundShape, i: int, x, y: float64) =
   self.path.modifyVertex(i, x, y)
 
 type
-  TestStyles = object
-    solidColors: ptr Rgba8
-    gradient: ptr Rgba8
-
-proc initTestStyles(solidColors, gradient: ptr Rgba8): TestStyles =
-  result.solidColors = solidColors
-  result.gradient = gradient
-
-proc isSolid(self: TestStyles, style: int): bool =
-  result = true
-
-proc color(self: TestStyles, style: int): Rgba8 =
-  self.solidColors[style]
-
-proc generateSpan(self: TestStyles, span: ptr Rgba8, x, y, len: int, style: int) =
-  copyMem(span, self.gradient + x, sizeof(Rgba8) * len)
-
-type
   App = object
     shape: CompoundShape
     colors: array[100, Rgba8]
     scale: TransAffine
     gamma: GammaLut8
-    gradient: seq[Rgba8]
-    pointIdx, hitX, hitY: int
+    pointIdx: int
 
 proc initApp(): App =
   result.shape = initCompoundShape()
   result.scale = initTransAffine()
   result.pointIdx = -1
-  result.hitX = -1
-  result.hitY = -1
   result.gamma = initGammaLut8()
   result.gamma.gamma(2.0)
-  result.gradient = @[]
 
   randomize()
   for i in 0.. <100:
@@ -199,18 +185,9 @@ proc readNext(app: var App) =
   discard app.shape.readNext()
   app.shape.scale(frameWidth.float64, frameHeight.float64)
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_flash.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.compile: "agg_curves2.cpp".}
-#{.passL: "-lstdc++".}
-#
-#proc test_flash() {.importc.}
-
 proc onDraw() =
   var app    = initApp()
   discard app.open("shapes.txt")
-  app.readNext()
   app.readNext()
 
   var
@@ -220,62 +197,77 @@ proc onDraw() =
     rb     = initRendererBase(pixf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineU8()
-    slBin  = initScanlineBin()
     ras    = initRasterizerScanlineAA()
-    rasc   = initRasterizerCompoundAA()
     shape  = initConvTransform(app.shape, app.scale)
     stroke = initConvStroke(shape)
-    sa     = initSpanAllocator[Rgba8]()
+    tmpPath= initPathStorage()
     width  = frameWidth.float64
     height = frameHeight.float64
 
   rb.clear(initRgba(1.0, 1.0, 0.95))
-  app.gradient.setLen(frameWidth)
-  var styleHandler = initTestStyles(app.colors[0].addr, app.gradient[0].addr)
+  app.shape.approximation_scale(app.scale.scale())
+  ras.clipBox(0, 0, width, height)
 
-  var
-    c1 = initRgba(255, 0, 0, 180)
-    c2 = initRgba(0, 0, 255, 180)
+  # This is an alternative method of Flash rasterization.
+  # We decompose the compound shape into separate paths
+  # and select the ones that fit the given style (left or right).
+  # So that, we form a sub-shape and draw it as a whole.
+  #
+  # Here the regular scanline rasterizer is used, but it doesn't
+  # automatically close the polygons. So that, the rasterizer
+  # actually works with a set of polylines instead of polygons.
+  # Of course, the data integrity must be preserved, that is,
+  # the polylines must eventually form a closed contour
+  # (or a set of closed contours). So that, first we set
+  # auto_close(false)
+  #
+  # The second important thing is that one path can be rasterized
+  # twice, if it has both, left and right fill. Sometimes the
+  # path has equal left and right fill, so that, the same path
+  # will be added twice even for a single sub-shape. If the
+  # rasterizer can tolerate these degenerates you can add them,
+  # but it's also fine just to omit them.
+  #
+  # The third thing is that for one side (left or right)
+  # you should invert the direction of the paths.
+  #
+  # The main disadvantage of this method is imperfect stitching
+  # of the adjacent polygons. The problem can be solved if we use
+  # compositing operation "plus" instead of alpha-blend. But
+  # in this case we are forced to use an RGBA buffer, clean it with
+  # zero, rasterize using "plus" operation, and then alpha-blend
+  # the result over the final scene. It can be too expensive.
 
-  for i in 0.. <width.int:
-    app.gradient[i] = initRgba8(c1.gradient(c2, i.float64 / width))
-    app.gradient[i].premultiply()
-
-  app.shape.approximationScale(app.scale.scale())
-
-  # Fill shape
-  rasc.clipBox(0, 0, width, height)
-  rasc.reset()
-
-  #rasc.fillingRule(fillEvenOdd)
+  ras.autoClose(false)
 
   var startTime = cpuTime()
-  for i in 0.. <app.shape.paths():
-    if app.shape.style(i).leftFill >= 0 or app.shape.style(i).rightFill >= 0:
-      rasc.styles(app.shape.style(i).leftFill, app.shape.style(i).rightFill)
-      rasc.addPath(shape, app.shape.style(i).pathId)
-  renderScanlinesCompound(rasc, sl, slBin, rb, sa, styleHandler)
+  for s in app.shape.minStyle..app.shape.maxStyle:
+    ras.reset()
+    for i in 0.. <app.shape.paths():
+      var style = app.shape.style(i)
+      if style.leftFill != style.rightFill:
+        if style.leftFill == s:
+          ras.addPath(shape, style.pathId)
+        if style.rightFill == s:
+          tmpPath.removeAll()
+          tmpPath.concatPath(shape, style.pathId)
+          tmpPath.invertPolygon(0)
+          ras.addPath(tmpPath)
+    renderScanlinesAASolid(ras, sl, rb, app.colors[s])
   let tfill = (cpuTime() - startTime) * 1000.0
 
-  # Hit-test test
-  var drawStrokes = true
-  if app.hitX >= 0 and app.hitY >= 0:
-    if rasc.hitTest(app.hitX, app.hitY):
-      drawStrokes = false
-
+  ras.autoClose(true)
   # Draw strokes
   startTime = cpuTime()
-  if draw_strokes:
-    ras.clipBox(0, 0, width, height)
-    stroke.width(sqrt(app.scale.scale()))
-    stroke.lineJoin(roundJoin)
-    stroke.lineCap(roundCap)
-    for i in 0.. <app.shape.paths():
-      ras.reset()
-      if app.shape.style(i).line >= 0:
-        ras.addPath(stroke, app.shape.style(i).pathId)
-        ren.color(initRgba8(0,0,0, 128))
-        renderScanlines(ras, sl, ren)
+  stroke.width(sqrt(app.scale.scale()))
+  stroke.lineJoin(roundJoin)
+  stroke.lineCap(roundCap)
+  for i in 0.. <app.shape.paths():
+    ras.reset()
+    if app.shape.style(i).line >= 0:
+      ras.addPath(stroke, app.shape.style(i).pathId)
+      ren.color(initRgba8(0,0,0, 128))
+      renderScanlines(ras, sl, ren)
   let tstroke = (cpuTime() - startTime) * 1000.0
 
   var
