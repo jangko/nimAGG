@@ -1,5 +1,7 @@
 import agg_basics, agg_color_gray, agg_dda_line, agg_span_gouraud, agg_math
 
+export agg_span_gouraud
+
 type
   GrayCalc = object
     mX1, mY1, mDx, m1Dy: float64
@@ -21,10 +23,10 @@ proc init[CoordT](self: var GrayCalc, c1, c2: CoordT) =
   self.mDx  = c2.x - c1.x
   let dy = c2.y - c1.y
   self.m1Dy = if abs(dy) < 1e-10: 1e10 else: 1.0 / dy
-  self.mV1 = c1.color.v
-  self.mA1 = c1.color.a
-  self.mDv = c2.color.v - self.mV1
-  self.mDa = c2.color.a - self.mA1
+  self.mV1 = int(c1.color.v)
+  self.mA1 = int(c1.color.a)
+  self.mDv = c2.color.v.int - self.mV1
+  self.mDa = c2.color.a.int - self.mA1
 
 proc calc(self: var GrayCalc, y: float64) =
   var k = (y - self.mY1) * self.m1Dy
@@ -68,7 +70,7 @@ proc prepare*[ColorT](self: var SpanGouraudGray[ColorT]) =
 ddaLineInterpolator(DdaLine, 14)
 
 proc generate*[ColorT](self: var SpanGouraudGray[ColorT], span: ptr ColorT, x, y, len: int) =
-  self.mC1.calc(y)
+  self.mC1.calc(y.float64)
 
   var
     pc1 = self.mC1.addr
@@ -76,10 +78,10 @@ proc generate*[ColorT](self: var SpanGouraudGray[ColorT], span: ptr ColorT, x, y
 
   if y < self.mY2:
     # Bottom part of the triangle (first subtriangle)
-    self.mC2.calc(y + self.mC2.self.m1Dy)
+    self.mC2.calc(y.float64 + self.mC2.m1Dy)
   else:
     # Upper part (second subtriangle)
-    self.mC3.calc(y - self.mC3.self.m1Dy)
+    self.mC3.calc(y.float64 - self.mC3.m1Dy)
     pc2 = self.mC3.addr
 
   if self.mSwap:
@@ -89,23 +91,26 @@ proc generate*[ColorT](self: var SpanGouraudGray[ColorT], span: ptr ColorT, x, y
 
   # Get the horizontal length with subpixel accuracy
   # and protect it from division by zero
-  var nlen = abs(pc2.self.mX - pc1.self.mX)
+  var nlen = abs(pc2.mX - pc1.mX)
   if nlen <= 0: nlen = 1
 
   var
-    v = initDdaLine(pc1.self.mV, pc2.self.mV, nlen)
-    a = initDdaLine(pc1.self.mA, pc2.self.mA, nlen)
+    v = initDdaLine(pc1.mV, pc2.mV, nlen)
+    a = initDdaLine(pc1.mA, pc2.mA, nlen)
 
   # Calculate the starting point of the gradient with subpixel
   # accuracy and correct (roll back) the interpolators.
   # This operation will also clip the beginning of the span
   # if necessary.
-  var start = pc1.self.mX - (x shl subPixelShift)
+  var start = pc1.mX - (x shl subPixelShift)
   v    -= start
   a    -= start
   nlen += start
 
-  var vv, va: int
+  var 
+    vv, va: int
+    span = span
+    len = len
   const lim = getBaseMask(ColorT)
   type ValueT = getValueT(ColorT)
 
