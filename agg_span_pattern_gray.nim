@@ -25,7 +25,13 @@ proc offsetX*[S,A](self: var SpanPatternGray[S,A], v: int) = self.mOffsetX = v
 proc offsetY*[S,A](self: var SpanPatternGray[S,A], v: int) = self.mOffsetY = v
 proc offsetX*[S,A](self: SpanPatternGray[S,A]): int = self.mOffsetX
 proc offsetY*[S,A](self: SpanPatternGray[S,A]): int = self.mOffsetY
-proc alpha*[S,A](self: var SpanPatternGray[S,A], v: A) = self.mAlpha = v
+
+proc alpha*[S,A,B](self: var SpanPatternGray[S,A], v: B) =
+  when A is not B:
+    self.mAlpha = A(v)
+  else:
+    self.mAlpha = v
+
 proc alpha*[S,A](self: SpanPatternGray[S,A]): A = self.mAlpha
 
 proc prepare*[S,A](self: SpanPatternGray[S,A]) = discard
@@ -45,9 +51,3 @@ proc generate*[S,A, ColorT](self: var SpanPatternGray[S,A], span: ColorT, x, y, 
     p = cast[ptr A](self.mSrc[].nextX())
     inc span
     dec len
-
-
-
-
-
-

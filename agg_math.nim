@@ -38,10 +38,68 @@ proc calcLinePointDistance*(x1, y1, x2, y2, x, y: float64): float64 =
 proc crossProduct*(x1, y1, x2, y2, x, y: float64): float64 {.inline.} =
   result = (x - x2) * (y2 - y1) - (y - y2) * (x2 - x1)
 
-proc calcSqDistance*(x1, y1, x2, y2: float64): float64  {.inline.} =
+proc pointInTriangle*(x1, y1, x2, y2, x3, y3, x, y: float64): bool {.inline.} =
+  let
+    cp1 = crossProduct(x1, y1, x2, y2, x, y) < 0.0
+    cp2 = crossProduct(x2, y2, x3, y3, x, y) < 0.0
+    cp3 = crossProduct(x3, y3, x1, y1, x, y) < 0.0
+  result = cp1 == cp2 and cp2 == cp3 and cp3 == cp1
+
+proc calcSegmentPointU*(x1, y1, x2, y2, x, y: float64): float64 {.inline.} =
+  let
+    dx = x2 - x1
+    dy = y2 - y1
+
+  if dx == 0 and dy == 0:
+    return 0
+
+  let
+    pdx = x - x1
+    pdy = y - y1
+
+  result =(pdx * dx + pdy * dy) / (dx * dx + dy * dy)
+
+proc calcSqDistance*(x1, y1, x2, y2: float64): float64 {.inline.} =
   let dx = x2-x1
   let dy = y2-y1
   result = dx * dx + dy * dy
+
+proc calcSegmentPointSqDistance*(x1, y1, x2, y2, x, y, u: float64): float64 {.inline.} =
+  if u <= 0:
+    return calcSqDistance(x, y, x1, y1)
+  elif u >= 1:
+    return calcSqDistance(x, y, x2, y2)
+  calcSqDistance(x, y, x1 + u * (x2 - x1), y1 + u * (y2 - y1))
+
+proc calcSegmentPointSqDistance*(x1, y1, x2, y2, x, y: float64): float64 {.inline.} =
+  calcSegmentPointSqDistance(x1, y1, x2, y2, x, y, calcSegmentPointU(x1, y1, x2, y2, x, y))
+
+proc intersectionExists*(x1, y1, x2, y2, x3, y3, x4, y4: float64): bool {.inline.} =
+  # It's less expensive but you can't control the
+  # boundary conditions: Less or LessEqual
+  var
+    dx1 = x2 - x1
+    dy1 = y2 - y1
+    dx2 = x4 - x3
+    dy2 = y4 - y3
+  result = ((x3 - x2) * dy1 - (y3 - y2) * dx1 < 0.0) !=
+           ((x4 - x2) * dy1 - (y4 - y2) * dx1 < 0.0) and
+           ((x1 - x4) * dy2 - (y1 - y4) * dx2 < 0.0) !=
+           ((x2 - x4) * dy2 - (y2 - y4) * dx2 < 0.0)
+
+   # It's is more expensive but more flexible
+   # in terms of boundary conditions.
+   #--------------------
+   #double den  = (x2-x1) * (y4-y3) - (y2-y1) * (x4-x3);
+   #if(fabs(den) < intersection_epsilon) return false;
+   #double nom1 = (x4-x3) * (y1-y3) - (y4-y3) * (x1-x3);
+   #double nom2 = (x2-x1) * (y1-y3) - (y2-y1) * (x1-x3);
+   #double ua = nom1 / den;
+   #double ub = nom2 / den;
+   #return ua >= 0.0 && ua <= 1.0 && ub >= 0.0 && ub <= 1.0;
+
+proc calcTriangleArea*(x1, y1, x2, y2, x3, y3: float64): float64 {.inline.} =
+  result = (x1*y2 - x2*y1 + x2*y3 - x3*y2 + x3*y1 - x1*y3) * 0.5
 
 proc calcPolygonArea*[Storage](st: var Storage): float64 =
   var

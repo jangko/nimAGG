@@ -8,18 +8,15 @@ conv_clip_polyline
 conv_clip_polygon
 
 bitset_iterator
-
-span_pattern_rgb
-span_pattern_gray
 span_interpolator_adaptor
-
-incomplete:
-  agg_math
 
 translate ok:
   bezier_arc
-  renderer_scanline
+  agg_math
   
+  -renderer_scanline
+  -span_pattern_rgb
+  -span_pattern_gray  
   -rasterizer_compound_aa  
   -trans_viewport  
   -vcgen_vertex_sequence

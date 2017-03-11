@@ -2,7 +2,7 @@ import agg_rendering_buffer, agg_conv_transform, agg_conv_stroke
 import agg_scanline_u, agg_scanline_bin, agg_renderer_scanline, agg_rasterizer_outline_aa
 import agg_rasterizer_scanline_aa, agg_span_allocator, agg_span_gouraud_rgba, agg_gamma_lut
 import agg_arc, agg_bezier_arc, agg_pixfmt_rgb, agg_pixfmt_rgba, agg_bounding_rect
-import agg_vpgen_clip_polygon, ctrl_slider, ctrl_bezier, ctrl_rbox, ctrl_cbox
+import ctrl_slider, ctrl_bezier, ctrl_rbox, ctrl_cbox
 import agg_rasterizer_compound_aa, nimBMP, agg_renderer_base, agg_color_rgba
 import random, times, strutils, agg_gsv_text
 

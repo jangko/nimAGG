@@ -603,11 +603,12 @@ proc loadBMP24*(fileName: string): BMPResult =
   if bmp != nil: result = bmp.convert(24)
 
 type
+  ConvertT = proc(p: var BMPRGBA, input: string, px: int)
   BMPEncoder = object
     bitsPerPixel: int
     colors: OrderedTable[BMPRGBA, int]
     pixels: string
-    cvt: proc(p: var BMPRGBA, input: string, px: int)
+    cvt: ConvertT
 
 proc hash*(c: BMPRGBA): Hash =
   var h: Hash = 0
@@ -615,6 +616,11 @@ proc hash*(c: BMPRGBA): Hash =
   h = h !& ord(c.g)
   h = h !& ord(c.b)
   h = h !& ord(c.a)
+
+proc pixelFromGray8(p: var BMPRGBA, input: string, px: int) =
+  p.r = input[px].ord
+  p.g = input[px].ord
+  p.b = input[px].ord
 
 proc pixelFromRGB24(p: var BMPRGBA, input: string, px: int) =
   let y = px * 3
@@ -629,13 +635,23 @@ proc pixelFromRGB32(p: var BMPRGBA, input: string, px: int) =
   p.b = input[y + 2].ord
   p.a = input[y + 3].ord
 
+proc pixelFromNoColor(p: var BMPRGBA, input: string, px: int) =
+  discard
+
+proc getCvt(bitsPerPixel: int): ConvertT =
+  case bitsPerPixel
+  of 8:  result = pixelFromGray8
+  of 24: result = pixelFromRGB24
+  of 32: result = pixelFromRGB32
+  else:  result = pixelFromNoColor
+
 proc countColors(input: string, w, h, bitsPerPixel: int, colors: var OrderedTable[BMPRGBA, int]): int =
   let numPixels = w * h
-  assert bitsPerPixel in {24, 32}
+  assert bitsPerPixel in {8, 24, 32}
 
   var
     p: BMPRGBA
-    cvt = if bitsPerPixel == 32: pixelFromRGB32 else: pixelFromRGB24
+    cvt = getCvt(bitsPerPixel)
     numColors = 0
 
   for px in 0.. <numPixels:
@@ -733,7 +749,7 @@ proc autoChooseColor(input: string, w, h, bitsPerPixel: int): BMPEncoder =
     colors = initOrderedTable[BMPRGBA, int]()
     numColors = countColors(input, w, h, bitsPerPixel, colors)
 
-  result.cvt = if bitsPerPixel == 32: pixelFromRGB32 else: pixelFromRGB24
+  result.cvt = getCvt(bitsPerPixel)
   result.colors = colors
 
   if numColors <= 2:
@@ -762,7 +778,7 @@ proc writeLE[T: BMPHeader|BMPInfo](s: Stream, val: T) =
   for field in fields(val): s.writeLE(field)
 
 proc encodeBMP*(s: Stream, input: string, w, h, bitsPerPixel: int) =
-  if bitsPerPixel notin {24,32}:
+  if bitsPerPixel notin {8,24,32}:
     raise BMPError("unsupported bitsPerPixel: " & $bitsPerPixel)
 
   let expectedLen = ((bitsPerPixel div 8) * w * h)
@@ -811,4 +827,9 @@ proc saveBMP32*(fileName, input: string, w, h: int) =
 proc saveBMP24*(fileName, input: string, w, h: int) =
   var s = newFileStream(fileName, fmWrite)
   s.encodeBMP(input, w, h, 24)
+  s.close()
+
+proc saveBMP8*(fileName, input: string, w, h: int) =
+  var s = newFileStream(fileName, fmWrite)
+  s.encodeBMP(input, w, h, 8)
   s.close()

@@ -23,7 +23,12 @@ proc offsetX*[S,A](self: var SpanPatternRgb[S,A], v: int) = self.mOffsetX = v
 proc offsetY*[S,A](self: var SpanPatternRgb[S,A], v: int) = self.mOffsetY = v
 proc offsetX*[S,A](self: SpanPatternRgb[S,A]): int = self.mOffsetX
 proc offsetY*[S,A](self: SpanPatternRgb[S,A]): int = self.mOffsetY
-proc alpha*[S,A](self: var SpanPatternRgb[S,A], v: A) = self.mAlpha = v
+proc alpha*[S,A,B](self: var SpanPatternRgb[S,A], v: B) = 
+  when A is not B:
+    self.mAlpha = A(v)
+  else:
+    self.mAlpha = v
+    
 proc alpha*[S,A](self: SpanPatternRgb[S,A]): A = self.mAlpha
 
 proc prepare*[S,A](self: SpanPatternRgb[S,A],) = discard
