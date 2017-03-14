@@ -44,137 +44,89 @@ type
     pix_format_custom_k32
     pix_format_custom_l32
     pix_format_custom_m32
-    
+
   PolymorphicBase = ref object of RootObj
-    clear_p: proc(c: Rgba8)
-    width_p: proc(): int
-    height_p: proc(): int
-    pixel_p: proc(x, y: int): Rgba8
-    copyPixel_p: proc(x, y: int, c: Rgba8)
-    blendPixel_p: proc(x, y: int, c: Rgba8, cover: uint8)
-    copyHline_p: proc(x, y, len: int, c: Rgba8)
-    copyVline_p: proc(x, y, len: int, c: Rgba8)
-    blendHline_p: proc(x, y, len: int, c: Rgba8, cover: uint8)
-    blendVline_p: proc(x, y, len: int, c: Rgba8, cover: uint8)
-    blendSolidHspan_p: proc(x, y, len: int, c: Rgba8, covers: ptr uint8)
-    blendSolidVspan_p: proc(x, y, len: int, c: Rgba8, covers: ptr uint8)
-    copyColorHspan_p: proc(x, y, len: int, colors: ptr Rgba8)
-    copyColorVspan_p: proc(x, y, len: int, colors: ptr Rgba8)
-    blendColorHspan_p: proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8)
-    blendColorVspan_p: proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8)
+    clear: proc(c: Rgba8)
+    width: proc(): int
+    height: proc(): int
+    pixel: proc(x, y: int): Rgba8
+    copyPixel: proc(x, y: int, c: Rgba8)
+    blendPixel: proc(x, y: int, c: Rgba8, cover: uint8)
+    copyHline: proc(x, y, len: int, c: Rgba8)
+    copyVline: proc(x, y, len: int, c: Rgba8)
+    blendHline: proc(x, y, len: int, c: Rgba8, cover: uint8)
+    blendVline: proc(x, y, len: int, c: Rgba8, cover: uint8)
+    blendSolidHspan: proc(x, y, len: int, c: Rgba8, covers: ptr uint8)
+    blendSolidVspan: proc(x, y, len: int, c: Rgba8, covers: ptr uint8)
+    copyColorHspan: proc(x, y, len: int, colors: ptr Rgba8)
+    copyColorVspan: proc(x, y, len: int, colors: ptr Rgba8)
+    blendColorHspan: proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8)
+    blendColorVspan: proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8)
 
   PolymorphicAdaptor[PixFmt] = ref object of PolymorphicBase
     pixf: PixFmt
     rb: RendererBase[PixFmt]
     gamma: GammaLut8
 
-proc clear(self: PolymorphicBase, c: Rgba8) =
-  self.clear_p(c)
-
-proc width(self: PolymorphicBase): int =
-  self.width_p()
-
-proc height(self: PolymorphicBase): int =
-  self.height_p()
-
-proc pixel(self: PolymorphicBase, x, y: int): Rgba8 =
-  self.pixel_p(x, y)
-
-proc copyPixel(self: PolymorphicBase, x, y: int, c: Rgba8) =
-  self.copyPixel_p(x, y, c)
-
-proc blendPixel(self: PolymorphicBase, x, y: int, c: Rgba8, cover: uint8) =
-  self.blendPixel_p(x, y, c, cover)
-
-proc copyHline(self: PolymorphicBase, x, y, len: int, c: Rgba8) =
-  self.copyHline_p(x, y, len, c)
-
-proc copyVline(self: PolymorphicBase, x, y, len: int, c: Rgba8) =
-  self.copyVline_p(x, y, len, c)
-
-proc blendHline(self: PolymorphicBase, x, y, len: int, c: Rgba8, cover: uint8) =
-  self.blendHline_p(x, y, len, c, cover)
-
-proc blendVline(self: PolymorphicBase, x, y, len: int, c: Rgba8, cover: uint8) =
-  self.blendVline_p(x, y, len, c, cover)
-
-proc blendSolidHspan(self: PolymorphicBase, x, y, len: int, c: Rgba8, covers: ptr uint8) =
-  self.blendSolidHspan_p(x, y, len, c, covers)
-
-proc blendSolidVspan(self: PolymorphicBase, x, y, len: int, c: Rgba8, covers: ptr uint8) =
-  self.blendSolidVspan_p(x, y, len, c, covers)
-
-proc copyColorHspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba8) =
-  self.copyColorHspan_p(x, y, len, colors)
-
-proc copyColorVspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba8) =
-  self.copyColorVspan_p(x, y, len, colors)
-
-proc blendColorHspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
-  self.blendColorHspan_p(x, y, len, colors, covers, cover)
-
-proc blendColorVspan(self: PolymorphicBase, x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
-  self.blendColorVspan_p(x, y, len, colors, covers, cover)
-
 proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
-  proc clear_i(c: Rgba8) =
+  ren.clear = proc(c: Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.rb.clear(c)
 
-  proc width_i(): int =
+  ren.width = proc(): int =
     ren.pixf.width()
 
-  proc height_i(): int =
+  ren.height = proc(): int =
     ren.pixf.height()
 
-  proc pixel_i(x, y: int): Rgba8 =
+  ren.pixel = proc(x, y: int): Rgba8 =
     when getColorT(PixFmt) is not Rgba8:
       construct(Rgba8, ren.pixf.pixel(x, y))
     else:
       ren.pixf.pixel(x, y)
 
-  proc copyPixel_i(x, y: int, c: Rgba8) =
+  ren.copyPixel = proc(x, y: int, c: Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.copyPixel(x, y, c)
 
-  proc blendPixel_i(x, y: int, c: Rgba8, cover: uint8) =
+  ren.blendPixel = proc(x, y: int, c: Rgba8, cover: uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.blendPixel(x, y, c, cover)
 
-  proc copyHline_i(x, y, len: int, c: Rgba8) =
+  ren.copyHline = proc(x, y, len: int, c: Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.copyHline(x, y, len, c)
 
-  proc copyVline_i(x, y, len: int, c: Rgba8) =
+  ren.copyVline = proc(x, y, len: int, c: Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.copyVline(x, y, len, c)
 
-  proc blendHline_i(x, y, len: int, c: Rgba8, cover: uint8) =
+  ren.blendHline = proc(x, y, len: int, c: Rgba8, cover: uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.blendHline(x, y, len, c, cover)
 
-  proc blendVline_i(x, y, len: int, c: Rgba8, cover: uint8) =
+  ren.blendVline = proc(x, y, len: int, c: Rgba8, cover: uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.blendVline(x, y, len, c, cover)
 
-  proc blendSolidHspan_i(x, y, len: int, c: Rgba8, covers: ptr uint8) =
+  ren.blendSolidHspan = proc(x, y, len: int, c: Rgba8, covers: ptr uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.blendSolidHspan(x, y, len, c, covers)
 
-  proc blendSolidVspan_i(x, y, len: int, c: Rgba8, covers: ptr uint8) =
+  ren.blendSolidVspan = proc(x, y, len: int, c: Rgba8, covers: ptr uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = construct(getColorT(PixFmt), c)
     ren.pixf.blendSolidVspan(x, y, len, c, covers)
 
-  proc copyColorHspan_i(x, y, len: int, colors: ptr Rgba8) =
+  ren.copyColorHspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = createU(getColorT(PixFmt), len)
       for i in 0.. <len:
@@ -184,7 +136,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
     else:
       ren.pixf.copyColorHspan(x, y, len, colors)
 
-  proc copyColorVspan_i(x, y, len: int, colors: ptr Rgba8) =
+  ren.copyColorVspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = createU(getColorT(PixFmt), len)
       for i in 0.. <len:
@@ -194,7 +146,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
     else:
       ren.pixf.copyColorVspan(x, y, len, colors)
 
-  proc blendColorHspan_i(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
+  ren.blendColorHspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = createU(getColorT(PixFmt), len)
       for i in 0.. <len:
@@ -204,7 +156,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
     else:
       ren.pixf.blendColorHspan(x, y, len, colors, covers, cover)
 
-  proc blendColorVspan_i(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
+  ren.blendColorVspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when getColorT(PixFmt) is not Rgba8:
       var c = createU(getColorT(PixFmt), len)
       for i in 0.. <len:
@@ -213,23 +165,6 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
       dealloc(c)
     else:
       ren.pixf.blendColorVspan(x, y, len, colors, covers, cover)
-
-  ren.clear_p           = clear_i
-  ren.width_p           = width_i
-  ren.height_p          = height_i
-  ren.pixel_p           = pixel_i
-  ren.copyPixel_p       = copyPixel_i
-  ren.blendPixel_p      = blendPixel_i
-  ren.copyHline_p       = copyHline_i
-  ren.copyVline_p       = copyVline_i
-  ren.blendHline_p      = blendHline_i
-  ren.blendVline_p      = blendVline_i
-  ren.blendSolidHspan_p = blendSolidHspan_i
-  ren.blendSolidVspan_p = blendSolidVspan_i
-  ren.copyColorHspan_p  = copyColorHspan_i
-  ren.copyColorVspan_p  = copyColorVspan_i
-  ren.blendColorHspan_p = blendColorHspan_i
-  ren.blendColorVspan_p = blendColorVspan_i
 
 proc newPolymorphicAdaptorGamma[PixFmt](rbuf: var RenderingBuffer): PolymorphicBase =
   var ren   = new(PolymorphicAdaptor[PixFmt])
@@ -317,7 +252,7 @@ proc pixfFactory(x: PixFormat, rbuf: var RenderingBuffer): PolymorphicBase =
   of pix_format_custom_k32: result = newPolymorphicAdaptor[CustomBlendK32](rbuf)
   of pix_format_custom_l32: result = newPolymorphicAdaptor[CustomBlendL32](rbuf)
   of pix_format_custom_m32: result = newPolymorphicAdaptor[CustomBlendM32](rbuf)
-  
+
 const
   frameWidth = 400
   frameHeight = 400
@@ -420,7 +355,7 @@ proc onDraw(pixFormat: PixFormat) =
   of pix_format_rgb555_gamma: colorConv(rbuf2, rbuf, color_conv_rgb555_to_rgb24)
   of pix_format_rgb565_gamma: colorConv(rbuf2, rbuf, color_conv_rgb565_to_rgb24)
   of pix_format_custom_a32..pix_format_custom_m32: colorConv(rbuf2, rbuf, color_conv_rgba32_to_rgb24)
-  
+
   let name = $pixformat & ".bmp"
   echo name
   saveBMP24(name, target, frameWidth, frameHeight)

@@ -368,7 +368,7 @@ proc concatPath*[VC, VertexSource](self: var PathBase[VC], vs: var VertexSource,
     self.mVert.addVertex(x, y, cmd)
     cmd = vs.vertex(x, y)
 
-proc joinPath*[VC, VertexSource](self: var PathBase[VC], vs: VertexSource, pathId = 0) =
+proc joinPath*[VC, VertexSource](self: var PathBase[VC], vs: var VertexSource, pathId = 0) =
   var x, y: float64
 
   vs.rewind(pathId)
@@ -424,16 +424,16 @@ proc transformAllPaths*[VC, Trans](self: var PathBase[VC], trans: Trans) =
       self.mVert.modifyVertex(idx, x, y)
 
 proc arcTo*[VC](self: var PathBase[VC], rx, ry, angle: float64, largeArcFlag, sweepFlag: bool, x, y: float64) =
-  if self.mVert.totalVertices() and isVertex(self.mVert.lastCommand()):
+  if self.mVert.totalVertices() != 0 and isVertex(self.mVert.lastCommand()):
     const epsilon = 1e-30
     var
       x0: float64 = 0.0
       y0: float64 = 0.0
+      rx = abs(rx)
+      ry = abs(ry)
 
-    self.mVert.lastVertex(x0, y0)
-    rx = abs(rx)
-    ry = abs(ry)
-
+    discard self.mVert.lastVertex(x0, y0)
+    
     # Ensure radii are valid
     #-------------------------
     if rx < epsilon or ry < epsilon:

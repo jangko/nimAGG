@@ -24,10 +24,14 @@ proc arcToBezier(cx, cy, rx, ry, startAngle, sweepAngle: float64, curve: ptr flo
     px: array[4, float64]
     py: array[4, float64]
 
-  px[0] =  x0; py[0] = -y0
-  px[1] =  x0 + tx; py[1] = -ty
-  px[2] =  x0 + tx; py[2] =  ty
-  px[3] =  x0; py[3] =  y0
+  px[0] =  x0
+  py[0] = -y0
+  px[1] =  x0 + tx
+  py[1] = -ty
+  px[2] =  x0 + tx
+  py[2] =  ty
+  px[3] =  x0
+  py[3] =  y0
 
   let sn = sin(startAngle + sweepAngle / 2.0)
   let cs = cos(startAngle + sweepAngle / 2.0)

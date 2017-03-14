@@ -6,7 +6,7 @@ import agg_renderer_scanline, nimBMP, agg_color_rgba, agg_pixfmt_rgb
 import agg_color_conv, agg_color_conv_rgb8, math, agg_conv_clip_polygon, make_arrows
 import agg_path_storage, agg_trans_affine, agg_conv_transform, agg_conv_stroke
 import agg_bounding_rect, agg_conv_unclose_polygon, agg_conv_close_polygon
-import agg_conv_shorten_path, agg_conv_clip_polyline
+import agg_conv_shorten_path, agg_conv_clip_polyline, agg_conv_smooth_poly1
 
 const
   frameWidth = 400
@@ -112,17 +112,32 @@ proc onDraw() =
     stroke     = initConvStroke(transArrow)
     #path     = initConvUnclosePolygon(stroke)
     #path      = initConvShortenPath(stroke)
-    clip      = initConvClipPolyline(stroke)
-    path     = initConvClosePolygon(clip)
+    #clip      = initConvClipPolyline(stroke)
+    #path     = initConvClosePolygon(clip)
   #path.shorten(0.5)
 
-  clip.clipBox(mx-40, my-40, mx+40, my+40)
+  #clip.clipBox(mx-40, my-40, mx+40, my+40)
   stroke.width(2)
   ras.reset()
-  ras.addPath(path)
+  ras.addPath(stroke)
   ren.color(initRgba(0.0, 0.5, 0.5, 0.5))
   renderScanlines(ras, sl, ren)
 
+  var 
+    arc = initPathStorage()
+    arcs= initConvStroke(arc)
+    smooth = initConvSmoothPoly1(arcs)
+
+  arc.moveTo(mx, my)
+  arc.arcTo(50.0, 50.0, 90.0, true, true, mx + 40, my + 30)
+  
+  arcs.width(2)
+  ras.reset()
+  ras.addPath(smooth)
+  ren.color(initRgba(0.9, 0.5, 0.5))
+  renderScanlines(ras, sl, ren)
+
+  
   #var
   #  target = newString(frameWidth * frameHeight * 3)
   #  rbuf2  = initRenderingBuffer(cast[ptr ValueT](target[0].addr), frameWidth, frameHeight, -frameWidth * 3)
