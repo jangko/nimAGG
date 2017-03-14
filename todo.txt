@@ -1,19 +1,16 @@
-vpgen_clip_polyline
-vpgen_clip_polygon
-
-conv_unclose_polygon
-conv_shorten_path
-conv_close_polygon
-conv_clip_polyline
-conv_clip_polygon
-
 bitset_iterator
-span_interpolator_adaptor
+bezier_arc
 
 translate ok:
-  bezier_arc
-  agg_math
-  
+  -vpgen_clip_polyline
+  -vpgen_clip_polygon
+  -conv_clip_polyline
+  -conv_clip_polygon  
+  -conv_shorten_path  
+  -conv_close_polygon
+  -conv_unclose_polygon  
+  -agg_math
+  -span_interpolator_adaptor  
   -renderer_scanline
   -span_pattern_rgb
   -span_pattern_gray  

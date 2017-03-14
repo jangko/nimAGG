@@ -1,11 +1,12 @@
 import agg_basics, agg_conv_adaptor_vpgen, agg_vpgen_clip_polyline
 
+export agg_conv_adaptor_vpgen, agg_vpgen_clip_polyline
 type
   ConvClipPolyline*[VertexSource] = object of ConvAdaptorVpgen[VertexSource, VpgenClipPolyline]
 
 proc initConvClipPolyline*[VS](vs: var VS): ConvClipPolyline[VS] {.inline.} =
   type base = ConvAdaptorVpgen[VS, VpgenClipPolyline]
-  base[VS](result).init(vs)
+  base(result).init(vs)
 
 proc clipBox*[VS](self: var ConvClipPolyline[VS], x1, y1, x2, y2: float64) {.inline.} =
   type base = ConvAdaptorVpgen[VS, VpgenClipPolyline]

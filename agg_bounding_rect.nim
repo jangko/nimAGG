@@ -62,3 +62,7 @@ proc boundingRectSingle*[VertexSource, CoordT](vs: var VertexSource, pathId: int
     cmd = vs.vertex(x, y)
 
   result = x1 <= x2 and y1 <= y2
+  
+proc boundingRectD*[VertexSource](vs: var VertexSource, pathId: int): RectD {.inline.} =
+  discard boundingRectSingle(vs, pathId, result.x1, result.y1, result.x2, result.y2)
+  result

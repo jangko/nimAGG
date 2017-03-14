@@ -9,6 +9,7 @@ type
     mVertices: int
 
 proc init*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], source: var VS) =
+  mixin construct
   self.mSource = source.addr
   self.mVpgen  = construct(VPG)
 
@@ -30,6 +31,7 @@ proc rewind*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], pathId: int)  =
   self.mVertices  = 0
 
 proc vertex*[VS, VPG](self: var ConvAdaptorVpgen[VS, VPG], x, y: var float64): uint =
+  mixin autoUnclose, moveTo, autoClose, lineTo
   var cmd: uint = pathCmdStop
   while true:
     cmd = self.mVpgen.vertex(x, y)

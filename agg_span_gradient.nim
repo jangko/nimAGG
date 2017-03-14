@@ -12,7 +12,9 @@ type
     mColorF: ptr ColorF
     mD1, mD2: int
 
-template getDownscaleShift*[I,G,C](x: typedesc[SpanGradient[I,G,C]]): int = (getSubPixelShift(I.type) - gradientSubpixelShift)
+template getDownscaleShift*[I,G,C](x: typedesc[SpanGradient[I,G,C]]): int = 
+  mixin getSubPixelShift
+  (getSubPixelShift(I.type) - gradientSubpixelShift)
 
 proc initSpanGradient*[I,G,C](inter: var I,
   gradientF: var G, colorF: var C, d1, d2: float64): SpanGradient[I,G,C] =

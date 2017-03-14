@@ -9,18 +9,20 @@ type
     mVertex: int
     mLineTo: bool
 
-proc initConvClosePolygon*[VertexSource](vs: var VertexSource): ConvClosePolygon =
+proc initConvClosePolygon*[VS](vs: var VS): ConvClosePolygon[VS] =
   result.mSource = vs.addr
 
-proc attach*[VertexSource](self: var ConvClosePolygon, source: var VertexSource) =
+proc attach*[VS](self: var ConvClosePolygon[VS], source: var VS) =
   self.mSource = source.addr
 
-proc rewind*[VertexSource](self: var ConvClosePolygon, pathId: int) =
+proc rewind*[VS](self: var ConvClosePolygon[VS], pathId: int) =
+  mixin rewind
   self.mSource[].rewind(pathId)
   self.mVertex = 2
   self.mLineTo = false
 
-proc vertex*[VertexSource](self: var ConvClosePolygon, x, y: var float64): uint =
+proc vertex*[VS](self: var ConvClosePolygon[VS], x, y: var float64): uint =
+  mixin vertex
   var cmd: uint = pathCmdStop
   while true:
     if self.mVertex < 2:

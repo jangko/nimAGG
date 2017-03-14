@@ -3,7 +3,7 @@ export agg_dda_line
 
 template spanInterpolatorLinear*(name: untyped, SubpixelShift: int) =
   type
-    name*[T] = object
+    name*[T] = object of RootObj
       mTrans: ptr T
       mLiX, mLiY: Dda2LineInterpolator
 
@@ -35,9 +35,16 @@ template spanInterpolatorLinear*(name: untyped, SubpixelShift: int) =
   proc `init name`*[T](trans: var T): name[T] =
     result.mTrans = trans.addr
 
+  proc init*[T](self: var name[T], trans: var T) =
+    self.mTrans = trans.addr
+
   proc `init name`*[T](trans: var T, x, y: float64, len: int): name[T] =
     result.mTrans = trans.addr
     result.begin(x, y, len)
+
+  proc init*[T](self: var name[T], trans: var T, x, y: float64, len: int) =
+    self.mTrans = trans.addr
+    self.begin(x, y, len)
 
   proc transformer*[T](self: var name[T]): var T = self.mTrans[]
   proc transformer*[T](self: var name[T], trans: var T) = self.mTrans = trans.addr
@@ -61,7 +68,7 @@ template spanInterpolatorLinear*(name: untyped, SubpixelShift: int) =
 
 template spanInterpolatorLinearSubdiv*(name: untyped, SubpixelShift: int) =
   type
-    name*[T] = object
+    name*[T] = object of RootObj
       mSubdivShift, mSubdivSize, mSubdivMask: int
       mTrans: ptr T
       mLiX, mLiY: Dda2LineInterpolator
@@ -99,23 +106,32 @@ template spanInterpolatorLinearSubdiv*(name: untyped, SubpixelShift: int) =
     self.mLiX = initDda2LineInterpolator(x1, iround(tx * subPixelScale), len)
     self.mLiY = initDda2LineInterpolator(y1, iround(ty * subPixelScale), len)
 
+  proc init*[T](self: var name[T]) =
+    self.mSubdivShift = 4
+    self.mSubdivSize  = 1 shl self.mSubdivShift
+    self.mSubdivMask  = self.mSubdivSize - 1
+
+  proc init*[T](self: var name[T], trans: var T, subdivShift = 4) =
+    self.mSubdivShift = subdivShift
+    self.mSubdivSize  = 1 shl self.mSubdivShift
+    self.mSubdivMask  = self.mSubdivSize - 1
+    self.mTrans = trans.addr
+
+  proc init*[T](self: var name[T], trans: var T, x, y: float64, len: int, subdivShift = 4) =
+    self.mSubdivShift = subdivShift
+    self.mSubdivSize  = 1 shl self.mSubdivShift
+    self.mSubdivMask  = self.mSubdivSize - 1
+    self.mTrans = trans.addr
+    self.begin(x, y, len)
+
   proc `init name`*[T](): name[T] =
-    result.mSubdivShift = 4
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
+    result.init()
 
   proc `init name`*[T](trans: var T, subdivShift = 4): name[T] =
-    result.mSubdivShift = subdivShift
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
-    result.mTrans = trans.addr
+    result.init(trans, subdivShift)
 
   proc `init name`*[T](trans: var T, x, y: float64, len: int, subdivShift = 4): name[T] =
-    result.mSubdivShift = subdivShift
-    result.mSubdivSize  = 1 shl result.mSubdivShift
-    result.mSubdivMask  = result.mSubdivSize - 1
-    result.mTrans = trans.addr
-    result.begin(x, y, len)
+    result.init(trans, x, y, len, subdivShift)
 
   proc transformer*[T](self: var name[T]): var T = self.mTrans[]
   proc transformer*[T](self: var name[T], trans: var T) = self.mTrans = trans.addr
