@@ -163,8 +163,12 @@ proc onDraw() =
     pixfPre = initPixfmtRgba32Pre(rbuf)
     rbPre   = initRendererBase(pixfPre)
 
-    bmp = loadBMP32("resources" & DirSep & "compositing.bmp")
-    rbuf1 = initRenderingBuffer(cast[ptr ValueT](bmp.data[0].addr), bmp.width, bmp.height, -bmp.width * pixWidth)
+    fileName = "." & DirSep & "resources" & DirSep & "compositing.bmp"
+
+  echo fileName
+  var
+    bmp    = loadBMP32(fileName)
+    rbuf1  = initRenderingBuffer(cast[ptr ValueT](bmp.data[0].addr), bmp.width, bmp.height, -bmp.width * pixWidth)
     mode   = app.compOp.curItem()
 
   # set alpha channel to full opaque
