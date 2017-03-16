@@ -24,13 +24,9 @@ install:
   - cd ..
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
   - copy %CD%\csources\bin\nim.exe %CD%\Nim\bin\nim.exe
-  - cd Nim
-  - SET PATH=%CD%\Nim\bin;%PATH%
   
 build_script:
-  - bin\nim c -d:release koch
-  - koch boot -d:release  
-  - cd ..
+  - SET PATH=%CD%\Nim\bin;%PATH%
 
 test_script:
   - nim e build.nims
