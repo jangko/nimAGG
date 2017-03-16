@@ -12,7 +12,7 @@ before_script:
   - sh build.sh
   - cd ..    
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
-  - mv /csources/bin/nim /Nim/bin/
+  - mv $(pwd)/csources/bin/nim $(pwd)/Nim/bin/
   - cd Nim
   - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
   - nim c -d:release koch
