@@ -16,6 +16,8 @@ before_script:
   - cd Nim
   - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
   - export PATH=$(pwd)/bin:$PATH
+  - nim c koch
+  - ./koch boot -d:release
   - cd ..
 script:
   - nim e build.nims
