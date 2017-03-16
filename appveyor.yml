@@ -15,7 +15,6 @@ environment:
 
 install:
   - MKDIR %CD%\DIST
-  - MKDIR %CD%\DIST\PCRE
   - IF not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%"
   - 7z x -y "%MINGW_ARCHIVE%" -o"%CD%\DIST"> nul
   - SET PATH=%CD%\DIST\%MINGW_DIR%\BIN;%CD%\BIN;%PATH%
@@ -23,10 +22,15 @@ install:
   - cd csources
   - IF "%PLATFORM%" == "x64" ( build64.bat ) else ( build.bat )
   - cd ..
-
+  - git clone --depth 1 https://github.com/nim-lang/Nim.git
+  - copy %CD%\csources\bin\nim.exe %CD%\Nim\bin\nim.exe
+  - cd Nim
+  - SET PATH=%CD%\Nim\bin;%PATH%
+  
 build_script:
-  - bin\nim c koch
-  - koch boot -d:release
+  - nim c -d:release koch
+  - koch boot -d:release  
+  - cd ..
 
 test_script:
   - nim e build.nims

@@ -15,6 +15,6 @@ Those bugs are:
 -generic object with generic field(s) type obtained via template*
 
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG
-[nimagg-appveyor]: https://ci.appveyor.com/api/projects/status/github/jangko/nimAGG
+[nimagg-appveyor]: https://ci.appveyor.com/api/projects/jangko/nimagg
 [badge-nimagg-travisci]: https://travis-ci.org/jangko/nimAGG.svg?branch=master
 [badge-nimagg-appveyor]: https://ci.appveyor.com/api/projects/status/github/jangko/nimAGG?svg=true
