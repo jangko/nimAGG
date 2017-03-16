@@ -10,9 +10,9 @@ before_script:
   - git clone --depth 1 https://github.com/nim-lang/csources.git
   - cd csources
   - sh build.sh
-  - export PATH=$(pwd)/bin:$PATH
   - cd ..    
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
+  - mv /csources/bin/nim /Nim/bin/
   - cd Nim
   - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
   - nim c -d:release koch
