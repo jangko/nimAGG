@@ -1,7 +1,8 @@
 nimcache
 master
 intense
+result
 examples
 *.exe
-*.bmp
+/*.bmp
 *.o
