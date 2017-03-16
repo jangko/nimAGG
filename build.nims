@@ -90,7 +90,7 @@ when not defined(cpu64):
 
 for c in subjects:
   echo c
-  exec "nim c -d:release --verbosity:0 --hints:off $1 $2" % [switches, c]
+  exec "nim c --verbosity:0 --hints:off $1 $2" % [switches, c]
   when defined(windows):
     exec c
   else:

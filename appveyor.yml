@@ -28,7 +28,7 @@ install:
   - SET PATH=%CD%\Nim\bin;%PATH%
   
 build_script:
-  - nim c -d:release koch
+  - bin\nim c -d:release koch
   - koch boot -d:release  
   - cd ..
 
