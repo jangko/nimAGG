@@ -978,9 +978,10 @@ template getValueT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getValueT(ge
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
+  type ColorT = getColorT(BlenderPre)
   const
-    baseMask = getBaseMask(getColorT(BlenderPre))
-    baseShift = getBaseShift(getColorT(BlenderPre))
+    baseMask = getBaseMask(ColorT)
+    baseShift = getBaseShift(ColorT)
   BlenderPre.blendPix(p,
     (cr * ca + baseMask) shr baseShift,
     (cg * ca + baseMask) shr baseShift,
@@ -997,10 +998,11 @@ template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = get
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
   type
+    ColorT = getColorT(BlenderPre)
     OrderT = getOrderT(BlenderPre)
   const
-    baseMask = getBaseMask(getColorT(BlenderPre))
-    baseShift = getBaseShift(getColorT(BlenderPre))
+    baseMask = getBaseMask(ColorT)
+    baseShift = getBaseShift(ColorT)
   var
     cr = (cr * ca + baseMask) shr baseShift
     cg = (cg * ca + baseMask) shr baseShift
@@ -1023,10 +1025,11 @@ template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgbaPre[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
   type
+    ColorT = getColorT(BlenderPre)
     OrderT = getOrderT(BlenderPre)
   const
-    baseMask = getBaseMask(getColorT(BlenderPre))
-    baseShift = getBaseShift(getColorT(BlenderPre))
+    baseMask = getBaseMask(ColorT)
+    baseShift = getBaseShift(ColorT)
   let da = p[OrderT.A].uint
   BlenderPre.blendPix(p,
     (cr * da + baseMask) shr baseShift,

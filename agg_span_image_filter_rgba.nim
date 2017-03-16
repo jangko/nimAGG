@@ -124,8 +124,9 @@ proc initSpanImageFilterRgbaBilinearClipAux*[S,I,ColorT](src: var S,
   
 proc initSpanImageFilterRgbaBilinearClip*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): auto =
-  when ColorT is not getColorT(S):
-    initSpanImageFilterRgbaBilinearClipAux[S,I,getColorT(S)](src, construct(getColorT(S), backColor), inter)
+  type ColorS = getColorT(S)
+  when ColorT is not ColorS:
+    initSpanImageFilterRgbaBilinearClipAux[S,I,ColorS](src, construct(ColorS, backColor), inter)
   else:
     initSpanImageFilterRgbaBilinearClipAux(src, backColor, inter)
     

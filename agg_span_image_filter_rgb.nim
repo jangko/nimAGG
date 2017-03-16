@@ -15,19 +15,19 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbNN[S,I], span: ptr ColorT
     base = SpanImageFilter[S, I]
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask  = getBaseMask(ColorT)
 
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
-                                  
+
   var
     x = x
     y = y
     len = len
     span = span
-    
+
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
     var fgPtr = cast[ptr ValueT](base(self).source().span(sar(x, imageSubpixelShift),
@@ -53,10 +53,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinear[S,I], span: ptr 
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
   var
@@ -75,7 +75,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinear[S,I], span: ptr 
     var
       xLr = sar(xHr, imageSubpixelShift)
       yLr = sar(yHr, imageSubpixelShift)
-      
+
     fg[0] = imageSubpixelScale * imageSubpixelScale div 2
     fg[1] = fg[0]
     fg[2] = fg[0]
@@ -125,11 +125,12 @@ proc initSpanImageFilterRgbBilinearClipAux*[S,I,ColorT](src: var S,
   type base = SpanImageFilter[S, I]
   base(result).init(src, inter)
   result.mBackColor = backColor
-  
+
 proc initSpanImageFilterRgbBilinearClip*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): auto =
-  when ColorT is not getColorT(S):
-    initSpanImageFilterRgbBilinearClipAux[S,I,getColorT(S)](src, construct(getColorT(S), backColor), inter)
+  type ColorS = getColorT(S)
+  when ColorT is not ColorS:
+    initSpanImageFilterRgbBilinearClipAux[S,I,ColorS](src, construct(ColorS, backColor), inter)
   else:
     initSpanImageFilterRgbBilinearClipAux(src, backColor, inter)
 
@@ -139,19 +140,19 @@ proc backgroundColor*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,C
 proc prepare*[S,I,ColorT](self: SpanImageFilterRgbBilinearClip[S,I,ColorT]) =
   type base = SpanImageFilter[S, I]
   base(self).prepare()
-  
+
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgbBilinearClip[S,I,ColorT],
   span: ptr ColorT, x, y, len: int) =
-  
+
   type
     base = SpanImageFilter[S, I]
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -313,22 +314,22 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask  = CalcT(getBaseMask(ColorT))
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
   var
     fg: array[3, CalcT]
     fgPtr: ptr ValueT
-    weightArray = base(self).filter().weightArray()    
+    weightArray = base(self).filter().weightArray()
     span = span
     len = len
-    
+
   weightArray += ((base(self).filter().diameter() div 2 - 1) shl imageSubpixelShift)
-  
+
   doWhile len != 0:
     var xHr, yHr: int
     base(self).interpolator().coordinates(xHr, yHr)
@@ -345,7 +346,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     fg[2] = fg[0]
 
     #echo "$1 $2 $3 $4" % [$xHr , $yHr, $xLr, $yLr]
-    
+
     xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
@@ -355,29 +356,29 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
                   imageFilterScale div 2), imageFilterShift))
     fg[0] += weight * fgPtr[].CalcT; inc fgPtr
     fg[1] += weight * fgPtr[].CalcT; inc fgPtr
-    fg[2] += weight * fgPtr[].CalcT        
+    fg[2] += weight * fgPtr[].CalcT
 
     fgPtr = cast[ptr ValueT](base(self).source().nextX())
-    weight = CalcT(sar((weightArray[xHr].int * weightArray[yHr + imageSubpixelScale].int + 
+    weight = CalcT(sar((weightArray[xHr].int * weightArray[yHr + imageSubpixelScale].int +
       imageFilterScale div 2), imageFilterShift))
     fg[0] += weight * fgPtr[].CalcT; inc fgPtr
     fg[1] += weight * fgPtr[].CalcT; inc fgPtr
     fg[2] += weight * fgPtr[].CalcT
-        
+
     fgPtr = cast[ptr ValueT](base(self).source().nextY())
-    weight = CalcT(sar((weightArray[xHr + imageSubpixelScale].int * weightArray[yHr].int + 
+    weight = CalcT(sar((weightArray[xHr + imageSubpixelScale].int * weightArray[yHr].int +
       imageFilterScale div 2), imageFilterShift))
     fg[0] += weight * fgPtr[].CalcT; inc fgPtr
     fg[1] += weight * fgPtr[].CalcT; inc fgPtr
     fg[2] += weight * fgPtr[].CalcT
-        
+
     fgPtr = cast[ptr ValueT](base(self).source().nextX())
-    weight = CalcT(sar((weightArray[xHr].int * weightArray[yHr].int + 
+    weight = CalcT(sar((weightArray[xHr].int * weightArray[yHr].int +
       imageFilterScale div 2), imageFilterShift))
     fg[0] += weight * fgPtr[].CalcT; inc fgPtr
     fg[1] += weight * fgPtr[].CalcT; inc fgPtr
     fg[2] += weight * fgPtr[].CalcT
-    
+
     #echo "$1 $2 $3 $4" % [$weight, $fg[0], $fg[1], $fg[2]]
 
     fg[0] = fg[0] shr imageFilterShift
@@ -385,7 +386,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     fg[2] = fg[2] shr imageFilterShift
 
     #echo "$1 $2 $3 $4" % [$weight, $fg[0], $fg[1], $fg[2]]
-    
+
     if fg[OrderT.R.ord] > baseMask: fg[OrderT.R.ord] = baseMask
     if fg[OrderT.G.ord] > baseMask: fg[OrderT.G.ord] = baseMask
     if fg[OrderT.B.ord] > baseMask: fg[OrderT.B.ord] = baseMask
@@ -394,7 +395,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     span.g = ValueT(fg[OrderT.G.ord])
     span.b = ValueT(fg[OrderT.B.ord])
     span.a = ValueT(baseMask)
-    
+
     #echo "$1 $2 $3" % [ $span.r.int, $span.g.int, $span.b.int]
 
     inc span
@@ -413,10 +414,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb[S,I], span: ptr ColorT, 
     base = SpanImageFilter[S, I]
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
   var
@@ -506,11 +507,11 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgbAffine[S,I], span: ptr 
     base = SpanImageResampleAffine[S,I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     downscaleShift = imageFilterShift
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -597,11 +598,11 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgb[S,I], span: ptr ColorT
     base = SpanImageResample[S, I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     downscaleShift = imageFilterShift
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
   var

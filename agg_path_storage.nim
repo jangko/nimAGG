@@ -85,6 +85,13 @@ proc initPolyPlainAdaptor*[T](data: ptr T, numPoints: int, closed: bool): PolyPl
   result.mEnd = data + numPoints * 2
   result.mClosed = closed
   result.mStop = false
+  
+proc initPolyPlainAdaptor*[T](data: var openArray[T], numPoints: int, closed: bool): PolyPlainAdaptor[T] =
+  result.mData = data[0].addr
+  result.mPtr = data[0].addr
+  result.mEnd = data[0].addr + numPoints * 2
+  result.mClosed = closed
+  result.mStop = false
 
 proc rewind*[T](self: var PolyPlainAdaptor[T], x: int) =
   self.mPtr = self.mData

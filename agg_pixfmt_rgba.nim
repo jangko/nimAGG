@@ -222,15 +222,16 @@ proc pixel*[Blender, RenBuf, PixelT](self: PixfmtAlphaBlendRgba[Blender, RenBuf,
   type
     ValueT = getValueT(Blender)
     OrderT = getOrderT(Blender)
+    ColorT = getColorT(Blender)
   var p = cast[ptr ValueT](self.mRbuf[].rowPtr(y))
   if p != nil:
     p += x shl 2
-    return construct(getColorT(Blender),
+    return construct(ColorT,
         p[OrderT.R],
         p[OrderT.G],
         p[OrderT.B],
         p[OrderT.A])
-  result = noColor(getColorT(Blender))
+  result = noColor(ColorT)
 
 proc copyPixel*[Blender, RenBuf, PixelT, ColorT](self: PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT],
   x, y: int, c: ColorT) {.inline.} =
@@ -463,7 +464,6 @@ proc blendColorHspan*[Blender, RenBuf, PixelT, ColorT](self: PixfmtAlphaBlendRgb
   x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
   type
     ValueT = getValueT(Blender)
-    OrderT = getOrderT(Blender)
 
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
@@ -500,7 +500,6 @@ proc blendColorVspan*[Blender, RenBuf, PixelT, ColorT](self: PixfmtAlphaBlendRgb
   x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
   type
     ValueT = getValueT(Blender)
-    OrderT = getOrderT(Blender)
   var
     p: ptr ValueT
     y = y
@@ -554,22 +553,22 @@ proc forEachPixel[PixFmt, Func](self: PixFmt, f: Func) =
 proc premultiply*[Blender, RenBuf, PixelT](self: var PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT]) =
   type
     ColorT = getColorT(Blender)
-    OrderT = getOrderT(getColorT(Blender))
-    ValueT = getValueT(getColorT(Blender))
+    OrderT = getOrderT(ColorT)
+    ValueT = getValueT(ColorT)
   self.forEachPixel(multiplierRgbaPremultiply[ColorT, OrderT, ValueT])
 
 proc demultiply*[Blender, RenBuf, PixelT](self: var PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT]) =
   type
     ColorT = getColorT(Blender)
-    OrderT = getOrderT(getColorT(Blender))
-    ValueT = getValueT(getColorT(Blender))
+    OrderT = getOrderT(ColorT)
+    ValueT = getValueT(ColorT)
   self.forEachPixel(multiplierRgbaDemultiply[ColorT, OrderT, ValueT])
 
 proc applyGammaDir*[Blender, RenBuf, PixelT, GammaLut](self: var PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT],
   gamma: GammaLut) =
   type
     OrderT = getOrderT(Blender)
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
 
   proc apply_gamma_dir_rgba(p: ptr ValueT) =
     p[OrderT.R] = gamma.dir(p[OrderT.R])
@@ -582,7 +581,7 @@ proc applyGammaInv*[Blender, RenBuf, PixelT, GammaLut](self: var PixfmtAlphaBlen
   gamma: GammaLut) =
   type
     OrderT = getOrderT(Blender)
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
 
   proc apply_gamma_inv_rgba(p: ptr ValueT) =
     p[OrderT.R] = gamma.inv(p[OrderT.R])
@@ -776,28 +775,28 @@ proc makePix*[Blender, RenBuf, ColorT](x: typedesc[PixfmtCustomBlendRgba[Blender
 proc pixel*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], x, y: int): auto {.inline.} =
   type
     ColorT = getColorT(Blender)
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(ColorT)
     OrderT = getOrderT(Blender)
   var p = cast[ptr ValueT](self.mRbuf[].rowPtr(y)) + (x shl 2)
-  result = construct(getColorT(Blender), p[OrderT.R].uint, p[OrderT.G].uint, p[OrderT.B].uint, p[OrderT.A].uint)
+  result = construct(ColorT, p[OrderT.R].uint, p[OrderT.G].uint, p[OrderT.B].uint, p[OrderT.A].uint)
 
 proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y: int, c: ColorT) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   Blender.blendPix(self.mTable[self.mCompOp],
     cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, 1)) + (x shl 2),
     c.r, c.g, c.b, c.a, 255)
 
 proc blendPixel*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y: int, c: ColorT, cover: uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   Blender.blendPix(self.mTable[self.mCompOp],
     cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, 1)) + (x shl 2),
     c.r, c.g, c.b, c.a, cover)
 
 proc copyHline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
     len = len
@@ -808,7 +807,7 @@ proc copyHline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender
 
 proc copyVline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     len = len
     y = y
@@ -821,7 +820,7 @@ proc copyVline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender
 
 proc blendHline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT, cover: uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
     len = len
@@ -832,7 +831,7 @@ proc blendHline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blende
 
 proc blendVline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT, cover: uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     len = len
     y = y
@@ -845,7 +844,7 @@ proc blendVline*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blende
 
 proc blendSolidHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT, covers: ptr uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
     len = len
@@ -860,7 +859,7 @@ proc blendSolidHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[B
 
 proc blendSolidVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, c: ColorT, covers: ptr uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     len = len
     y = y
@@ -877,7 +876,7 @@ proc blendSolidVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[B
 proc copyColorHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y: int, len: int, colors: ptr ColorT) =
   type
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
     OrderT = getOrderT(Blender)
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
@@ -895,7 +894,7 @@ proc copyColorHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Bl
 proc copyColorVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y: int, len: int, colors: ptr ColorT) =
   type
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
     OrderT = getOrderT(Blender)
   var
     len = len
@@ -913,7 +912,7 @@ proc copyColorVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Bl
 
 proc blendColorHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     p = cast[ptr ValueT](self.mRbuf[].rowPtr(x, y, len)) + (x shl 2)
     len = len
@@ -933,7 +932,7 @@ proc blendColorHspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[B
 
 proc blendColorVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   x, y, len: int, colors: ptr ColorT, covers: ptr uint8, cover: uint8) =
-  type ValueT = getValueT(getColorT(Blender))
+  type ValueT = getValueT(Blender)
   var
     len = len
     y = y
@@ -956,21 +955,21 @@ proc blendColorVspan*[Blender, RenBuf, ColorT](self: var PixfmtCustomBlendRgba[B
 proc premultiply*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf]) =
   type
     ColorT = getColorT(Blender)
-    OrderT = getOrderT(getColorT(Blender))
-    ValueT = getValueT(getColorT(Blender))
+    OrderT = getOrderT(Blender)
+    ValueT = getValueT(Blender)
   self.forEachPixel(multiplierRgbaPremultiply[ColorT, OrderT, ValueT])
 
 proc demultiply*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf]) =
   type
     ColorT = getColorT(Blender)
-    OrderT = getOrderT(getColorT(Blender))
-    ValueT = getValueT(getColorT(Blender))
+    OrderT = getOrderT(Blender)
+    ValueT = getValueT(Blender)
   self.forEachPixel(multiplierRgbaDemultiply[ColorT, OrderT, ValueT])
 
 proc applyGammaDir*[Blender, RenBuf, GammaLut](self: var PixfmtCustomBlendRgba[Blender, RenBuf], gamma: GammaLut) =
   type
     OrderT = getOrderT(Blender)
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
 
   proc apply_gamma_dir_rgba(p: ptr ValueT) =
     p[OrderT.R] = gamma.dir(p[OrderT.R])
@@ -982,7 +981,7 @@ proc applyGammaDir*[Blender, RenBuf, GammaLut](self: var PixfmtCustomBlendRgba[B
 proc applyGammaInv*[Blender, RenBuf, GammaLut](self: var PixfmtCustomBlendRgba[Blender, RenBuf], gamma: GammaLut) =
   type
     OrderT = getOrderT(Blender)
-    ValueT = getValueT(getColorT(Blender))
+    ValueT = getValueT(Blender)
 
   proc apply_gamma_inv_rgba(p: ptr ValueT) =
     p[OrderT.R] = gamma.inv(p[OrderT.R])

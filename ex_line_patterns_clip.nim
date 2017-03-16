@@ -140,7 +140,7 @@ proc loadImage(app: var App, idx: int, name: string) =
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
 
-proc drawPolyline[Rasterizer, Renderer](app: var App, ras: var Rasterizer, ren: var Renderer, polyline: ptr float64, numPoints: int) =
+proc drawPolyline[Rasterizer, Renderer](app: var App, ras: var Rasterizer, ren: var Renderer, polyLine: var openArray[float64], numPoints: int) =
   var
     vs = initPolyPlainAdaptor(polyline, numPoints, app.line1.close())
     trans = initConvTransform(vs, app.scale);

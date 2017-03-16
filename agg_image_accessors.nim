@@ -10,18 +10,20 @@ type
 template getOrderT*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getOrderT(PixFmt.type)
 template getColorT*[PixFmt](x: typedesc[ImageAccessorClip[PixFmt]]): typedesc = getColorT(PixFmt.type)
 
-proc initImageAccessorClip*[PixFmt, ColorT](pixf: var PixFmt, bk: ColorT): ImageAccessorClip[PixFmt] =
-  when getColorT(PixFmt) is not ColorT:
-    var bk = construct(getColorT(PixFmt), bk)
+proc initImageAccessorClip*[PixFmt, ColorA](pixf: var PixFmt, bk: ColorA): ImageAccessorClip[PixFmt] =
+  type ColorT = getColorT(PixFmt)
+  when ColorT is not ColorA:
+    var bk = construct(ColorT, bk)
   result.mPixF = pixf.addr
   makePix(PixFmt, result.mBkBuf[0].addr, bk)
 
 proc attach*[PixFmt](self: var ImageAccessorClip[PixFmt], pixf: var PixFmt) =
    self.mPixF = pixf.addr
 
-proc backgroundColor*[PixFmt, ColorT](self: var ImageAccessorClip[PixFmt], bk: ColorT) =
-  when getColorT(PixFmt) is not ColorT:
-    var bk = construct(getColorT(PixFmt), bk)
+proc backgroundColor*[PixFmt, ColorA](self: var ImageAccessorClip[PixFmt], bk: ColorA) =
+  type ColorT = getColorT(PixFmt)
+  when ColorT is not ColorA:
+    var bk = construct(ColorT, bk)
   makePix(PixFmt, self.mBkBuf[0].addr, bk)
 
 proc pixel*[PixFmt](self: var ImageAccessorClip[PixFmt]): ptr uint8 {.inline.} =

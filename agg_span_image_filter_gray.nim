@@ -1,5 +1,5 @@
 import agg_basics, agg_color_gray, agg_span_image_filter, agg_image_filters
-import agg_span_interpolator_linear
+import agg_span_interpolator_linear, agg_pixfmt_gray
 
 export agg_span_image_filter
 
@@ -108,8 +108,9 @@ proc initSpanImageFilterGrayBilinearClipAux*[S,I,ColorT](src: var S,
   
 proc initSpanImageFilterGrayBilinearClip*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): auto =
-  when ColorT is not getColorT(S):
-    initSpanImageFilterGrayBilinearClipAux[S,I,getColorT(S)](src, construct(getColorT(S), backColor), inter)
+  type ColorS = getColorT(S)
+  when ColorT is not ColorS:
+    initSpanImageFilterGrayBilinearClipAux[S,I,ColorS](src, construct(ColorS, backColor), inter)
   else:
     initSpanImageFilterGrayBilinearClipAux(src, backColor, inter)
 

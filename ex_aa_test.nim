@@ -107,10 +107,9 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
 
   renderScanlines(self.mRas[], self.mSl[], self.mRen[])
 
-#pixfmtRgb24Gamma(PixFmt, GammaLut8)
-
 type
-  ColorT = Rgba8#getColorT(PixFmt)
+  PixFmt = PixfmtRgb24Gamma[GammaLut8] 
+  ColorT = getColorT(PixFmt)
 
 proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffine, gradient_d2 = 100.0) =
   let
@@ -122,30 +121,16 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
   mtx *= transAffineTranslation(x1 + 0.5, y1 + 0.5)
   mtx.invert()
   
-type
-  PixFmt = PixfmtRgb24Gamma[GammaLut8] 
   
 # A simple function to form the gradient color array
 # consisting of 3 colors, "begin", "middle", "end"
 proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
   var
-    start = construct(getColorT(PixFmt), start)
-    stop = construct(getColorT(PixFmt), stop)
+    start = construct(ColorT, start)
+    stop = construct(ColorT, stop)
 
   for i in 0.. <256:
     arr[i] = start.gradient(stop, i.float64 / 255.0)
-
-proc print_color(arr: seq[Rgba8]) =
-  for x in arr:
-    echo "$1 $2 $3 $4" % [$x.r, $x.g, $x.b, $x.a]
-
-proc print(mtx: TransAffine) =
-  echo "$1 $2 $3 $4 $5 $6" % [mtx.sx.formatFloat(ffDecimal, 3),
-    mtx.shy.formatFloat(ffDecimal, 3),
-    mtx.shx.formatFloat(ffDecimal, 3),
-    mtx.sy.formatFloat(ffDecimal, 3),
-    mtx.tx.formatFloat(ffDecimal, 3),
-    mtx.ty.formatFloat(ffDecimal, 3)]
 
 proc onDraw() =
   var
@@ -376,4 +361,4 @@ proc drawRandom() =
   saveBMP24("aa_test2.bmp", buffer, frameWidth, frameHeight)
 
 drawRandom()
-#onDraw()
+onDraw()

@@ -486,9 +486,9 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
   type
     SrcOrder  = getOrderT(SrcPixelFormatRenderer)
     OrderT = getOrderT(Blender)
-    ColorType = getColorT(Blender)
+    ColorT = getColorT(Blender)
   const
-    baseMask = getBaseMask(getColorT(Blender))
+    baseMask = getBaseMask(ColorT)
 
   var
     psrc = src.rowPtr(ysrc)
@@ -515,7 +515,7 @@ proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: PixfmtAlphaBlendR
       inc(pdst, 3)
       dec len
   else:
-    var color: ColorType
+    var color: ColorT
     doWhile len != 0:
       color.r = psrc[SrcOrder.R]
       color.g = psrc[SrcOrder.G]

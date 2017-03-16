@@ -68,9 +68,11 @@ type
     gamma: GammaLut16
 
 proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
+  type ColorT = getColorT(PixFmt)
+
   ren.clear = proc(c: Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.rb.clear(c)
 
   ren.width = proc(): int =
@@ -80,86 +82,86 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
     ren.pixf.height()
 
   ren.pixel = proc(x, y: int): Rgba16 =
-    when getColorT(PixFmt) is not Rgba16:
+    when ColorT is not Rgba16:
       construct(Rgba16, ren.pixf.pixel(x, y))
     else:
       ren.pixf.pixel(x, y)
 
   ren.copyPixel = proc(x, y: int, c: Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.copyPixel(x, y, c)
 
   ren.blendPixel = proc(x, y: int, c: Rgba16, cover: uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.blendPixel(x, y, c, cover)
 
   ren.copyHline = proc(x, y, len: int, c: Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.copyHline(x, y, len, c)
 
   ren.copyVline = proc(x, y, len: int, c: Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.copyVline(x, y, len, c)
 
   ren.blendHline = proc(x, y, len: int, c: Rgba16, cover: uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.blendHline(x, y, len, c, cover)
 
   ren.blendVline = proc(x, y, len: int, c: Rgba16, cover: uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.blendVline(x, y, len, c, cover)
 
   ren.blendSolidHspan = proc(x, y, len: int, c: Rgba16, covers: ptr uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.blendSolidHspan(x, y, len, c, covers)
 
   ren.blendSolidVspan = proc(x, y, len: int, c: Rgba16, covers: ptr uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = construct(getColorT(PixFmt), c)
+    when ColorT is not Rgba16:
+      var c = construct(ColorT, c)
     ren.pixf.blendSolidVspan(x, y, len, c, covers)
 
   ren.copyColorHspan = proc(x, y, len: int, colors: ptr Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = createU(getColorT(PixFmt), len)
+    when ColorT is not Rgba16:
+      var c = createU(ColorT, len)
       for i in 0.. <len:
-        c[i] = construct(getColorT(PixFmt), colors[i])
+        c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorHspan(x, y, len, c)
       dealloc(c)
     else:
       ren.pixf.copyColorHspan(x, y, len, colors)
 
   ren.copyColorVspan = proc(x, y, len: int, colors: ptr Rgba16) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = createU(getColorT(PixFmt), len)
+    when ColorT is not Rgba16:
+      var c = createU(ColorT, len)
       for i in 0.. <len:
-        c[i] = construct(getColorT(PixFmt), colors[i])
+        c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorVspan(x, y, len, c)
       dealloc(c)
     else:
       ren.pixf.copyColorVspan(x, y, len, colors)
 
   ren.blendColorHspan = proc(x, y, len: int, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = createU(getColorT(PixFmt), len)
+    when ColorT is not Rgba16:
+      var c = createU(ColorT, len)
       for i in 0.. <len:
-        c[i] = construct(getColorT(PixFmt), colors[i])
+        c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorHspan(x, y, len, c, covers, cover)
       dealloc(c)
     else:
       ren.pixf.blendColorHspan(x, y, len, colors, covers, cover)
 
   ren.blendColorVspan = proc(x, y, len: int, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) =
-    when getColorT(PixFmt) is not Rgba16:
-      var c = createU(getColorT(PixFmt), len)
+    when ColorT is not Rgba16:
+      var c = createU(ColorT, len)
       for i in 0.. <len:
-        c[i] = construct(getColorT(PixFmt), colors[i])
+        c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorVspan(x, y, len, c, covers, cover)
       dealloc(c)
     else:
