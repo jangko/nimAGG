@@ -10,13 +10,13 @@ before_script:
   - git clone --depth 1 https://github.com/nim-lang/csources.git
   - cd csources
   - sh build.sh
-  - cd ..
-  - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
-  - export PATH=$(pwd)/bin:$PATH
+  - cd ..    
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
   - cd Nim
+  - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
   - nim c -d:release koch
   - ./koch boot -d:release
+  - export PATH=$(pwd)/bin:$PATH
 script:
   - nim e build.nims
   
