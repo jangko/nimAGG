@@ -103,9 +103,10 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
     for i in 0.. <buffer.len: buffer[i] = 0.chr
-    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixElem)
     var pixf = `init PixFmt`(rbuf)
 
+    
     for x in 0.. <frameWidth:
       for y in 0.. <frameHeight:
         pixf.copyPixel(x, y, `init ColorT`((x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint))
@@ -265,7 +266,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
     for i in 0.. <buffer.len: buffer[i] = 0.chr
-    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * 2)
     var pixf = `init PixFmt`(rbuf)
 
     for x in 0.. <frameWidth:
@@ -385,7 +386,7 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     var
       tempbuf = newString(frameWidth * frameHeight * pixWidth)
-      temprbuf = RenBuf(cast[ptr ValueT](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+      temprbuf = RenBuf(cast[ptr ValueT](tempbuf[0].addr), frameWidth, frameHeight, frameWidth * 2)
       temppixf = `init PixFmt`(temprbuf)
 
     temppixf.copyFrom(rbuf, 0, 0, 0, 0, frameWidth)
@@ -408,10 +409,10 @@ proc testRenderingBuffer[ColorT]() =
   var
     buf1 = newString(frameWidth * frameHeight * pixWidth)
     buf2 = newString(frameWidth * frameHeight * pixWidth)
-    rbuf1 = initRenderingBuffer(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbuf2 = initRenderingBuffer(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc1 = initRenderingBufferCached(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    rbufc2 = initRenderingBufferCached(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
+    rbuf1 = initRenderingBuffer(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * 3)
+    rbuf2 = initRenderingBuffer(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * 3)
+    rbufc1 = initRenderingBufferCached(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * 3)
+    rbufc2 = initRenderingBufferCached(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * 3)
 
   for i in 0.. <buf1.len:
     buf1[i] = 0.chr

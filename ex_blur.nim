@@ -46,7 +46,7 @@ proc initApp(): App =
   result.how.addItem("Stack Blur")
   result.how.addItem("Recursive Blur")
   result.how.addItem("Channels")
-  result.how.curItem(2)
+  result.how.curItem(1)
 
   result.radius.setRange(0.0, 40.0)
   result.radius.value(15.0)

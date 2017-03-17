@@ -12,7 +12,7 @@ proc addPath[T](vs: var T, pathId = 0) =
 
   var cmd = vs.vertex(x, y)
   while not isStop(cmd):
-    echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
+    #echo "$1 $2 $3" % [x.formatFloat(ffDecimal, 3), y.formatFloat(ffDecimal, 3), $cmd]
     cmd = vs.vertex(x, y)
 
 proc main() =
@@ -25,8 +25,8 @@ proc main() =
   txt.text(text)
   txt.addPath()
 
-  echo "---"
-  test_text(text)
+  #echo "---"
+  #test_text(text)
 
 main()
 

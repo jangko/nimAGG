@@ -87,12 +87,12 @@ const
 
 type
   ValueT = uint8
-  
+
 type
   App = object
     compOp: RboxCtrl[Rgba8]
     alphaDst, alphaSrc: SliderCtrl[Rgba8]
-    
+
 proc initApp(): App =
   result.alphaDst = newSliderCtrl[Rgba8](5, 5,    400, 11,    not flipY)
   result.alphaSrc = newSliderCtrl[Rgba8](5, 5+15, 400, 11+15, not flipY)
@@ -102,12 +102,12 @@ proc initApp(): App =
   result.alphaSrc.label("Src Alpha=$1")
   result.alphaSrc.value(0.75)
   result.compOp.textSize(6.8)
-  
+
   for mode in CompOp:
     result.compOp.addItem($mode)
-    
+
   result.compOp.curItem(3)
-  
+
 proc renderScene(app: var App, rbuf, rbuf1: var RenderingBuffer, pixf: var PixfmtRgba32, compOp: int) =
   type
     BlenderT = CompOpAdaptorRgba[Rgba8, OrderRgba]
@@ -162,12 +162,7 @@ proc onDraw() =
 
     pixfPre = initPixfmtRgba32Pre(rbuf)
     rbPre   = initRendererBase(pixfPre)
-
-    fileName = "." & DirSep & "resources" & DirSep & "compositing.bmp"
-
-  echo fileName
-  var
-    bmp    = loadBMP32(fileName)
+    bmp    = loadBMP32("resources" & DirSep & "compositing.bmp")
     rbuf1  = initRenderingBuffer(cast[ptr ValueT](bmp.data[0].addr), bmp.width, bmp.height, -bmp.width * pixWidth)
     mode   = app.compOp.curItem()
 
@@ -176,7 +171,7 @@ proc onDraw() =
   for i in 0.. <numPix:
     bmp.data[i * 4 + 3] = 255.chr
 
-  
+
   # draw checker board
   rb.clear(initRgba8(255, 255, 255))
   for y in countup(0, rb.height() - 1, 8):
@@ -211,11 +206,11 @@ proc onDraw() =
   ras.addPath(pt)
   ren.color(initRgba(0,0,0))
   renderScanlines(ras, sl, ren)
-  
+
   renderCtrlRs(ras, sl, ren, app.alphaDst)
   renderCtrlRs(ras, sl, ren, app.alphaSrc)
   renderCtrlRs(ras, sl, ren, app.compOp)
-    
+
   saveBMP32("compositing $1.bmp" % [$co], buffer, frameWidth, frameHeight)
 
 onDraw()

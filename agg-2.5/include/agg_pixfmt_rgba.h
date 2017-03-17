@@ -1916,7 +1916,6 @@ namespace agg
             {
                 value_type* p = (value_type*)m_rbuf->row_ptr(x, y, len) + (x << 2);
                 calc_type alpha = (calc_type(c.a) * (cover + 1)) >> 8;
-                printf("%d\n", alpha);
                 if(alpha == base_mask)
                 {
                     pixel_type v;

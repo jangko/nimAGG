@@ -11,7 +11,7 @@ type
 proc rgba_premultiply(c: var Rgba) {.importc.}
 proc rgba_premultiply_a(c: var Rgba, a: cdouble) {.importc.}
 proc rgba_demultiply(c: var Rgba) {.importc.}
-proc rgba_gradient(s: var Rgba, c: Rgba, k: cdouble): Rgba {.importc.}
+proc rgba_gradient(s: var Rgba, c: var Rgba, k: cdouble): Rgba {.importc.}
 
 proc rgba8_opacity(s: var Rgba8, a: cdouble) {.importc.}
 proc rgba8_get_opacity(s: var Rgba8): cdouble {.importc.}
@@ -89,7 +89,10 @@ proc test_rgba() =
   b = a
   var c = initRgba(0.2,0.4,0.6,0.8)
   var d = a.rgba_gradient(c, 0.5)
+  c = initRgba(0.2,0.4,0.6,0.8)
   var e = b.gradient(c, 0.5)
+  echo d
+  echo e
   doAssert(d == e)
 
 proc test_rgba8() =

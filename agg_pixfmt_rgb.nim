@@ -653,10 +653,10 @@ proc initPixfmtRgb48Gamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma)
 proc initPixfmtBgr48Gamma*[Gamma](rbuf: var RenderingBuffer16, gamma: var Gamma): PixfmtBgr48Gamma[Gamma] =
   result.mRbuf = rbuf.addr
   result.blender.gamma(gamma)
-  
+
 proc initPixfmtAlphaBlendRgb*[B,R,G](rbuf: var R, gamma: var G): PixfmtAlphaBlendRgb[B,R] =
   result.mRbuf = rbuf.addr
   result.blender.gamma(gamma)
-  
+
 template construct*[B,R](x: typedesc[PixfmtAlphaBlendRgb[B,R]], rbuf, gamma: typed): untyped =
   initPixfmtAlphaBlendRgb[B,R,gamma.type](rbuf, gamma)

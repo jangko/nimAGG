@@ -20,7 +20,7 @@ void rgba_demultiply(agg::rgba& c) {
   c.demultiply();
 }
 
-agg::rgba rgba_gradient(agg::rgba& s, agg::rgba c, double k) {
+agg::rgba rgba_gradient(agg::rgba& s, agg::rgba& c, double k) {
   return s.gradient(c, k);
 }
 
