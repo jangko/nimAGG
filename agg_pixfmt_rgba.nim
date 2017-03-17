@@ -155,10 +155,11 @@ type
   PixfmtAlphaBlendRgba*[Blender, RenBuf, PixelT] = object
     mRbuf: ptr RenBuf
 
-template getOrderT*[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getOrderT(B.type)
-template getColorT*[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getColorT(B.type)
-template getValueT*[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getValueT(B.type)
+template getOrderT  *[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getOrderT(B.type)
+template getColorT  *[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getColorT(B.type)
+template getValueT  *[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): typedesc = getValueT(B.type)
 template getPixWidth*[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): int = sizeof(P.type)
+template getPixElem *[B,R,P](x: typedesc[PixfmtAlphaBlendRgba[B,R,P]]): int = 4
 
 proc initPixfmtAlphaBlendRgba*[Blender, RenBuf, PixelT](rbuf: var RenBuf):
   PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT] =
@@ -199,8 +200,8 @@ proc row*[Blender, RenBuf, PixelT](self: PixfmtAlphaBlendRgba[Blender, RenBuf, P
   self.mRbuf[].row(y)
 
 proc pixPtr*[Blender, RenBuf, PixelT](self: PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT], x, y: int): auto {.inline.} =
-  const pixWidth = getPixWidth(self.type)
-  self.mRbuf[].rowPtr(y) + x * pixWidth
+  const pixElem = getPixElem(self.type)
+  self.mRbuf[].rowPtr(y) + x * pixElem
 
 proc rbuf*[Blender, RenBuf, PixelT](self: PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT]): var Renbuf {.inline.} =
   self.mRbuf[]
@@ -592,11 +593,13 @@ proc applyGammaInv*[Blender, RenBuf, PixelT, GammaLut](self: var PixfmtAlphaBlen
 
 proc copyFrom*[Blender, RenBuf, PixelT, RenBuf2](self: var PixfmtAlphaBlendRgba[Blender, RenBuf, PixelT],
   src: RenBuf2, xdst, ydst, xsrc, ysrc, len: int) =
-  const pixWidth = getPixWidth(self.type)
+  const
+    pixWidth = getPixWidth(self.type)
+    pixElem  = getPixElem(self.type)
   var p = src.rowPtr(ysrc)
   if p != nil:
-    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
-      p + xsrc * pixWidth, len * pixWidth)
+    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixElem,
+      p + xsrc * pixElem, len * pixWidth)
 
 proc blendFrom*[Blender, RenBuf, PixelT, SrcPixelFormatRenderer](self: var PixfmtAlphaBlendRgba[Blender,
   RenBuf, PixelT], src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =
@@ -700,10 +703,11 @@ type
     mCompOp: int
     mTable: CustomBlendTable
 
-template getOrderT*[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getOrderT(B.type)
-template getColorT*[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getColorT(B.type)
-template getValueT*[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getValueT(B.type)
-template getPixWidth *[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): int = (sizeof(getValueT(B.type)) * 4)
+template getOrderT  *[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getOrderT(B.type)
+template getColorT  *[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getColorT(B.type)
+template getValueT  *[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): typedesc = getValueT(B.type)
+template getPixWidth*[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): int = (sizeof(getValueT(B.type)) * 4)
+template getPixElem *[B,R](x: typedesc[PixfmtCustomBlendRgba[B,R]]): int = 4
 
 proc initPixfmtCustomBlendRgba*[Blender, RenBuf](rbuf: var Renbuf, compOp = 3): PixfmtCustomBlendRgba[Blender, RenBuf] =
   result.mRbuf = rbuf.addr
@@ -745,9 +749,9 @@ proc rowPtr*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], y: i
 proc row*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], y: int): auto {.inline.} =
   self.mRbuf[].row(y)
 
-proc pixPtr*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], x, y: int): ptr uint8 {.inline.} =
-  const pixWidth = getPixWidth(self.type)
-  self.mRbuf[].rowPtr(y) + x * pixWidth
+proc pixPtr*[Blender, RenBuf](self: PixfmtCustomBlendRgba[Blender, RenBuf], x, y: int): auto {.inline.} =
+  const pixElem = getPixElem(self.type)
+  self.mRbuf[].rowPtr(y) + x * pixElem
 
 proc compOp*[Blender, RenBuf](self: var PixfmtCustomBlendRgba[Blender, RenBuf], op: int) {.inline.} =
   self.mCompOp = op
@@ -992,11 +996,13 @@ proc applyGammaInv*[Blender, RenBuf, GammaLut](self: var PixfmtCustomBlendRgba[B
 
 proc copyFrom*[Blender, RenBuf, RenBuf2](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   src: RenBuf2, xdst, ydst, xsrc, ysrc, len: int) =
-  const pixWidth = getPixWidth(self.type)
+  const
+    pixWidth = getPixWidth(self.type)
+    pixElem  = getPixElem(self.type)
   var p = src.rowPtr(ysrc)
   if p != nil:
-    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
-      p + xsrc * pixWidth, len * pixWidth)
+    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixElem,
+      p + xsrc * pixElem, len * pixWidth)
 
 proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: var PixfmtCustomBlendRgba[Blender, RenBuf],
   src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =

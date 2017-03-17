@@ -91,8 +91,6 @@ proc test_rgba() =
   var d = a.rgba_gradient(c, 0.5)
   c = initRgba(0.2,0.4,0.6,0.8)
   var e = b.gradient(c, 0.5)
-  echo d
-  echo e
   doAssert(d == e)
 
 proc test_rgba8() =

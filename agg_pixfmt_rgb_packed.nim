@@ -583,7 +583,8 @@ type
 template getOrderT  *[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): typedesc = int # a fake one
 template getColorT  *[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): typedesc = getColorT(B.type)
 template getValueT  *[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): typedesc = getValueT(B.type)
-template getPixWidth*[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): int = sizeof(getPixelT(B))
+template getPixWidth*[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): int = sizeof(getPixelT(B.type))
+template getPixElem *[B,R](x: typedesc[PixfmtAlphaBlendRgbPacked[B,R]]): int = 2
 
 proc copyOrBlendPix*[Blender, RenBuf, PixelT, ColorT](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf],
   p: ptr PixelT, c: ColorT, cover: uint) {.inline.} =
@@ -638,9 +639,9 @@ proc rowPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf], 
 proc row*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf], y: int): auto {.inline.} =
   self.mRbuf[].row(y)
 
-proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf], x, y: int): ptr uint8 {.inline.} =
-  const pixWidth = getPixWidth(self.type)
-  return self.mRbuf[].rowPtr(y) + x * pixWidth
+proc pixPtr*[Blender, RenBuf](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf], x, y: int): auto {.inline.} =
+  const pixElem = getPixElem(self.type)
+  return self.mRbuf[].rowPtr(y) + x * pixElem
 
 proc makePix*[Blender, RenBuf, ColorT](self: PixfmtAlphaBlendRgbPacked[Blender, RenBuf],
   p: ptr uint8, c: ColorT) {.inline.} =
@@ -823,11 +824,13 @@ proc blendColorVspan*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgbPack
 
 proc copyFrom*[Blender, RenBuf, RenBuf2](self: var PixfmtAlphaBlendRgbPacked[Blender, RenBuf],
   src: RenBuf, xdst, ydst, xsrc, ysrc, len: int) =
-  const pixWidth = getPixWidth(self.type)
+  const
+    pixWidth = getPixWidth(self.type)
+    pixElem  = getPixElem(self.type)
   var p = src.rowPtr(ysrc)
   if p != nil:
-    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixWidth,
-            p + xsrc * pixWidth, len * pixWidth)
+    moveMem(self.mRbuf[].rowPtr(xdst, ydst, len) + xdst * pixElem,
+            p + xsrc * pixElem, len * pixWidth)
 
 proc blendFrom*[Blender, RenBuf, SrcPixelFormatRenderer](self: var PixfmtAlphaBlendRgbPacked[Blender, RenBuf],
   src: SrcPixelFormatRenderer, xdst, ydst, xsrc, ysrc, len: int, cover: uint8) =

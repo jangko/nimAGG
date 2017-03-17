@@ -4,6 +4,8 @@ import agg_pixfmt_rgba, agg_color_rgba, agg_color_conv_rgb8, agg_color_conv, ble
 import nimBMP, agg_renderer_base, agg_pixfmt_gray, agg_color_gray, agg_gamma_lut
 
 type
+  ValueT = getValueT(Rgba8)
+
   PixFormat = enum
     pix_format_rgb555
     pix_format_rgb565
@@ -50,6 +52,7 @@ type
     width: proc(): int
     height: proc(): int
     pixel: proc(x, y: int): Rgba8
+    pixPtr: proc(x, y: int): ptr ValueT
     copyPixel: proc(x, y: int, c: Rgba8)
     blendPixel: proc(x, y: int, c: Rgba8, cover: uint8)
     copyHline: proc(x, y, len: int, c: Rgba8)
@@ -87,6 +90,9 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
       construct(Rgba8, ren.pixf.pixel(x, y))
     else:
       ren.pixf.pixel(x, y)
+
+  ren.pixPtr = proc(x, y: int): ptr ValueT =
+    ren.pixf.pixPtr(x, y)
 
   ren.copyPixel = proc(x, y: int, c: Rgba8) =
     when ColorT is not Rgba8:
@@ -183,7 +189,7 @@ proc newPolymorphicAdaptor[PixFmt](rbuf: var RenderingBuffer): PolymorphicBase =
   ren.init()
   result   = ren
 
-proc getPixWidth(x: PixFormat): int =
+proc getPixElem(x: PixFormat): int =
   case x
   of pix_format_rgb555: result = 2
   of pix_format_rgb565: result = 2
@@ -259,14 +265,11 @@ const
   frameWidth = 400
   frameHeight = 400
 
-type
-  ValueT = uint8
-
 proc onDraw(pixFormat: PixFormat) =
   var
-    pixWidth = getPixWidth(pixFormat)
-    buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+    pixElem = getPixElem(pixFormat)
+    buffer = newSeq[ValueT](frameWidth * frameHeight * pixElem)
+    rbuf   = initRenderingBuffer(buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixElem)
     ren    = pixfFactory(pixFormat, rbuf)
     c      = initRgba8(initRgba(0.5, 0.7, 0.3, 0.5))
 
@@ -324,6 +327,12 @@ proc onDraw(pixFormat: PixFormat) =
 
   for x in 350.. <400:
     ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
+
+  let h = ren.height() div 2
+  for i in 0.. <h:
+    var p = ren.pixPtr(i, i)
+    setMem(p, 0, pixElem * sizeof(ValueT))
+    inc(p, pixElem)
 
   var
     target = newString(frameWidth * frameHeight * 3)

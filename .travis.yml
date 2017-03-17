@@ -5,6 +5,10 @@ os:
   - osx
 dist: trusty
 
+matrix:
+  allow_failures:
+    - os: osx
+    
 before_script:
   - set -e
   - git clone --depth 1 https://github.com/nim-lang/csources.git
@@ -21,6 +25,7 @@ before_script:
   - cd ..
 script:
   - nim e build.nims
+  - nim e -d:release build.nims
   - nim c -d:release --verbosity:0 --hints:off gen_color_conv
   - ./gen_color_conv > gen_color_conv.cpp
   - g++ -o gen_color_conv_cpp -I./agg-2.5/include gen_color_conv.cpp
