@@ -83,11 +83,3 @@ proc shorten*[V,M](self: var ConvStroke[V,M], s: float64) =
 proc shorten*[V,M](self: ConvStroke[V,M]): float64 =
   type base = ConvAdaptorVcgen[V, VcgenStroke, M]
   base(self).generator().shorten()
-
-proc rewind*[V,M](self: var ConvStroke[V,M], pathId: int) {.inline.} =
-  type base = ConvAdaptorVcgen[V, VcgenStroke, M]
-  base(self).rewind(pathId)
-
-proc vertex*[V,M](self: var ConvStroke[V,M], x, y: var float64): uint {.inline.} =
-  type base = ConvAdaptorVcgen[V, VcgenStroke, M]
-  base(self).vertex(x, y)
