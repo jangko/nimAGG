@@ -111,10 +111,10 @@ proc onDraw() =
     transArrow = initConvTransform(arrow, mtx)
     stroke     = initConvStroke(transArrow)
     #path     = initConvUnclosePolygon(stroke)
-    #path      = initConvShortenPath(stroke)
+    path      = initConvShortenPath(stroke)
     #clip      = initConvClipPolyline(stroke)
     #path     = initConvClosePolygon(clip)
-  #path.shorten(0.5)
+  path.shorten(0.5)
 
   #clip.clipBox(mx-40, my-40, mx+40, my+40)
   stroke.width(2)

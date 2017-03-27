@@ -27,13 +27,3 @@ proc x2*[VS](self: ConvClipPolygon[VS]): float64 =
 proc y2*[VS](self: ConvClipPolygon[VS]): float64 = 
   type base = ConvAdaptorVpgen[VS, VpgenClipPolygon]
   base[VS](self).vpgen().y2()
-
-proc rewind*[VS](self: var ConvClipPolygon[VS], pathId: int) {.inline.} = 
-  type base = ConvAdaptorVpgen[VS, VpgenClipPolygon]
-  mixin rewind
-  base(self).rewind(pathId)
-  
-proc vertex*[VS](self: var ConvClipPolygon[VS], x, y: var float64): uint {.inline.} = 
-  type base = ConvAdaptorVpgen[VS, VpgenClipPolygon]
-  mixin vertex
-  base(self).vertex(x, y)
