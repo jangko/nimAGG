@@ -266,3 +266,6 @@ proc setOrientation*(c, o: uint): uint {.inline.} =
 
 proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
   result = abs(v1 - v2) <= float64(epsilon)
+
+template allocU*(T: typedesc, size = 1): untyped =
+  cast[ptr T](alloc(T.sizeof * size))
