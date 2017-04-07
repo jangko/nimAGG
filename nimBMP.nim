@@ -1,7 +1,7 @@
 # BMP Graphics Encoder and Decoder written in Nim
 # part of nimPDF sister projects
 #
-# Copyright (c) 2015 Andri Lim
+# Copyright (c) 2015-2016 Andri Lim
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -88,11 +88,13 @@ type
     width*: int
     height*: int
 
-  BMPResult* = ref object
-    data*: string
+  BMPResult*[T] = object
+    data*: T
     width*, height*: int
 
-  scanlineReader = proc(bmp: BMP, input: string, row: int)
+  InputContainer* = string or seq[uint8]
+
+  ScanlineReader = proc(bmp: BMP, input: string, row: int)
 
 const
   RLE_COMMAND     = 0
@@ -226,7 +228,7 @@ proc read1bitRow(bmp: BMP, input: string, row: int) =
       inc j
     inc k
 
-proc getScanlineReader(bmp: BMP): scanlineReader =
+proc getScanlineReader(bmp: BMP): ScanlineReader =
   case bmp.bitsPerPixel
   of 1:  result = read1bitRow
   of 4:  result = read4bitRow
@@ -566,49 +568,87 @@ proc loadBMP*(fileName: string): BMP =
     debugEcho getCurrentExceptionMsg()
     result = nil
 
-proc convertTo32Bit*(bmp: BMP): BMPResult =
-  new(result)
-  result.data  = newString(bmp.width * bmp.height * 4)
-  result.width = bmp.width
-  result.height = bmp.height
+template construct(x: typedesc[string], size: int): untyped = newString(size)
+template construct(x: typedesc[seq[uint8]], size: int): untyped = newSeq[uint8](size)
+
+template getValueT(x: typedesc[string]): typedesc = char
+template getValueT(x: typedesc[seq[uint8]]): typedesc = uint8
+
+proc convertTo32Bit*[T](bmp: BMP, res: var BMPResult[T]) =
+  type ValueT = getValueT(T)
   let numPixels = bmp.width * bmp.height
   for i in 0.. <numPixels:
-    result.data[i * 4 + 0] = chr(bmp.pixels[i].r)
-    result.data[i * 4 + 1] = chr(bmp.pixels[i].g)
-    result.data[i * 4 + 2] = chr(bmp.pixels[i].b)
-    result.data[i * 4 + 3] = chr(bmp.pixels[i].a)
+    let px = i * 4
+    res.data[px + 0] = ValueT(bmp.pixels[i].r)
+    res.data[px + 1] = ValueT(bmp.pixels[i].g)
+    res.data[px + 2] = ValueT(bmp.pixels[i].b)
+    res.data[px + 3] = ValueT(bmp.pixels[i].a)
 
-proc convertTo24Bit*(bmp: BMP): BMPResult =
-  new(result)
-  result.data  = newString(bmp.width * bmp.height * 3)
-  result.width = bmp.width
-  result.height = bmp.height
+proc convertTo24Bit*[T](bmp: BMP, res: var BMPResult[T]) =
+  type ValueT = getValueT(T)
   let numPixels = bmp.width * bmp.height
   for i in 0.. <numPixels:
-    result.data[i * 3 + 0] = chr(bmp.pixels[i].r)
-    result.data[i * 3 + 1] = chr(bmp.pixels[i].g)
-    result.data[i * 3 + 2] = chr(bmp.pixels[i].b)
+    let px = i * 3
+    res.data[px + 0] = ValueT(bmp.pixels[i].r)
+    res.data[px + 1] = ValueT(bmp.pixels[i].g)
+    res.data[px + 2] = ValueT(bmp.pixels[i].b)
 
-proc convert*(bmp: BMP, bitsPerPixel: int): BMPResult =
-  assert bitsPerPixel in {24, 32}
-  if bitsPerPixel == 24: result = bmp.convertTo24Bit()
-  else: result = bmp.convertTo32Bit()
+proc convertTo8Bit*[T](bmp: BMP, res: var BMPResult[T]) =
+  type ValueT = getValueT(T)
+  let numPixels = bmp.width * bmp.height
+  for i in 0.. <numPixels:
+    var p = bmp.pixels[i]
+    res.data[i] = ValueT((p.r.int*77 + p.g.int*150 + p.b.int*29) shr 8)
 
-proc loadBMP32*(fileName: string): BMPResult =
+proc convert*[T](bmp: BMP, bitsPerPixel: int): BMPResult[T] =
+  assert bitsPerPixel in {8, 24, 32}
+  result.data   = construct(T, bmp.width * bmp.height * bitsPerPixel div 8)
+  result.width  = bmp.width
+  result.height = bmp.height
+
+  case bitsPerPixel
+  of 8 : convertTo8Bit[T](bmp, result)
+  of 24: convertTo24Bit[T](bmp, result)
+  of 32: convertTo32Bit[T](bmp, result)
+  else : convertTo24Bit[T](bmp, result)
+
+proc loadBMP32Aux[T](fileName: string): BMPResult[T] =
   var bmp = loadBMP(fileName)
-  if bmp != nil: result = bmp.convert(32)
+  if bmp != nil: result = convert[T](bmp, 32)
 
-proc loadBMP24*(fileName: string): BMPResult =
+proc loadBMP24Aux[T](fileName: string): BMPResult[T] =
   var bmp = loadBMP(fileName)
-  if bmp != nil: result = bmp.convert(24)
+  if bmp != nil: result = convert[T](bmp, 24)
+
+proc loadBMP8Aux[T](fileName: string): BMPResult[T] =
+  var bmp = loadBMP(fileName)
+  if bmp != nil: result = convert[T](bmp, 8)
+
+template loadBMP32*(fileName: string, T: typedesc): untyped =
+  loadBMP32Aux[T](fileName)
+
+template loadBMP24*(fileName: string, T: typedesc): untyped =
+  loadBMP24Aux[T](fileName)
+
+template loadBMP8*(fileName: string, T: typedesc): untyped =
+  loadBMP8Aux[T](fileName)
+
+template loadBMP32*(fileName: string): untyped =
+  loadBMP32Aux[string](fileName)
+
+template loadBMP24*(fileName: string): untyped =
+  loadBMP24Aux[string](fileName)
+
+template loadBMP8*(fileName: string): untyped =
+  loadBMP8Aux[string](fileName)
 
 type
-  ConvertT = proc(p: var BMPRGBA, input: string, px: int)
-  BMPEncoder = object
+  ConvertT[T] = proc(p: var BMPRGBA, input: T, px: int)
+  BMPEncoder[T] = object
     bitsPerPixel: int
     colors: OrderedTable[BMPRGBA, int]
     pixels: string
-    cvt: ConvertT
+    cvt: ConvertT[T]
 
 proc hash*(c: BMPRGBA): Hash =
   var h: Hash = 0
@@ -617,41 +657,41 @@ proc hash*(c: BMPRGBA): Hash =
   h = h !& ord(c.b)
   h = h !& ord(c.a)
 
-proc pixelFromGray8(p: var BMPRGBA, input: string, px: int) =
+proc pixelFromGray8(p: var BMPRGBA, input: InputContainer, px: int) =
   p.r = input[px].ord
   p.g = input[px].ord
   p.b = input[px].ord
 
-proc pixelFromRGB24(p: var BMPRGBA, input: string, px: int) =
+proc pixelFromRGB24(p: var BMPRGBA, input: InputContainer, px: int) =
   let y = px * 3
   p.r = input[y].ord
   p.g = input[y + 1].ord
   p.b = input[y + 2].ord
 
-proc pixelFromRGB32(p: var BMPRGBA, input: string, px: int) =
+proc pixelFromRGB32(p: var BMPRGBA, input: InputContainer, px: int) =
   let y = px * 4
   p.r = input[y].ord
   p.g = input[y + 1].ord
   p.b = input[y + 2].ord
   p.a = input[y + 3].ord
 
-proc pixelFromNoColor(p: var BMPRGBA, input: string, px: int) =
+proc pixelFromNoColor(p: var BMPRGBA, input: InputContainer, px: int) =
   discard
 
-proc getCvt(bitsPerPixel: int): ConvertT =
+proc getCvt[T](bitsPerPixel: int): ConvertT[T] =
   case bitsPerPixel
   of 8:  result = pixelFromGray8
   of 24: result = pixelFromRGB24
   of 32: result = pixelFromRGB32
   else:  result = pixelFromNoColor
 
-proc countColors(input: string, w, h, bitsPerPixel: int, colors: var OrderedTable[BMPRGBA, int]): int =
+proc countColors(input: InputContainer, w, h, bitsPerPixel: int, colors: var OrderedTable[BMPRGBA, int]): int =
   let numPixels = w * h
   assert bitsPerPixel in {8, 24, 32}
 
   var
     p: BMPRGBA
-    cvt = getCvt(bitsPerPixel)
+    cvt = getCvt[input.type](bitsPerPixel)
     numColors = 0
 
   for px in 0.. <numPixels:
@@ -664,7 +704,7 @@ proc countColors(input: string, w, h, bitsPerPixel: int, colors: var OrderedTabl
 
   result = numColors
 
-proc encode1Bit(bmp: var BMPEncoder, input: string, w, h: int) =
+proc encode1Bit(bmp: var BMPEncoder, input: InputContainer, w, h: int) =
   let scanlineSize = 4 * ((w * bmp.bitsPerPixel + 31) div 32)
   let size = scanlineSize * h
   bmp.pixels = newString(size)
@@ -688,7 +728,7 @@ proc encode1Bit(bmp: var BMPEncoder, input: string, w, h: int) =
       bmp.pixels[y] = t.chr
       inc y
 
-proc encode4Bit(bmp: var BMPEncoder, input: string, w, h: int) =
+proc encode4Bit(bmp: var BMPEncoder, input: InputContainer, w, h: int) =
   let scanlineSize = 4 * ((w * bmp.bitsPerPixel + 31) div 32)
   let size = scanlineSize * h
   bmp.pixels = newString(size)
@@ -708,7 +748,7 @@ proc encode4Bit(bmp: var BMPEncoder, input: string, w, h: int) =
       else:
         bmp.pixels[y] = chr(bmp.pixels[y].ord or (bmp.colors[p] and 0x0F))
 
-proc encode8Bit(bmp: var BMPEncoder, input: string, w, h: int) =
+proc encode8Bit(bmp: var BMPEncoder, input: InputContainer, w, h: int) =
   let scanlineSize = 4 * ((w * bmp.bitsPerPixel + 31) div 32)
   let size = scanlineSize * h
   bmp.pixels = newString(size)
@@ -725,7 +765,7 @@ proc encode8Bit(bmp: var BMPEncoder, input: string, w, h: int) =
       inc y
       inc px
 
-proc encode24Bit(bmp: var BMPEncoder, input: string, w, h: int) =
+proc encode24Bit(bmp: var BMPEncoder, input: InputContainer, w, h: int) =
   let scanlineSize = 4 * ((w * bmp.bitsPerPixel + 31) div 32)
   let size = scanlineSize * h
   bmp.pixels = newString(size)
@@ -744,12 +784,12 @@ proc encode24Bit(bmp: var BMPEncoder, input: string, w, h: int) =
       bmp.pixels[y + 2] = chr(p.r)
       inc px
 
-proc autoChooseColor(input: string, w, h, bitsPerPixel: int): BMPEncoder =
+proc autoChooseColor[T](input: T, w, h, bitsPerPixel: int): BMPEncoder[T] =
   var
     colors = initOrderedTable[BMPRGBA, int]()
     numColors = countColors(input, w, h, bitsPerPixel, colors)
 
-  result.cvt = getCvt(bitsPerPixel)
+  result.cvt = getCvt[T](bitsPerPixel)
   result.colors = colors
 
   if numColors <= 2:
@@ -777,7 +817,7 @@ proc writeLE[T: WORD|DWORD|LONG](s: Stream, val: T) =
 proc writeLE[T: BMPHeader|BMPInfo](s: Stream, val: T) =
   for field in fields(val): s.writeLE(field)
 
-proc encodeBMP*(s: Stream, input: string, w, h, bitsPerPixel: int) =
+proc encodeBMP*(s: Stream, input: InputContainer, w, h, bitsPerPixel: int) =
   if bitsPerPixel notin {8,24,32}:
     raise BMPError("unsupported bitsPerPixel: " & $bitsPerPixel)
 
@@ -792,18 +832,18 @@ proc encodeBMP*(s: Stream, input: string, w, h, bitsPerPixel: int) =
 
   var header: BMPHeader
   header.fileSize  = DWORD(offset + dataSize)
-  header.reserved1 = 0.WORD
-  header.reserved2 = 0.WORD
-  header.offset    = offset.DWORD
+  header.reserved1 = WORD(0)
+  header.reserved2 = WORD(0)
+  header.offset    = DWORD(offset)
 
   var info: BMPInfo
   info.size   = 40
-  info.width  = w.LONG
-  info.height = h.LONG
+  info.width  = LONG(w)
+  info.height = LONG(h)
   info.planes = 1
   info.bitsPerPixel = WORD(bmp.bitsPerPixel)
-  info.compression  = BC_NONE.DWORD
-  info.imageSize    = dataSize.DWORD
+  info.compression  = DWORD(BC_NONE)
+  info.imageSize    = DWORD(dataSize)
   info.horzResolution = DefaultXPelsPerMeter
   info.vertResolution = DefaultYPelsPerMeter
   info.colorUsed = DWORD(bmp.colors.len)
@@ -819,17 +859,17 @@ proc encodeBMP*(s: Stream, input: string, w, h, bitsPerPixel: int) =
 
   s.write bmp.pixels
 
-proc saveBMP32*(fileName, input: string, w, h: int) =
+proc saveBMP32*(fileName: string, input: InputContainer, w, h: int) =
   var s = newFileStream(fileName, fmWrite)
   s.encodeBMP(input, w, h, 32)
   s.close()
 
-proc saveBMP24*(fileName, input: string, w, h: int) =
+proc saveBMP24*(fileName: string, input: InputContainer, w, h: int) =
   var s = newFileStream(fileName, fmWrite)
   s.encodeBMP(input, w, h, 24)
   s.close()
 
-proc saveBMP8*(fileName, input: string, w, h: int) =
+proc saveBMP8*(fileName: string, input: InputContainer, w, h: int) =
   var s = newFileStream(fileName, fmWrite)
   s.encodeBMP(input, w, h, 8)
   s.close()
