@@ -36,7 +36,7 @@ type
 
 type
   App = object
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
     alpha: SplineCtrl[Rgba8]
     x, y, rx, ry: array[50, float64]
@@ -52,7 +52,7 @@ proc initApp(): App =
   result.alpha.value(5, 1.0)
   result.alpha.updateSpline()
         
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
 
 proc loadImage(app: var App, idx: int, name: string) =
@@ -66,7 +66,7 @@ proc loadImage(app: var App, idx: int, name: string) =
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
   
-proc getBmp(app: var App, idx: int): var BmpResult =
+proc getBmp(app: var App, idx: int): var BmpResult[string] =
   app.bmp[idx]
   
 proc init(app: var App, width, height: int) =

@@ -369,7 +369,7 @@ type
     distortion: RboxCtrl[Rgba8]
     centerX, centerY, phase: float64
     gradientColors: array[256, Rgba8]
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
 
 proc initApp(): App =
@@ -407,7 +407,7 @@ proc initApp(): App =
       gradientColors[i * 4 + 2],
       gradientColors[i * 4 + 3])
 
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
 
 proc loadImage(app: var App, idx: int, name: string) =
