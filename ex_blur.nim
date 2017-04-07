@@ -28,6 +28,12 @@ type
     rbuf2: RenderingBuffer
     stackBlur: StackBlur[Rgba8, StackBlurCalcRgb]
     recursiveBlur: RecursiveBlur[Rgba8, RecursiveBlurCalcRgb]
+    
+#{.passC: "-I./agg-2.5/include".}
+#{.compile: "test_blur.cpp".}
+#{.passL: "-lstdc++".}
+#    
+#proc test_blur(buf: cstring, w, h, px: cint, bb: var RectD) {.importc.}
 
 proc initApp(): App =
   result.how = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 70.0, not flipY)
@@ -139,7 +145,7 @@ proc onDraw() =
   app.ras.clipBox(0, 0, frameWidth, frameHeight)
 
   # Render shadow
-  app.ras.addPath(shadow_trans);
+  app.ras.addPath(shadowTrans)
   renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0.2,0.3,0.0))
 
   # Calculate the bounding box and extend it by the blur radius
@@ -162,6 +168,10 @@ proc onDraw() =
     bbox.x2 += app.radius.value()
     bbox.y2 += app.radius.value()
 
+  #var buf2 = newString(buffer.len)
+  #copyMem(buf2.cstring, buffer.cstring, buffer.len)  
+  #test_blur(buf2, frameWidth, frameHeight, pixWidth, bbox) 
+  #echo "---"
   let startTime = cpuTime()
   if app.how.curItem() != 2:
     # Create a new pixel renderer and attach it to the main one as a child image.
@@ -173,7 +183,7 @@ proc onDraw() =
       if app.how.curItem() == 0:
         # More general method, but 30-40% slower.
         #m_stack_blur.blur(pixf2, agg::uround(m_radius.value()));
-
+    
         # Faster, but bore specific.
         # Works only for 8 bits per channel and only with radii <= 254.
         stackBlurRgb24(pixf2, uround(app.radius.value()), uround(app.radius.value()))
@@ -209,14 +219,14 @@ proc onDraw() =
   var
     t = initGsvText()
     st = initConvStroke(t)
-
+  
   t.size(10.0)
   st.width(1.5)
   t.startPoint(140.0, 30.0)
   t.text(endTime.formatFloat(ffDecimal, 2) & " ms")
   app.ras.addPath(st)
   renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0,0,0))
-
+  
   renderCtrl(app.ras, app.sl, renb, app.how)
   renderCtrl(app.ras, app.sl, renb, app.radius)
   renderCtrl(app.ras, app.sl, renb, app.chr)

@@ -70,7 +70,10 @@ const subjects = [
   "t01_rendering_buffer",
   "t02_rendering_buffer",
   "t03_rendering_buffer",
-  "t04_rendering_buffer"]
+  "t04_rendering_buffer",
+  "ex_svg_circle",
+  "ex_gradients_contour",
+  "ex_particle_demo"]
 
 mode = ScriptMode.Silent
 

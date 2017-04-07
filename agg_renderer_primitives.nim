@@ -12,6 +12,7 @@ type
 template getColorT*[B,C](x: typedesc[RendererPrimitives[B,C]]): typedesc = getColorT(B.type)
 
 proc init*[B,C](self: var RendererPrimitives[B,C], ren: var B) =
+  mixin noColor
   self.mRen = ren.addr
   self.mFillColor = noColor(C)
   self.mLineColor = noColor(C)

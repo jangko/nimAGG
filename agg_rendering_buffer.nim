@@ -29,7 +29,7 @@ type
   RenderingBufferCached* = RowPtrCache[uint8]
   RenderingBuffer16* = RowAccessor[uint16]
   RenderingBufferCached16* = RowPtrCache[uint16]
-  
+
 proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height, stride: int) =
   self.buf = buf
   self.start = buf
@@ -38,7 +38,7 @@ proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height, stride: int
   self.stride = stride
   if stride < 0:
     self.start = self.buf - int(height - 1) * stride
-  
+
 proc initRowAccessor*[T](buf: ptr T, width, height, stride: int): RowAccessor[T] =
   result.buf = nil
   result.start = nil
@@ -49,10 +49,10 @@ proc initRowAccessor*[T](buf: ptr T, width, height, stride: int): RowAccessor[T]
 
 proc initRenderingBuffer*[T](buf: ptr T, width, height, stride: int): RowAccessor[T] =
   result = initRowAccessor[T](buf, width, height, stride)
-  
+
 proc initRenderingBuffer*(): auto =
   result = initRowAccessor[uint8](nil, 0, 0, 0)
-  
+
 proc width*[T](self: RowAccessor[T]): int {.inline.} =
   result = self.width
 
@@ -114,14 +114,14 @@ proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: int, stride
   for i in 0.. <height:
     self.rows[i] = p
     inc(p, stride)
-    
+
 proc initRowPtrCache*[T](): RowPtrCache[T] =
   result.buf = nil
   result.rows = @[]
   result.width = 0
   result.height = 0
   result.stride = 0
-  
+
 proc initRowPtrCache*[T](buf: ptr T, width, height: int, stride: int): RowPtrCache[T] =
   result.buf = nil
   result.rows = newSeq[ptr T](height.int)
@@ -156,13 +156,13 @@ proc rowPtr*[T](self: RowPtrCache[T], x, y, z: int): ptr T {.inline.} =
 
 proc row*[T](self: RowPtrCache[T], y: int): RowInfo[T] {.inline.} =
   result = RowInfo(x1:0, x2:(self.width-1).int, data: self.rows(y))
-  
+
 proc rows*[T](self: var RowPtrCache[T]): var seq[ptr T] {.inline.} =
   self.rows
 
 proc data*[T](self: var RowPtrCache[T]): ptr ptr T =
   self.rows[0].addr
-  
+
 proc copyFrom*[T](self: var RowPtrCache[T], src: RowPtrCache[T]) =
   let
     h = min(self.height, src.height).int
@@ -213,7 +213,10 @@ proc rowPtr*[T](self: var DynaRow[T], y: int): ptr T =
 
 proc row*[T](self: var DynaRow[T], y: int): RowInfo[T] =
   var r = self.rows[y].addr
-  result = RowInfo(x1:r.x1, x2:r.x2, data: r.data[0].addr)
+  if r.data.len == 0:
+    result = RowInfo[T](x1:r.x1, x2:r.x2, data: nil)
+  else:
+    result = RowInfo[T](x1:r.x1, x2:r.x2, data: r.data[0].addr)
 
 proc copyFrom*[T](self, src: var DynaRow[T]) =
   let

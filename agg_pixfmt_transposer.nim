@@ -14,12 +14,12 @@ proc attach*[PixFmt](self: var PixfmtTransposer[PixFmt], pixf: var PixFmt) =
   self.mPixf = pixf.addr
 
 proc width*[PixFmt](self: PixfmtTransposer[PixFmt]): int {.inline.} =
-  mixin width
-  self.mPixf[].width()
-
-proc height*[PixFmt](self: PixfmtTransposer[PixFmt]): int {.inline.} =
   mixin height
   self.mPixf[].height()
+
+proc height*[PixFmt](self: PixfmtTransposer[PixFmt]): int {.inline.} =
+  mixin width
+  self.mPixf[].width()
 
 proc pixel*[PixFmt](self: var PixfmtTransposer[PixFmt], x, y: int): auto {.inline.} =
   mixin pixel

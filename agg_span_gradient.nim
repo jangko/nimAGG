@@ -235,6 +235,8 @@ type
 
 proc initGradientReflectAdaptor*[GradientF](gf: var GradientF): GradientReflectAdaptor[GradientF] =
   result.mGradient = gf.addr
+  
+template construct*[T](x: typedesc[GradientReflectAdaptor[T]], val: untyped): untyped = initGradientReflectAdaptor(val)
 
 proc calculate*[GradientF](self: var GradientReflectAdaptor[GradientF], x, y, d: int): int {.inline.} =
   let d2 = d shl 1

@@ -86,9 +86,9 @@ template gradientLutAux*(name: untyped, colorInterpolator, ColorT: typed, colorL
   proc offsetEqual(a, b: `name ColorPoint`): bool =
     result = a.offset == b.offset
 
-  proc `init name`*(): name =
+  proc `init name`*(size = colorLutSize): name =
     result.mColorProfile = @[]
-    result.mColorLut = newSeq[ColorT](colorLutSize)
+    result.mColorLut = newSeq[ColorT](size)
 
   # Build Gradient Lut
   # First, call removeAll(), then add_color() at least twice,
@@ -108,7 +108,7 @@ template gradientLutAux*(name: untyped, colorInterpolator, ColorT: typed, colorL
   # Size-index Interface. This class can be used directly as the
   # ColorF in span_gradient. All it needs is two access methods
   # size() and operator [].
-  proc len*(self: name): int = colorLutSize
+  proc len*(self: name): int = self.mColorLut.len
   proc `[]`*(self: name, i: int): ColorT =
     result = self.mColorLut[i]
 
@@ -118,7 +118,7 @@ template gradientLutAux*(name: untyped, colorInterpolator, ColorT: typed, colorL
 
     if self.mColorProfile.len >= 2:
       var
-        start = uround(self.mColorProfile[0].offset * colorLutSize)
+        start = uround(self.mColorProfile[0].offset * self.mColorLut.len.float64)
         stop: int
         c = self.mColorProfile[0].color
 
@@ -126,7 +126,7 @@ template gradientLutAux*(name: untyped, colorInterpolator, ColorT: typed, colorL
         self.mColorLut[i] = c
 
       for i in 1.. <self.mColorProfile.len:
-        stop  = uround(self.mColorProfile[i].offset * colorLutSize.float64)
+        stop  = uround(self.mColorProfile[i].offset * self.mColorLut.len.float64)
         var ci = initColorInterpolator[ColorT](self.mColorProfile[i-1].color,
                               self.mColorProfile[i].color,
                               stop - start + 1)

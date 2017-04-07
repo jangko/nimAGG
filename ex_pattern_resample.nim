@@ -29,7 +29,7 @@ type
     ras: RasterizerScanlineAA
     sl: ScanlineU8
     x1, y1, x2, y2: float64
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
 
 proc initApp(): App =
@@ -57,7 +57,7 @@ proc initApp(): App =
   result.blur.setRange(0.5, 2.0)
   result.blur.value(1.0)
   result.blur.label("Blur=$1")
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
@@ -73,7 +73,7 @@ proc loadImage(app: var App, idx: int, name: string) =
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
 
-proc getBmp(app: var App, idx: int): var BmpResult =
+proc getBmp(app: var App, idx: int): var BmpResult[string] =
   app.bmp[idx]
 
 proc init(app: var App) =

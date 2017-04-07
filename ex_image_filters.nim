@@ -15,7 +15,7 @@ type
 
 type
   App = object
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
     radius, step: SliderCtrl[Rgba8]
     filters: RboxCtrl[Rgba8]
@@ -81,7 +81,7 @@ proc initApp(): App =
   result.filters.backgroundColor(initRgba(0.0, 0.0, 0.0, 0.1))
   result.filters.textSize(6.0)
   result.filters.textThickness(0.85)
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
 
 proc loadImage(app: var App, idx: int, name: string) =
@@ -95,7 +95,7 @@ proc loadImage(app: var App, idx: int, name: string) =
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
 
-proc getBmp(app: var App, idx: int): var BmpResult =
+proc getBmp(app: var App, idx: int): var BmpResult[string] =
   app.bmp[idx]
 
 proc copyImgToImg(app: var App, dst, src: int) =

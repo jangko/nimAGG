@@ -98,7 +98,7 @@ type
     curve9: BezierCtrl[Rgba8]
     scaleX: SliderCtrl[Rgba8]
     startX: SliderCtrl[Rgba8]
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
 
 proc initApp(): App =
@@ -156,7 +156,7 @@ proc initApp(): App =
   result.startX.value(0.0)
   result.startX.noTransform()
 
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
 
 proc loadImage(app: var App, idx: int, name: string) =

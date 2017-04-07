@@ -186,14 +186,23 @@ proc newCboxCtrl*[ColorT](x, y: float64, label: string, flipY = false): CboxCtrl
   result.mColors[1] = result.mTextColor.addr
   result.mColors[2] = result.mActiveColor.addr
 
-proc textColor*[ColorT](self: CboxCtrl[ColorT], c: ColorT) =
-  self.mTextColor = c
+proc textColor*[ColorA, ColorB](self: CboxCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mTextColor = construct(ColorA, c)
+  else:
+    self.mTextColor = c
 
-proc inactiveColor*[ColorT](self: CboxCtrl[ColorT], c: ColorT) =
-  self.mInactiveColor = c
+proc inactiveColor*[ColorA, ColorB](self: CboxCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mInactiveColor = construct(ColorA, c)
+  else:
+    self.mInactiveColor = c
 
-proc activeColor*[ColorT](self: CboxCtrl[ColorT], c: ColorT) =
-  self.mActiveColor = c
+proc activeColor*[ColorA, ColorB](self: CboxCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mActiveColor = construct(ColorA, c)
+  else:
+    self.mActiveColor = c
 
 proc color*[ColorT](self: CboxCtrl[ColorT], i: int): ColorT =
   self.mColors[i][]

@@ -25,7 +25,7 @@ type
     polygonCx, polygonCy: float64
     dx, dy: float64
     flag: int
-    bmp: seq[BmpResult]
+    bmp: seq[BmpResult[string]]
     rbuf: seq[RenderingBuffer]
     ps : PathStorage
 
@@ -56,7 +56,7 @@ proc initApp(): App =
   result.example.addItem("5")
   result.example.addItem("6")
   result.example.curItem(0)
-  result.bmp = newSeq[BmpResult](10)
+  result.bmp = newSeq[BmpResult[string]](10)
   result.rbuf = newSeq[RenderingBuffer](10)
   result.ps = initPathStorage()
 
@@ -76,7 +76,7 @@ proc loadImage(app: var App, idx: int, name: string) =
 proc rbufImage(app: var App, idx: int): var RenderingBuffer =
   result = app.rbuf[idx]
 
-proc getBmp(app: var App, idx: int): var BmpResult =
+proc getBmp(app: var App, idx: int): var BmpResult[string] =
   app.bmp[idx]
 
 proc createStar(app: var App, w, h: int) =

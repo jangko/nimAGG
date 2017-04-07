@@ -89,7 +89,7 @@ proc allocateBlock[T](self: RasterizerCellsAA[T]) =
       self.cells.setLen(self.maxBlocks + cellBlockPool)
       inc(self.maxBlocks, cellBlockPool)
 
-    self.cells[self.numBlocks] = createU(T, cellBlockSize)
+    self.cells[self.numBlocks] = allocU(T, cellBlockSize)
     inc self.numBlocks
 
   self.currCellPtr = self.cells[self.currBlock]
