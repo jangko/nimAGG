@@ -29,8 +29,8 @@ proc d1*[I,G,A](self: SpanGradientAlpha[I,G,A]): float64 = float64(self.mD1) / g
 proc d2*[I,G,A](self: SpanGradientAlpha[I,G,A]): float64 = float64(self.mD2) / gradientSubpixelScale
 
 proc interpolator*[I,G,A](self: var SpanGradientAlpha[I,G,A], i: var I) = self.mInterpolator = i.addr
-proc gradient_function*[I,G,A](self: var SpanGradientAlpha[I,G,A], gf: var G) = self.mGradientF = gf.addr
-proc alpha_function*[I,G,A](self: var SpanGradientAlpha[I,G,A], af: var A) = self.mAlphaF = af.addr
+proc gradientFunction*[I,G,A](self: var SpanGradientAlpha[I,G,A], gf: var G) = self.mGradientF = gf.addr
+proc alphaFunction*[I,G,A](self: var SpanGradientAlpha[I,G,A], af: var A) = self.mAlphaF = af.addr
 proc d1*[I,G,A](self: var SpanGradientAlpha[I,G,A], v: float64) =
   self.mD1 = iround(v * gradientSubpixelScale)
 

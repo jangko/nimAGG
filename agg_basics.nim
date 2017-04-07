@@ -269,3 +269,9 @@ proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
 
 template allocU*(T: typedesc, size = 1): untyped =
   cast[ptr T](alloc(T.sizeof * size))
+
+proc min*(x, y: uint32): uint32 =
+  if x <= y: x else: y
+  
+proc max*(x, y: uint32): uint32 =
+  if y <= x: x else: y
