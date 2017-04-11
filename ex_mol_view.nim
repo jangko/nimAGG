@@ -489,7 +489,7 @@ proc initApp(name: string): App =
   else:
     echo "file not found"
 
-  setMem(addr(result.atomColors[0.AtomColor]), 0, sizeof(result.atomColors))
+  zeroMem(addr(result.atomColors[0.AtomColor]), sizeof(result.atomColors))
   result.atomColors[atom_color_general] = initRgba8(0,0,0)
   result.atomColors[atom_color_N]       = initRgba8(0,0,120)
   result.atomColors[atom_color_O]       = initRgba8(200,0,0)

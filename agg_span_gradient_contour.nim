@@ -137,7 +137,7 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
 
   # III. Convert To Grayscale
   if min == max:
-    setMem(self.mBuffer[0].addr, 0, width * height)
+    zeroMem(self.mBuffer[0].addr, width * height)
   else:
     var scale = 255.0 / (max - min)
 

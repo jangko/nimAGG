@@ -361,10 +361,10 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
       cell: ptr CellInfo
 
     self.mCells.setLen(numCells * 2) # Each cell can have two styles
-    if self.mCells.len > 0: setMem(self.mCells[0].addr, 0, sizeof(CellInfo) * self.mCells.len)
+    if self.mCells.len > 0: zeroMem(self.mCells[0].addr, sizeof(CellInfo) * self.mCells.len)
     self.mAst = newSeqOfCap[uint](numStyles)
     self.mAsm.setLen((numStyles + 7) shr 3)
-    if self.mAsm.len > 0: setMem(self.mAsm[0].addr, 0, sizeof(uint8) * self.mAsm.len)
+    if self.mAsm.len > 0: zeromMem(self.mAsm[0].addr, sizeof(uint8) * self.mAsm.len)
     #self.mAsm.zero()
 
     if numCells != 0:
