@@ -39,40 +39,53 @@ proc onDraw() =
   rb.clear(initRgba(1,1,1))
   
   poly1.addRegion()  
-  poly1.addVertex(50.0, 50.0)
-  poly1.addVertex(150.0, 150.0)
-  poly1.addVertex(190.0, 50.0)
-  
-  poly1.addRegion()  
-  poly1.addVertex(130.0, 50.0)
-  poly1.addVertex(290.0, 150.0)
-  poly1.addVertex(290.0, 50.0)
+  poly1.addVertex(500.0, 60.0)
+  poly1.addVertex(500.0, 150.0)
+  poly1.addVertex(200.0, 150.0)
+  poly1.addVertex(200.0, 60.0)
   
   poly2.addRegion()  
-  poly2.addVertex(110.0, 20.0)
-  poly2.addVertex(110.0, 110.0)
-  poly2.addVertex(20.0, 20.0)
-  
-  poly2.addRegion()  
-  poly2.addVertex(130.0, 170.0)
-  poly2.addVertex(130.0, 20.0)
-  poly2.addVertex(260.0, 20.0) 
-  poly2.addVertex(260.0, 170.0) 
+  poly2.addVertex(500.0, 60.0)
+  poly2.addVertex(500.0, 150.0)
+  poly2.addVertex(450.0, 230.0)
+  poly2.addVertex(400.0, 180.0)
+  poly2.addVertex(590.0, 60.0)
+      
+  #poly1.addRegion()  
+  #poly1.addVertex(50.0, 50.0)
+  #poly1.addVertex(150.0, 150.0)
+  #poly1.addVertex(190.0, 50.0)
+  #
+  #poly1.addRegion()  
+  #poly1.addVertex(130.0, 50.0)
+  #poly1.addVertex(290.0, 150.0)
+  #poly1.addVertex(290.0, 50.0)
+  #
+  #poly2.addRegion()  
+  #poly2.addVertex(110.0, 20.0)
+  #poly2.addVertex(110.0, 110.0)
+  #poly2.addVertex(20.0, 20.0)
+  #
+  #poly2.addRegion()  
+  #poly2.addVertex(130.0, 170.0)
+  #poly2.addVertex(130.0, 20.0)
+  #poly2.addVertex(260.0, 20.0) 
+  #poly2.addVertex(260.0, 170.0) 
   
   var stroke = initConvStroke(path)
-  stroke.width(1.5)
+  stroke.width(3)
   
-  polygonToPath(path, poly1)
-  ras.addPath(stroke)
-  renderScanlinesAAsolid(ras, sl, rb, initRgba(1.0, 0.1, 0.1))
-  
-  polygonToPath(path, poly2)
-  ras.addPath(stroke)
-  renderScanlinesAAsolid(ras, sl, rb, initRgba(0.1, 0.1, 1.0))
+  #polygonToPath(path, poly1)
+  #ras.addPath(stroke)
+  #renderScanlinesAAsolid(ras, sl, rb, initRgba(1.0, 0.1, 0.1))
+  #
+  #polygonToPath(path, poly2)
+  #ras.addPath(stroke)
+  #renderScanlinesAAsolid(ras, sl, rb, initRgba(0.1, 0.1, 1.0))
   
   var 
     pb = initPolyBool()
-    isect = pb.clipIntersect(poly1, poly2)
+    isect = pb.clipXor(poly1, poly2)
   
   polygonToPath(path, isect)
   ras.addPath(path)

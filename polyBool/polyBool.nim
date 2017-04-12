@@ -18,7 +18,7 @@ proc buildLog*(self: var PolyBool, bl: bool) =
 proc buildLog*(self: PolyBool): auto =
   if self.log != nil: result = self.log.log()
 
-  # getter/setter for epsilon
+# getter/setter for epsilon
 proc epsilon*(self: var PolyBool, v: float64) =
   self.eps.epsilon(v)
 
@@ -93,13 +93,28 @@ proc polygon*(self: PolyBool, seg: Segments): Polygon =
 type
   Selector = proc(self: PolyBool, combined: Combined): Segments
 
+proc debug*(seg: Segments) {.deprecated.} =
+  for s in seg.segments:
+    s.debug()
+    
+proc debug*(seg: Combined) {.deprecated.} =
+  for s in seg.combined:
+    s.debug()
+    
+proc debug*(poly: Polygon) {.deprecated.} =  
+  for reg in poly.regions:
+    stdout.write "["
+    for p in reg:
+      stdout.write p.debug()
+    echo "]"
+    
 proc operate(self: PolyBool, poly1, poly2: Polygon, selector: Selector): Polygon =
   var
     seg1 = self.segments(poly1)
     seg2 = self.segments(poly2)
     comb = self.combine(seg1, seg2)
     seg3 = self.selector(comb)
-
+  
   self.polygon(seg3)
 
 # helper functions for common operations

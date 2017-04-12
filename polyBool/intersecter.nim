@@ -23,6 +23,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
     result.myFill.below = false
     result.otherFill.above = false
     result.otherFill.below = false
+    
 
   proc copyEdge(start, stop: PointT, seg: Edge): Edge =
     new(result)
@@ -31,7 +32,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
     result.stop = stop
     result.myFill = seg.myFill
     result.otherFill.above = false
-    result.otherFill.below = false
+    result.otherFill.below = false    
 
   # event logic
   var eventRoot = initLinkedList[NodeData]()
@@ -343,7 +344,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
                 inside = below.data.seg.myFill.above
             ev.data.seg.otherFill.above = inside
             ev.data.seg.otherFill.below = inside
-
+            
         if buildLog != nil:
           buildLog.status(
             ev.data.seg,

@@ -92,14 +92,29 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
   let t1 = cpuTime() - startTime
   startTime = cpuTime()
 
-  ras.addPath(counter)
+  var 
+    ps = initPathStorage()
+    x, y: float64
+    cmd = counter.vertex(x, y)
+    
+  while not isStop(cmd):
+    if isMoveTo(cmd):
+      ps.moveTo(x, y)
+    elif isLineTo(cmd):
+      ps.lineTo(x, y)
+    elif isClose(cmd):
+      ps.closePolygon()
+      
+    cmd = counter.vertex(x, y)
+      
+  ras.addPath(ps)
   ren.color(initRgba(0.25, 0.9, 0.25, 0.65))
   renderScanlines(ras, sl, ren)
 
   let t2 = cpuTime() - startTime
 
   var
-    stroke = initConvStroke(clp)
+    stroke = initConvStroke(ps)
 
   stroke.width(0.4)
   ras.addPath(stroke)
@@ -352,6 +367,8 @@ proc onDraw(op = 2, shape = 3) =
     ras = initRasterizerScanlineAA()
 
   rb.clear(initRgba(1,1,1))
+  
+  ras.fillingRule(fillEvenOdd)
   app.renderClipper(sl, ras)
 
   renderCtrl(ras, sl, rb, app.mPolygons)
