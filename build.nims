@@ -73,7 +73,9 @@ const subjects = [
   "t04_rendering_buffer",
   "ex_svg_circle",
   "ex_gradients_contour",
-  "ex_particle_demo"]
+  "ex_particle_demo",
+  "ex_test_poly_bool",
+  "ex_poly_bool"]
 
 mode = ScriptMode.Silent
 
