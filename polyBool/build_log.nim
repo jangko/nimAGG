@@ -84,8 +84,8 @@ proc checkIntersection*(self: BuildLog, seg1, seg2: Edge) =
   self.list.add(LogEntry(kind: lkCheck, seg1: seg1, seg2: seg2))
 
 proc edgeChop*(self: BuildLog, seg: Edge, stop: PointT) =
-  self.list.add(LogEntry(kind: lkDivSeg, seg: seg, pt: stop))
-  self.list.add(LogEntry(kind: lkChop, seg: seg, pt: stop))
+  self.list.add(LogEntry(kind: lkDivSeg, divSeg: seg, divPt: stop))
+  self.list.add(LogEntry(kind: lkChop, divSeg: seg, divPt: stop))
 
 proc statusRemove*(self: BuildLog, seg: Edge) =
   self.list.add(LogEntry(kind: lkPopSeg, seg: seg))
@@ -141,10 +141,10 @@ proc chainClose*(self: BuildLog, index: int) =
   self.list.add(LogEntry(kind: lkChainClose, index: index))
 
 proc chainAddHead*(self: BuildLog, index: int, pt: PointT) =
-  self.list.add(LogEntry(kind: lkChainAddHead, index: index, pt: pt))
+  self.list.add(LogEntry(kind: lkChainAddHead, idx: index, pt: pt))
 
 proc chainAddTail*(self: BuildLog, index: int, pt: PointT) =
-  self.list.add(LogEntry(kind: lkChainAddTail, index: index, pt: pt))
+  self.list.add(LogEntry(kind: lkChainAddTail, idx: index, pt: pt))
 
 proc chainConnect*(self: BuildLog, index1, index2: int) =
   self.list.add(LogEntry(kind: lkChainConnect, index1: index1, index2: index2))
