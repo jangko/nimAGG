@@ -5,12 +5,17 @@ proc clipperError(msg: string): ref Exception =
   result.msg = msg
 
 type
-  IntersecterApi* = object
+  PolyBoolApi* = object
+    mVertex: int
+    mFirst, mLast: PointT
     calculateCombined*: proc(edge1: Edges, inverted1: bool, edge2: Edges, inverted2: bool): Edges
     addRegion*:  proc(region: seq[PointT])
     calculateSegmented*: proc(inverted: bool): Edges
+    startRegion*: proc()
+    addVertex*: proc(x, y: float64)
+    endRegion*: proc()
 
-proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): IntersecterApi =
+proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): PolyBoolApi =
   # selfIntersection is true/false depending on the phase of the overall algorithm
 
   # edge creation
@@ -19,20 +24,19 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
     result.id = if buildLog != nil: buildLog.edgeId() else: -1
     result.start = start
     result.stop = stop
-    result.myFill.above = false
-    result.myFill.below = false
-    result.otherFill.above = false
-    result.otherFill.below = false
-    
+    result.thisFill.above = false
+    result.thisFill.below = false
+    result.thatFill.above = false
+    result.thatFill.below = false
 
   proc copyEdge(start, stop: PointT, seg: Edge): Edge =
     new(result)
     result.id = if buildLog != nil: buildLog.edgeId() else: -1
     result.start = start
     result.stop = stop
-    result.myFill = seg.myFill
-    result.otherFill.above = false
-    result.otherFill.below = false    
+    result.thisFill = seg.thisFill
+    result.thatFill.above = false
+    result.thatFill.below = false    
 
   # event logic
   var eventRoot = initLinkedList[NodeData]()
@@ -271,22 +275,22 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
 
           if selfIntersection:
             var toggle: bool # are we a toggling edge?
-            if not ev.data.seg.myFill.below:
+            if not ev.data.seg.thisFill.below:
               toggle = true
             else:
-              toggle = ev.data.seg.myFill.above != ev.data.seg.myFill.below
+              toggle = ev.data.seg.thisFill.above != ev.data.seg.thisFill.below
 
             # merge two edges that belong to the same polygon
             # think of this as sandwiching two edges together, where `eve.seg` is
             # the bottom -- this will cause the above fill flag to toggle
             if toggle:
-              eve.data.seg.myFill.above = not eve.data.seg.myFill.above
+              eve.data.seg.thisFill.above = not eve.data.seg.thisFill.above
           else:
             # merge two edges that belong to different polygons
             # each edge has distinct knowledge, so no special logic is needed
             # note that this can only happen once per edge in this phase, because we
             # are guaranteed that all self-intersections are gone
-            eve.data.seg.otherFill = ev.data.seg.myFill
+            eve.data.seg.thatFill = ev.data.seg.thisFill
 
           if buildLog != nil:
             buildLog.edgeUpdate(eve.data.seg)
@@ -304,31 +308,31 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
         # calculate fill flags
         if selfIntersection:
           var toggle: bool # are we a toggling edge?
-          if not ev.data.seg.myFill.below: # if we are a new edge...
+          if not ev.data.seg.thisFill.below: # if we are a new edge...
             toggle = true # then we toggle
           else: # we are a edge that has previous knowledge from a division
-            toggle = ev.data.seg.myFill.above != ev.data.seg.myFill.below # calculate toggle
+            toggle = ev.data.seg.thisFill.above != ev.data.seg.thisFill.below # calculate toggle
 
           # next, calculate whether we are filled below us
           if below.isNil: # if nothing is below us...
             # we are filled below us if the polygon is inverted
-            ev.data.seg.myFill.below = primaryPolyInverted
+            ev.data.seg.thisFill.below = primaryPolyInverted
           else:
             # otherwise, we know the answer -- it's the same if whatever is below
             # us is filled above it
-            ev.data.seg.myFill.below = below.data.seg.myFill.above
+            ev.data.seg.thisFill.below = below.data.seg.thisFill.above
 
           # since now we know if we're filled below us, we can calculate whether
           # we're filled above us by applying toggle to whatever is below us
           if toggle:
-            ev.data.seg.myFill.above = not ev.data.seg.myFill.below
+            ev.data.seg.thisFill.above = not ev.data.seg.thisFill.below
           else:
-            ev.data.seg.myFill.above = ev.data.seg.myFill.below
+            ev.data.seg.thisFill.above = ev.data.seg.thisFill.below
         else:
-          # now we fill in any missing transition information, since we are all-knowing
-          # at this point
+          # now we fill in any missing transition information, 
+          # since we are all-knowing at this point
 
-          if not ev.data.seg.otherFill.above and not ev.data.seg.otherFill.below:
+          if not ev.data.seg.thatFill.above and not ev.data.seg.thatFill.below:
             # if we don't have other information, then we need to figure out if we're
             # inside the other polygon
             var inside: bool
@@ -339,11 +343,11 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
             else: # otherwise, something is below us
               # so copy the below edge's other polygon's above
               if ev.data.primary == below.data.primary:
-                inside = below.data.seg.otherFill.above
+                inside = below.data.seg.thatFill.above
               else:
-                inside = below.data.seg.myFill.above
-            ev.data.seg.otherFill.above = inside
-            ev.data.seg.otherFill.below = inside
+                inside = below.data.seg.thisFill.above
+            ev.data.seg.thatFill.above = inside
+            ev.data.seg.thatFill.below = inside
             
         if buildLog != nil:
           buildLog.status(
@@ -373,10 +377,10 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
         # if we've reached this point, we've calculated everything there is to know, so
         # save the edge for reporting
         if not ev.data.primary:
-          # make sure `seg.myFill` actually points to the primary polygon though
-          var s = ev.data.seg.myFill
-          ev.data.seg.myFill = ev.data.seg.otherFill
-          ev.data.seg.otherFill = s
+          # make sure `seg.thisFill` actually points to the primary polygon though
+          var s = ev.data.seg.thisFill
+          ev.data.seg.thisFill = ev.data.seg.thatFill
+          ev.data.seg.thatFill = s
         edges.add(ev.data.seg)
 
       # remove the event and continue
@@ -386,11 +390,21 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
       buildLog.done()
 
     return edges
+    
+  proc addEdge(pt1, pt2: PointT) =
+    var forward = eps.pointsCompare(pt1, pt2)
+    if forward == 0: 
+      # points are equal, so we have a zero-length edge
+      # just skip it
+      return
 
+    var seg = newEdge(if forward < 0: pt1 else: pt2, if forward < 0: pt2 else: pt1)
+    discard eventAddEdge(seg, true)
+      
   # return the appropriate API depending on what we're doing
   if not selfIntersection:
     # performing combination of polygons, so only deal with already-processed edges
-    var res: IntersecterApi
+    var res: PolyBoolApi
     res.calculateCombined = proc(edge1: Edges, inverted1: bool, edge2: Edges, inverted2: bool): Edges =
       # edgesX come from the self-intersection API, or this API
       # invertedX is whether we treat that list of segments as an inverted polygon or not
@@ -401,25 +415,42 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Int
     return res
 
   # otherwise, performing self-intersection, so deal with regions
-  var res: IntersecterApi
+  var res: PolyBoolApi
   res.addRegion = proc(region: seq[PointT]) =
     # regions are a list of points:
     #  [ [0, 0], [100, 0], [50, 100] ]
     # you can add multiple regions before running calculate
     var
       pt1: PointT
-      pt2 = region[region.len - 1]
+      pt2 = region[^1]
     for i in 0.. <region.len:
       pt1 = pt2
       pt2 = region[i]
-
-      var forward = eps.pointsCompare(pt1, pt2)
-      if forward == 0: # points are equal, so we have a zero-length edge
-        continue # just skip it
-
-      var seg = newEdge(if forward < 0: pt1 else: pt2, if forward < 0: pt2 else: pt1)
-      discard eventAddEdge(seg, true)
-
+      addEdge(pt1, pt2)
+    
+  res.startRegion = proc() =
+    res.mVertex = 0
+    
+  res.addVertex = proc(x, y: float64) =
+    case res.mVertex
+    of 0:
+      res.mFirst.x = x
+      res.mFirst.y = y
+      inc res.mVertex
+    of 1:
+      res.mLast.x = x
+      res.mLast.y = y
+      inc res.mVertex
+      addEdge(res.mFirst, res.mLast)
+    else:
+      addEdge(res.mLast, PointT(x: x, y: y))
+      res.mLast = PointT(x: x, y: y)
+      inc res.mVertex
+    
+  res.endRegion = proc() =
+    if res.mVertex >= 2:
+      addEdge(res.mLast, res.mFirst)    
+    
   res.calculateSegmented = proc(inverted: bool): Edges =
     # is the polygon inverted?
     # returns edges

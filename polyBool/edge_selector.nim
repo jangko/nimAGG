@@ -2,10 +2,10 @@ import build_log, epsilon, poly_types
 
 proc indexBuilder(edge: Edge): int =
   result = 0
-  if edge.myFill.above: inc(result, 8)
-  if edge.myFill.below: inc(result, 4)
-  if edge.otherFill.above: inc(result, 2)
-  if edge.otherFill.below: inc result
+  if edge.thisFill.above: inc(result, 8)
+  if edge.thisFill.below: inc(result, 4)
+  if edge.thatFill.above: inc(result, 2)
+  if edge.thatFill.below: inc result
 
 proc selectEdge(edges: Edges, selection: array[16, int], buildLog: BuildLog): Edges =
   result = @[]
@@ -18,10 +18,10 @@ proc selectEdge(edges: Edges, selection: array[16, int], buildLog: BuildLog): Ed
       res.id = if buildLog != nil: buildLog.edgeId() else: -1
       res.start = edge.start
       res.stop  = edge.stop
-      res.myFill.above = selection[index] == 1  # 1 if filled above
-      res.myFill.below = selection[index] == 2  # 2 if filled below
-      res.otherFill.above = false
-      res.otherFill.below = false
+      res.thisFill.above = selection[index] == 1  # 1 if filled above
+      res.thisFill.below = selection[index] == 2  # 2 if filled below
+      res.thatFill.above = false
+      res.thatFill.below = false
       result.add res
 
   if buildLog != nil:

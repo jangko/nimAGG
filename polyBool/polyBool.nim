@@ -1,4 +1,4 @@
-import build_log, epsilon, intersecter, edge_chainer, edge_selector, poly_types
+import build_log, epsilon, edge_chainer, intersecter, edge_selector, poly_types
 
 export poly_types
 
@@ -6,6 +6,9 @@ type
   PolyBool* = object
     log: BuildLog
     eps: Epsilon
+    api: PolyBoolApi
+
+  Selector = proc(self: PolyBool, combined: Combined): Segments
 
 proc initPolyBool*(): PolyBool =
   result.log = nil
@@ -26,19 +29,6 @@ proc epsilon*(self: var PolyBool): var Epsilon =
   self.eps
 
 # core API
-type
-  Polygon* = object
-    regions*: Regions
-    inverted*: bool
-
-  Segments = object
-    segments: Edges
-    inverted: bool
-
-  Combined = object
-    combined: Edges
-    inverted1, inverted2: bool
-
 proc initPolygon*(inverted: bool = false): Polygon =
   result.regions = @[]
   result.inverted = inverted
@@ -51,6 +41,22 @@ proc addVertex*(self: var Polygon, v: PointT) =
 
 proc addVertex*(self: var Polygon, x, y: float64) =
   self.regions[^1].add(PointT(x: x, y: y))
+
+proc startPolygon*(self: var PolyBool) =
+  self.api = intersecter(true, self.eps, self.log)
+
+proc startRegion*(self: var PolyBool) =
+  self.api.startRegion()
+
+proc addVertex*(self: var PolyBool, x, y: float64) =
+  self.api.addVertex(x, y)
+
+proc endRegion*(self: var PolyBool) =
+  self.api.endRegion()
+
+proc endPolygon*(self: var PolyBool, inverted: bool = false): Segments =
+  result.segments = self.api.calculateSegmented(inverted)
+  result.inverted = inverted
 
 proc segments*(self: PolyBool, poly: Polygon): Segments =
   var api = intersecter(true, self.eps, self.log)
@@ -90,31 +96,13 @@ proc polygon*(self: PolyBool, seg: Segments): Polygon =
   result.regions  = segmentChainer(seg.segments, self.eps, self.log)
   result.inverted = seg.inverted
 
-type
-  Selector = proc(self: PolyBool, combined: Combined): Segments
-
-proc debug*(seg: Segments) {.deprecated.} =
-  for s in seg.segments:
-    s.debug()
-    
-proc debug*(seg: Combined) {.deprecated.} =
-  for s in seg.combined:
-    s.debug()
-    
-proc debug*(poly: Polygon) {.deprecated.} =  
-  for reg in poly.regions:
-    stdout.write "["
-    for p in reg:
-      stdout.write p.debug()
-    echo "]"
-    
 proc operate(self: PolyBool, poly1, poly2: Polygon, selector: Selector): Polygon =
   var
     seg1 = self.segments(poly1)
     seg2 = self.segments(poly2)
     comb = self.combine(seg1, seg2)
     seg3 = self.selector(comb)
-  
+
   self.polygon(seg3)
 
 # helper functions for common operations

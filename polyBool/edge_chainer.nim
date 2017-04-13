@@ -9,6 +9,21 @@ type
   Chain = ref object
     data: seq[PointT]
 
+proc removeHead(chain: Chain) {.inline.} =
+  chain.data.delete(0)
+  
+proc removeTail(chain: Chain) {.inline.} =
+  discard chain.data.pop()
+  
+proc addHead(chain: Chain, pt: PointT) {.inline.} =
+  chain.data.insert(pt)
+  
+proc addTail(chain: Chain, pt: PointT) {.inline.} =
+  chain.data.add(pt)
+
+proc join(a, b: Chain) {.inline.} =
+  a.data = a.data.concat(b.data)
+  
 proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions =
   var
     chains  = newSeq[Chain]()
@@ -28,9 +43,9 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
 
     # search for two chains that this segment matches
     var
-      firstMatch = Match(index: 0, matchesHead: false, matchesPt1: false)
+      firstMatch  = Match(index: 0, matchesHead: false, matchesPt1: false)
       secondMatch = Match(index: 0, matchesHead: false, matchesPt1: false)
-      nextMatch = firstMatch
+      nextMatch   = firstMatch
 
     proc setMatch(index: int, matchesHead, matchesPt1: bool): bool =
       # return true if we've matched twice
@@ -47,7 +62,7 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
       var
         chain = chains[i]
         head  = chain.data[0]
-        tail  = chain.data[chain.data.len - 1]
+        tail  = chain.data[^1]
 
       if eps.pointsSame(head, pt1):
         if setMatch(i, true, true): break
@@ -79,10 +94,10 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
         pt    = if firstMatch.matchesPt1: pt2 else: pt1 # if we matched pt1, then we add pt2, etc
         addToHead = firstMatch.matchesHead # if we matched at head, then add to the head
         chain = chains[index]
-        grow  = if addToHead: chain.data[0] else: chain.data[chain.data.len - 1]
-        grow2 = if addToHead: chain.data[1] else: chain.data[chain.data.len - 2]
-        oppo  = if addToHead: chain.data[chain.data.len - 1] else: chain.data[0]
-        oppo2 = if addToHead: chain.data[chain.data.len - 2] else: chain.data[1]
+        grow  = if addToHead: chain.data[0] else: chain.data[^1]
+        grow2 = if addToHead: chain.data[1] else: chain.data[^2]
+        oppo  = if addToHead: chain.data[^1] else: chain.data[0]
+        oppo2 = if addToHead: chain.data[^2] else: chain.data[1]
 
       if eps.pointsCollinear(grow2, grow, pt):
         # grow isn't needed because it's directly between grow2 and pt:
@@ -90,11 +105,11 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
         if addToHead:
           if buildLog != nil:
             buildLog.chainRemoveHead(firstMatch.index, pt)
-          chain.data.delete(0)
+          chain.removeHead()
         else:
           if buildLog != nil:
             buildLog.chainRemoveTail(firstMatch.index, pt)
-          discard chain.data.pop()
+          chain.removeTail()
         grow = grow2 # old grow is gone... new grow is what grow2 was
       if eps.pointsSame(oppo, pt):
         # we're closing the loop, so remove chain from chains
@@ -106,11 +121,11 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
           if addToHead:
             if buildLog != nil:
               buildLog.chainRemoveTail(firstMatch.index, grow)
-            discard chain.data.pop()
+            chain.removeTail()
           else:
             if buildLog != nil:
               buildLog.chainRemoveHead(firstMatch.index, grow)
-            chain.data.delete(0)
+            chain.removeHead()
 
         if buildLog != nil:
           buildLog.chainClose(firstMatch.index)
@@ -119,15 +134,15 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
         regions.add(chain.data)
         continue
 
-      # not closing a loop, so just add it to the apporpriate side
+      # not closing a loop, so just add it to the appropriate side
       if addToHead:
         if buildLog != nil:
           buildLog.chainAddHead(firstMatch.index, pt)
-        chain.data.insert(pt)
+        chain.addHead(pt)
       else:
         if buildLog != nil:
           buildLog.chainAddTail(firstMatch.index, pt)
-        chain.data.add(pt)
+        chain.addTail(pt)
       continue
 
     # otherwise, we matched two chains, so we need to combine those chains together
@@ -142,8 +157,8 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
       var
         chain1 = chains[index1]
         chain2 = chains[index2]
-        tail  = chain1.data[chain1.data.len - 1]
-        tail2 = chain1.data[chain1.data.len - 2]
+        tail  = chain1.data[^1]
+        tail2 = chain1.data[^2]
         head  = chain2.data[0]
         head2 = chain2.data[1]
 
@@ -152,7 +167,7 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
         # tail2 ---tail---> head
         if buildLog != nil:
           buildLog.chainRemoveTail(index1, tail)
-        discard chain1.data.pop()
+        chain1.removeTail()
         tail = tail2 # old tail is gone... new tail is what tail2 was
 
       if eps.pointsCollinear(tail, head, head2):
@@ -160,11 +175,11 @@ proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions
         # tail ---head---> head2
         if buildLog != nil:
           buildLog.chainRemoveHead(index2, head)
-        chain2.data.delete(0)
+        chain2.removeHead()
 
       if buildLog != nil:
         buildLog.chainJoin(index1, index2)
-      chains[index1].data = chain1.data.concat(chain2.data)
+      chains[index1].join(chain2)
       chains.delete(index2)
 
     var F = firstMatch.index

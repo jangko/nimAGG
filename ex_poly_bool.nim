@@ -106,7 +106,8 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
       ps.closePolygon()
       
     cmd = counter.vertex(x, y)
-      
+    
+  ras.fillingRule(fillEvenOdd)    
   ras.addPath(ps)
   ren.color(initRgba(0.25, 0.9, 0.25, 0.65))
   renderScanlines(ras, sl, ren)
@@ -126,6 +127,7 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
     txt = initGsvText()
     txtStroke = initConvStroke(txt)
 
+  ras.fillingRule(fillNonZero)
   txtStroke.width(1.5)
   txtStroke.lineCap(LineCap.roundCap)
   txt.size(10.0)
@@ -367,8 +369,7 @@ proc onDraw(op = 2, shape = 3) =
     ras = initRasterizerScanlineAA()
 
   rb.clear(initRgba(1,1,1))
-  
-  ras.fillingRule(fillEvenOdd)
+    
   app.renderClipper(sl, ras)
 
   renderCtrl(ras, sl, rb, app.mPolygons)
