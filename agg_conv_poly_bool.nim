@@ -65,7 +65,7 @@ proc sourceToPolygon[VertexSource](vs: var VertexSource): Polygon =
       if not starting_first_line and isClosed(cmd):
         result.addVertex(start_x, start_y)
     cmd = vs.vertex(x, y)
-    
+
 proc sourceToSegments[VertexSource](pb: var PolyBool, vs: var VertexSource): Segments =
   var
     x, y: float64
@@ -90,7 +90,7 @@ proc sourceToSegments[VertexSource](pb: var PolyBool, vs: var VertexSource): Seg
       pb.endRegion()
     cmd = vs.vertex(x, y)
   pb.endPolygon()
-  
+
 # Vertex Source Interface
 proc rewind*[VSA,VSB](self: var ConvPolyBool[VSA,VSB], pathId: int) =
   mixin rewind
@@ -98,13 +98,13 @@ proc rewind*[VSA,VSB](self: var ConvPolyBool[VSA,VSB], pathId: int) =
   self.mSrcB[].rewind(pathId)
   self.mResult.removeAll()
 
-  #[var 
+  var
     polyA = sourceToPolygon(self.mSrcA[])
     polyB = sourceToPolygon(self.mSrcB[])
     polyRes: Polygon
-  
+
   case self.mOp
-  of polyBoolUnion: 
+  of polyBoolUnion:
     polyRes = self.mPolyBool.clipUnion(polyA, polyB)
   of polyBoolIntersect:
     polyRes = self.mPolyBool.clipIntersect(polyA, polyB)
@@ -114,22 +114,22 @@ proc rewind*[VSA,VSB](self: var ConvPolyBool[VSA,VSB], pathId: int) =
     polyRes = self.mPolyBool.clipDifference(polyA, polyB)
   of polyBoolBMinusA:
     polyRes = self.mPolyBool.clipDifference(polyB, polyA)
-    
-  self.mResult.polygonToPath(polyRes)]#
-  
-  var 
+
+  self.mResult.polygonToPath(polyRes)
+
+  #[var
     polyA = self.mPolyBool.sourceToSegments(self.mSrcA[])
     polyB = self.mPolyBool.sourceToSegments(self.mSrcB[])
     combined: Combined
     polyRes: Segments
-  
+
   if self.mOp == polyBoolBMinusA:
     combined = self.mPolyBool.combine(polyB, polyA)
   else:
     combined = self.mPolyBool.combine(polyA, polyB)
-    
+
   case self.mOp
-  of polyBoolUnion: 
+  of polyBoolUnion:
     polyRes = self.mPolyBool.selectUnion(combined)
   of polyBoolIntersect:
     polyRes = self.mPolyBool.selectIntersect(combined)
@@ -139,8 +139,8 @@ proc rewind*[VSA,VSB](self: var ConvPolyBool[VSA,VSB], pathId: int) =
     polyRes = self.mPolyBool.selectDifference(combined)
   of polyBoolBMinusA:
     polyRes = self.mPolyBool.selectDifference(combined)
-    
-  self.mResult.polygonToPath(self.mPolyBool.polygon(polyRes))
-    
+
+  self.mResult.polygonToPath(self.mPolyBool.polygon(polyRes))]#
+
 proc vertex*[VSA,VSB](self: var ConvPolyBool[VSA,VSB], x, y: var float64): uint =
   self.mResult.vertex(x, y)

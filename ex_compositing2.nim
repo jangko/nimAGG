@@ -114,10 +114,8 @@ proc onDraw() =
     sl     = initScanlineU8()
     ramp1, ramp2: array[256, Rgba8]
     ren    = initRendererScanlineAASolid(rb)
-    mode   = app.compOp.curItem()
-    
-  rb.clear(initRgba8(255, 255, 255))
-  
+    #mode   = app.compOp.curItem()
+      
   generateColorRamp(ramp1,
     initRgba(0, 0, 0, app.alphaDst.value()),
     initRgba(0, 0, 1, app.alphaDst.value()),
@@ -129,36 +127,41 @@ proc onDraw() =
     initRgba(0, 0, 1, app.alphaSrc.value()),
     initRgba(0, 1, 0, app.alphaSrc.value()),
     initRgba(1, 0, 0, 0))
+    
+  for mode in CompOp:
+    app.compOp.curItem(mode.ord)
+    rb.clear(initRgba8(255, 255, 255))
+    let startTime = cpuTime()
+    renderScene(rb, rbuf, ramp1, ramp2, mode.ord, ras, sl)
+    let t2 = cpuTime() - startTime
+    
+    var
+      t = initGsvText()
+      pt = initConvStroke(t)
+    
+    t.size(10.0)
+    pt.width(1.5)
+    t.startPoint(10.0, 50.0)
+    t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
+    
+    ras.addPath(pt)
+    ren.color(initRgba(0,0,0))
+    renderScanlines(ras, sl, ren)
+    
+    let co = CompOp(mode)
+    t.startPoint(10.0, 35.0)
+    t.text($co)
+    
+    ras.addPath(pt)
+    ren.color(initRgba(0,0,0))
+    renderScanlines(ras, sl, ren)
   
-  let startTime = cpuTime()
-  renderScene(rb, rbuf, ramp1, ramp2, mode, ras, sl)
-  let t2 = cpuTime() - startTime
-  
-  var
-    t = initGsvText()
-    pt = initConvStroke(t)
-  
-  t.size(10.0)
-  pt.width(1.5)
-  t.startPoint(10.0, 50.0)
-  t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
-  
-  ras.addPath(pt)
-  ren.color(initRgba(0,0,0))
-  renderScanlines(ras, sl, ren)
-  
-  let co = CompOp(mode)
-  t.startPoint(10.0, 35.0)
-  t.text($co)
-  
-  ras.addPath(pt)
-  ren.color(initRgba(0,0,0))
-  renderScanlines(ras, sl, ren)
-
-  renderCtrlRs(ras, sl, ren, app.alphaDst)
-  renderCtrlRs(ras, sl, ren, app.alphaSrc)
-  renderCtrlRs(ras, sl, ren, app.compOp)
-        
-  saveBMP32("compositing2 $1.bmp" % [$co], buffer, frameWidth, frameHeight)
+    renderCtrlRs(ras, sl, ren, app.alphaDst)
+    renderCtrlRs(ras, sl, ren, app.alphaSrc)
+    renderCtrlRs(ras, sl, ren, app.compOp)
+          
+    let name = "compositing2 $1.bmp" % [$co]
+    echo name
+    saveBMP32(name, buffer, frameWidth, frameHeight)
 
 onDraw()

@@ -164,53 +164,56 @@ proc onDraw() =
     rbPre   = initRendererBase(pixfPre)
     bmp    = loadBMP32("resources" & DirSep & "compositing.bmp")
     rbuf1  = initRenderingBuffer(cast[ptr ValueT](bmp.data[0].addr), bmp.width, bmp.height, -bmp.width * pixWidth)
-    mode   = app.compOp.curItem()
+    #mode   = app.compOp.curItem()
 
   # set alpha channel to full opaque
   let numPix = bmp.width*bmp.height
   for i in 0.. <numPix:
     bmp.data[i * 4 + 3] = 255.chr
 
-
-  # draw checker board
-  rb.clear(initRgba8(255, 255, 255))
-  for y in countup(0, rb.height() - 1, 8):
-    for x in countup(((y shr 3) and 1) shl 3, rb.width() - 1, 16):
-      rb.copyBar(x, y, x+7, y+7, initRgba8(0xdf, 0xdf, 0xAA))
-
-  rb2.clear(initRgba8(0,0,0,0))
-
-  let startTime = cpuTime()
-  app.renderScene(rbuf0, rbuf1, pixf2, mode)
-  let t2 = cpuTime() - startTime
-
-  rbPre.blendFrom(pixf2)
-
-  var
-    t = initGsvText()
-    pt = initConvStroke(t)
-
-  t.size(10.0)
-  pt.width(1.5)
-  t.startPoint(10.0, 50.0)
-  t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
-
-  ras.addPath(pt)
-  ren.color(initRgba(0,0,0))
-  renderScanlines(ras, sl, ren)
-
-  let co = CompOp(mode)
-  t.startPoint(10.0, 35.0)
-  t.text($co)
-
-  ras.addPath(pt)
-  ren.color(initRgba(0,0,0))
-  renderScanlines(ras, sl, ren)
-
-  renderCtrlRs(ras, sl, ren, app.alphaDst)
-  renderCtrlRs(ras, sl, ren, app.alphaSrc)
-  renderCtrlRs(ras, sl, ren, app.compOp)
-
-  saveBMP32("compositing $1.bmp" % [$co], buffer, frameWidth, frameHeight)
+  for modeOp in CompOp:
+    app.compOp.curItem(modeOp.ord)
+    # draw checker board
+    rb.clear(initRgba8(255, 255, 255))
+    for y in countup(0, rb.height() - 1, 8):
+      for x in countup(((y shr 3) and 1) shl 3, rb.width() - 1, 16):
+        rb.copyBar(x, y, x+7, y+7, initRgba8(0xdf, 0xdf, 0xAA))
+  
+    rb2.clear(initRgba8(0,0,0,0))
+  
+    let startTime = cpuTime()
+    app.renderScene(rbuf0, rbuf1, pixf2, modeOp.ord)
+    let t2 = cpuTime() - startTime
+  
+    rbPre.blendFrom(pixf2)
+  
+    var
+      t = initGsvText()
+      pt = initConvStroke(t)
+  
+    t.size(10.0)
+    pt.width(1.5)
+    t.startPoint(10.0, 50.0)
+    t.text("$1 ms" % [formatFloat(t2, ffDecimal, 2)])
+  
+    ras.addPath(pt)
+    ren.color(initRgba(0,0,0))
+    renderScanlines(ras, sl, ren)
+  
+    let co = modeOp
+    t.startPoint(10.0, 35.0)
+    t.text($co)
+  
+    ras.addPath(pt)
+    ren.color(initRgba(0,0,0))
+    renderScanlines(ras, sl, ren)
+  
+    renderCtrlRs(ras, sl, ren, app.alphaDst)
+    renderCtrlRs(ras, sl, ren, app.alphaSrc)
+    renderCtrlRs(ras, sl, ren, app.compOp)
+  
+    let name = "compositing $1.bmp" % [$co]
+    echo name
+    saveBMP32(name, buffer, frameWidth, frameHeight)
 
 onDraw()

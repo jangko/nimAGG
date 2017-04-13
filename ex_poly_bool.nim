@@ -45,7 +45,7 @@ type
     buffer: seq[ValueT]
     rbuf: RenderingBuffer
 
-proc initApp(op = 2, shape = 3): App =
+proc initApp(): App =
   result.mPolygons  = newRboxCtrl[Rgba8](5.0,     5.0, 5.0+205.0,  110.0, not flipY)
   result.mOperation = newRboxCtrl[Rgba8](555.0,   5.0, 555.0+80.0, 130.0, not flipY)
 
@@ -55,14 +55,14 @@ proc initApp(op = 2, shape = 3): App =
   result.mOperation.addItem("XOR")
   result.mOperation.addItem("A-B")
   result.mOperation.addItem("B-A")
-  result.mOperation.curItem(op)
+  result.mOperation.curItem(2)
 
   result.mPolygons.addItem("Two Simple Paths")
   result.mPolygons.addItem("Closed Stroke")
   result.mPolygons.addItem("Great Britain and Arrows")
   result.mPolygons.addItem("Great Britain and Spiral")
   result.mPolygons.addItem("Spiral and Glyph")
-  result.mPolygons.curItem(shape)
+  result.mPolygons.curItem(3)
 
   result.mX = frameWidth.float64 / 2.0
   result.mY = frameHeight.float64 / 2.0
@@ -360,24 +360,25 @@ proc renderClipper[Scanline, Ras](app: var App, sl: var Scanline, ras: var Ras) 
     app.performRendering(sl, ras, ren, clp)
   else: discard
 
-proc onDraw(op = 2, shape = 3) =
+proc onDraw() =
   var
-    app = initApp(op, shape)
+    app = initApp()
     pf  = initPixFmtRgb24(app.rbuf)
     rb  = initRendererBase(pf)
     sl  = initScanlineU8()
     ras = initRasterizerScanlineAA()
-
-  rb.clear(initRgba(1,1,1))
     
-  app.renderClipper(sl, ras)
+  for op in 0..5:
+    app.mOperation.curItem(op)
+    for shape in 0..4:
+      app.mPolygons.curItem(shape)
+      rb.clear(initRgba(1,1,1))        
+      app.renderClipper(sl, ras)
+    
+      renderCtrl(ras, sl, rb, app.mPolygons)
+      renderCtrl(ras, sl, rb, app.mOperation)
+      let name = "poly_bool_$1_$2.bmp" % [$op, $shape]
+      echo name
+      saveBMP24(name, app.buffer, frameWidth, frameHeight)
 
-  renderCtrl(ras, sl, rb, app.mPolygons)
-  renderCtrl(ras, sl, rb, app.mOperation)
-  let name = "poly_bool_$1_$2.bmp" % [$op, $shape]
-  echo name
-  saveBMP24(name, app.buffer, frameWidth, frameHeight)
-
-for op in 0..5:
-  for shape in 0..4:
-    onDraw(op, shape)
+onDraw()
