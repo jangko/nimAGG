@@ -331,7 +331,7 @@ proc onDraw(pixFormat: PixFormat) =
   let h = ren.height() div 2
   for i in 0.. <h:
     var p = ren.pixPtr(i, i)
-    setMem(p, 0, pixElem * sizeof(ValueT))
+    zeroMem(p, pixElem * sizeof(ValueT))
     inc(p, pixElem)
 
   var

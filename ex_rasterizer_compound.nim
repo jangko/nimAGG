@@ -119,15 +119,6 @@ proc composePath(app: var App) =
   app.path.curve3(22.41, 4.74, 28.47, 9.62)
   app.path.closePolygon()
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "rasterizer_compound.cpp".}
-#{.compile: "agg_curves2.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.compile: "agg_vcgen_stroke2.cpp".}
-#{.passL: "-lstdc++".}
-#
-#proc test_compound(): cstring {.importc.}
-
 proc onDraw() =
   var
     app    = initApp()

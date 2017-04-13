@@ -178,18 +178,6 @@ proc drawCurve[Pattern, Rasterizer, Renderer, PatternSource, VertexSource](app: 
   ren.startX(app.startX.value())
   ras.addPath(vs)
 
-#[
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_pattern.cpp".}
-{.compile: "agg_bezier_ctrl2.cpp".}
-{.compile: "agg_polygon_ctrl2.cpp".}
-{.compile: "agg_curves2.cpp".}
-{.compile: "agg_vcgen_stroke2.cpp".}
-{.compile: "agg_line_aa_basics2.cpp".}
-{.passL: "-lstdc++".}
-]#
-#proc test_pattern(image: cstring, w, h: cint, data: ptr ptr Rgba8): cstring {.importc.}
-
 proc onDraw() =
   var
     app    = initApp()

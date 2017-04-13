@@ -66,14 +66,15 @@ const subjects = [
   "test_span_image_filter_gray",
   "test_span_image_filter_rgb",
   "test_span_image_filter_rgba",
-  "test_text",
   "t01_rendering_buffer",
   "t02_rendering_buffer",
   "t03_rendering_buffer",
   "t04_rendering_buffer",
   "ex_svg_circle",
   "ex_gradients_contour",
-  "ex_particle_demo"]
+  "ex_particle_demo",
+  "ex_test_poly_bool",
+  "ex_poly_bool"]
 
 mode = ScriptMode.Silent
 

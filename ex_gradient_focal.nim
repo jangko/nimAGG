@@ -5,15 +5,6 @@ import agg_basics, agg_color_rgba, agg_pixfmt_rgb, agg_renderer_base
 import nimBMP, agg_trans_affine, agg_ellipse, agg_conv_stroke
 import agg_conv_transform, times, agg_gsv_text, strutils
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_gradient.cpp".}
-{.compile: "agg_trans_affine2.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_gradient() {.importc.}
-proc get_gradient(i: cint, c: var Rgba8) {.importc.}
-proc main_gradient(): cstring {.importc.}
-proc print_gradient() {.importc.}
 const
   frameWidth = 600
   frameHeight = 400

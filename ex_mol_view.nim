@@ -489,19 +489,13 @@ proc initApp(name: string): App =
   else:
     echo "file not found"
 
-  setMem(addr(result.atomColors[0.AtomColor]), 0, sizeof(result.atomColors))
+  zeroMem(addr(result.atomColors[0.AtomColor]), sizeof(result.atomColors))
   result.atomColors[atom_color_general] = initRgba8(0,0,0)
   result.atomColors[atom_color_N]       = initRgba8(0,0,120)
   result.atomColors[atom_color_O]       = initRgba8(200,0,0)
   result.atomColors[atom_color_S]       = initRgba8(120,120,0)
   result.atomColors[atom_color_P]       = initRgba8(80,50,0)
   result.atomColors[atom_color_halogen] = initRgba8(0,200,0)
-
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_mol_view.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_mol() {.importc.}
 
 proc onDraw() =
   var

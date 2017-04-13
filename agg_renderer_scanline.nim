@@ -321,7 +321,7 @@ proc renderScanlinesCompound*[Rasterizer, ScanlineAA, ScanlineBin,
           var spanBin = slBin.begin()
           numSpans = slBin.numSpans()
           while true:
-            setMem(mixBufer + spanBin.x - minX, 0, spanBin.len * sizeof(getColorT(BaseRenderer)))
+            zeroMem(mixBufer + spanBin.x - minX, spanBin.len * sizeof(getColorT(BaseRenderer)))
             dec numSpans
             if numSpans == 0: break
             inc spanBin
@@ -434,8 +434,8 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
           slLen   = ras.scanlineLength()
 
         if slLen != 0:
-          setMem(mixBuffer + slStart - minX, 0, slLen * sizeof(getColorT(BaseRenderer)))
-          setMem(coverBuffer + slStart - minX, 0, slLen * sizeof(getColorT(BaseRenderer)))
+          zeroMem(mixBuffer + slStart - minX, slLen * sizeof(getColorT(BaseRenderer)))
+          zeroMem(coverBuffer + slStart - minX, slLen * sizeof(getColorT(BaseRenderer)))
           var slY = 0x7FFFFFFF
 
           for i in 0.. <numStyles:

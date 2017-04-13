@@ -22,7 +22,7 @@ proc value(p: ptr uint8): uint16 =
 
 proc initGlyphRasterBin*(font: ptr uint8): GlyphRasterBin =
   result.mFont = font
-  setMem(result.mSpan[0].addr, 0, sizeof(result.mSpan))
+  zeroMem(result.mSpan[0].addr, sizeof(result.mSpan))
 
 proc font*(self: GlyphRasterBin): ptr uint8 =
   self.mFont

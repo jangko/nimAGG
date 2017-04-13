@@ -199,14 +199,6 @@ proc readNext(app: var App) =
   discard app.shape.readNext()
   app.shape.scale(frameWidth.float64, frameHeight.float64)
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_flash.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.compile: "agg_curves2.cpp".}
-#{.passL: "-lstdc++".}
-#
-#proc test_flash() {.importc.}
-
 proc onDraw() =
   var app    = initApp()
   discard app.open("shapes.txt")

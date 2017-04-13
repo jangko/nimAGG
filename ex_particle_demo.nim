@@ -23,7 +23,7 @@ proc initGradientTricolor(c1, c2, c3: Rgba8): GradientTricolor =
   result.mC2 = c2
   result.mC3 = c3
 
-proc `[]`(self: GradientTricolor, index: int): Rgba8 =
+proc `[]`(self: GradientTricolor, idx: int): Rgba8 =
   type
     ColorT = Rgba8
     CalcT = getCalcT(ColorT)
@@ -32,18 +32,18 @@ proc `[]`(self: GradientTricolor, index: int): Rgba8 =
   const
     baseShift = getBaseShift(ColorT)
 
-  if index <= 127:
-    let index = index * 2
-    result.r = ValueT((((self.mC2.r - self.mC1.r).int * index) + (self.mC1.r.int shl baseShift)) shr baseShift)
-    result.g = ValueT((((self.mC2.g - self.mC1.g).int * index) + (self.mC1.g.int shl baseShift)) shr baseShift)
-    result.b = ValueT((((self.mC2.b - self.mC1.b).int * index) + (self.mC1.b.int shl baseShift)) shr baseShift)
-    result.a = ValueT((((self.mC2.a - self.mC1.a).int * index) + (self.mC1.a.int shl baseShift)) shr baseShift)
+  if idx <= 127:
+    let idx = idx * 2
+    result.r = ValueT((((self.mC2.r.CalcT - self.mC1.r.CalcT) * idx.CalcT) + (self.mC1.r.CalcT shl baseShift)) shr baseShift)
+    result.g = ValueT((((self.mC2.g.CalcT - self.mC1.g.CalcT) * idx.CalcT) + (self.mC1.g.CalcT shl baseShift)) shr baseShift)
+    result.b = ValueT((((self.mC2.b.CalcT - self.mC1.b.CalcT) * idx.CalcT) + (self.mC1.b.CalcT shl baseShift)) shr baseShift)
+    result.a = ValueT((((self.mC2.a.CalcT - self.mC1.a.CalcT) * idx.CalcT) + (self.mC1.a.CalcT shl baseShift)) shr baseShift)
   else:
-    let index = index - 127 * 2
-    result.r = ValueT((((self.mC3.r - self.mC2.r).int * index) + (self.mC2.r.int shl baseshift)) shr baseShift)
-    result.g = ValueT((((self.mC3.g - self.mC2.g).int * index) + (self.mC2.g.int shl baseshift)) shr baseShift)
-    result.b = ValueT((((self.mC3.b - self.mC2.b).int * index) + (self.mC2.b.int shl baseshift)) shr baseShift)
-    result.a = ValueT((((self.mC3.a - self.mC2.a).int * index) + (self.mC2.a.int shl baseshift)) shr baseShift)
+    let idx = (idx - 127) * 2
+    result.r = ValueT((((self.mC3.r.CalcT - self.mC2.r.CalcT) * idx.CalcT) + (self.mC2.r.CalcT shl baseshift)) shr baseShift)
+    result.g = ValueT((((self.mC3.g.CalcT - self.mC2.g.CalcT) * idx.CalcT) + (self.mC2.g.CalcT shl baseshift)) shr baseShift)
+    result.b = ValueT((((self.mC3.b.CalcT - self.mC2.b.CalcT) * idx.CalcT) + (self.mC2.b.CalcT shl baseshift)) shr baseShift)
+    result.a = ValueT((((self.mC3.a.CalcT - self.mC2.a.CalcT) * idx.CalcT) + (self.mC2.a.CalcT shl baseshift)) shr baseShift)
 
 type
   App = ref object

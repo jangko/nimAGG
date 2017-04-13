@@ -40,15 +40,15 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       x = x
 
     if y < 0 or y > ymax:
-      setMem(dst, 0, numPix * sizeof(CoverType))
+      zeroMem(dst, numPix * sizeof(CoverType))
       return
 
     if x < 0:
       count += x
       if count <= 0:
-        setMem(dst, 0, numPix * sizeof(CoverType))
+        zeroMem(dst, numPix * sizeof(CoverType))
         return
-      setMem(covers, 0, -x * sizeof(CoverType))
+      zeroMem(covers, -x * sizeof(CoverType))
       covers -= x
       x = 0
 
@@ -56,9 +56,9 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       var rest = x + count - xmax - 1
       count -= rest
       if count <= 0:
-        setMem(dst, 0, numPix * sizeof(CoverType))
+        zeroMem(dst, numPix * sizeof(CoverType))
         return
-      setMem(covers + count, 0, rest * sizeof(CoverType))
+      zeroMem(covers + count, rest * sizeof(CoverType))
 
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
@@ -76,15 +76,15 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       x = x
 
     if y < 0 or y > ymax:
-      setMem(dst, 0, numPix * sizeof(CoverType))
+      zeroMem(dst, numPix * sizeof(CoverType))
       return
 
     if x < 0:
       count += x
       if count <= 0:
-         setMem(dst, 0, numPix * sizeof(CoverType))
+         zeroMem(dst, numPix * sizeof(CoverType))
          return
-      setMem(covers, 0, -x * sizeof(CoverType))
+      zeroMem(covers, -x * sizeof(CoverType))
       covers -= x
       x = 0
 
@@ -92,9 +92,9 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       var rest = x + count - xmax - 1
       count -= rest
       if count <= 0:
-        setMem(dst, 0, numPix * sizeof(CoverType))
+        zeroMem(dst, numPix * sizeof(CoverType))
         return
-      setMem(covers + count, 0, rest * sizeof(CoverType))
+      zeroMem(covers + count, rest * sizeof(CoverType))
 
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
@@ -112,15 +112,15 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       y = yy
 
     if x < 0 or x > xmax:
-      setMem(dst, 0, numPix * sizeof(CoverType))
+      zeroMem(dst, numPix * sizeof(CoverType))
       return
 
     if y < 0:
      count += y
      if count <= 0:
-       setMem(dst, 0, numPix * sizeof(CoverType))
+       zeroMem(dst, numPix * sizeof(CoverType))
        return
-     setMem(covers, 0, -y * sizeof(CoverType))
+     zeroMem(covers, -y * sizeof(CoverType))
      covers -= y
      y = 0
 
@@ -128,9 +128,9 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
      var rest = y + count - ymax - 1
      count -= rest
      if count <= 0:
-       setMem(dst, 0, numPix * sizeof(CoverType))
+       zeroMem(dst, numPix * sizeof(CoverType))
        return
-     setMem(covers + count, 0, rest * sizeof(CoverType))
+     zeroMem(covers + count, rest * sizeof(CoverType))
 
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset
     doWhile count != 0:
@@ -148,15 +148,15 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       y = yy
 
     if x < 0 or x > xmax:
-      setMem(dst, 0, numPix * sizeof(CoverType))
+      zeroMem(dst, numPix * sizeof(CoverType))
       return
 
     if y < 0:
       count += y
       if count <= 0:
-        setMem(dst, 0, numPix * sizeof(CoverType))
+        zeroMem(dst, numPix * sizeof(CoverType))
         return
-      setMem(covers, 0, -y * sizeof(CoverType))
+      zeroMem(covers, -y * sizeof(CoverType))
       covers -= y
       y = 0
 
@@ -164,9 +164,9 @@ template alphaMaskU8*(Step: int, Offset: int, name: untyped, MaskF: typed = oneC
       var rest = y + count - ymax - 1
       count -= rest
       if count <= 0:
-        setMem(dst, 0, numPix * sizeof(CoverType))
+        zeroMem(dst, numPix * sizeof(CoverType))
         return
-      setMem(covers + count, 0, rest * sizeof(CoverType))
+      zeroMem(covers + count, rest * sizeof(CoverType))
 
     var mask = self.rbuf[].rowPtr(y) + x * Step + Offset;
     doWhile count != 0:

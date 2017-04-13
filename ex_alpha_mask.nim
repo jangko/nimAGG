@@ -3,12 +3,6 @@ import agg_path_storage, agg_conv_transform, agg_bounding_rect, agg_renderer_sca
 import agg_pixfmt_rgb, agg_pixfmt_gray, agg_scanline_u, agg_scanline_p, agg_renderer_base, agg_trans_affine
 import parse_lion, nimBMP, agg_rasterizer_scanline_aa, agg_alpha_mask_u8, agg_ellipse, random
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "parse_lion2.cpp".}
-{.passL: "-lstdc++".}
-
-proc parse_lion() {.importc.}
-
 const
   frameWidth = 512
   frameHeight = 400
