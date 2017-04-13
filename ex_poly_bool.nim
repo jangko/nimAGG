@@ -89,7 +89,7 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
     startTime = cpuTime()
 
   counter.rewind(0)
-  let t1 = cpuTime() - startTime
+  let t1 = (cpuTime() - startTime) * 1000
   startTime = cpuTime()
 
   var 
@@ -112,7 +112,7 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
   ren.color(initRgba(0.25, 0.9, 0.25, 0.65))
   renderScanlines(ras, sl, ren)
 
-  let t2 = cpuTime() - startTime
+  let t2 = (cpuTime() - startTime) * 1000
 
   var
     stroke = initConvStroke(ps)

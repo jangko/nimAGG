@@ -396,12 +396,6 @@ proc onResize(app: var App, sx, sy: int) =
   app.gray8Buf.setLen(sx * sy)
   app.gray8Rbuf.attach(app.gray8Buf[0].addr, sx, sy, sx)
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_blend.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_blend(data: cstring, sx, sy: cint, x1,y1,x2,y2, radius:float64): cstring {.importc.}
-
 proc onDraw() =
   var
     app    = initApp()
@@ -439,7 +433,6 @@ proc onDraw() =
   # Render shadow
   app.ras.addPath(shadowTrans)
   renderScanlinesAAsolid(app.ras, app.sl, renbGray8, initGray8(255))
-  #renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba8(255,0,0,255))
 
   # Calculate the bounding box and extend it by the blur radius
   var bbox: RectD
@@ -450,10 +443,6 @@ proc onDraw() =
   bbox.x2 += app.radius.value()
   bbox.y2 += app.radius.value()
 
-  #var buf = test_blend(cast[cstring](app.gray8buf[0].addr), frameWidth.cint, frameHeight.cint,
-  #bbox.x1, bbox.y1, bbox.x2, bbox.y2, app.radius.value())
-
-  #echo "---"
   if bbox.clip(initRectD(0.0, 0.0, frameWidth.float64, frameHeight.float64)):
     # Create a new pixel renderer and attach it to the main one as a child image.
     # It returns true if the attachment suceeded. It fails if the rectangle
@@ -486,16 +475,9 @@ proc onDraw() =
   renderCtrl(app.ras, app.sl, renb, app.how)
   renderCtrl(app.ras, app.sl, renb, app.radius)
   renderCtrl(app.ras, app.sl, renb, app.shadow)
-
-  #copyMem(buffer.cstring, buf, buffer.len)
-  
+ 
   when defined(grayMode):
-    var
-      target = newString(frameWidth * frameHeight * 3)
-      rbuf2  = initRenderingBuffer(cast[ptr ValueT](target[0].addr), frameWidth, frameHeight, -frameWidth * 3)
-
-    colorConv(rbuf2, rbuf, color_conv_gray8_to_rgb24)
-    saveBMP24("blend_color.bmp", target, frameWidth, frameHeight)
+    saveBMP8("blend_color.bmp", buffer, frameWidth, frameHeight)
   else:
     saveBMP24("blend_color.bmp", buffer, frameWidth, frameHeight)
     

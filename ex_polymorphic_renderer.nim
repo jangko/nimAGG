@@ -103,12 +103,6 @@ const
 type
   ValueT = uint8
   
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_poly.cpp".}
-{.passL: "-lstdc++".}
-
-#proc test_poly(): cstring {.importc.}
-  
 proc onDraw() =
   var
     buffer = newString(frameWidth * frameHeight * pixWidth)

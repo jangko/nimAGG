@@ -5,15 +5,6 @@ import agg_span_interpolator_linear, agg_span_gouraud_rgba, agg_span_allocator
 import agg_color_rgba, agg_renderer_base, nimBMP, math, agg_trans_affine, agg_ellipse
 import strutils, random, times
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "aa_test.cpp".}
-{.compile: "agg_trans_affine2.cpp".}
-{.compile: "agg_vcgen_stroke2.cpp".}
-{.compile: "agg_vcgen_dash2.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_aa() {.importc.}
-
 const
   frameWidth = 600
   frameHeight = 480

@@ -66,7 +66,6 @@ const subjects = [
   "test_span_image_filter_gray",
   "test_span_image_filter_rgb",
   "test_span_image_filter_rgba",
-  "test_text",
   "t01_rendering_buffer",
   "t02_rendering_buffer",
   "t03_rendering_buffer",

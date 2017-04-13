@@ -4,10 +4,6 @@ import
   agg_color_gray, agg_renderer_base, agg_color_rgba,
   agg_renderer_scanline, nimBMP
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_ellipse.cpp".}
-#{.passL: "-lstdc++".}
-
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 3, 2, PixfmtGray8bgr24r)
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 3, 1, PixfmtGray8bgr24g)
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 3, 0, PixfmtGray8bgr24b)
@@ -19,8 +15,6 @@ const
 
 type
   ValueT = uint8
-
-#proc test_ellipse() {.importc.}
 
 proc onDraw() =
   var

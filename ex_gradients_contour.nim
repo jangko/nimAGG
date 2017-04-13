@@ -1550,14 +1550,6 @@ proc renderContour[GradFunc, T2, TR](app: var App, gradFunc: var GradFunc, t2: v
   else:
     app.renderContourAux(gradFunc, t2, D1, D2, gmt)
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_contour.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.compile: "agg_curves2.cpp".}
-#{.passL: "-lstdc++".}
-#
-#proc test_contour(): cstring {.importc.}
-
 proc performRendering[VertexSource](app: var App, vs: var VertexSource, contour: var PathStorage) =
   let bb = boundingRectD(vs, 0)
   var scale = (frameWidth.float64 - 120.0) / (bb.x2 - bb.x1)

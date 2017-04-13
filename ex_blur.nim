@@ -29,12 +29,6 @@ type
     stackBlur: StackBlur[Rgba8, StackBlurCalcRgb]
     recursiveBlur: RecursiveBlur[Rgba8, RecursiveBlurCalcRgb]
     
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_blur.cpp".}
-#{.passL: "-lstdc++".}
-#    
-#proc test_blur(buf: cstring, w, h, px: cint, bb: var RectD) {.importc.}
-
 proc initApp(): App =
   result.how = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 70.0, not flipY)
   result.radius = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 130 + 300.0, 10.0 + 8.0 + 4.0, not flipY)

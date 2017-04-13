@@ -2,24 +2,10 @@ import agg_basics, agg_rendering_buffer, agg_scanline_p, agg_renderer_base
 import agg_pixfmt_rgb, agg_gamma_lut, agg_ellipse, agg_rounded_rect, agg_color_rgba
 import agg_conv_stroke, agg_rasterizer_scanline_aa, agg_renderer_scanline, nimBMP
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_gamma.cpp".}
-#{.compile: "agg_arc2.cpp".}
-#{.compile: "agg_rounded_rect2.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.compile: "agg_vcgen_stroke2.cpp".}
-#
-#{.passL: "-lstdc++"}
-#
-#
-#proc test_gamma() {.importc.}
-
 const
   frameWidth = 600
   frameHeight = 400
   pixWidth = 3
-
-#pixfmtRgb24Gamma(PixFmt, GammaLut8)
 
 const
   mGamma = 1.8
@@ -63,9 +49,6 @@ renderScanlines(ras, sl, ren)
 var d = mOffset
 var r = initRoundedRect(mx[0]+d, my[0]+d, mx[1]+d, my[1]+d, mRadius)
 r.normalizeRadius()
-
-#test_gamma()
-#echo "----"
 
 # Drawing as an outline
 var p = initConvStroke(r)

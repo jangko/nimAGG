@@ -497,12 +497,6 @@ proc initApp(name: string): App =
   result.atomColors[atom_color_P]       = initRgba8(80,50,0)
   result.atomColors[atom_color_halogen] = initRgba8(0,200,0)
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_mol_view.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_mol() {.importc.}
-
 proc onDraw() =
   var
     app    = initApp("molecule.sdf")

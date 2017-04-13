@@ -17,40 +17,9 @@ const
 type
   ValueT = uint8
 
-#{.passC: "-I./agg-2.5/include".}
-#{.compile: "test_arc.cpp".}
-#{.compile: "agg_bezier_arc2.cpp".}
-#{.compile: "agg_vcgen_stroke2.cpp".}
-#{.compile: "agg_trans_affine2.cpp".}
-#{.passL: "-lstdc++".}
-#
-#proc test_arc(buf: cstring, w, h, px: cint) {.importc.}
-
 proc circle(path: var PathStorage, cx, cy, radius: float64) =
   var arc = initBezierArc(cx, cy, radius, radius, 0, 2 * pi)
   path.joinPath(arc)
-
-#[proc drawPath[RAS, REN, SL](path: var PathStorage, ras: var RAS, ren: var REN, sl: var SL, c: Color) =
-  var
-    curve  = initConvCurve(path)
-    stroke = initConvStroke(curve)
-    c      = extractRGB(c)
-
-  stroke.width(2)
-  ras.reset()
-  ras.addPath(stroke)
-  ren.color(initRgba8(c.r, c.g, c.b))
-  renderScanlines(ras, sl, ren)
-
-proc fillPath[RAS, REN, SL](path: var PathStorage, ras: var RAS, ren: var REN, sl: var SL, c: Color) =
-  var
-    curve  = initConvCurve(path)
-    c = extractRGB(c)
-
-  ras.reset()
-  ras.addPath(curve)
-  ren.color(initRgba8(c.r, c.g, c.b))
-  renderScanlines(ras, sl, ren)]#
 
 proc toRgba8(c: Color): Rgba8 =
   let c = extractRGB(c)

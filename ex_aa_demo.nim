@@ -3,13 +3,6 @@ import agg_renderer_scanline, agg_pixfmt_rgb, agg_color_rgba
 import agg_gamma_functions, agg_renderer_base, agg_path_storage
 import agg_conv_stroke, agg_math_stroke, agg_rasterizer_scanline_aa, nimBMP
 
-{.passC: "-I./agg-2.5/include".}
-{.compile: "test_aa.cpp".}
-{.compile: "test_aa2.cpp".}
-{.passL: "-lstdc++".}
-
-proc test_aa(): cstring {.importc.}
-
 type
   Square = object
     size: float64
