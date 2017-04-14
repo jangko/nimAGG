@@ -340,20 +340,35 @@ proc newSplineCtrl*[ColorT](x1, y1, x2, y2: float64, numPnt: int, flipY = false)
   result.mColors[4] = result.mActivePntColor.addr
 
 # Set colors
-proc backgroundColor*[ColorT](self: SplineCtrl[ColorT], c: ColorT) =
-  self.mBackgroundColor = c
+proc backgroundColor*[ColorA, ColorB](self: SplineCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mBackgroundColor = construct(ColorA, c)
+  else:
+    self.mBackgroundColor = c
 
-proc borderColor*[ColorT](self: SplineCtrl[ColorT], c: ColorT) =
-  self.mBorderColor = c
+proc borderColor*[ColorA, ColorB](self: SplineCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mBorderColor = construct(ColorA, c)
+  else:
+    self.mBorderColor = c
+    
+proc curveColor*[ColorA, ColorB](self: SplineCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mCurveColor = construct(ColorA, c)
+  else:
+    self.mCurveColor = c
 
-proc curveColor*[ColorT](self: SplineCtrl[ColorT], c: ColorT) =
-  self.mCurveColor = c
+proc inactivePntColor*[ColorA, ColorB](self: SplineCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mInactivePntColor = construct(ColorA, c)
+  else:
+    self.mInactivePntColor = c
 
-proc inactivePntColor*[ColorT](self: SplineCtrl[ColorT], c: ColorT) =
-  self.mInactivePntColor = c
-
-proc activePntColor*[ColorT](self: SplineCtrl[ColorT], c: ColorT) =
-  self.mActivePntColor = c
+proc activePntColor*[ColorA, ColorB](self: SplineCtrl[ColorA], c: ColorB) =
+  when ColorA isnot ColorB:
+    self.mActivePntColor = construct(ColorA, c)
+  else:
+    self.mActivePntColor = c
 
 proc color*[ColorT](self: SplineCtrl[ColorT], i: int): ColorT =
   self.mColors[i][]

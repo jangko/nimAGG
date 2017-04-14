@@ -83,7 +83,7 @@ proc calcValues*(self: GammaCtrlImpl) =
   ky2 = (self.mYs2 - self.mYp2) * 4.0 / (self.mYs2 - self.mYs1)
   self.mGammaSpline.values(kx1, ky1, kx2, ky2)
 
-proc textSize*(self: GammaCtrlImpl, h, w: float64) =
+proc textSize*(self: GammaCtrlImpl, h: float64, w = 0.0'f64) =
   self.mTextWidth = w
   self.mTextHeight = h
   self.mYc2 = self.m.y2 - self.mTextHeight * 2.0
@@ -115,7 +115,7 @@ proc pointSize*(self: GammaCtrlImpl, s: float64) =
   self.mPointSize = s
 proc getGammaValue*(self: GammaCtrlImpl, x :float64): float64 =
   self.mGammaSpline.y(x)
- 
+
 method inRect*(self: GammaCtrlImpl, x, y: float64): bool =
   var
     x = x
