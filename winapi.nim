@@ -19,13 +19,17 @@ type
   HBITMAP* = HANDLE
   HDC* = HANDLE
   HGDIOBJ* = HANDLE
+  HFONT* = HANDLE
 
+  SHORT* = int16
   ATOM* = int16
   DWORD* = int32
   LONG* = int32
   WINUINT* = int32
   WINBOOL* = int32
   UCHAR* = int8
+  BYTE* = uint8
+  WORD* = int16
 
   LONG_PTR* = ByteAddress
   WPARAM* = LONG_PTR
@@ -142,6 +146,13 @@ type
   TPAINTSTRUCT* = PAINTSTRUCT
   PPAINTSTRUCT* = ptr PAINTSTRUCT
 
+  BITMAPFILEHEADER* {.final, pure.} = object
+    bfType*: int16
+    bfSize*: DWord
+    bfReserved1*: int16
+    bfReserved2*: int16
+    bfOffBits*: DWord
+
   BITMAPINFOHEADER* {.final, pure.} = object
     biSize*: DWORD
     biWidth*: LONG
@@ -174,6 +185,76 @@ type
   LPBITMAPINFO* = ptr BITMAPINFO
   PBITMAPINFO* = ptr BITMAPINFO
   TBITMAPINFO* = BITMAPINFO
+
+  BLENDFUNCTION* {.final, pure.} = object
+    BlendOp: BYTE
+    BlendFlags: BYTE
+    SourceConstantAlpha: BYTE
+    AlphaFormat: BYTE
+
+  PBLENDFUNCTION*  = ptr BLENDFUNCTION
+  LPBLENDFUNCTION* = ptr BLENDFUNCTION
+
+  FIXED* {.final, pure.} = object
+    fract*: int16
+    value*: SHORT
+
+  TFIXED* = FIXED
+  PFIXED* = ptr FIXED
+
+  MAT2* {.final, pure.} = object
+    eM11*: FIXED
+    eM12*: FIXED
+    eM21*: FIXED
+    eM22*: FIXED
+
+  TMAT2* = MAT2
+  PMAT2* = ptr MAT2
+
+  KERNINGPAIR* {.final, pure.} = object
+    wFirst*: int16
+    wSecond*: int16
+    iKernAmount*: int32
+
+  LPKERNINGPAIR* = ptr KERNINGPAIR
+  TKERNINGPAIR* = KERNINGPAIR
+  PKERNINGPAIR* = ptr KERNINGPAIR
+
+  POINTFX* {.final, pure.} = object
+    x*: FIXED
+    y*: FIXED
+
+  TPOINTFX* = POINTFX
+  PPOINTFX* = ptr POINTFX
+
+  TTPOLYGONHEADER* {.final, pure.} = object
+    cb*: DWORD
+    dwType*: DWORD
+    pfxStart*: POINTFX
+
+  LPTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
+  TTTPOLYGONHEADER* = TTPOLYGONHEADER
+  PTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
+
+  TTPOLYCURVE* {.final, pure.} = object
+    wType*: int16
+    cpfx*: int16
+    apfx*: array[0..0, POINTFX]
+
+  LPTTPOLYCURVE* = ptr TTPOLYCURVE
+  TTTPOLYCURVE* = TTPOLYCURVE
+  PTTPOLYCURVE* = ptr TTPOLYCURVE
+
+  GLYPHMETRICS* {.final, pure.} = object
+    gmBlackBoxX*: WINUINT
+    gmBlackBoxY*: WINUINT
+    gmptGlyphOrigin*: POINT
+    gmCellIncX*: SHORT
+    gmCellIncY*: SHORT
+
+  LPGLYPHMETRICS* = ptr GLYPHMETRICS
+  TGLYPHMETRICS* = GLYPHMETRICS
+  PGLYPHMETRICS* = ptr GLYPHMETRICS
 
 when defined(winUnicode):
   type
@@ -895,7 +976,7 @@ const
   CBM_INIT* = 0x00000004
   DIB_PAL_COLORS* = 1
   DIB_RGB_COLORS* = 0
-  
+
   # Ternary Raster Operations - BitBlt
   BLACKNESS* = 0x00000042
   NOTSRCERASE* = 0x001100A6
@@ -912,7 +993,116 @@ const
   PATCOPY* = 0x00F00021
   PATPAINT* = 0x00FB0A09
   WHITENESS* = 0x00FF0062
-  
+
+  # SetPrinter
+  # SetService
+  # SetStretchBltMode
+  BLACKONWHITE* = 1
+  COLORONCOLOR* = 3
+  HALFTONE* = 4
+  STRETCH_ANDSCANS* = 1
+  STRETCH_DELETESCANS* = 3
+  STRETCH_HALFTONE* = 4
+  STRETCH_ORSCANS* = 2
+  WHITEONBLACK* = 2
+
+  AC_SRC_OVER* = 0x00
+  AC_SRC_ALPHA* = 0x01
+  AC_SRC_NO_PREMULT_ALPHA* = 0x01
+  AC_SRC_NO_ALPHA* = 0x02
+  AC_DST_NO_PREMULT_ALPHA* = 0x10
+  AC_DST_NO_ALPHA* = 0x20
+
+  # TTPOLYGONHEADER structure
+  TT_POLYGON_TYPE* = 24
+
+  # TTPOLYCURVE structure
+  TT_PRIM_LINE* = 1
+  TT_PRIM_QSPLINE* = 2
+
+  # CreateFont
+  FW_DONTCARE* = 0
+  FW_THIN* = 100
+  FW_EXTRALIGHT* = 200
+  FW_LIGHT* = 300
+  FW_NORMAL* = 400
+  FW_REGULAR* = FW_NORMAL
+  FW_MEDIUM* = 500
+  FW_SEMIBOLD* = 600
+  FW_BOLD* = 700
+  FW_EXTRABOLD* = 800
+  FW_HEAVY* = 900
+  ANSI_CHARSET* = 0
+  DEFAULT_CHARSET* = 1
+  SYMBOL_CHARSET* = 2
+  SHIFTJIS_CHARSET* = 128
+  HANGEUL_CHARSET* = 129
+  GB2312_CHARSET* = 134
+  CHINESEBIG5_CHARSET* = 136
+  GREEK_CHARSET* = 161
+  TURKISH_CHARSET* = 162
+  HEBREW_CHARSET* = 177
+  ARABIC_CHARSET* = 178
+  BALTIC_CHARSET* = 186
+  RUSSIAN_CHARSET* = 204
+  THAI_CHARSET* = 222
+  EASTEUROPE_CHARSET* = 238
+  OEM_CHARSET* = 255
+  OUT_DEFAULT_PRECIS* = 0
+  OUT_STRING_PRECIS* = 1
+  OUT_CHARACTER_PRECIS* = 2
+  OUT_STROKE_PRECIS* = 3
+  OUT_TT_PRECIS* = 4
+  OUT_DEVICE_PRECIS* = 5
+  OUT_RASTER_PRECIS* = 6
+  OUT_TT_ONLY_PRECIS* = 7
+  OUT_OUTLINE_PRECIS* = 8
+  CLIP_DEFAULT_PRECIS* = 0
+  CLIP_CHARACTER_PRECIS* = 1
+  CLIP_STROKE_PRECIS* = 2
+  CLIP_MASK* = 15
+  CLIP_LH_ANGLES* = 16
+  CLIP_TT_ALWAYS* = 32
+  CLIP_EMBEDDED* = 128
+  DEFAULT_QUALITY* = 0
+  DRAFT_QUALITY* = 1
+  PROOF_QUALITY* = 2
+  NONANTIALIASED_QUALITY* = 3
+  ANTIALIASED_QUALITY* = 4
+  DEFAULT_PITCH* = 0
+  FIXED_PITCH* = 1
+  VARIABLE_PITCH* = 2
+  MONO_FONT* = 8
+  FF_DECORATIVE* = 80
+  FF_DONTCARE* = 0
+  FF_MODERN* = 48
+  FF_ROMAN* = 16
+  FF_SCRIPT* = 64
+  FF_SWISS* = 32
+
+  # EnumObjects, GetCurrentObject, GetObjectType
+  OBJ_BRUSH* = 2
+  OBJ_PEN* = 1
+  OBJ_PAL* = 5
+  OBJ_FONT* = 6
+  OBJ_BITMAP* = 7
+  OBJ_EXTPEN* = 11
+  OBJ_REGION* = 8
+  OBJ_DC* = 3
+  OBJ_MEMDC* = 10
+  OBJ_METAFILE* = 9
+  OBJ_METADC* = 4
+  OBJ_ENHMETAFILE* = 13
+  OBJ_ENHMETADC* = 12
+
+  # GetGlyphOutline
+  GGO_BITMAP* = 1
+  GGO_NATIVE* = 2
+  GGO_METRICS* = 0
+  GGO_GRAY2_BITMAP* = 4
+  GGO_GRAY4_BITMAP* = 5
+  GGO_GRAY8_BITMAP* = 6
+
 proc RGB*(r, g, b: int): COLORREF =
   result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
 
@@ -1185,19 +1375,93 @@ proc beginPaint*(wnd: HWND, lpPaint: var TPAINTSTRUCT): HDC{.stdcall,
 proc endPaint*(wnd: HWND, lpPaint: TPAINTSTRUCT): WINBOOL{.stdcall,
     dynlib: "user32", importc: "EndPaint", discardable.}
 
-proc createCompatibleDC*(para1: HDC): HDC{.stdcall, dynlib: "gdi32",
+proc createCompatibleDC*(hdc: HDC): HDC{.stdcall, dynlib: "gdi32",
     importc: "CreateCompatibleDC".}
 
-proc createDIBSection*(para1: HDC, para2: var BITMAPINFO, para3: WINUINT,
-                       para4: var pointer, para5: HANDLE, para6: DWORD): HBITMAP{.
+proc createDIBSection*(hdc: HDC, pbmi: var BITMAPINFO, iUsage: WINUINT,
+                       ppvBits: var pointer, hSection: HANDLE, dwOffset: DWORD): HBITMAP{.
     stdcall, dynlib: "gdi32", importc: "CreateDIBSection".}
 
 proc selectObject*(para1: HDC, para2: HGDIOBJ): HGDIOBJ{.stdcall,
     dynlib: "gdi32", importc: "SelectObject", discardable.}
-    
+
 proc deleteObject*(para1: HGDIOBJ): WINBOOL{.stdcall, dynlib: "gdi32",
     importc: "DeleteObject", discardable.}
-    
+
 proc bitBlt*(hdcDest: HDC, nXDest, nYDest, nWidth, nHeight: cint,
              hdcSrc: HDC, nXSrc, nYSrc: int32, dwRop: DWORD): WINBOOL{.
   stdcall, dynlib: "gdi32", importc: "BitBlt", discardable.}
+
+proc setStretchBltMode*(hdc: HDC, mode: int32): int32{.stdcall,
+    dynlib: "gdi32", importc: "SetStretchBltMode".}
+
+proc stretchDIBits*(para1: HDC, para2: int32, para3: int32, para4: int32,
+                    para5: int32, para6: int32, para7: int32, para8: int32,
+                    para9: int32, para10: pointer, para11: var BITMAPINFO,
+                    para12: WINUINT, para13: DWORD): int32{.stdcall,
+    dynlib: "gdi32", importc: "StretchDIBits".}
+
+proc setDIBitsToDevice*(hdc: HDC, para2: int32, para3: int32, para4: DWORD,
+                        para5: DWORD, para6: int32, para7: int32, para8: WINUINT,
+                        para9: WINUINT, para10: pointer, para11: var BITMAPINFO,
+                        para12: WINUINT): int32{.stdcall, dynlib: "gdi32",
+    importc: "SetDIBitsToDevice".}
+
+proc alphaBlend*(hdcSrc: HDC,para2,para3,para4,para5: int, hdcDst: HDC, para7, para8, para9, para10: int,
+  blendFunc: BLENDFUNCTION): WINBOOL {.stdcall, dynlib: "gdi32", importc: "AlphaBlend".}
+
+
+proc GetKerningPairsW*(para1: HDC, para2: DWORD, para3: LPKERNINGPAIR): DWORD{.
+  stdcall, dynlib: "gdi32", importc: "GetKerningPairsW".}
+
+proc GetKerningPairsA*(para1: HDC, para2: DWORD, para3: LPKERNINGPAIR): DWORD{.
+  stdcall, dynlib: "gdi32", importc: "GetKerningPairsA".}
+
+template getKerningPairs*(hdc: HDC, maxSize: DWORD, outBuf: LPKERNINGPAIR): DWORD =
+  when defined(winUnicode): GetKerningPairsW(hdc, maxSize, outBuf)
+  else: GetKerningPairsA(hdc, maxSize, outBuf)
+
+proc mulDiv*(nNumber: int32, nNumerator: int32, nDenominator: int32): int32{.
+    stdcall, dynlib: "kernel32", importc: "MulDiv".}
+
+proc getCurrentObject*(hdc: HDC, para2: WINUINT): HGDIOBJ{.stdcall,
+    dynlib: "gdi32", importc: "GetCurrentObject".}
+
+proc GetGlyphOutlineA*(para1: HDC, para2: WINUINT, para3: WINUINT,
+                   para4: LPGLYPHMETRICS, para5: DWORD, para6: LPVOID,
+                   para7: PMAT2): DWORD{.stdcall, dynlib: "gdi32",
+importc: "GetGlyphOutlineA".}
+
+proc GetGlyphOutlineW*(para1: HDC, para2: WINUINT, para3: WINUINT,
+                   para4: LPGLYPHMETRICS, para5: DWORD, para6: LPVOID,
+                   para7: PMAT2): DWORD{.stdcall, dynlib: "gdi32",
+importc: "GetGlyphOutlineW".}
+
+proc getGlyphOutline*(hdc: HDC, uChar: WINUINT, uFormat: WINUINT,
+  lpgm: LPGLYPHMETRICS, cBuffer: DWORD, lpvBuffer: LPVOID, lpmat: PMAT2): DWORD =
+  when defined(winUnicode): GetGlyphOutlineW(hdc, uChar, uFormat, lpgm, cBuffer, lpvBuffer, lpMat)
+  else: GetGlyphOutlineA(hdc, uChar, uFormat, lpgm, cBuffer, lpvBuffer, lpMat)
+  
+proc CreateFontA*(para1: int32, para2: int32, para3: int32, para4: int32,
+                  para5: int32, para6: DWORD, para7: DWORD, para8: DWORD,
+                  para9: DWORD, para10: DWORD, para11: DWORD, para12: DWORD,
+                  para13: DWORD, para14: LPCSTR): HFONT{.stdcall,
+    dynlib: "gdi32", importc: "CreateFontA".}
+    
+proc CreateFontW*(para1: int32, para2: int32, para3: int32, para4: int32,
+                  para5: int32, para6: DWORD, para7: DWORD, para8: DWORD,
+                  para9: DWORD, para10: DWORD, para11: DWORD, para12: DWORD,
+                  para13: DWORD, para14: LPCWSTR): HFONT{.stdcall,
+    dynlib: "gdi32", importc: "CreateFontW".}
+    
+template createFont*(nHeight, nWidth, nEscapement, nOrientation, fnWeight: int32, 
+  fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision: DWORD, 
+  fdwQuality, fdwPitchAndFamily: DWORD, lpszFace: untyped): HFONT =
+  when defined(winUnicode): 
+    CreateFontW(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, 
+      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, 
+      fdwQuality, fdwPitchAndFamily, WC(lpszFace))
+  else:
+    CreateFontA(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, 
+      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, 
+      fdwQuality, fdwPitchAndFamily, lpszFace.cstring)
