@@ -20,6 +20,7 @@ type
   HDC* = HANDLE
   HGDIOBJ* = HANDLE
   HFONT* = HANDLE
+  HRGN* = HANDLE
 
   SHORT* = int16
   ATOM* = int16
@@ -196,8 +197,8 @@ type
   LPBLENDFUNCTION* = ptr BLENDFUNCTION
 
   FIXED* {.final, pure.} = object
-    fract*: int16
-    value*: SHORT
+    fract*: WORD
+    value*: int16
 
   TFIXED* = FIXED
   PFIXED* = ptr FIXED
@@ -236,10 +237,12 @@ type
   TTTPOLYGONHEADER* = TTPOLYGONHEADER
   PTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
 
+  APFXARRAY {.unchecked.} = array[0..0, POINTFX] 
+  
   TTPOLYCURVE* {.final, pure.} = object
     wType*: int16
     cpfx*: int16
-    apfx*: array[0..0, POINTFX]
+    apfx*: APFXARRAY
 
   LPTTPOLYCURVE* = ptr TTPOLYCURVE
   TTTPOLYCURVE* = TTPOLYCURVE
@@ -1103,6 +1106,18 @@ const
   GGO_GRAY4_BITMAP* = 5
   GGO_GRAY8_BITMAP* = 6
 
+  # GetDCEx
+  DCX_WINDOW* = 0x00000001
+  DCX_CACHE* = 0x00000002
+  DCX_PARENTCLIP* = 0x00000020
+  DCX_CLIPSIBLINGS* = 0x00000010
+  DCX_CLIPCHILDREN* = 0x00000008
+  DCX_NORESETATTRS* = 0x00000004
+  DCX_LOCKWINDOWUPDATE* = 0x00000400
+  DCX_EXCLUDERGN* = 0x00000040
+  DCX_INTERSECTRGN* = 0x00000080
+  DCX_VALIDATE* = 0x00200000
+
 proc RGB*(r, g, b: int): COLORREF =
   result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
 
@@ -1407,8 +1422,8 @@ proc setDIBitsToDevice*(hdc: HDC, para2: int32, para3: int32, para4: DWORD,
                         para12: WINUINT): int32{.stdcall, dynlib: "gdi32",
     importc: "SetDIBitsToDevice".}
 
-proc alphaBlend*(hdcSrc: HDC,para2,para3,para4,para5: int, hdcDst: HDC, para7, para8, para9, para10: int,
-  blendFunc: BLENDFUNCTION): WINBOOL {.stdcall, dynlib: "gdi32", importc: "AlphaBlend".}
+#proc alphaBlend*(hdcSrc: HDC,para2,para3,para4,para5: int, hdcDst: HDC, para7, para8, para9, para10: int,
+#  blendFunc: BLENDFUNCTION): WINBOOL {.stdcall, dynlib: "gdi32", importc: "AlphaBlend".}
 
 
 proc GetKerningPairsW*(para1: HDC, para2: DWORD, para3: LPKERNINGPAIR): DWORD{.
@@ -1441,27 +1456,33 @@ proc getGlyphOutline*(hdc: HDC, uChar: WINUINT, uFormat: WINUINT,
   lpgm: LPGLYPHMETRICS, cBuffer: DWORD, lpvBuffer: LPVOID, lpmat: PMAT2): DWORD =
   when defined(winUnicode): GetGlyphOutlineW(hdc, uChar, uFormat, lpgm, cBuffer, lpvBuffer, lpMat)
   else: GetGlyphOutlineA(hdc, uChar, uFormat, lpgm, cBuffer, lpvBuffer, lpMat)
-  
+
 proc CreateFontA*(para1: int32, para2: int32, para3: int32, para4: int32,
                   para5: int32, para6: DWORD, para7: DWORD, para8: DWORD,
                   para9: DWORD, para10: DWORD, para11: DWORD, para12: DWORD,
                   para13: DWORD, para14: LPCSTR): HFONT{.stdcall,
     dynlib: "gdi32", importc: "CreateFontA".}
-    
+
 proc CreateFontW*(para1: int32, para2: int32, para3: int32, para4: int32,
                   para5: int32, para6: DWORD, para7: DWORD, para8: DWORD,
                   para9: DWORD, para10: DWORD, para11: DWORD, para12: DWORD,
                   para13: DWORD, para14: LPCWSTR): HFONT{.stdcall,
     dynlib: "gdi32", importc: "CreateFontW".}
-    
-template createFont*(nHeight, nWidth, nEscapement, nOrientation, fnWeight: int32, 
-  fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision: DWORD, 
+
+template createFont*(nHeight, nWidth, nEscapement, nOrientation, fnWeight: int32,
+  fdwItalic, fdwUnderline, fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision: DWORD,
   fdwQuality, fdwPitchAndFamily: DWORD, lpszFace: untyped): HFONT =
-  when defined(winUnicode): 
-    CreateFontW(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, 
-      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, 
+  when defined(winUnicode):
+    CreateFontW(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline,
+      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision,
       fdwQuality, fdwPitchAndFamily, WC(lpszFace))
   else:
-    CreateFontA(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline, 
-      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision, 
+    CreateFontA(nHeight, nWidth, nEscapement, nOrientation, fnWeight, fdwItalic, fdwUnderline,
+      fdwStrikeOut, fdwCharSet, fdwOutputPrecision, fdwClipPrecision,
       fdwQuality, fdwPitchAndFamily, lpszFace.cstring)
+
+proc windowFromDC*(hDC: HDC): HWND{.stdcall, dynlib: "user32", importc: "WindowFromDC".}
+proc getDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetDC".}
+proc getDCEx*(wnd: HWND, hrgnClip: HRGN, flags: DWORD): HDC{.stdcall, dynlib: "user32", importc: "GetDCEx".}
+proc getWindowDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetWindowDC".}
+proc releaseDC*(wnd: HWND, hDC: HDC): int32{.stdcall, dynlib: "user32", importc: "ReleaseDC".}

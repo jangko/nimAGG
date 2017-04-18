@@ -178,7 +178,7 @@ template serializedIntegerPathAdaptor(name: untyped, CoordShift: int = 6) =
 
   proc vertex*[T](self: var name[T], x, y: var float64): uint =
     type VertexType = `name VI`[T]
-    if self.mData == 0 or self.mPtr > self.mEnd:
+    if self.mData == nil or self.mPtr > self.mEnd:
       x = 0
       y = 0
       return pathCmdStop

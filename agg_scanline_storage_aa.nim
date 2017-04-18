@@ -349,7 +349,9 @@ type
     
 template getCoverT*[T](x: typedesc[ConstIteratorAdaptorAA[T]]): typedesc = T
 template getIterT*[T](x: typedesc[SerializedScanlinesAdaptorAA[T]]): typedesc = ConstIteratorAdaptorAA[T]
-
+template embeddedScanlineT*[T](x: typedesc[SerializedScanlinesAdaptorAA[T]]): typedesc = 
+  EmbeddedScanlineAdaptorAA[T.type]
+  
 proc readInt32*[T](self: var ConstIteratorAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[1] = self.mPtr[]; inc self.mPtr
@@ -446,13 +448,11 @@ proc init*[T](self: var SerializedScanlinesAdaptorAA[T], data: ptr uint8,
   self.mMaxX = -0x7FFFFFFF
   self.mMaxY = -0x7FFFFFFF
 
-
 proc readInt32*[T](self: var SerializedScanlinesAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[1] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[2] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[3] = self.mPtr[]; inc self.mPtr
-
 
 proc readInt32u*[T](self: var SerializedScanlinesAdaptorAA[T]): uint32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr

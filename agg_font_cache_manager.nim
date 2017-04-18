@@ -1,7 +1,8 @@
-import agg_basics, agg_font_types
+import agg_basics, agg_font_types, agg_font_win32_tt, agg_scanline_storage_bin
+import agg_scanline_storage_aa, agg_path_storage_integer
 
-const
-  blockSize = 16384-16
+#const
+#  blockSize = 16384-16
 
 type
   GlyphRow = seq[GlyphCache]
@@ -72,7 +73,7 @@ proc font*(self: FontCachePool, fontSignature: string, resetCache = false) =
   let idx = self.findFont(fontSignature)
   if idx >= 0:
     if resetCache:
-      self.mFonts[idx] = new(FontCache)
+      self.mFonts[idx] = newFontCache()
       self.mFonts[idx].signature(fontSignature)
     self.mCurFont = self.mFonts[idx]
   else:
@@ -80,7 +81,7 @@ proc font*(self: FontCachePool, fontSignature: string, resetCache = false) =
       self.mFonts.del(0)
       self.mNumFonts = self.mMaxFonts - 1
 
-    self.mFonts[self.mNumFonts] = new(FontCache)
+    self.mFonts[self.mNumFonts] = newFontCache()
     self.mFonts[self.mNumFonts].signature(fontSignature)
     self.mCurFont = self.mFonts[self.mNumFonts]
     inc self.mNumFonts
@@ -101,103 +102,103 @@ proc cacheGlyph*(self: FontCachePool, glyphCode, glyphIndex, dataSize: int,
       dataType, bounds, advanceX, advanceY)
   result = nil
 
-type
-  FontCacheManager[FontEngine] = ref object
-    mFonts: FontCachePool
-    mEngine: FontEngine
-    mChangeStamp: int
-    mDx, mDy: float64
-    mPrevGlyph, mLastGlyph: GlyphCache
+template fontCacheManager(name: untyped, FontEngine: typedesc) =
+  type
+    name* = ref object
+      mFonts: FontCachePool
+      mEngine: FontEngine
+      mChangeStamp: int
+      mDx, mDy: float64
+      mPrevGlyph, mLastGlyph: GlyphCache
+      mPathAdaptor: pathAdaptorT(FontEngine)
+      mGray8Adaptor: gray8AdaptorT(FontEngine)
+      mGray8Scanline: gray8ScanlineT(FontEngine)
+      mMonoAdaptor: monoAdaptorT(FontEngine)
+      mMonoScanline: monoScanlineT(FontEngine)
+        
+  template fontEngineT*(x: typedesc[name]): typedesc = FontEngine
+  template pathAdaptorT*(x: typedesc[name]): typedesc = pathAdaptorT(FontEngine)
+  template gray8AdaptorT*(x: typedesc[name]): typedesc = gray8AdaptorT(FontEngine)
+  template gray8ScanlineT*(x: typedesc[name]): typedesc = gray8ScanlineT(FontEngine)
+  template monoAdaptorT*(x: typedesc[name]): typedesc = monoAdaptorT(FontEngine)
+  template monoScanlineT*(x: typedesc[name]): typedesc = monoScanlineT(FontEngine)
+
+  proc `new name`*(engine: FontEngine, maxFonts = 32): name =
+    new(result)
+    result.mFonts = newFontCachePool(maxFonts)
+    result.mEngine = engine
+    result.mChangeStamp = -1
+    result.mPrevGlyph = nil 
+    result.mLastGlyph = nil
+
+  proc resetLastGlyph*(self: name) =
+    self.mPrevGlyph = nil
+    self.mLastGlyph = nil
     
-#[    
-    path_adaptor_type   self.mPathAdaptor;
-    gray8_adaptor_type  self.mGray8Adaptor;
-    gray8_scanline_type self.mGray8Scanline;
-    mono_adaptor_type   self.mMonoAdaptor;
-    mono_scanline_type  self.mMonoScanline;
-
-    typedef FontEngine font_engine_type;
-    typedef font_cache_manager<FontEngine> self_type;
-    typedef typename font_engine_type::path_adaptor_type   path_adaptor_type;
-    typedef typename font_engine_type::gray8_adaptor_type  gray8_adaptor_type;
-    typedef typename gray8_adaptor_type::embedded_scanline gray8_scanline_type;
-    typedef typename font_engine_type::mono_adaptor_type   mono_adaptor_type;
-    typedef typename mono_adaptor_type::embedded_scanline  mono_scanline_type;
-
-
-    font_cache_manager(font_engine_type& engine, unsigned max_fonts=32) :
-        self.mFonts(max_fonts),
-        self.mEngine(engine),
-        self.mChangeStamp(-1),
-        self.mPrevGlyph(0),
-        self.mLastGlyph(0)
-
-proc reset_last_glyph()
-    self.mPrevGlyph = self.mLastGlyph = 0;
-
-
-const glyph_cache* glyph(unsigned glyphCode)
-{
-    synchronize()
-    const glyph_cache* gl = self.mFonts.find_glyph(glyphCode)
-    if gl)
-        self.mPrevGlyph = self.mLastGlyph;
-        return self.mLastGlyph = gl;
+  proc synchronize*(self: name) =
+    if self.mChangeStamp != self.mEngine.changeStamp():
+      self.mFonts.font(self.mEngine.fontSignature())
+      self.mChangeStamp = self.mEngine.changeStamp()
+      self.mPrevGlyph = nil
+      self.mLastGlyph = nil
+      
+  proc glyph*(self: name, glyphCode: int): GlyphCache =
+    self.synchronize()
+    let gl = self.mFonts.findGlyph(glyphCode)
+    if gl != nil:
+      self.mPrevGlyph = self.mLastGlyph
+      self.mLastGlyph = gl
+      return gl
     else:
-        if self.mEngine.prepare_glyph(glyphCode))
-            self.mPrevGlyph = self.mLastGlyph;
-            self.mLastGlyph = self.mFonts.cache_glyph(glyphCode,
-                                               self.mEngine.glyphIndex(),
-                                               self.mEngine.dataSize(),
-                                               self.mEngine.dataType(),
-                                               self.mEngine.bounds(),
-                                               self.mEngine.advanceX(),
-                                               self.mEngine.advanceY())
-            self.mEngine.write_glyph_to(self.mLastGlyphdata)
-            return self.mLastGlyph;
-    return 0;
+      if self.mEngine.prepareGlyph(glyphCode):
+        self.mPrevGlyph = self.mLastGlyph
+        self.mLastGlyph = self.mFonts.cacheGlyph(glyphCode,
+          self.mEngine.glyphIndex(), self.mEngine.dataSize(),
+          self.mEngine.dataType(), self.mEngine.bounds(),
+          self.mEngine.advanceX(), self.mEngine.advanceY())
+          
+        if self.mLastGlyph.data.len > 0:
+          self.mEngine.writeGlyphTo(self.mLastGlyph.data[0].addr)
+        return self.mLastGlyph
+    result = nil
 
-proc init_embedded_adaptors(const glyph_cache* gl,
-                            x, y: float64,
-                            double scale=1.0)
-    if gl)
-        case gldataType)
-        default: return;
-        of glyph_data_mono:
-            self.mMonoAdaptor.init(gldata, gldataSize, x, y)
-        of glyph_data_gray8:
-            self.mGray8Adaptor.init(gldata, gldataSize, x, y)
-        of glyph_data_outline:
-            self.mPathAdaptor.init(gldata, gldataSize, x, y, scale)
+  proc initEmbeddedAdaptors*(self: name, gl: GlyphCache, x, y: float64, scale = 1.0) =
+    if gl != nil:
+      var
+        data: ptr uint8 = if gl.data.len == 0: nil else: gl.data[0].addr
+      case gl.dataType
+      of glyph_data_mono:
+        self.mMonoAdaptor.init(data, gl.dataSize, x, y)
+      of glyph_data_gray8:
+        self.mGray8Adaptor.init(data, gl.dataSize, x, y)
+      of glyph_data_outline:
+        self.mPathAdaptor.init(data, gl.dataSize, x, y, scale)
+      else: discard
 
-path_adaptor_type&   path_adaptor()   { return self.mPathAdaptor;   }
-gray8_adaptor_type&  gray8_adaptor()  { return self.mGray8Adaptor;  }
-gray8_scanline_type& gray8_scanline() = return self.mGray8Scanline
-mono_adaptor_type&   mono_adaptor()   { return self.mMonoAdaptor;   }
-mono_scanline_type&  mono_scanline()  { return self.mMonoScanline;  }
+  proc pathAdaptor*(self: name): var pathAdaptorT(FontEngine) = self.mPathAdaptor
+  proc gray8Adaptor*(self: name): var gray8AdaptorT(FontEngine) = self.mGray8Adaptor
+  proc gray8Scanline*(self: name): var gray8ScanlineT(FontEngine) = self.mGray8Scanline
+  proc monoAdaptor*(self: name): var monoAdaptorT(FontEngine) = self.mMonoAdaptor
+  proc monoScanline*(self: name): var monoScanlineT(FontEngine) = self.mMonoScanline
 
-const glyph_cache* prev_glyph(): float64 = self.mPrevGlyph
-const glyph_cache* last_glyph(): float64 = self.mLastGlyph
+  proc prevGlyph*(self: name): GlyphCache = self.mPrevGlyph
+  proc lastGlyph*(self: name): GlyphCache = self.mLastGlyph
 
+  proc addKerning*(self: name; x, y: var float64): bool =
+    if self.mPrevGlyph != nil and self.mLastGlyph != nil:
+      return self.mEngine.addKerning(self.mPrevGlyph.glyphIndex,
+        self.mLastGlyph.glyphIndex, x, y)
+    result = false
 
-bool addKerning(x, y: var float64)
-    if self.mPrevGlyph and self.mLastGlyph)
-        return self.mEngine.addKerning(self.mPrevGlyphglyphIndex,
-                                    self.mLastGlyphglyphIndex,
-                                    x, y)
-    return false;
+  proc preCache*(self: name, start, stop: int) =
+    for x in start..stop: 
+      discard self.glyph(x)
 
-proc precache(unsigned from, unsigned to)
-        for(; from <= to; ++from) glyph(from)
+  proc resetCache*(self: name) =
+    self.mFonts.font(self.mEngine.fontSignature(), true)
+    self.mChangeStamp = self.mEngine.changeStamp()
+    self.mPrevGlyph = nil
+    self.mLastGlyph = nil
 
-proc reset_cache()
-        self.mFonts.font(self.mEngine.font_signature(), true)
-        self.mChangeStamp = self.mEngine.changeStamp()
-        self.mPrevGlyph = self.mLastGlyph = 0;
-
-proc synchronize()
-        if self.mChangeStamp != self.mEngine.changeStamp())
-            self.mFonts.font(self.mEngine.font_signature())
-            self.mChangeStamp = self.mEngine.changeStamp()
-            self.mPrevGlyph = self.mLastGlyph = 0;
-]#
+fontCacheManager(FontCacheManagerWin16, FontEngineWin32TTInt16)
+fontCacheManager(FontCacheManagerWin32, FontEngineWin32TTInt32)

@@ -57,13 +57,13 @@ type
     mScanlinesBin: ScanlineStorageBin
     mRasterizer: RasterizerScanlineAA
 
-template getGray8AdaptorT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
+template gray8AdaptorT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
   SerializedScanlinesAdaptorAA[uint8]
 
-template getMonoAdaptorT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
+template monoAdaptorT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
   SerializedScanlinesAdaptorBin
 
-template getScanlinesAAT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
+template scanlinesAAT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
   ScanlineStorageAA8
 
 template geScanlinesBinT*(x: typedesc[FontEngineWin32TTBase]): typedesc =
@@ -81,25 +81,25 @@ proc crc32[T](crc: uint32, buf: T): uint32 =
 
   result = not crcu32
 
-proc dbl_to_fx(d: float64): FIXED {.inline.} =
-  var k = int32(d * 65536.0)
-  result = cast[ptr FIXED](k.addr)[]
+#proc dbl_to_fx(d: float64): FIXED {.inline.} =
+#  var k = int32(d * 65536.0)
+#  result = cast[ptr FIXED](k.addr)[]
 
 proc dbl_to_plain_fx(d: float64): int {.inline.} =
   result = int(d * 65536.0)
 
-proc negate_fx(fx: FIXED): FIXED {.inline.} =
-  var k = -(cast[ptr int32](fx.unsafeAddr)[])
-  result = cast[ptr FIXED](k.addr)[]
+#proc negate_fx(fx: FIXED): FIXED {.inline.} =
+#  var k = -(cast[ptr int32](fx.unsafeAddr)[])
+#  result = cast[ptr FIXED](k.addr)[]
 
 proc fx_to_dbl(p: FIXED): float64 {.inline.} =
-  result = float64(p.value) + float64(p.fract) * (1.0 / 65536.0)
+  result = float64(p.value) + float64(p.fract.uint16) * (1.0 / 65536.0)
 
-proc fx_to_plain_int(fx: FIXED): int {.inline.} =
-  result = int(cast[ptr int32](fx.unsafeAddr)[])
+#proc fx_to_plain_int(fx: FIXED): int {.inline.} =
+#  result = int(cast[ptr int32](fx.unsafeAddr)[])
 
-proc fx_to_int26p6(p: FIXED): int {.inline.} =
-  result = (int(p.value) shl 6) + (int(p.fract) shr 10)
+#proc fx_to_int26p6(p: FIXED): int {.inline.} =
+#  result = (int(p.value) shl 6) + (int(p.fract) shr 10)
 
 proc dbl_to_int26p6(p: float64): int {.inline.} =
   result = int(p * 64.0 + 0.5)
@@ -180,6 +180,7 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
 
     x = fx_to_dbl(th.pfxStart.x)
     y = fx_to_dbl(th.pfxStart.y)
+
     if flipY: y = -y
     mtx.transform(x, y)
     path.moveTo(ValueT(dbl_to_int26p6(x)), ValueT(dbl_to_int26p6(y)))
@@ -203,8 +204,8 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
 
           if u < pc.cpfx - 2:         # If not on last spline, compute C
             # midpoint (x,y)
-            cast[ptr int](pnt_c.x.addr)[] = cast[ptr int](pnt_b.x.addr)[] + cast[ptr int](pnt_c.x.addr)[] div 2
-            cast[ptr int](pnt_c.y.addr)[] = cast[ptr int](pnt_b.y.addr)[] + cast[ptr int](pnt_c.y.addr)[] div 2
+            cast[ptr int32](pnt_c.x.addr)[] = (cast[ptr int32](pnt_b.x.addr)[] + cast[ptr int32](pnt_c.x.addr)[]) div 2
+            cast[ptr int32](pnt_c.y.addr)[] = (cast[ptr int32](pnt_b.y.addr)[] + cast[ptr int32](pnt_c.y.addr)[]) div 2
 
           var x2, y2: float64
           x  = fx_to_dbl(pnt_b.x)
@@ -217,7 +218,6 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
 
           mtx.transform(x,  y)
           mtx.transform(x2, y2)
-
           path.curve3(ValueT(dbl_to_int26p6(x)),
                       ValueT(dbl_to_int26p6(y)),
                       ValueT(dbl_to_int26p6(x2)),
@@ -269,7 +269,7 @@ proc updateSignature*(self: FontEngineWin32TTBase) =
         gammaTable[i] = self.mRasterizer.applyGamma(i).uint8
       gammaHash = int(crc32(0, gammaTable))
 
-    self.mSignature = "$1,$2,$3,$4:$5x$6,$7,$8,$9,$10,$11,%08X" % [
+    self.mSignature = "$1,$2,$3,$4:$5x$6,$7,$8,$9,$10,$11,$12" % [
       self.mTypeFace, $self.mCharSet, $self.mGlyphRendering.ord,
       $self.mResolution, $self.mHeight, $self.mWidth, $self.mWeight,
       $int(self.mItalic), $int(self.mHinting), $int(self.mFlipY),
@@ -680,7 +680,7 @@ proc init*(self: FontEngineWin32TTBase, flag32: bool, dc: HDC, maxFonts = 32) =
   zeroMem(self.mMatrix.addr, sizeof(self.mMatrix))
   self.mMatrix.eM11.value = 1
   self.mMatrix.eM22.value = 1
-
+  self.mAffine = initTransAffine()
 
 # This class uses values of type int16 (10.6 format) for the vector cache.
 # The vector cache is compact, but when rendering glyphs of height
@@ -689,20 +689,26 @@ proc init*(self: FontEngineWin32TTBase, flag32: bool, dc: HDC, maxFonts = 32) =
 type
   FontEngineWin32TTInt16* = ref object of FontEngineWin32TTBase
 
-template getPathAdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+template pathAdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
   SerializedIntegerPathAdaptor[int16]
 
-template getGray8AdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
-  getGray8AdaptorT(FontEngineWin32TTBase)
+template gray8AdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  gray8AdaptorT(FontEngineWin32TTBase)
 
-template getMonoAdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
-  getMonoAdaptorT(FontEngineWin32TTBase)
+template monoAdaptorT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  monoAdaptorT(FontEngineWin32TTBase)
 
-template getScanlinesAAT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
-  getScanlinesAAT(FontEngineWin32TTBase)
+template scanlinesAAT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  scanlinesAAT(FontEngineWin32TTBase)
 
-template getScanlineBinT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
-  getScanlineBinT(FontEngineWin32TTBase)
+template scanlinesBinT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  scanlinesBinT(FontEngineWin32TTBase)
+
+template gray8ScanlineT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  embeddedScanlineT(gray8AdaptorT(FontEngineWin32TTBase))
+
+template monoScanlineT*(x: typedesc[FontEngineWin32TTInt16]): typedesc =
+  embeddedScanlineT(monoAdaptorT(FontEngineWin32TTBase))
 
 proc finalizer(self: FontEngineWin32TTInt16) =
   deinit(self)
@@ -718,20 +724,26 @@ proc newFontEngineWin32TTInt16*(dc: HDC, maxFonts = 32): FontEngineWin32TTInt16 
 type
   FontEngineWin32TTInt32* = ref object of FontEngineWin32TTBase
 
-template getPathAdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+template pathAdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
   SerializedIntegerPathAdaptor[int32]
 
-template getGray8AdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
-  getGray8AdaptorT(FontEngineWin32TTBase)
+template gray8AdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  gray8AdaptorT(FontEngineWin32TTBase)
 
-template getMonoAdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
-  getMonoAdaptorT(FontEngineWin32TTBase)
+template monoAdaptorT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  monoAdaptorT(FontEngineWin32TTBase)
 
-template getScanlinesAAT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
-  getScanlinesAAT(FontEngineWin32TTBase)
+template scanlinesAAT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  scanlinesAAT(FontEngineWin32TTBase)
 
-template getScanlineBinT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
-  getScanlineBinT(FontEngineWin32TTBase)
+template scanlinesBinT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  scanlinesBinT(FontEngineWin32TTBase)
+
+template gray8ScanlineT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  embeddedScanlineT(gray8AdaptorT(FontEngineWin32TTBase))
+
+template monoScanlineT*(x: typedesc[FontEngineWin32TTInt32]): typedesc =
+  embeddedScanlineT(monoAdaptorT(FontEngineWin32TTBase))
 
 proc finalizer(self: FontEngineWin32TTInt32) =
   deinit(self)

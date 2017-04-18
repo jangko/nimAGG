@@ -236,15 +236,16 @@ type
     mNumSpans: int
     mDx: int
 
-type
-  span32 = object
+  Span32 = object
     x: int32
     len: int32
 
   ConstIteratorAdaptorBin* = object
     mPtr: ptr uint8
-    mSpan: span32
+    mSpan: Span32
     mDx: int
+
+template embeddedScanlineT*(x: typedesc[SerializedScanlinesAdaptorBin]): typedesc = EmbeddedScanlineAdaptorBin
 
 proc readInt32(self: var ConstIteratorAdaptorBin): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
