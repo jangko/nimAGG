@@ -130,7 +130,7 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
     result.mChangeStamp = -1
     result.mPrevGlyph = nil 
     result.mLastGlyph = nil
-
+    
   proc resetLastGlyph*(self: name) =
     self.mPrevGlyph = nil
     self.mLastGlyph = nil
