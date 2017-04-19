@@ -48,6 +48,12 @@ type
 
   RasterizerScanlineAA* = RasterizerScanlineAA1[RasterizerSlClipInt, getCoordT(RasterizerSlClipInt)]
 
+template getAAShift*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaShift
+template getAAScale*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaScale
+template getAAMask*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaSMask
+template getAAScale2*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaScale2
+template getAAMask2*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaMask2
+
 proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
   result.outline = newRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
@@ -104,7 +110,7 @@ proc fillingRule*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT];
 proc autoClose*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; flag: bool) =
   self.autoClose = flag
 
-proc applyGamma*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; cover: uint): uint =
+proc applyGamma*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; cover: int): int =
   result = self.mGamma[cover]
 
 proc closePolygon*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =

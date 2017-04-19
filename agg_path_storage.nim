@@ -35,7 +35,7 @@ proc swapVertices*(self: VertexStorage, v1, v2: int) =
   swap(self.mVert[v1], self.mVert[v2])
 
 proc lastCommand*(self: VertexStorage): uint =
-  result = if self.mVert.len > 0: self.mVert[self.mVert.len - 1].cmd else: pathCmdStop
+  result = if self.mVert.len > 0: self.mVert[^1].cmd else: pathCmdStop
 
 proc vertex*(self: VertexStorage, idx: int, x, y: var float64): uint =
   var v = self.mVert[idx].addr
@@ -59,10 +59,10 @@ proc prevVertex*(self: VertexStorage, x, y: var float64): uint =
   result = self.vertex(self.mVert.len - 2, x, y)
 
 proc lastX*(self: VertexStorage): float64 =
-  result = if self.mVert.len > 0: self.mVert[self.mVert.len - 1].x else: 0.0'f64
+  result = if self.mVert.len > 0: self.mVert[^1].x else: 0.0'f64
 
 proc lastY*(self: VertexStorage): float64 =
-  result = if self.mVert.len > 0: self.mVert[self.mVert.len - 1].y else: 0.0'f64
+  result = if self.mVert.len > 0: self.mVert[^1].y else: 0.0'f64
 
 proc totalVertices*(self: VertexStorage): int =
   result = self.mVert.len
@@ -85,7 +85,7 @@ proc initPolyPlainAdaptor*[T](data: ptr T, numPoints: int, closed: bool): PolyPl
   result.mEnd = data + numPoints * 2
   result.mClosed = closed
   result.mStop = false
-  
+
 proc initPolyPlainAdaptor*[T](data: var openArray[T], numPoints: int, closed: bool): PolyPlainAdaptor[T] =
   result.mData = data[0].addr
   result.mPtr = data[0].addr
@@ -256,10 +256,10 @@ type
 proc initPathBase*[VC](vertices: VC): PathBase[VC] =
   result.mVert = vertices
   result.iter = 0
-  
+
 proc initPathBase*[VC](): PathBase[VC] =
   result.iter = 0
-  
+
 proc initPathStorage*(): auto =
   result = initPathBase(newVertexStorage())
 
@@ -275,8 +275,8 @@ proc relToAbs*[VC](self: var PathBase[VC], x, y: var float64) =
   if self.mVert.totalVertices() != 0:
     var x2, y2: float64
     if isVertex(self.mVert.lastVertex(x2, y2)):
-      inc(x, x2)
-      inc(y, y2)
+      x += x2
+      y += y2
 
 proc lastX*[VC](self: var PathBase[VC]): float64 {.inline.} =
   result = self.mVert.lastX()
@@ -440,7 +440,7 @@ proc arcTo*[VC](self: var PathBase[VC], rx, ry, angle: float64, largeArcFlag, sw
       ry = abs(ry)
 
     discard self.mVert.lastVertex(x0, y0)
-    
+
     # Ensure radii are valid
     #-------------------------
     if rx < epsilon or ry < epsilon:
@@ -558,7 +558,7 @@ proc perceivePolygonOrientation*[VC](self: var PathBase[VC], start, stop: int): 
     x1, y1, x2, y2: float64
 
   for i in 0.. <np:
-    discard self.mVert.vertex(start + i,            x1, y1)
+    discard self.mVert.vertex(start + i,              x1, y1)
     discard self.mVert.vertex(start + (i + 1) mod np, x2, y2)
     area += x1 * y2 - y1 * x2
 
@@ -586,56 +586,60 @@ proc invertPolygon*[VC](self: var PathBase[VC], start, stop: int) =
     dec stop
 
 proc invertPolygon*[VC](self: var PathBase[VC], start: int) =
-  let len = self.mVert.totalVertices()
   var start = start
 
   # Skip all non-vertices at the beginning
-  while start < len and (not isVertex(self.mVert.command(start))):
+  while start < self.mVert.totalVertices() and
+    not isVertex(self.mVert.command(start)):
     inc start
 
   # Skip all insignificant move_to
-  while start+1 < len and
+  while start+1 < self.mVert.totalVertices() and
     isMoveTo(self.mVert.command(start)) and
     isMoveTo(self.mVert.command(start+1)):
     inc start
 
   # Find the last vertex
   var stop = start + 1
-  while stop < len and (not isNextPoly(self.mVert.command(stop))):
+  while stop < self.mVert.totalVertices() and
+    not isNextPoly(self.mVert.command(stop)):
     inc stop
 
   self.invertPolygon(start, stop)
 
 proc arrangePolygonOrientation*[VC](self: var PathBase[VC], start: int, orientation: uint): int =
   if orientation == pathFlagsNone: return start
-  let len = self.mVert.totalVertices()
 
   var start = start
   # Skip all non-vertices at the beginning
-  while start < len and (not isVertex(self.mVert.command(start))):
+  while start < self.mVert.totalVertices() and
+    not isVertex(self.mVert.command(start)):
     inc start
 
   # Skip all insignificant move_to
-  while start+1 < len and
+  while start+1 < self.mVert.totalVertices() and
     isMoveTo(self.mVert.command(start)) and
     isMoveTo(self.mVert.command(start+1)):
     inc start
 
   # Find the last vertex
   var stop = start + 1
-  while stop < len and (not isNextPoly(self.mVert.command(stop))):
+  while stop < self.mVert.totalVertices() and
+    not isNextPoly(self.mVert.command(stop)):
     inc stop
 
   if stop - start > 2:
     if self.perceivePolygonOrientation(start, stop) != orientation:
       # Invert polygon, set orientation flag, and skip all end_poly
       self.invertPolygon(start, stop)
-      if stop < len:
+
+      if stop < self.mVert.totalVertices():
         var cmd = self.mVert.command(stop)
-        while stop < len and isEndPoly(cmd):
+        while stop < self.mVert.totalVertices() and isEndPoly(cmd):
           self.mVert.modifyCommand(stop, setOrientation(cmd, orientation))
           inc stop
-          cmd = self.mVert.command(stop)
+          if stop < self.mVert.totalVertices():
+            cmd = self.mVert.command(stop)
 
   result = stop
 
@@ -643,10 +647,9 @@ proc arrangeOrientations*[VC](self: var PathBase[VC], start: int, orientation: u
   var start = start
 
   if orientation != pathFlagsNone:
-    let len = self.mVert.totalVertices()
-    while start < len:
+    while start < self.mVert.totalVertices():
       start = self.arrangePolygonOrientation(start, orientation)
-      if start < len and isStop(self.mVert.command(start)):
+      if start >= self.mVert.totalVertices() or isStop(self.mVert.command(start)):
         inc start
         break
 
@@ -654,9 +657,8 @@ proc arrangeOrientations*[VC](self: var PathBase[VC], start: int, orientation: u
 
 proc arrangeOrientationsAllPaths*[VC](self: var PathBase[VC], orientation: uint) =
   if orientation != pathFlagsNone:
-    let len = self.mVert.totalVertices()
     var start = 0
-    while start < len:
+    while start < self.mVert.totalVertices():
       start = self.arrangeOrientations(start, orientation)
 
 proc flipX*[VC](self: var PathBase[VC], x1, x2: float64) =
@@ -731,13 +733,13 @@ proc swapVertices*[C](self: var VertexStlStorage[C], v1, v2: int) =
 
 proc lastCommand*[C](self: VertexStlStorage[C]): uint =
   result = if self.mVert.len != 0: self.mVert[self.mVert.len - 1].cmd else: pathCmdStop
-  
+
 proc vertex*[C](self: var VertexStlStorage[C], idx: int, x, y: var float64): uint =
   let v = self.mVert[idx].addr
   x = v.x
   y = v.y
   v.cmd
-  
+
 proc lastVertex*[C](self: VertexStlStorage[C], x, y: var float64): uint =
   if self.mVert.len == 0:
     x = 0.0

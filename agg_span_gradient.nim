@@ -12,7 +12,7 @@ type
     mColorF: ptr ColorF
     mD1, mD2: int
 
-template getDownscaleShift*[I,G,C](x: typedesc[SpanGradient[I,G,C]]): int = 
+template getDownscaleShift*[I,G,C](x: typedesc[SpanGradient[I,G,C]]): int =
   mixin getSubPixelShift
   (getSubPixelShift(I.type) - gradientSubpixelShift)
 
@@ -81,7 +81,7 @@ type
   GradientLinearColor*[ColorT] = object
     mC1, mC2: ColorT
     mSize: int
-    
+
 proc initGradientLinearColor*[ColorT](): GradientLinearColor[ColorT] =
   discard
 
@@ -107,6 +107,8 @@ proc colors*[ColorA, ColorB](self: var GradientLinearColor[ColorA], c1, c2: Colo
 type
   GradientCircle* = object
 
+proc construct*(x: typedesc[GradientCircle]): GradientCircle = discard
+
 # Actually the same as radial. Just for compatibility
 proc calculate*(self: GradientCircle, x, y, d: int): int {.inline.} =
   fastSqrt(x*x + y*y)
@@ -114,11 +116,15 @@ proc calculate*(self: GradientCircle, x, y, d: int): int {.inline.} =
 type
   GradientRadial* = object
 
+proc construct*(x: typedesc[GradientRadial]): GradientRadial = discard
+
 proc calculate*(self: GradientRadial, x, y, d: int): int {.inline.} =
   fastSqrt(x*x + y*y)
 
 type
   GradientRadialD* = object
+
+proc construct*(x: typedesc[GradientRadialD]): GradientRadialD = discard
 
 proc calculate*(self: GradientRadialD, x, y, d: int): int {.inline.} =
   uround(sqrt(float64(x)*float64(x) + float64(y)*float64(y)))
@@ -161,6 +167,12 @@ proc initGradientRadialFocus*(r, fx, fy: float64): GradientRadialFocus =
   result.mFy = iround(fy * gradientSubpixelScale)
   result.updateValues()
 
+template construct*(x: typedesc[GradientRadialFocus]): untyped =
+  initGradientRadialFocus()
+
+template construct*(x: typedesc[GradientRadialFocus]): untyped =
+  initGradientRadialFocus(r, fx, fy)
+
 proc init*(self: var GradientRadialFocus, r, fx, fy: float64) =
   self.mR  = iround(r  * gradientSubpixelScale)
   self.mFx = iround(fx * gradientSubpixelScale)
@@ -184,17 +196,20 @@ proc calculate*(self: var GradientRadialFocus, x, y, d: int): int =
 type
   GradientX* = object
 
+proc construct*(x: typedesc[GradientX]): GradientX = discard
 proc initGradientX*(): GradientX = discard
 proc calculate*(self: GradientX, x, y, d: int): int {.inline.} = x
 
 type
   GradientY* = object
 
+proc construct*(x: typedesc[GradientY]): GradientY = discard
 proc calculate*(self: GradientY, x, y, d: int): int {.inline.} = y
 
 type
   GradientDiamond* = object
 
+proc construct*(x: typedesc[GradientDiamond]): GradientDiamond = discard
 proc calculate*(self: GradientDiamond, x, y, d: int): int {.inline.} =
   let ax = abs(x)
   let ay = abs(y)
@@ -203,18 +218,21 @@ proc calculate*(self: GradientDiamond, x, y, d: int): int {.inline.} =
 type
   GradientXY* = object
 
+proc construct*(x: typedesc[GradientXY]): GradientXY = discard
 proc calculate*(self: GradientXY, x, y, d: int): int {.inline.} =
   result = abs(x) * abs(y) div d
 
 type
   GradientSqrtXY* = object
 
+proc construct*(x: typedesc[GradientSqrtXY]): GradientSqrtXY = discard
 proc calculate*(self: GradientSqrtXY, x, y, d: int): int {.inline.} =
   fastSqrt(abs(x) * abs(y))
 
 type
   GradientConic* = object
 
+proc construct*(x: typedesc[GradientConic]): GradientConic = discard
 proc calculate*(self: GradientConic, x, y, d: int): int {.inline.} =
   uround(abs(arctan2(float64(y), float64(x))) * float64(d) / pi)
 
@@ -224,6 +242,8 @@ type
 
 proc initGradientRepeatAdaptor*[GradientF](gf: var GradientF): GradientRepeatAdaptor[GradientF] =
   result.mGradient = gf.addr
+
+template construct*[T](x: typedesc[GradientRepeatAdaptor[T]], val: untyped): untyped = initGradientRepeatAdaptor(val)
 
 proc calculate*[GradientF](self: var GradientRepeatAdaptor[GradientF], x, y, d: int): int {.inline.} =
   result = self.mGradient[].calculate(x, y, d) mod d
@@ -235,7 +255,7 @@ type
 
 proc initGradientReflectAdaptor*[GradientF](gf: var GradientF): GradientReflectAdaptor[GradientF] =
   result.mGradient = gf.addr
-  
+
 template construct*[T](x: typedesc[GradientReflectAdaptor[T]], val: untyped): untyped = initGradientReflectAdaptor(val)
 
 proc calculate*[GradientF](self: var GradientReflectAdaptor[GradientF], x, y, d: int): int {.inline.} =

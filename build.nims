@@ -1,4 +1,4 @@
-const subjects = [
+var subjects = @[
   "ex_aa_demo",
   "ex_aa_test",
   "ex_alpha_gradient",
@@ -74,8 +74,14 @@ const subjects = [
   "ex_gradients_contour",
   "ex_particle_demo",
   "ex_test_poly_bool",
-  "ex_poly_bool"]
+  "ex_poly_bool",
+  "ex_gradients"]
 
+when defined(windows):
+  subjects.add "ex_trans_curve1"
+  subjects.add "ex_trans_curve2"
+  subjects.add "ex_truetype_test"
+  
 mode = ScriptMode.Silent
 
 import strutils

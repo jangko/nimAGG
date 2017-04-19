@@ -77,6 +77,7 @@ proc cuspLimit*[VS, C3, C4](self: ConvCurve1[VS, C3, C4]): float64 =
   self.mCurve4.cuspLimit()
 
 proc rewind*[VS, C3, C4](self: var ConvCurve1[VS, C3, C4], pathId: int) =
+  mixin rewind
   self.mSource[].rewind(pathId)
   self.mLastX = 0.0
   self.mLastY = 0.0

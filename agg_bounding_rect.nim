@@ -1,6 +1,6 @@
 import agg_basics
 
-proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: T;
+proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: var T;
   start, num: int; x1, y1, x2, y2: var CoordT): bool =
 
   x1 = CoordT(1)

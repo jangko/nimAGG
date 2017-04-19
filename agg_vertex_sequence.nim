@@ -1,4 +1,4 @@
-import agg_math
+import agg_math, agg_basics
 
 # Vertex (x, y) with the distance to the next one. The last vertex has
 # distance between the last and the first points if the polygon is closed
@@ -35,9 +35,6 @@ proc initVertexDistCmd*(x, y: float64, cmd: uint): VertexDistCmd =
 type
   VertexSequence*[T] = object
     vert: seq[T]
-
-proc removeLast*[T](x: var seq[T]) {.inline.} =
-  if x.len != 0: x.delete(x.len-1)
 
 proc initVertexSequence*[T](): VertexSequence[T] =
   result.vert = @[]
@@ -79,12 +76,12 @@ proc next*[T](self: var VertexSequence[T], idx: int): var T =
 proc prev*[T](self: var VertexSequence[T], idx: int): var T =
   let size = self.vert.len
   self.vert[(idx + size - 1) mod size]
-  
+
 proc `[]`*[T](self: VertexSequence[T], idx: int): T = self.vert[idx]
 proc `[]`*[T](self: var VertexSequence[T], idx: int): var T = self.vert[idx]
-proc `[]=`*[T](self: var VertexSequence[T], idx: int, v: T) = 
+proc `[]=`*[T](self: var VertexSequence[T], idx: int, v: T) =
   self.vert[idx] = v
-  
+
 proc len*[T](self: VertexSequence[T]): int = self.vert.len
 proc removeLast*[T](self: var VertexSequence[T]) = self.vert.removeLast()
 proc removeAll*[T](self: var VertexSequence[T]) = self.vert.setLen(0)

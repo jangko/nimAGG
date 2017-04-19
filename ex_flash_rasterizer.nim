@@ -2,7 +2,7 @@ import agg_rendering_buffer, agg_trans_viewport, agg_path_storage, agg_conv_tran
 import agg_conv_curve, agg_conv_stroke, agg_gsv_text, agg_scanline_u, agg_scanline_bin
 import agg_renderer_scanline, agg_rasterizer_scanline_aa, agg_rasterizer_compound_aa
 import agg_span_allocator, agg_gamma_lut, agg_pixfmt_rgba, agg_bounding_rect, agg_color_gray
-import agg_color_rgba, nimBMP, agg_trans_affine, strutils, agg_basics, agg_math
+import agg_color_rgba, nimBMP, agg_trans_affine, agg_basics, agg_math
 import random, os, strutils, agg_renderer_base, math, times
 
 const

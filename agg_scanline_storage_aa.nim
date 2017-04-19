@@ -349,7 +349,9 @@ type
     
 template getCoverT*[T](x: typedesc[ConstIteratorAdaptorAA[T]]): typedesc = T
 template getIterT*[T](x: typedesc[SerializedScanlinesAdaptorAA[T]]): typedesc = ConstIteratorAdaptorAA[T]
-
+template embeddedScanlineT*[T](x: typedesc[SerializedScanlinesAdaptorAA[T]]): typedesc = 
+  EmbeddedScanlineAdaptorAA[T.type]
+  
 proc readInt32*[T](self: var ConstIteratorAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[1] = self.mPtr[]; inc self.mPtr
@@ -357,7 +359,7 @@ proc readInt32*[T](self: var ConstIteratorAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[3] = self.mPtr[]; inc self.mPtr
 
 proc initSpan*[T](self: var ConstIteratorAdaptorAA[T]) =
-  self.mSpan.x      = self.readInt32() + self.mDx
+  self.mSpan.x      = self.readInt32() + self.mDx.int32
   self.mSpan.len    = self.readInt32()
   self.mSpan.covers = self.mPtr
 
@@ -374,13 +376,13 @@ proc inc*[T](self: var ConstIteratorAdaptorAA[T]) =
   self.initSpan()
 
 proc x*[T](self: ConstIteratorAdaptorAA[T]): int {.inline.} =
-  self.span.x.int
+  self.mSpan.x.int
 
 proc len*[T](self: ConstIteratorAdaptorAA[T]): int {.inline.} =
-  self.span.len.int
+  self.mSpan.len.int
 
 proc covers*[T](self: ConstIteratorAdaptorAA[T]): ptr T {.inline.} =
-  self.span.covers
+  self.mSpan.covers
 
 proc initEmbeddedScanlineAdaptorAA*[T](): EmbeddedScanlineAdaptorAA[T] =
   result.mPtr = nil
@@ -446,13 +448,11 @@ proc init*[T](self: var SerializedScanlinesAdaptorAA[T], data: ptr uint8,
   self.mMaxX = -0x7FFFFFFF
   self.mMaxY = -0x7FFFFFFF
 
-
 proc readInt32*[T](self: var SerializedScanlinesAdaptorAA[T]): int32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[1] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[2] = self.mPtr[]; inc self.mPtr
   cast[ptr uint8](result.addr)[3] = self.mPtr[]; inc self.mPtr
-
 
 proc readInt32u*[T](self: var SerializedScanlinesAdaptorAA[T]): uint32 =
   cast[ptr uint8](result.addr)[0] = self.mPtr[]; inc self.mPtr
@@ -511,7 +511,7 @@ proc sweepScanline*[T](self: var SerializedScanlinesAdaptorAA[T], sl: var Embedd
 
     var byteSize = self.readInt32u()
     sl.init(self.mPtr, self.mDx, self.mDy)
-    self.mPtr += byteSize - sizeof(int32)
+    self.mPtr += byteSize.int - sizeof(int32)
 
   result = true
 
