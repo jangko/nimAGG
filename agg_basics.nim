@@ -47,7 +47,7 @@ const
 
 template sar*(x: int, shift: SomeInteger): int =
   (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
-  
+
 template sar*(x: int64, shift: SomeInteger): int64 =
   (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
 
@@ -270,8 +270,11 @@ proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
 template allocU*(T: typedesc, size = 1): untyped =
   cast[ptr T](alloc(T.sizeof * size))
 
-proc min*(x, y: uint32): uint32 =
+proc min*(x, y: uint32): uint32 {.inline.} =
   if x <= y: x else: y
-  
-proc max*(x, y: uint32): uint32 =
+
+proc max*(x, y: uint32): uint32 {.inline.} =
   if y <= x: x else: y
+
+proc removeLast*[T](x: var seq[T]) {.inline.} =
+  if x.len != 0: x.delete(x.len-1)

@@ -1,4 +1,4 @@
-var subjects = [
+var subjects = @[
   "ex_aa_demo",
   "ex_aa_test",
   "ex_alpha_gradient",

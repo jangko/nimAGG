@@ -275,8 +275,8 @@ proc relToAbs*[VC](self: var PathBase[VC], x, y: var float64) =
   if self.mVert.totalVertices() != 0:
     var x2, y2: float64
     if isVertex(self.mVert.lastVertex(x2, y2)):
-      inc(x, x2)
-      inc(y, y2)
+      x += x2
+      y += y2
 
 proc lastX*[VC](self: var PathBase[VC]): float64 {.inline.} =
   result = self.mVert.lastX()
@@ -633,9 +633,9 @@ proc arrangePolygonOrientation*[VC](self: var PathBase[VC], start: int, orientat
       if stop < len:
         var cmd = self.mVert.command(stop)
         while stop < len and isEndPoly(cmd):
-          self.mVert.modifyCommand(stop, setOrientation(cmd, orientation))
-          inc stop
+          self.mVert.modifyCommand(stop, setOrientation(cmd, orientation))          
           cmd = self.mVert.command(stop)
+          inc stop
 
   result = stop
 

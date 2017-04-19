@@ -50,6 +50,7 @@ proc rewind*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], pathId: int)  =
   self.mStatus = initial
 
 proc vertex*[V,G,M](self: var ConvAdaptorVcGen[V,G,M], x, y: var float64): uint =
+  mixin removeAll
   var
     cmd: uint = pathCmdStop
     done = false
