@@ -60,7 +60,7 @@ proc initApp(): App =
 proc parseSvg(app: var App, fname: string) =
   var p = initParser(app.mPath)
   p.parse("resources" & DirSep & fname & ".svg")
-  #app.mPath.arrangeOrientations()
+  app.mPath.arrangeOrientations()
   app.mPath.boundingRect(app.mMinX, app.mMinY, app.mMaxX, app.mMaxY)
   #caption(p.title())
 
@@ -99,10 +99,11 @@ proc onDraw(fileName: string) =
 
   ras.gamma(gamma)
   mtx *= transAffineTranslation((app.mMinX + app.mMaxX) * -0.5, (app.mMinY + app.mMaxY) * -0.5 + 50)
+  mtx.flipX()
   mtx *= transAffineScaling(scaleX, scaleY)
   mtx *= transAffineRotation(deg2rad(app.mRotate.value()))
-  mtx *= transAffineTranslation((app.mMinX + app.mMaxX) * 0.5 + app.mX, (app.mMinY + app.mMaxY) * 0.5 + app.mY + 50)
-
+  mtx *= transAffineTranslation((app.mMinX + app.mMaxX) * 0.5 + app.mX, (app.mMinY + app.mMaxY) * 0.5 + app.mY + 50)  
+  
   app.mPath.expand(app.mExpand.value())
 
   var startTime = cpuTime()

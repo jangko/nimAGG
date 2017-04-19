@@ -31,9 +31,9 @@ type
     FillFlag
     StrokeFlag
     EvenOddFlag
-    
+
   PathFlags* = set[PathFlag]
-  
+
   PathAttributes* = object
     index*: int
     fillColor*, strokeColor*: Rgba8
@@ -97,12 +97,12 @@ type
     mCurvedStrokedTrans: CurvedStrokedTrans
     mCurvedTrans: CurvedTrans
     mCurvedTransContour: CurvedTransContour
-    
+
 proc initPathRenderer*(): PathRenderer =
   result.mStorage = initPathStorage()
   result.mAttrStorage = @[]
   result.mAttrStack = @[]
-  
+
   result.mCurved = initConvCurve(result.mStorage)
   result.mCurvedCount = initConvCount(result.mCurved)
 
@@ -121,19 +121,19 @@ proc removeAll*(self: var PathRenderer) =
 
 proc vertexCount*(self: PathRenderer): int =
   self.mCurvedCount.count()
-  
+
 proc curAttr*(self: var PathRenderer): var PathAttributes =
   if self.mAttrStack.len() == 0:
     raise SVGError("curAttr : Attribute stack is empty")
 
   self.mAttrStack[^1]
-  
+
 proc pushAttr*(self: var PathRenderer) =
   if self.mAttrStack.len() != 0:
     self.mAttrStack.add(self.mAttrStack[^1])
   else:
     self.mAttrStack.add(initPathAttributes())
-    
+
 proc popAttr*(self: var PathRenderer) =
   if self.mAttrStack.len() == 0:
     raise SVGError("popAttr : Attribute stack is empty")
@@ -149,10 +149,10 @@ proc endPath*(self: var PathRenderer) =
   if self.mAttrStorage.len() == 0:
     raise SVGError("end_path : The path was not begun")
 
-  var 
+  var
     attr = self.curAttr()
     idx = self.mAttrStorage[^1].index
-    
+
   attr.index = idx
   self.mAttrStorage[^1] = attr
   self.popAttr()
@@ -161,7 +161,7 @@ proc moveTo*(self: var PathRenderer, x, y: float64, rel: bool = false) =  # M, m
   var
     x = x
     y = y
-    
+
   if rel: self.mStorage.relToAbs(x, y)
   self.mStorage.moveTo(x, y)
 
@@ -178,18 +178,18 @@ proc hlineTo*(self: var PathRenderer, x: float64, rel: bool = false) =  # H, h
     x2 = 0.0
     y2 = 0.0
     x = x
-    
+
   if self.mStorage.totalVertices() != 0:
     discard self.mStorage.vertex(self.mStorage.totalVertices() - 1, x2, y2)
     if rel: x += x2
     self.mStorage.lineTo(x, y2)
-    
+
 proc vlineTo*(self: var PathRenderer, y: float64, rel: bool = false) = # V, v
   var
     x2 = 0.0
     y2 = 0.0
     y = y
-    
+
   if self.mStorage.totalVertices() != 0:
     discard self.mStorage.vertex(self.mStorage.totalVertices() - 1, x2, y2)
     if rel: y += y2
@@ -201,14 +201,14 @@ proc curve3*(self: var PathRenderer, x1, y1, x, y: float64, rel: bool = false) =
     y1 = y1
     x = x
     y = y
-    
-  if rel: 
+
+  if rel:
     self.mStorage.relToAbs(x1, y1)
     self.mStorage.relToAbs(x, y)
   self.mStorage.curve3(x1, y1, x, y)
 
 proc curve3*(self: var PathRenderer, x, y: float64, rel: bool = false) = # T, t
-  if rel: 
+  if rel:
     self.mStorage.curve3Rel(x, y)
   else:
     self.mStorage.curve3(x, y)
@@ -221,15 +221,15 @@ proc curve4*(self: var PathRenderer, x1, y1, x2, y2, x, y: float64, rel: bool = 
     y2 = y2
     x = x
     y = y
- 
-  if rel: 
+
+  if rel:
     self.mStorage.relToAbs(x1, y1)
     self.mStorage.relToAbs(x2, y2)
     self.mStorage.relToAbs(x,  y)
   self.mStorage.curve4(x1, y1, x2, y2, x, y)
 
 proc curve4*(self: var PathRenderer, x2, y2, x, y: float64, rel: bool = false) = # S, s
-  if rel: 
+  if rel:
     self.mStorage.curve4Rel(x2, y2, x, y)
   else:
     self.mStorage.curve4(x2, y2, x, y)
@@ -253,7 +253,7 @@ proc evenOdd*(self: var PathRenderer, flag: bool) =
 
 proc strokeWidth*(self: var PathRenderer, w: float64) =
   self.curAttr().strokeWidth = w
-  
+
 proc fillNone*(self: var PathRenderer) =
   self.curAttr().flag.excl FillFlag
 
@@ -278,12 +278,12 @@ proc miterLimit*(self: var PathRenderer, ml: float64) =
 proc transform*(self: var PathRenderer): var TransAffine =
   self.curAttr().transform
 
-proc parsePath*(self: var PathRenderer, tok: var Pathtokenizer, debug: bool = false) =
+proc parsePath*(self: var PathRenderer, tok: var Pathtokenizer) =
   while tok.next():
     var
       arg: array[10, float64]
       cmd = tok.lastCommand()
-      
+
     case cmd
     of 'M', 'm':
       arg[0] = tok.lastNumber()
@@ -322,12 +322,12 @@ proc parsePath*(self: var PathRenderer, tok: var Pathtokenizer, debug: bool = fa
       self.closeSubpath()
     else:
       raise SVGError("parse_path: Invalid Command " & $cmd)
-            
+
 # Make all polygons CCW-oriented
 proc arrangeOrientations*(self: var PathRenderer) =
   self.mStorage.arrangeOrientationsAllPaths(pathFlagsCcw)
 
-# Expand all polygons 
+# Expand all polygons
 proc expand*(self: var PathRenderer, value: float64) =
   self.mCurvedTransContour.width(value)
 
@@ -339,17 +339,17 @@ proc boundingRect*(self: var PathRenderer, x1, y1, x2, y2: var float64) =
   var trans = initConvTransform(self.mStorage, self.mTransform)
   discard boundingRect(trans, self, 0, self.mAttrStorage.len(), x1, y1, x2, y2)
 
-# Rendering. One can specify two additional parameters: 
+# Rendering. One can specify two additional parameters:
 # trans_affine and opacity. They can be used to transform the whole
 # image and/or to make it translucent.
-proc render*[Rasterizer, Scanline, Renderer](self: var PathRenderer, ras: var Rasterizer, 
+proc render*[Rasterizer, Scanline, Renderer](self: var PathRenderer, ras: var Rasterizer,
   sl: var Scanline, ren: var Renderer, mtx: var TransAffine, cb: RectI, opacity = 1.0) =
 
   mixin clipBox, rewind
-  
+
   ras.clipBox(cb.x1.float64, cb.y1.float64, cb.x2.float64, cb.y2.float64)
   self.mCurvedCount.count(0)
-  
+
   for attr in self.mAttrStorage:
     self.mTransform = attr.transform
     self.mTransform *= mtx
@@ -357,9 +357,9 @@ proc render*[Rasterizer, Scanline, Renderer](self: var PathRenderer, ras: var Ra
     #self.mCurved.approximation_method(curve_inc)
     self.mCurved.approximationScale(scl)
     self.mCurved.angleTolerance(0.0)
-    
+
     var color: Rgba8
-    
+
     if FillFlag in attr.flag:
       ras.reset()
       ras.fillingRule(if EvenOddFlag in attr.flag: fillEvenOdd else: fillNonZero)
@@ -368,12 +368,12 @@ proc render*[Rasterizer, Scanline, Renderer](self: var PathRenderer, ras: var Ra
       #else:
         #self.mCurvedTransContour.miterLimit(attr.miterLimit)
         #ras.addPath(self.mCurvedTransContour, attr.index)
-    
+
       color = attr.fillColor
       color.opacity(color.opacity() * opacity)
       ren.color(color)
       renderScanlines(ras, sl, ren)
-    
+
     if StrokeFlag in attr.flag:
         self.mCurvedStroked.width(attr.strokeWidth)
         #self.mCurvedStroked.line_join((attr.line_join == miter_join) ? miter_join_round : attr.line_join)
@@ -382,12 +382,12 @@ proc render*[Rasterizer, Scanline, Renderer](self: var PathRenderer, ras: var Ra
         self.mCurvedStroked.miterLimit(attr.miterLimit)
         self.mCurvedStroked.innerJoin(innerRound)
         self.mCurvedStroked.approximationScale(scl)
-    
-        # If the *visual* line width is considerable we 
+
+        # If the *visual* line width is considerable we
         # turn on processing of curve cusps.
         if attr.strokeWidth * scl > 1.0:
           self.mCurved.angleTolerance(0.2)
-          
+
         ras.reset()
         ras.fillingRule(fillNonZero)
         ras.addPath(self.mCurvedStrokedTrans, attr.index)

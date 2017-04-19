@@ -160,9 +160,6 @@ type
     mTitleFlag: bool
     mPathFlag: bool
 
-var debug = false
-var pathNo = 0
-
 proc initParser*(path: var PathRenderer): Parser =
   result.mPath = path.addr
   result.mTokenizer = initPathtokenizer()
@@ -370,7 +367,7 @@ proc parsePath(self: var Parser, attrs: XmlAttributes) =
     # attributes (see 'else' branch).
     if key == "d":
       self.mTokenizer.setPathStr(val)
-      self.mPath[].parsePath(self.mTokenizer, debug)
+      self.mPath[].parsePath(self.mTokenizer)
     else:
       # Create a temporary single pair "name-value" in order
       # to aproc multiple calls for the same attribute.
@@ -462,7 +459,7 @@ proc parsePoly(self: var Parser, attrs: XmlAttributes, closeFlag: bool) =
 
 proc startElement(self: var Parser, node: XmlNode) =
   case node.tag
-  of "title":
+  of "title", "desc":
     self.mTitleFlag = true
     self.parseChildren(node)
     self.mTitleFlag = false
@@ -474,19 +471,12 @@ proc startElement(self: var Parser, node: XmlNode) =
   of "path":
     if self.mPathFlag:
       raise SVGError("start_element: Nested path")
-    inc pathNo
-    
-    if pathNo == 1:
-      debug = true
-    
     self.mPath[].beginPath()
     self.parsePath(node.attrs)
     self.mPath[].endPath()
     self.mPathFlag = true
     self.parseChildren(node)
     self.mPathFlag = false
-    
-    debug = false
   of "rect":
     self.parseRect(node.attrs)
     self.parseChildren(node)
