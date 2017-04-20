@@ -1,7 +1,7 @@
 import winapi, agg_basics
 
 type
-  PixelMap = object
+  PixelMap* = object
     mBmp: ptr BITMAPINFO
     mBuf: ptr uint8
     mBpp: int
@@ -19,7 +19,7 @@ proc initPixelMap*(): PixelMap =
   result.mFullSize = 0
   result.mBuffer = nil
 
-proc destroy(self: var PixelMap) =
+proc destroy*(self: var PixelMap) =
   self.mBmp = nil
   self.mIsInternal = false
   self.mBuf = nil
@@ -122,7 +122,7 @@ proc createFromBmp(self: var PixelMap, bmp: ptr BITMAPINFO) =
     self.mBmp       = bmp
     self.mBuf       = calcImagePtr(bmp)
 
-proc create*(self: var PixelMap, width, height: int, org: int, clearVal: int) =
+proc create*(self: var PixelMap, width, height: int, org: int, clearVal: int = 256) =
   var
     width = width
     height = height
@@ -202,7 +202,7 @@ proc attachToBmp*(self: var PixelMap, bmp: ptr BITMAPINFO) =
     self.createFromBmp(bmp)
     self.mIsInternal = false
 
-proc draw(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT, bmpRect: ptr RECT) =
+proc draw*(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT = nil, bmpRect: ptr RECT = nil) =
   if self.mBmp == nil or self.mBuf == nil: return
 
   var
@@ -235,19 +235,19 @@ proc draw(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT, bmpRect: ptr RECT)
   if deviceWidth != bmpWidth or deviceHeight != bmpHeight:
     discard setStretchBltMode(hdc, COLORONCOLOR)
     discard stretchDIBits(
-      hdc,            # handle of device context
-      int32(deviceX),        # x-coordinate of upper-left corner of source rect.
-      int32(deviceY),        # y-coordinate of upper-left corner of source rect.
-      int32(deviceWidth),    # width of source rectangle
-      int32(deviceHeight),   # height of source rectangle
+      hdc,                  # handle of device context
+      int32(deviceX),       # x-coordinate of upper-left corner of source rect.
+      int32(deviceY),       # y-coordinate of upper-left corner of source rect.
+      int32(deviceWidth),   # width of source rectangle
+      int32(deviceHeight),  # height of source rectangle
       int32(bmpX),
-      int32(bmpY),           # x, y -coordinates of upper-left corner of dest. rect.
-      int32(bmpWidth),       # width of destination rectangle
-      int32(bmpHeight),      # height of destination rectangle
-      self.mBuf,      # address of bitmap bits
-      self.mBmp[],      # address of bitmap data
-      DIB_RGB_COLORS, # usage
-      SRCCOPY)        # raster operation code
+      int32(bmpY),          # x, y -coordinates of upper-left corner of dest. rect.
+      int32(bmpWidth),      # width of destination rectangle
+      int32(bmpHeight),     # height of destination rectangle
+      self.mBuf,            # address of bitmap bits
+      self.mBmp[],          # address of bitmap data
+      DIB_RGB_COLORS,       # usage
+      SRCCOPY)              # raster operation code
   else:
     discard setDIBitsToDevice(
       hdc,                  # handle to device context
@@ -380,7 +380,6 @@ proc loadFromBmp*(self: var PixelMap, fileName: string): bool =
     result = self.loadFromBmp(fd)
     fd.close()
 
-
 proc saveAsBmp(self: PixelMap, fd: File): bool =
   if self.mBmp == nil: return false
 
@@ -416,3 +415,5 @@ proc height*(self: PixelMap): int =
 
 proc stride*(self: PixelMap): int =
   result = calcRowLen(self.mBmp.bmiHeader.biWidth, self.mBmp.bmiHeader.biBitCount)
+
+proc bpp*(self: PixelMap): int = self.mBpp

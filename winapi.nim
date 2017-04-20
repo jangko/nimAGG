@@ -32,6 +32,13 @@ type
   BYTE* = uint8
   WORD* = int16
 
+  LARGE_INTEGER* = int64
+  ULARGE_INTEGER* = int64
+  PLARGE_INTEGER* = ptr LARGE_INTEGER
+  TLARGEINTEGER* = int64
+  PULARGE_INTEGER* = ptr ULARGE_INTEGER
+  TULARGEIINTEGER* = int64
+
   LONG_PTR* = ByteAddress
   WPARAM* = LONG_PTR
   LPARAM* = LONG_PTR
@@ -237,8 +244,8 @@ type
   TTTPOLYGONHEADER* = TTPOLYGONHEADER
   PTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
 
-  APFXARRAY {.unchecked.} = array[0..0, POINTFX] 
-  
+  APFXARRAY {.unchecked.} = array[0..0, POINTFX]
+
   TTPOLYCURVE* {.final, pure.} = object
     wType*: int16
     cpfx*: int16
@@ -1118,6 +1125,45 @@ const
   DCX_INTERSECTRGN* = 0x00000080
   DCX_VALIDATE* = 0x00200000
 
+  # GetSysColor
+  COLOR_3DDKSHADOW* = 21
+  COLOR_3DFACE* = 15
+  COLOR_3DHILIGHT* = 20
+  COLOR_3DLIGHT* = 22
+  COLOR_BTNHILIGHT* = 20
+  COLOR_3DSHADOW* = 16
+  COLOR_ACTIVEBORDER* = 10
+  COLOR_ACTIVECAPTION* = 2
+  COLOR_APPWORKSPACE* = 12
+  COLOR_BACKGROUND* = 1
+  COLOR_DESKTOP* = 1
+  COLOR_BTNFACE* = 15
+  COLOR_BTNHIGHLIGHT* = 20
+  COLOR_BTNSHADOW* = 16
+  COLOR_BTNTEXT* = 18
+  COLOR_CAPTIONTEXT* = 9
+  COLOR_GRAYTEXT* = 17
+  COLOR_HIGHLIGHT* = 13
+  COLOR_HIGHLIGHTTEXT* = 14
+  COLOR_INACTIVEBORDER* = 11
+  COLOR_INACTIVECAPTION* = 3
+  COLOR_INACTIVECAPTIONTEXT* = 19
+  COLOR_INFOBK* = 24
+  COLOR_INFOTEXT* = 23
+  COLOR_MENU* = 4
+  COLOR_MENUTEXT* = 7
+  COLOR_SCROLLBAR* = 0
+  COLOR_WINDOW* = 5
+  COLOR_WINDOWFRAME* = 6
+  COLOR_WINDOWTEXT* = 8
+  
+  # Mouse messages
+  MK_CONTROL* = 8
+  MK_LBUTTON* = 1
+  MK_MBUTTON* = 16
+  MK_RBUTTON* = 2
+  MK_SHIFT* = 4
+  
 proc RGB*(r, g, b: int): COLORREF =
   result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
 
@@ -1347,7 +1393,7 @@ template getWindowLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
   when defined(winUnicode): GetWindowLongPtrW(wnd, nIndex)
   else: GetWindowLongPtrA(wnd, nIndex)
 
-template getClasLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
+template getClassLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
   when defined(winUnicode): GetClassLongPtrW(wnd, nIndex)
   else: GetClassLongPtrA(wnd, nIndex)
 
@@ -1486,3 +1532,21 @@ proc getDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetDC".}
 proc getDCEx*(wnd: HWND, hrgnClip: HRGN, flags: DWORD): HDC{.stdcall, dynlib: "user32", importc: "GetDCEx".}
 proc getWindowDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetWindowDC".}
 proc releaseDC*(wnd: HWND, hDC: HDC): int32{.stdcall, dynlib: "user32", importc: "ReleaseDC".}
+
+proc queryPerformanceCounter*(lpPerformanceCount: var LARGE_INTEGER): WINBOOL{.
+    stdcall, dynlib: "kernel32", importc: "QueryPerformanceCounter".}
+proc queryPerformanceFrequency*(lpFrequency: var LARGE_INTEGER): WINBOOL{.stdcall,
+    dynlib: "kernel32", importc: "QueryPerformanceFrequency".}
+
+proc moveWindow*(wnd: HWND, X: int32, Y: int32, nWidth: int32, nHeight: int32,
+                 bRepaint: WINBOOL): WINBOOL{.stdcall, dynlib: "user32", importc: "MoveWindow".}
+                 
+proc invalidateRect*(wnd: HWND, lpRect: var RECT, bErase: WINBOOL): WINBOOL{.
+    stdcall, dynlib: "user32", importc: "InvalidateRect".}
+    
+proc invalidateRect*(wnd: HWND, lpRect: LPRECT, bErase: WINBOOL): WINBOOL{.
+    stdcall, dynlib: "user32", importc: "InvalidateRect".}
+    
+proc getCapture*(): HWND{.stdcall, dynlib: "user32", importc: "GetCapture".}
+proc setCapture*(wnd: HWND): HWND{.stdcall, dynlib: "user32", importc: "SetCapture".}
+proc releaseCapture*(): WINBOOL{.stdcall, dynlib: "user32", importc: "ReleaseCapture".}
