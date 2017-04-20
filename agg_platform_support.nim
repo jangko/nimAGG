@@ -79,7 +79,7 @@ type
 # it can be simulated with holding a special key on the keydoard.
 type
   InputFlag* = enum
-    mouse_left
+    mouseLeft
     mouse_right
     kbd_shift
     kbd_ctrl
@@ -293,7 +293,7 @@ const
 type
   PlatformBase* = ref object of RootObj
 
-  PlatformSupport*[T] = ref object of PlatformBase
+  GenericPlatform*[T] = ref object of PlatformBase
     mCtrls: CtrlContainer
 
     # Sorry, I'm too tired to describe the private
@@ -314,13 +314,13 @@ type
 
 # format - see enum PixFormat
 # flip_y - true if you want to have the Y-axis flipped vertically.
-proc init*[T](self: PlatformSupport[T], format: PixFormat, flipY: bool)
+proc init*[T](self: GenericPlatform[T], format: PixFormat, flipY: bool)
 
 # Setting the windows caption (title). Should be able
 # to be called at least before calling init().
 # It's perfect if they can be called anytime.
-proc caption*[T](self: PlatformSupport[T], cap: string)
-proc caption*[T](self: PlatformSupport[T]): string =
+proc caption*[T](self: GenericPlatform[T], cap: string)
+proc caption*[T](self: GenericPlatform[T]): string =
   self.mCaption
 
 # These 3 methods handle working with images. The image
@@ -331,9 +331,9 @@ proc caption*[T](self: PlatformSupport[T]): string =
 # to determine the initial size of the window depending on
 # the size of the loaded image.
 # The argument "idx" is the number of the image 0...maxImages-1
-proc loadImg*[T](self: PlatformSupport[T], idx: int, file: string): bool
-proc saveImg*[T](self: PlatformSupport[T], idx: int, file: string): bool
-proc createImg*[T](self: PlatformSupport[T], idx: int, width = 0, height = 0): bool
+proc loadImg*[T](self: GenericPlatform[T], idx: int, file: string): bool
+proc saveImg*[T](self: GenericPlatform[T], idx: int, file: string): bool
+proc createImg*[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool
 
 
 # init() and run(). See description before the class for details.
@@ -343,17 +343,17 @@ proc createImg*[T](self: PlatformSupport[T], idx: int, width = 0, height = 0): b
 # some on_init() event handler when the window is created but
 # not yet displayed. The rbuf_window() method (see below) is
 # accessible from on_init().
-proc init*[T](self: PlatformSupport[T], width, height: int, flags: WindowFlags): bool
-proc run*[T](self: PlatformSupport[T]): int
+proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): bool
+proc run*[T](self: GenericPlatform[T]): int
 
 # The very same parameters that were used in the constructor
-proc format*[T](self: PlatformSupport[T]): PixFormat =
+proc format*[T](self: GenericPlatform[T]): PixFormat =
   self.mFormat
 
-proc flipY*[T](self: PlatformSupport[T]): bool =
+proc flipY*[T](self: GenericPlatform[T]): bool =
   self.mFlipY
 
-proc bpp*[T](self: PlatformSupport[T]): int =
+proc bpp*[T](self: GenericPlatform[T]): int =
   self.mBpp
 
 # The following provides a very simple mechanism of doing someting
@@ -362,10 +362,10 @@ proc bpp*[T](self: PlatformSupport[T]): int =
 # When it's false it calls on_idle() when the event queue is empty.
 # The mode can be changed anytime. This mechanism is satisfactory
 # to create very simple animations.
-proc waitMode*[T](self: PlatformSupport[T]): bool =
+proc waitMode*[T](self: GenericPlatform[T]): bool =
   self.mWaitMode
 
-proc waitMode*[T](self: PlatformSupport[T], waitMode: bool) =
+proc waitMode*[T](self: GenericPlatform[T], waitMode: bool) =
   self.mWaitMode = waitMode
 
 # These two functions control updating of the window.
@@ -376,8 +376,8 @@ proc waitMode*[T](self: PlatformSupport[T], waitMode: bool) =
 # update_window() results in just putting immediately the content
 # of the currently rendered buffer to the window without calling
 # on_draw().
-proc forceRedraw*[T](self: PlatformSupport[T])
-proc updateWindow*[T](self: PlatformSupport[T])
+proc forceRedraw*[T](self: GenericPlatform[T])
+proc updateWindow*[T](self: GenericPlatform[T])
 
 
 # So, finally, how to draw anythig with AGG? Very simple.
@@ -388,28 +388,28 @@ proc updateWindow*[T](self: PlatformSupport[T])
 # are not displayed directly, they should be copied to or
 # combined somehow with the rbuf_window(). rbuf_window() is
 # the only buffer that can be actually displayed.
-proc rbufWindow*[T](self: PlatformSupport[T]): var RenderingBuffer =
+proc rbufWindow*[T](self: GenericPlatform[T]): var RenderingBuffer =
   self.mRbufWindow
 
-proc rbufImg*[T](self: PlatformSupport[T], idx: int): var RenderingBuffer =
+proc rbufImg*[T](self: GenericPlatform[T], idx: int): var RenderingBuffer =
   self.mRbufImage[idx]
 
 # Returns file extension used in the implementation for the particular
 # system.
-proc imgExt*[T](self: PlatformSupport[T]): string
+proc imgExt*[T](self: GenericPlatform[T]): string
 
-proc copyImgToWindow*[T](self: PlatformSupport[T], idx: int) =
+proc copyImgToWindow*[T](self: GenericPlatform[T], idx: int) =
   if idx < maxImages and self.rbufImg(idx).buf() != nil:
     self.rbufWindow().copyFrom(self.rbufImg(idx))
 
-proc copy_window_to_img*[T](self: PlatformSupport[T], idx: int) =
+proc copy_window_to_img*[T](self: GenericPlatform[T], idx: int) =
   if idx < maxImages:
-    self.createImg(idx, self.rbufWindow().width(), self.rbufWindow().height())
+    discard self.createImg(idx, self.rbufWindow().width(), self.rbufWindow().height())
     self.rbufImg(idx).copyFrom(self.rbufWindow())
 
-proc copy_img_to_img*[T](self: PlatformSupport[T], idxTo, idxFrom: int) =
+proc copy_img_to_img*[T](self: GenericPlatform[T], idxTo, idxFrom: int) =
   if idxFrom < maxImages and idxTo < maxImages and self.rbufImg(idxFrom).buf() != nil:
-    self.createImg(idxTo, self.rbufImg(idxFrom).width(), self.rbufImg(idxFrom).height())
+    discard self.createImg(idxTo, self.rbufImg(idxFrom).width(), self.rbufImg(idxFrom).height())
     self.rbufImg(idxTo).copyFrom(self.rbufImg(idxFrom))
 
 # Event handlers. They are not pure functions, so you don't have
@@ -427,7 +427,7 @@ method onIdle*(self: PlatformBase) {.base.} = discard
 method onMouseMove*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
 method onMouseButtonDown*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
 method onMouseButtonUp*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
-method onKey*(self: PlatformBase, x, y: int, key: KeyCode, flags: InputFlags) {.base.} = discard
+method onKey*(self: PlatformBase, x, y: int, key: int, flags: InputFlags) {.base.} = discard
 method onCtrlChange*(self: PlatformBase) {.base.} = discard
 method onDraw*(self: PlatformBase) {.base.} = discard
 method onPostDraw*(self: PlatformBase, rawHandler: pointer) {.base.} = discard
@@ -441,7 +441,7 @@ method onPostDraw*(self: PlatformBase, rawHandler: pointer) {.base.} = discard
 # included into the basic AGG package do).
 # If you don't need a particular control to be scaled automatically
 # call ctrl::no_transform() after adding.
-proc addCtrl*[T](self: PlatformSupport, c: CtrlBase) =
+proc addCtrl*[T](self: GenericPlatform[T], c: CtrlBase) =
   self.mCtrls.add(c)
   c.transform(self.mResizeMtx)
 
@@ -458,37 +458,37 @@ proc addCtrl*[T](self: PlatformSupport, c: CtrlBase) =
 # width(), height(), initial_width(), and initial_height() must be
 # clear to understand with no comments :-)
 
-proc transAffineResizing*[T](self: PlatformSupport, width, height: int) =
+proc transAffineResizing*[T](self: GenericPlatform[T], width, height: int) =
   if window_keep_aspect_ratio in self.mWindowFlags:
     #double sx = double(width) / double(self.mInitialWidth)
     #double sy = double(height) / double(self.mInitialHeight)
     #if(sy < sx) sx = sy;
     #self.mResizeMtx = trans_affine_scaling(sx, sx)
     var vp = initTransViewport()
-    vp.preserveAspectRatio(0.5, 0.5, aspect_ratio_meet)
-    vp.deviceViewport(0, 0, width, height)
-    vp.worldViewport(0, 0, self.mInitialWidth, self.mInitialHeight)
+    vp.preserveAspectRatio(0.5, 0.5, aspectRatioMeet)
+    vp.setDeviceViewport(0, 0, width.float64, height.float64)
+    vp.setWorldViewport(0, 0, self.mInitialWidth.float64, self.mInitialHeight.float64)
     self.mResizeMtx = vp.toAffine()
   else:
     self.mResizeMtx = transAffineScaling(float64(width) / float64(self.mInitialWidth),
      float64(height) / float64(self.mInitialHeight))
 
-proc transAffineResizing*[T](self: PlatformSupport[T]): var TransAffine =
+proc transAffineResizing*[T](self: GenericPlatform[T]): var TransAffine =
   self.mResizeMtx
 
-proc width*[T](self: PlatformSupport[T]): float64 =
+proc width*[T](self: GenericPlatform[T]): float64 =
   self.mRbufWindow.width().float64
 
-proc height*[T](self: PlatformSupport[T]): float64 =
+proc height*[T](self: GenericPlatform[T]): float64 =
   self.mRbufWindow.height().float64
 
-proc initialWidth*[T](self: PlatformSupport[T]): float64 =
+proc initialWidth*[T](self: GenericPlatform[T]): float64 =
   self.mInitialWidth.float64
 
-proc initialHeight*[T](self: PlatformSupport[T]): float64 =
+proc initialHeight*[T](self: GenericPlatform[T]): float64 =
   self.mInitialHeight.float64
 
-proc windowFlags*[T](self: PlatformSupport[T]): WindowFlags =
+proc windowFlags*[T](self: GenericPlatform[T]): WindowFlags =
   self.mWindowFlags
 
 # Get raw display handler depending on the system.
@@ -498,18 +498,18 @@ proc windowFlags*[T](self: PlatformSupport[T]): WindowFlags =
 # If it's null the raw_display_handler is not supported. Also, there's
 # no guarantee that this function is implemented, so, in some
 # implementations you may have simply an unresolved symbol when linking.
-proc rawDisplayHandler*[T](self: PlatformSupport[T]): pointer
+proc rawDisplayHandler*[T](self: GenericPlatform[T]): pointer
 
 # display message box or print the message to the console
 # (depending on implementation)
-proc message*[T](self: PlatformSupport[T], msg: string)
+proc message*[T](self: GenericPlatform[T], msg: string)
 
 # Stopwatch functions. Function elapsed_time() returns time elapsed
 # since the latest start_timer() invocation in millisecods.
 # The resolutoin depends on the implementation.
 # In Win32 it uses QueryPerformanceFrequency() / QueryPerformanceCounter().
-proc startTimer*[T](self: PlatformSupport[T])
-proc elapsedTime*[T](self: PlatformSupport[T]): float64
+proc startTimer*[T](self: GenericPlatform[T])
+proc elapsedTime*[T](self: GenericPlatform[T]): float64
 
 
 # Get the full file name. In most cases it simply returns
@@ -525,6 +525,8 @@ proc elapsedTime*[T](self: PlatformSupport[T]): float64
 # FILE* fd = fopen(full_file_name("some.file"), "r")
 # instead of
 # FILE* fd = fopen("some.file", "r")
-proc fullFileName*[T](self: PlatformSupport[T], fileName: string): string
+proc fullFileName*[T](self: GenericPlatform[T], fileName: string): string
 
 include agg_win_platform_support
+type
+  PlatformSupport* = GenericPlatform[PlatformSpecific]

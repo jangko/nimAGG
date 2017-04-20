@@ -265,14 +265,19 @@ type
   LPGLYPHMETRICS* = ptr GLYPHMETRICS
   TGLYPHMETRICS* = GLYPHMETRICS
   PGLYPHMETRICS* = ptr GLYPHMETRICS
+  
+  MakeIntResourceA* = cstring
+  MakeIntResourceW* = PWideChar
 
 when defined(winUnicode):
   type
     WNDCLASS* = WNDCLASSW
+    MAKEINTRESOURCE* = MakeIntResourceW
 else:
   type
     WNDCLASS* = WNDCLASSA
-
+    MAKEINTRESOURCE* = MakeIntResourceA
+    
 const
   TRUE* = 1
   FALSE* = 0
@@ -1156,7 +1161,7 @@ const
   COLOR_WINDOW* = 5
   COLOR_WINDOWFRAME* = 6
   COLOR_WINDOWTEXT* = 8
-  
+
   # Mouse messages
   MK_CONTROL* = 8
   MK_LBUTTON* = 1
@@ -1164,6 +1169,39 @@ const
   MK_RBUTTON* = 2
   MK_SHIFT* = 4
   
+  # PeekMessage
+  PM_NOREMOVE* = 0
+  PM_REMOVE* = 1
+  PM_NOYIELD* = 2
+  
+  # GetIconInfo
+  IDC_ARROW* =       cast[MAKEINTRESOURCE](32512)
+  IDC_IBEAM* =       cast[MAKEINTRESOURCE](32513)
+  IDC_WAIT* =        cast[MAKEINTRESOURCE](32514)
+  IDC_CROSS* =       cast[MAKEINTRESOURCE](32515)
+  IDC_UPARROW* =     cast[MAKEINTRESOURCE](32516)
+  IDC_SIZE* =        cast[MAKEINTRESOURCE](32640)  # OBSOLETE: use IDC_SIZEALL
+  IDC_ICON* =        cast[MAKEINTRESOURCE](32641)  # OBSOLETE: use IDC_ARROW
+  IDC_SIZENWSE* =    cast[MAKEINTRESOURCE](32642)
+  IDC_SIZENESW* =    cast[MAKEINTRESOURCE](32643)
+  IDC_SIZEWE* =      cast[MAKEINTRESOURCE](32644)
+  IDC_SIZENS* =      cast[MAKEINTRESOURCE](32645)
+  IDC_SIZEALL* =     cast[MAKEINTRESOURCE](32646)
+  IDC_NO* =          cast[MAKEINTRESOURCE](32648)
+  IDC_HAND* =        cast[MAKEINTRESOURCE](32649)
+  IDC_APPSTARTING* = cast[MAKEINTRESOURCE](32650)
+  IDC_HELP* =        cast[MAKEINTRESOURCE](32651)
+
+  IDI_APPLICATION* = cast[MAKEINTRESOURCE](32512)
+  IDI_HAND* =        cast[MAKEINTRESOURCE](32513)
+  IDI_QUESTION* =    cast[MAKEINTRESOURCE](32514)
+  IDI_EXCLAMATION* = cast[MAKEINTRESOURCE](32515)
+  IDI_ASTERISK* =    cast[MAKEINTRESOURCE](32516)
+  IDI_WINLOGO* =     cast[MAKEINTRESOURCE](32517)
+  IDI_WARNING* =     IDI_EXCLAMATION
+  IDI_ERROR* =       IDI_HAND
+  IDI_INFORMATION* = IDI_ASTERISK
+
 proc RGB*(r, g, b: int): COLORREF =
   result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
 
@@ -1196,6 +1234,12 @@ proc LOBYTE*(w: int32): int8 =
 
 proc LOWORD*(L: int32): int16 =
   result = toU16(L)
+
+proc HIWORD*(L: LPARAM): int =
+  HIWORD(int32(L))
+
+proc LOWORD*(L: LPARAM): int =
+  LOWORD(int32(L))
 
 proc MAKELONG*(a, b: int32): LONG =
   result = a and 0x0000ffff'i32 or b shl 16'i32
@@ -1268,8 +1312,11 @@ proc createWindowEx*(dwExStyle: DWORD, className, windowName: string, dwStyle: D
       X.cint, Y.cint, nWidth.cint, nHeight.cint,
       hwndParent, hMenu, hInstance, lpParam)
 
-proc showWindow*(wnd: HWND, nCmdShow: int32): WINBOOL {.stdcall,
+proc ShowWindow*(wnd: HWND, nCmdShow: int32): WINBOOL {.stdcall,
     dynlib: "user32", importc: "ShowWindow", discardable.}
+
+template showWindow*(wnd: HWND, nCmdShow: int): WINBOOL =
+  ShowWindow(wnd, nCmdShow.cint)
 
 proc getClientRect*(wnd: HWND, lpRect: LPRECT): WINBOOL {.stdcall,
     dynlib: "user32", importc: "GetClientRect", discardable.}
@@ -1538,15 +1585,69 @@ proc queryPerformanceCounter*(lpPerformanceCount: var LARGE_INTEGER): WINBOOL{.
 proc queryPerformanceFrequency*(lpFrequency: var LARGE_INTEGER): WINBOOL{.stdcall,
     dynlib: "kernel32", importc: "QueryPerformanceFrequency".}
 
-proc moveWindow*(wnd: HWND, X: int32, Y: int32, nWidth: int32, nHeight: int32,
+proc MoveWindow(wnd: HWND, X: int32, Y: int32, nWidth: int32, nHeight: int32,
                  bRepaint: WINBOOL): WINBOOL{.stdcall, dynlib: "user32", importc: "MoveWindow".}
-                 
+
+template moveWindow*(wnd: HWND, x, y, nWidth, nHeight: int, bRepaint: WINBOOL): WINBOOL =
+  MoveWindow(wnd, x.cint, y.cint, nWidth.cint, nHeight.cint, bRepaint)
+
 proc invalidateRect*(wnd: HWND, lpRect: var RECT, bErase: WINBOOL): WINBOOL{.
     stdcall, dynlib: "user32", importc: "InvalidateRect".}
-    
+
 proc invalidateRect*(wnd: HWND, lpRect: LPRECT, bErase: WINBOOL): WINBOOL{.
     stdcall, dynlib: "user32", importc: "InvalidateRect".}
-    
+
 proc getCapture*(): HWND{.stdcall, dynlib: "user32", importc: "GetCapture".}
 proc setCapture*(wnd: HWND): HWND{.stdcall, dynlib: "user32", importc: "SetCapture".}
 proc releaseCapture*(): WINBOOL{.stdcall, dynlib: "user32", importc: "ReleaseCapture".}
+
+proc SetWindowTextA*(wnd: HWND, lpString: LPCSTR): WINBOOL{.stdcall,
+    dynlib: "user32", importc: "SetWindowTextA".}
+
+proc SetWindowTextW*(wnd: HWND, lpString: LPCWSTR): WINBOOL{.stdcall,
+    dynlib: "user32", importc: "SetWindowTextW".}
+
+template setWindowText*(wnd: HWND, lpString: string): WINBOOL =
+  when defined(winUnicode):
+    SetWindowTextW(wnd, WC(lpString))
+  else:
+    SetWindowTextA(wnd, lpString.cstring)
+
+proc peekMessage*(lpMsg: LPMSG, wnd: HWND, wMsgFilterMin: WINUINT, wMsgFilterMax: WINUINT,
+  wRemoveMsg: WINUINT): WINBOOL{.stdcall, dynlib: "user32", importc: "PeekMessageW".}
+  
+proc LoadIconA*(hInstance: HINST, lpIconName: LPCSTR): HICON{.stdcall,
+    dynlib: "user32", importc: "LoadIconA".}
+    
+proc LoadIconW*(hInstance: HINST, lpIconName: LPCWSTR): HICON{.stdcall,
+    dynlib: "user32", importc: "LoadIconW".}
+    
+proc LoadCursorA*(hInstance: HINST, lpCursorName: LPCSTR): HCURSOR{.stdcall,
+    dynlib: "user32", importc: "LoadCursorA".}
+    
+proc LoadCursorW*(hInstance: HINST, lpCursorName: LPCWSTR): HCURSOR{.stdcall,
+    dynlib: "user32", importc: "LoadCursorW".}
+
+template loadIcon*(hInstance: HINST, lpIconName: LPCSTR): HICON =
+  when defined(winUnicode):
+    LoadIconW(hInstance, lpIconName)
+  else:
+    LoadIconA(hInstance, lpIconName)
+    
+template loadCursor*(hInstance: HINST, lpCursorName: LPCSTR): HCURSOR =
+  when defined(winUnicode):
+    LoadCursorW(hInstance, lpCursorName)
+  else:
+    LoadCursorA(hInstance, lpCursorName)
+    
+template loadIcon*(hInstance: HINST, lpIconName: string): HICON =
+  when defined(winUnicode):
+    LoadIconW(hInstance, WC(lpIconName))
+  else:
+    LoadIconA(hInstance, lpIconName.cstring)
+    
+template loadCursor*(hInstance: HINST, lpCursorName: string): HCURSOR =
+  when defined(winUnicode):
+    LoadCursorW(hInstance, WC(lpCursorName))
+  else:
+    LoadCursorA(hInstance, lpCursorName.cstring)

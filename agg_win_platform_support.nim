@@ -311,7 +311,7 @@ proc translate(self: var PlatformSpecific, keyCode: int): KeyCode =
   self.mLastTranslatedKey = if keyCode > 255: key_none else: self.mKeyMap[keyCode]
   result = self.mLastTranslatedKey
 
-proc init[T](self: PlatformSupport[T], format: PixFormat, flipY: bool) =
+proc init[T](self: GenericPlatform[T], format: PixFormat, flipY: bool) =
   self.mSpecific = initPlatformSpecific(format, flipY)
   self.mFormat = format
   self.mBpp = self.mSpecific.mBpp
@@ -322,12 +322,12 @@ proc init[T](self: PlatformSupport[T], format: PixFormat, flipY: bool) =
   self.mInitialHeight = 10
   self.mCaption = "Anti-Grain Geometry Application"
 
-proc caption[T](self: PlatformSupport[T], cap: string) =
+proc caption[T](self: GenericPlatform[T], cap: string) =
   self.mCaption = cap
-  self.mSpecific.mHwnd != NULL:
-   setWindowText(self.mSpecific.mHwnd, self.mCaption)
+  if self.mSpecific.mHwnd != NULL:
+    discard setWindowText(self.mSpecific.mHwnd, self.mCaption)
 
-proc loadImg[T](self: PlatformSupport[T], idx: int, file: string): bool =
+proc loadImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
   if idx < maxImages:
     var fileName = toLowerAscii(file)
     if rfind(fileName, ".bmp") == -1:
@@ -335,7 +335,7 @@ proc loadImg[T](self: PlatformSupport[T], idx: int, file: string): bool =
     return self.mSpecific.loadPmap(fileName, idx, self.mRbufImage[idx])
   result = true
 
-proc saveImg[T](self: PlatformSupport[T], idx: int, file: string): bool =
+proc saveImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
   if idx < maxImages:
     var fileName = toLowerAscii(file)
     if rfind(fileName, ".bmp") == -1:
@@ -343,17 +343,17 @@ proc saveImg[T](self: PlatformSupport[T], idx: int, file: string): bool =
     return self.mSpecific.savePmap(fileName, idx, self.mRbufImage[idx])
   result = true
 
-proc createImg[T](self: PlatformSupport[T], idx: int, width = 0, height = 0): bool =
+proc createImg[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool =
   var
-    width = width
-    height = height
+    w = w
+    h = h
 
   if idx < maxImages:
     var stride = self.mSpecific.mPmapImage[idx].stride()
-    if width  == 0: width = self.mSpecific.mPmapWindow.width()
-    if height == 0: height = self.mSpecific.mPmapWindow.height()
+    if w  == 0: w = self.mSpecific.mPmapWindow.width()
+    if h == 0: h = self.mSpecific.mPmapWindow.height()
 
-    self.mSpecific.mPmapImage[idx].create(width, height, self.mSpecific.mBpp)
+    self.mSpecific.mPmapImage[idx].create(w, h, self.mSpecific.mBpp)
     self.mRbufImage[idx].attach(self.mSpecific.mPmapImage[idx].buf(),
                                 self.mSpecific.mPmapImage[idx].width(),
                                 self.mSpecific.mPmapImage[idx].height(),
@@ -362,8 +362,8 @@ proc createImg[T](self: PlatformSupport[T], idx: int, width = 0, height = 0): bo
   result = false
 
 proc getKeyFlags(wflags: int): InputFlags =
-  if (wflags and MK_LBUTTON) != 0: result.incl mouse_left
-  if (wflags and MK_RBUTTON) != 0: result.incl mouse_right
+  if (wflags and MK_LBUTTON) != 0: result.incl mouseLeft
+  if (wflags and MK_RBUTTON) != 0: result.incl mouseRight
   if (wflags and MK_SHIFT  ) != 0: result.incl kbd_shift
   if (wflags and MK_CONTROL) != 0: result.incl kbd_ctrl
 
@@ -371,193 +371,196 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
   var
     ps: PAINTSTRUCT
     paintDC: HDC
-    app: PlatformSupport[T]
+    app: GenericPlatform[T]
     cs = cast[LPCREATESTRUCT](lParam)
 
   if iMsg == WM_CREATE:
-    app = cast[PlatformSupport[T]](cs.lpCreateParams)
+    app = cast[GenericPlatform[T]](cs.lpCreateParams)
   else:
-    app = cast[PlatformSupport[T]](getWindowLongPtr(hWnd, GWLP_USER_DATA))
+    app = cast[GenericPlatform[T]](getWindowLongPtr(hWnd, GWLP_USER_DATA))
 
-  if app == nil:
-    if iMsg == WM_DESTROY:
-      postQuitMessage(0)
-      return 0
-    defWindowProc(hWnd, msg, wParam, lParam)
+  #if app == nil:
+  #  if iMsg == WM_DESTROY:
+  #    postQuitMessage(0)
+  #    return 0
+  #  discard defWindowProc(hWnd, iMsg, wParam, lParam)
 
-  var dc = getDC(app.self.mSpecific.mHwnd)
-  app.self.mSpecific.mCurrentDC = dc
+  if app != nil:
+    var dc = getDC(app.mSpecific.mHwnd)
+    app.mSpecific.mCurrentDC = dc
 
   var ret = LRESULT(0)
 
   case iMsg
   of WM_CREATE: discard
   of WM_SIZE:
-    app.self.mSpecific.createPmap(LOWORD(lParam), HIWORD(lParam), app.rbufWindow())
+    app.mSpecific.createPmap(LOWORD(lParam), HIWORD(lParam), app.rbufWindow())
     app.transAffineResizing(LOWORD(lParam), HIWORD(lParam))
     app.onResize(LOWORD(lParam), HIWORD(lParam))
     app.forceRedraw()
-  of WM_ERASEBKGND: discard
+  of WM_ERASEBKGND: 
+    return 0
   of WM_LBUTTONDOWN:
-    setCapture(app.self.mSpecific.mHwnd)
-    app.self.mSpecific.mCurX = int(LOWORD(lParam))
+    discard setCapture(app.mSpecific.mHwnd)
+    app.mSpecific.mCurX = int(LOWORD(lParam))
     if app.flipY():
-      app.self.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
+      app.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
     else:
-      app.self.mSpecific.mCurY = int(HIWORD(lParam))
-    app.self.mSpecific.mInputFlags.incl mouse_left
-    app.self.mSpecific.mInputFlags.incl getKeyFlags(wParam)
-    app.mCtrls.setCur(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY)
-    if app.mCtrls.onMouseButtonDown(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY):
+      app.mSpecific.mCurY = int(HIWORD(lParam))
+    app.mSpecific.mInputFlags.incl mouseLeft
+    app.mSpecific.mInputFlags.incl getKeyFlags(wParam)
+    discard app.mCtrls.setCur(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64)
+    if app.mCtrls.onMouseButtonDown(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
       app.onCtrlChange()
       app.forceRedraw()
     else:
-      if app.mCtrls.inRect(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY):
-        if app.mCtrls.setCur(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY):
+      if app.mCtrls.inRect(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+        if app.mCtrls.setCur(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
           app.onCtrlChange()
           app.forceRedraw()
       else:
-        app.onMouseButtonDown(app.self.mSpecific.mCurX,
-                              app.self.mSpecific.mCurY,
-                              app.self.mSpecific.mInputFlags)
+        app.onMouseButtonDown(app.mSpecific.mCurX,
+                              app.mSpecific.mCurY,
+                              app.mSpecific.mInputFlags)
   of WM_LBUTTONUP:
-    releaseCapture()
-    app.self.mSpecific.mCurX = int(LOWORD(lParam))
+    discard releaseCapture()
+    app.mSpecific.mCurX = int(LOWORD(lParam))
     if app.flipY():
-      app.self.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
+      app.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
     else:
-      app.self.mSpecific.mCurY = int(HIWORD(lParam))
+      app.mSpecific.mCurY = int(HIWORD(lParam))
 
-    app.self.mSpecific.mInputFlags.incl mouse_left
-    app.self.mSpecific.mInputFlags.incl getKeyFlags(wParam)
+    app.mSpecific.mInputFlags.incl mouseLeft
+    app.mSpecific.mInputFlags.incl getKeyFlags(wParam)
 
-    if app.mCtrls.onMouseButtonUp(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY):
+    if app.mCtrls.onMouseButtonUp(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
       app.onCtrlChange()
       app.forceRedraw()
-    app.onMouseButtonUp(app.self.mSpecific.mCurX,
-                        app.self.mSpecific.mCurY,
-                        app.self.mSpecific.mInputFlags)
+    app.onMouseButtonUp(app.mSpecific.mCurX,
+                        app.mSpecific.mCurY,
+                        app.mSpecific.mInputFlags)
   of WM_RBUTTONDOWN:
-    setCapture(app.self.mSpecific.mHwnd)
-    app.self.mSpecific.mCurX = int(LOWORD(lParam))
+    discard setCapture(app.mSpecific.mHwnd)
+    app.mSpecific.mCurX = int(LOWORD(lParam))
     if app.flipY():
-      app.self.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
+      app.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
     else:
-      app.self.mSpecific.mCurY = int(HIWORD(lParam))
+      app.mSpecific.mCurY = int(HIWORD(lParam))
 
-    app.self.mSpecific.mInputFlags.incl mouse_right
-    app.self.mSpecific.mInputFlags.incl getKeyFlags(wParam)
+    app.mSpecific.mInputFlags.incl mouseRight
+    app.mSpecific.mInputFlags.incl getKeyFlags(wParam)
 
-    app.onMouseButtonDown(app.self.mSpecific.mCurX,
-                          app.self.mSpecific.mCurY,
-                          app.self.mSpecific.mInputFlags)
+    app.onMouseButtonDown(app.mSpecific.mCurX,
+                          app.mSpecific.mCurY,
+                          app.mSpecific.mInputFlags)
   of WM_RBUTTONUP:
-    releaseCapture()
-    app.self.mSpecific.mCurX = int(LOWORD(lParam))
+    discard releaseCapture()
+    app.mSpecific.mCurX = int(LOWORD(lParam))
     if app.flipY():
-      app.self.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
+      app.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
     else:
-      app.self.mSpecific.mCurY = int(HIWORD(lParam))
+      app.mSpecific.mCurY = int(HIWORD(lParam))
 
-    app.self.mSpecific.mInputFlags.incl mouse_right
-    app.self.mSpecific.mInputFlags.incl getKeyFlags(wParam)
+    app.mSpecific.mInputFlags.incl mouseRight
+    app.mSpecific.mInputFlags.incl getKeyFlags(wParam)
 
-    app.onMouseButtonUp(app.self.mSpecific.mCurX,
-                        app.self.mSpecific.mCurY,
-                        app.self.mSpecific.mInputFlags)
+    app.onMouseButtonUp(app.mSpecific.mCurX,
+                        app.mSpecific.mCurY,
+                        app.mSpecific.mInputFlags)
   of WM_MOUSEMOVE:
-    app.self.mSpecific.mCurX = int(LOWORD(lParam))
+    app.mSpecific.mCurX = int(LOWORD(lParam))
     if app.flipY():
-      app.self.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
+      app.mSpecific.mCurY = app.rbufWindow().height() - int(HIWORD(lParam))
     else:
-      app.self.mSpecific.mCurY = int(HIWORD(lParam))
+      app.mSpecific.mCurY = int(HIWORD(lParam))
 
-    app.self.mSpecific.mInputFlags = getKeyFlags(wParam)
+    app.mSpecific.mInputFlags = getKeyFlags(wParam)
 
-    let flag = mouse_left in app.self.mSpecific.mInputFlags
-    if app.mCtrls.onMouseMove(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY, flag):
+    let flag = mouseLeft in app.mSpecific.mInputFlags
+    if app.mCtrls.onMouseMove(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64, flag):
       app.onCtrlChange()
       app.forceRedraw()
     else:
-      if not app.mCtrls.inRect(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY):
-        app.onMouseMove(app.self.mSpecific.mCurX, app.self.mSpecific.mCurY, app.self.mSpecific.mInputFlags)
+      if not app.mCtrls.inRect(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+        app.onMouseMove(app.mSpecific.mCurX, app.mSpecific.mCurY, app.mSpecific.mInputFlags)
   of WM_SYSKEYDOWN, WM_KEYDOWN:
-    app.self.mSpecific.mLastTranslatedKey = key_none
+    app.mSpecific.mLastTranslatedKey = key_none
     case wParam
     of VK_CONTROL:
-      app.self.mSpecific.mInputFlags.incl kbd_ctrl
+      app.mSpecific.mInputFlags.incl kbd_ctrl
     of VK_SHIFT:
-      app.self.mSpecific.mInputFlags.incl kbd_shift
+      app.mSpecific.mInputFlags.incl kbd_shift
     else:
-      app.self.mSpecific.translate(wParam)
+      discard app.mSpecific.translate(wParam)
 
-    if app.self.mSpecific.mLastTranslatedKey != key_none:
+    if app.mSpecific.mLastTranslatedKey != key_none:
       var
         left  = false
         up    = false
         right = false
         down  = false
 
-      case app.self.mSpecific.mLastTranslatedKey
+      case app.mSpecific.mLastTranslatedKey
       of key_left: left = true
       of key_up: up = true
       of key_right: right = true
       of key_down: down = true
       of key_f2:
         app.copyWindowToImg(maxImages - 1)
-        app.saveImg(maxImages - 1, "screenshot")
+        discard app.saveImg(maxImages - 1, "screenshot")
       else: discard
 
       if window_process_all_keys in app.windowFlags():
-        app.onKey(app.self.mSpecific.mCurX,
-                  app.self.mSpecific.mCurY,
-                  app.self.mSpecific.mLastTranslatedKey,
-                  app.self.mSpecific.mInputFlags)
+        app.onKey(app.mSpecific.mCurX,
+                  app.mSpecific.mCurY,
+                  app.mSpecific.mLastTranslatedKey.ord,
+                  app.mSpecific.mInputFlags)
       else:
         if app.mCtrls.onArrowKeys(left, right, down, up):
           app.onCtrlChange()
           app.forceRedraw()
         else:
-          app.onKey(app.self.mSpecific.mCurX,
-                    app.self.mSpecific.mCurY,
-                    app.self.mSpecific.mLastTranslatedKey,
-                    app.self.mSpecific.mInputFlags)
+          app.onKey(app.mSpecific.mCurX,
+                    app.mSpecific.mCurY,
+                    app.mSpecific.mLastTranslatedKey.ord,
+                    app.mSpecific.mInputFlags)
   of WM_SYSKEYUP, WM_KEYUP:
-    app.self.mSpecific.mLastTranslatedKey = key_none
+    app.mSpecific.mLastTranslatedKey = key_none
     case wParam
     of VK_CONTROL:
-      app.self.mSpecific.mInputFlags.excl kbd_ctrl
+      app.mSpecific.mInputFlags.excl kbd_ctrl
     of VK_SHIFT:
-      app.self.mSpecific.mInputFlags.excl kbd_shift
+      app.mSpecific.mInputFlags.excl kbd_shift
+    else: discard
   of WM_CHAR, WM_SYSCHAR:
-    if app.self.mSpecific.mLastTranslatedKey == key_none:
-      app.onKey(app.self.mSpecific.mCurX,
-                app.self.mSpecific.mCurY,
+    if app.mSpecific.mLastTranslatedKey == key_none:
+      app.onKey(app.mSpecific.mCurX,
+                app.mSpecific.mCurY,
                 wParam,
-                app.self.mSpecific.mInputFlags)
-
+                app.mSpecific.mInputFlags)
   of WM_PAINT:
-    paintDC = beginPaint(hWnd, ps)
-    app.self.mSpecific.mCurrentDC = paintDC
-    if app.self.mSpecific.mRedrawFlags:
-      app.onDraw()
-      app.self.mSpecific.mRedrawFlags = false
-
-    app.self.mSpecific.displayPmap(paintDC, app.rbufWindow())
-    app.onPostDraw(paintDC)
-    app.self.mSpecific.mCurrentDC = NULL
-    endPaint(hWnd, ps)
+   paintDC = beginPaint(hWnd, ps)
+   app.mSpecific.mCurrentDC = paintDC
+   if app.mSpecific.mRedrawFlags:
+     app.onDraw()
+     app.mSpecific.mRedrawFlags = false
+   
+   app.mSpecific.displayPmap(paintDC, app.rbufWindow())
+   app.onPostDraw(cast[pointer](paintDC))
+   app.mSpecific.mCurrentDC = NULL
+   endPaint(hWnd, ps)
   of WM_COMMAND: discard
   of WM_DESTROY:
     postQuitMessage(0)
   else:
-    ret = defWindowProc(hWnd, msg, wParam, lParam)
+    ret = defWindowProc(hWnd, iMsg, wParam, lParam)
 
-  app.self.mSpecific.mCurrentDC = NULL
-  releaseDC(app.self.mSpecific.mHwnd, dc)
+  if app != nil:
+    discard releaseDC(app.mSpecific.mHwnd, app.mSpecific.mCurrentDC)
+    app.mSpecific.mCurrentDC = NULL
   result = ret
 
-proc init[T](self: PlatformSupport[T], width, height: int, flags: WindowFlags): bool =
+proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): bool =
   if self.mSpecific.mSysFormat == pix_format_undefined:
     return false
 
@@ -568,15 +571,15 @@ proc init[T](self: PlatformSupport[T], width, height: int, flags: WindowFlags): 
 
   wc.lpszClassName = "AGGAppClass"
   wc.lpfnWndProc = windowProc[T]
-  wc.style = wflags
+  wc.style     = WINUINT(wflags)
   wc.hInstance = windowsInstance
-  wc.hIcon     = NULL #LoadIcon(0, IDI_APPLICATION)
-  wc.hCursor   = NULL #LoadCursor(0, IDC_ARROW)
+  wc.hIcon     = loadIcon(0, IDI_APPLICATION)
+  wc.hCursor   = loadCursor(0, IDC_ARROW)
   wc.hbrBackground = HBRUSH(COLOR_WINDOW+1)
   wc.lpszMenuName = "AGGAppMenu"
   wc.cbClsExtra = 0
   wc.cbWndExtra = 0
-  registerClass(wc)
+  discard registerClass(wc)
 
   wflags = WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_MINIMIZEBOX
 
@@ -584,44 +587,44 @@ proc init[T](self: PlatformSupport[T], width, height: int, flags: WindowFlags): 
     wflags = wflags or WS_THICKFRAME or WS_MAXIMIZEBOX
 
   self.mSpecific.mHwnd = createWindow("AGGAppClass",
-    self.mCaption, wflags, 100, 100, width, height,
-    0, 0, windowsInstance, 0)
+    self.mCaption, DWORD(wflags), 100, 100, width, height,
+    HWND(NULL), HMENU(NULL), windowsInstance, cast[LPVOID](self))
 
   if self.mSpecific.mHwnd == NULL:
     return false
 
-
   var
     rct: RECT
+    
+  discard setWindowLongPtr(self.mSpecific.mHwnd, GWLP_USER_DATA, cast[LPARAM](self))
 
   getClientRect(self.mSpecific.mHwnd, rct.addr)
-  moveWindow(self.mSpecific.mHwnd,   # handle to window
+  discard moveWindow(self.mSpecific.mHwnd,   # handle to window
                100,                  # horizontal position
                100,                  # vertical position
                width + (width - (rct.right - rct.left)),
                height + (height - (rct.bottom - rct.top)),
                FALSE)
 
-  setWindowLongPtr(self.mSpecific.mHwnd, GWL_USERDATA, cast[LONG_PTR](self))
   self.mSpecific.createPmap(width, height, self.mRBufWindow)
   self.mInitialWidth = width
   self.mInitialHeight = height
   self.onInit()
   self.mSpecific.mRedrawFlags = true
-  showWindow(self.mSpecific.mHwnd, windowsCmdShow)
+  discard showWindow(self.mSpecific.mHwnd, SW_SHOW)
   result = true
 
-proc run[T](self: PlatformSupport[T]): int =
+proc run[T](self: GenericPlatform[T]): int =
   var
     msg: MSG
 
   while true:
     if self.mWaitMode:
-      if getMessage(msg, 0, 0, 0) == 0: break
+      if not getMessage(msg, 0, 0, 0): break
       translateMessage(msg)
       dispatchMessage(msg)
     else:
-      if peekMessage(msg, 0, 0, 0, PM_REMOVE) != NULL:
+      if peekMessage(msg.addr, HWND(NULL), WINUINT(0), WINUINT(0), WINUINT(PM_REMOVE)) != NULL:
         translateMessage(msg)
         if msg.message == WM_QUIT:  break
         dispatchMessage(msg)
@@ -629,31 +632,31 @@ proc run[T](self: PlatformSupport[T]): int =
         self.onIdle()
   result = int(msg.wParam)
 
-proc forceRedraw[T](self: PlatformSupport[T]) =
+proc forceRedraw[T](self: GenericPlatform[T]) =
   self.mSpecific.mRedrawFlags = true
-  invalidateRect(self.mSpecific.mHwnd, 0, FALSE)
+  discard invalidateRect(self.mSpecific.mHwnd, nil, FALSE)
 
-proc updateWindow[T](self: PlatformSupport[T]) =
+proc updateWindow[T](self: GenericPlatform[T]) =
   var dc = getDC(self.mSpecific.mHwnd)
   self.mSpecific.displayPmap(dc, self.mRBufWindow)
   releaseDC(self.mSpecific.mHwnd, dc)
 
-proc imgExt[T](self: PlatformSupport[T]): string = ".bmp"
+proc imgExt[T](self: GenericPlatform[T]): string = ".bmp"
 
-proc rawDisplayHandler[T](self: PlatformSupport[T]): pointer =
+proc rawDisplayHandler[T](self: GenericPlatform[T]): pointer =
   cast[pointer](self.mSpecific.mCurrentDC)
 
-proc message[T](self: PlatformSupport[T], msg: string) =
+proc message[T](self: GenericPlatform[T], msg: string) =
   messageBox(self.mSpecific.mHwnd, msg, "AGG Message", MB_OK)
 
-proc startTimer[T](self: PlatformSupport[T]) =
+proc startTimer[T](self: GenericPlatform[T]) =
   queryPerformanceCounter(self.mSpecific.mSwStart)
 
-proc elapsedTime[T](self: PlatformSupport[T]): float64 =
+proc elapsedTime[T](self: GenericPlatform[T]): float64 =
   var stop: LARGE_INTEGER
   queryPerformanceCounter(stop)
   result = float64(stop.QuadPart - self.mSpecific.mSwStart.QuadPart) * 1000.0 /
     float64(self.mSpecific.mSwFreq.QuadPart)
 
-proc fullFileName[T](self: PlatformSupport[T], fileName: string): string =
+proc fullFileName[T](self: GenericPlatform[T], fileName: string): string =
   result = fileName

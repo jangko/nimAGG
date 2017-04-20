@@ -94,9 +94,9 @@ proc createGrayScalePalette(bmp: ptr BITMAPINFO) =
 
   for i in 0.. <rgbSize:
     brightness   = (255 * i) div (rgbSize - 1)
-    rgb.rgbBlue  = brightness.int8
-    rgb.rgbGreen = brightness.int8
-    rgb.rgbRed   = brightness.int8
+    rgb.rgbBlue  = cast[int8](brightness)
+    rgb.rgbGreen = cast[int8](brightness)
+    rgb.rgbRed   = cast[int8](brightness)
     rgb.rgbReserved = 0
     inc rgb
 
