@@ -2,7 +2,7 @@ import agg_basics, agg_rendering_buffer, agg_scanline_u
 import agg_renderer_scanline, agg_pixfmt_rgb, agg_color_rgba
 import agg_gamma_functions, agg_renderer_base, agg_path_storage
 import agg_conv_stroke, agg_math_stroke, agg_rasterizer_scanline_aa
-import agg_platform_support, ctrl_slider, nimBMP, math, agg_math
+import agg_platform_support, ctrl_slider, math, agg_math
 
 type
   Square = object
@@ -13,7 +13,7 @@ proc initSquare(size: float64): Square =
 
 proc setSize(self: var Square, size: float64) =
   self.size = size
-  
+
 proc draw[Rasterizer, Scanline, Renderer, ColorT](self: Square, ras : var Rasterizer,
   sl: var Scanline, ren: var Renderer, color: ColorT, x, y: float64) =
   ras.reset()
@@ -39,11 +39,11 @@ proc initRendererEnlarged[Renderer](ren: var Renderer, size: float64): RendererE
   result.size = size
   result.sl = initScanlineU8()
   result.ras = initRasterizerScanlineAA()
-  
+
 proc setSize[Renderer](self: var RendererEnlarge[Renderer], size: float64) =
   self.square.setSize(size)
   self.size = size
-  
+
 proc setColor[Renderer](self: var RendererEnlarge[Renderer], c: Rgba8) =
   self.color = c
 
@@ -81,9 +81,9 @@ const
 
 type
   ValueT = uint8
-  
+
   RendererT = RendererBase[PixFmtBgr24]
-  
+
   App = ref object of PlatformSupport
     mX: array[3, float64]
     mY: array[3, float64]
@@ -97,7 +97,7 @@ type
     sl: ScanlineU8
     ras: RasterizerScanlineAA
     ren: RendererEnlarge[RendererT]
-    
+
 proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
   PlatformSupport(result).init(format, flipY)
@@ -124,23 +124,23 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
   result.mSlider1.noTransform()
   result.mSlider2.noTransform()
-  
+
   result.sl  = initScanlineU8()
   result.ras = initRasterizerScanlineAA()
 
   let sizeMul = float64(result.mSlider1.value())
   result.ren  = initRendererEnlarged(result.rb, sizeMul)
-  
+
 method onDraw(app: App) =
   var
     pf  = initPixFmtBgr24(app.rbufWindow())
     rb  = initRendererBase(pf)
-    
+
   app.ren.setRenderer(rb)
-  
+
   let sizeMul = float64(app.mSlider1.value())
   app.ras.gamma(initGammaPower(app.mSlider2.value()))
-  
+
   app.ren.setSize(sizeMul)
   rb.clear(initRgba(1,1,1))
 
@@ -183,13 +183,11 @@ method onDraw(app: App) =
   renderCtrl(app.ras, app.sl, rb, app.mSlider1)
   renderCtrl(app.ras, app.sl, rb, app.mSlider2)
 
-  #saveBMP24("aa_demo.bmp", buffer, frameWidth, frameHeight)
-
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
-  var 
+  var
     x = float64(x)
     y = float64(y)
-    
+
   if mouseLeft in flags:
     var i = 0
     while i < 3:
@@ -208,10 +206,10 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
         app.mIdx = 3
 
 method onMouseMove(app: App, x, y: int, flags: InputFlags) =
-  var 
+  var
     x = float64(x)
     y = float64(y)
-    
+
   if mouseLeft in flags:
     if app.mIdx == 3:
       let dx = x - app.mDx
@@ -239,8 +237,9 @@ proc main(): int =
   var app = newApp(pix_format_bgr24, flipY)
   app.caption("AGG Example. Anti-Aliasing Demo")
 
-  if app.init(frameWidth, frameHeight, {window_resize}):
+  if app.init(frameWidth, frameHeight, {window_resize}, "aa_demo"):
     return app.run()
+
   result = 1
 
 discard main()

@@ -28,15 +28,15 @@ proc calcPaletteSize(clrUsed, bitsPerPixel: int): int =
   var paletteSize = 0
   if bitsPerPixel <= 8:
     paletteSize = clrUsed
+    
+    if paletteSize == 0:
+      paletteSize = 1 shl bitsPerPixel
 
-  if paletteSize == 0:
-    paletteSize = 1 shl bitsPerPixel
-
-  paletteSize
+  result = paletteSize
 
 proc calcPaletteSize(bmp: ptr BITMAPINFO): int =
   if bmp == nil: return 0
-  calcPaletteSize(bmp.bmiHeader.biClrUsed, bmp.bmiHeader.biBitCount)
+  result = calcPaletteSize(bmp.bmiHeader.biClrUsed, bmp.bmiHeader.biBitCount)
 
 proc calcRowLen(width, bitsPerPixel: int): int =
   var
@@ -68,7 +68,12 @@ proc createBitmapInfo*(self: var PixelMap, width, height, bitsPerPixel: int): pt
     rgbSize = calcPaletteSize(0, bitsPerPixel) * sizeof(RGBQUAD)
     fullSize = sizeof(BITMAPINFOHEADER) + rgbSize + imgSize
 
-  self.mBuffer = newSeq[uint8](fullSize)
+  if self.mBuffer.isNil:
+    self.mBuffer = newSeq[uint8](fullSize)
+    
+  if self.mBuffer.len < fullSize:
+    self.mBuffer.setLen(fullSize)
+    
   var bmp = cast[ptr BITMAPINFO](self.mBuffer[0].addr)
 
   bmp.bmiHeader.biSize   = DWORD(sizeof(BITMAPINFOHEADER))
@@ -116,8 +121,8 @@ proc calcImagePtr(bmp: ptr BITMAPINFO): ptr uint8 =
 
 proc createFromBmp(self: var PixelMap, bmp: ptr BITMAPINFO) =
   if bmp != nil:
-    self.mImgSize = calcRowLen(bmp.bmiHeader.biWidth,
-      bmp.bmiHeader.biBitCount) * bmp.bmiHeader.biHeight
+    let stride = calcRowLen(bmp.bmiHeader.biWidth, bmp.bmiHeader.biBitCount)
+    self.mImgSize   = stride * bmp.bmiHeader.biHeight
     self.mFullSize  = calcFullSize(bmp)
     self.mBmp       = bmp
     self.mBuf       = calcImagePtr(bmp)
@@ -350,17 +355,26 @@ proc blend*(self: var PixelMap, hdc: HDC, x, y: int, scale: float64) =
   rect.right  = LONG(x + width)
   rect.bottom = LONG(y + height)
   self.blend(hdc, rect.addr, nil)
-
+  
+type
+  BMPHeader = object
+    fileSize: DWORD
+    reserved1: WORD
+    reserved2: WORD
+    offset: DWORD
+    
 proc loadFromBmp(self: var PixelMap, fd: File): bool =
-  var
-    bmf: BITMAPFILEHEADER
+  var 
+    signature: WORD
+    bmh: BMPHeader
     bmi: ptr BITMAPINFO
     bmpSize: int
 
-  discard fd.readBuffer(bmf.addr, sizeof(bmf))
-  if bmf.bfType != 0x4D42: return false
+  discard fd.readBuffer(signature.addr, sizeof(WORD))
+  discard fd.readBuffer(bmh.addr, sizeof(bmh))
+  if signature != 0x4D42: return false
 
-  bmpSize = bmf.bfSize - sizeof(BITMAPFILEHEADER)
+  bmpSize = bmh.fileSize - sizeof(BITMAPFILEHEADER)
   self.mBuffer = newSeq[uint8](bmpSize)
   bmi = cast[ptr BITMAPINFO](self.mBuffer[0].addr)
 
@@ -383,19 +397,20 @@ proc loadFromBmp*(self: var PixelMap, fileName: string): bool =
 proc saveAsBmp(self: PixelMap, fd: File): bool =
   if self.mBmp == nil: return false
 
-  var
-    bmf: BITMAPFILEHEADER
-
-  bmf.bfType      = 0x4D42
-  bmf.bfOffBits   = DWORD(calcHeaderSize(self.mBmp) + sizeof(bmf))
-  bmf.bfSize      = DWORD(bmf.bfOffBits + self.mImgSize)
-  bmf.bfReserved1 = 0
-  bmf.bfReserved2 = 0
-
-  discard fd.writeBuffer(bmf.addr, sizeof(bmf))
+  var 
+    signature = WORD(0x4D42)      
+    bmh: BMPHeader
+    
+  bmh.offset    = DWORD(calcHeaderSize(self.mBmp) + 14)
+  bmh.fileSize  = DWORD(bmh.offset + self.mImgSize)
+  bmh.reserved1 = 0
+  bmh.reserved2 = 0
+  
+  discard fd.writeBuffer(signature.addr, sizeof(WORD))
+  discard fd.writeBuffer(bmh.addr, sizeof(bmh))
   discard fd.writeBuffer(self.mBmp, self.mFullSize)
   result = true
-
+  
 proc saveAsBmp*(self: PixelMap, fileName: string): bool =
   var
     fd = open(filename, fmWrite)

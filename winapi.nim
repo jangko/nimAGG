@@ -155,12 +155,12 @@ type
   PPAINTSTRUCT* = ptr PAINTSTRUCT
 
   BITMAPFILEHEADER* {.final, pure.} = object
-    bfType*: int16
-    bfSize*: DWord
-    bfReserved1*: int16
-    bfReserved2*: int16
-    bfOffBits*: DWord
-
+    bfType*: WORD
+    bfSize*: DWORD
+    bfReserved1*: WORD
+    bfReserved2*: WORD
+    bfOffBits*: DWORD
+  
   BITMAPINFOHEADER* {.final, pure.} = object
     biSize*: DWORD
     biWidth*: LONG
@@ -1628,13 +1628,13 @@ proc LoadCursorA*(hInstance: HINST, lpCursorName: LPCSTR): HCURSOR{.stdcall,
 proc LoadCursorW*(hInstance: HINST, lpCursorName: LPCWSTR): HCURSOR{.stdcall,
     dynlib: "user32", importc: "LoadCursorW".}
 
-template loadIcon*(hInstance: HINST, lpIconName: LPCSTR): HICON =
+template loadIcon*(hInstance: HINST, lpIconName: LPCSTR or LPCWSTR): HICON =
   when defined(winUnicode):
     LoadIconW(hInstance, lpIconName)
   else:
     LoadIconA(hInstance, lpIconName)
     
-template loadCursor*(hInstance: HINST, lpCursorName: LPCSTR): HCURSOR =
+template loadCursor*(hInstance: HINST, lpCursorName: LPCSTR or LPCWSTR): HCURSOR =
   when defined(winUnicode):
     LoadCursorW(hInstance, lpCursorName)
   else:

@@ -1,6 +1,6 @@
 import agg_basics, agg_rendering_buffer, agg_trans_viewport, ctrl_base
 import agg_trans_affine, agg_color_conv_rgb8, agg_color_conv_rgb16
-import agg_color_conv
+import agg_color_conv, os
 
 # These are flags used in method init(). Not all of them are
 # applicable on different platforms, for example the win32_api
@@ -12,6 +12,7 @@ type
     window_hw_buffer
     window_keep_aspect_ratio
     window_process_all_keys
+    window_hidden
 
   WindowFlags* = set[WindowFlag]
 
@@ -343,7 +344,7 @@ proc createImg*[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool
 # some on_init() event handler when the window is created but
 # not yet displayed. The rbuf_window() method (see below) is
 # accessible from on_init().
-proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): bool
+proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags, fileName: string): bool
 proc run*[T](self: GenericPlatform[T]): int
 
 # The very same parameters that were used in the constructor
@@ -402,12 +403,12 @@ proc copyImgToWindow*[T](self: GenericPlatform[T], idx: int) =
   if idx < maxImages and self.rbufImg(idx).buf() != nil:
     self.rbufWindow().copyFrom(self.rbufImg(idx))
 
-proc copy_window_to_img*[T](self: GenericPlatform[T], idx: int) =
+proc copyWindowToImg*[T](self: GenericPlatform[T], idx: int) =
   if idx < maxImages:
     discard self.createImg(idx, self.rbufWindow().width(), self.rbufWindow().height())
     self.rbufImg(idx).copyFrom(self.rbufWindow())
 
-proc copy_img_to_img*[T](self: GenericPlatform[T], idxTo, idxFrom: int) =
+proc copyImgToImg*[T](self: GenericPlatform[T], idxTo, idxFrom: int) =
   if idxFrom < maxImages and idxTo < maxImages and self.rbufImg(idxFrom).buf() != nil:
     discard self.createImg(idxTo, self.rbufImg(idxFrom).width(), self.rbufImg(idxFrom).height())
     self.rbufImg(idxTo).copyFrom(self.rbufImg(idxFrom))

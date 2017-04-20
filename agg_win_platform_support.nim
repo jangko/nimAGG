@@ -349,11 +349,11 @@ proc createImg[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool =
     h = h
 
   if idx < maxImages:
-    var stride = self.mSpecific.mPmapImage[idx].stride()
     if w  == 0: w = self.mSpecific.mPmapWindow.width()
     if h == 0: h = self.mSpecific.mPmapWindow.height()
 
     self.mSpecific.mPmapImage[idx].create(w, h, self.mSpecific.mBpp)
+    var stride = self.mSpecific.mPmapImage[idx].stride()
     self.mRbufImage[idx].attach(self.mSpecific.mPmapImage[idx].buf(),
                                 self.mSpecific.mPmapImage[idx].width(),
                                 self.mSpecific.mPmapImage[idx].height(),
@@ -398,7 +398,7 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
     app.transAffineResizing(LOWORD(lParam), HIWORD(lParam))
     app.onResize(LOWORD(lParam), HIWORD(lParam))
     app.forceRedraw()
-  of WM_ERASEBKGND: 
+  of WM_ERASEBKGND:
     return 0
   of WM_LBUTTONDOWN:
     discard setCapture(app.mSpecific.mHwnd)
@@ -544,7 +544,7 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
    if app.mSpecific.mRedrawFlags:
      app.onDraw()
      app.mSpecific.mRedrawFlags = false
-   
+
    app.mSpecific.displayPmap(paintDC, app.rbufWindow())
    app.onPostDraw(cast[pointer](paintDC))
    app.mSpecific.mCurrentDC = NULL
@@ -569,16 +569,16 @@ proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): 
     wflags = CS_OWNDC or CS_VREDRAW or CS_HREDRAW
     wc: WNDCLASS
 
-  wc.lpszClassName = "AGGAppClass"
-  wc.lpfnWndProc = windowProc[T]
-  wc.style     = WINUINT(wflags)
-  wc.hInstance = windowsInstance
-  wc.hIcon     = loadIcon(0, IDI_APPLICATION)
-  wc.hCursor   = loadCursor(0, IDC_ARROW)
+  wc.lpszClassName = WC("AGGAppClass")
+  wc.lpfnWndProc   = windowProc[T]
+  wc.style         = WINUINT(wflags)
+  wc.hInstance     = windowsInstance
+  wc.hIcon         = loadIcon(0, IDI_APPLICATION)
+  wc.hCursor       = loadCursor(0, IDC_ARROW)
   wc.hbrBackground = HBRUSH(COLOR_WINDOW+1)
-  wc.lpszMenuName = "AGGAppMenu"
-  wc.cbClsExtra = 0
-  wc.cbWndExtra = 0
+  wc.lpszMenuName  = WC("AGGAppMenu")
+  wc.cbClsExtra    = 0
+  wc.cbWndExtra    = 0
   discard registerClass(wc)
 
   wflags = WS_OVERLAPPED or WS_CAPTION or WS_SYSMENU or WS_MINIMIZEBOX
@@ -595,7 +595,7 @@ proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): 
 
   var
     rct: RECT
-    
+
   discard setWindowLongPtr(self.mSpecific.mHwnd, GWLP_USER_DATA, cast[LPARAM](self))
 
   getClientRect(self.mSpecific.mHwnd, rct.addr)
@@ -611,8 +611,21 @@ proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): 
   self.mInitialHeight = height
   self.onInit()
   self.mSpecific.mRedrawFlags = true
-  discard showWindow(self.mSpecific.mHwnd, SW_SHOW)
+  if window_hidden in flags:
+    discard showWindow(self.mSpecific.mHwnd, SW_HIDE)
+  else:
+    discard showWindow(self.mSpecific.mHwnd, SW_SHOW)
   result = true
+
+proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags, fileName: string): bool =
+  if paramCount() > 0:
+    if paramStr(1) == "-v":
+      if self.init(width, height, {window_hidden}):
+        self.onDraw()
+        self.copyWindowToImg(maxImages - 1)
+        discard self.saveImg(maxImages - 1, fileName)
+        return false
+  result = self.init(width, height, flags)
 
 proc run[T](self: GenericPlatform[T]): int =
   var
