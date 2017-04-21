@@ -1,19 +1,19 @@
-import agg_win32_bmp, winapi, strutils
+import agg_pixmap_win, winapi, strutils
 
 var
   windowsInstance = HINST(NULL)
   windowsCmdShow  = 0
 
 type
-  PlatformSpecific = object
+  PlatformSpecific[T] = object
     mFormat: PixFormat
     mSysFormat: PixFormat
     mFlipY: bool
     mBpp: int
     mSysBpp: int
     mHwnd: HWND
-    mPmapWindow: PixelMap
-    mPmapImage: array[maxImages, PixelMap]
+    mWinPmap: PixelMap[T]
+    mImgPmap: array[maxImages, PixelMap[T]]
     mKeyMap: array[256, KeyCode]
     mLastTranslatedKey: KeyCode
     mCurX: int
@@ -24,7 +24,7 @@ type
     mSwFreq: LARGE_INTEGER
     mSwStart: LARGE_INTEGER
 
-proc initPlatformSpecific(format: PixFormat, flipY: bool): PlatformSpecific =
+proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   if windowsInstance == NULL:
     windowsInstance = getModuleHandle(nil)
 
@@ -136,15 +136,15 @@ proc initPlatformSpecific(format: PixFormat, flipY: bool): PlatformSpecific =
   discard queryPerformanceFrequency(result.mSwFreq)
   discard queryPerformanceCounter(result.mSwStart)
 
-proc createPmap(self: var PlatformSpecific, width, height: int, wnd: var RenderingBuffer) =
-  self.mPmapWindow.create(width, height, self.mBpp)
-  let stride = if self.mFlipY: self.mPmapWindow.stride() else: -self.mPmapWindow.stride()
-  wnd.attach(self.mPmapWindow.buf(),
-             self.mPmapWindow.width(),
-             self.mPmapWindow.height(),
+proc createPmap[T,RenBuf](self: var PlatformSpecific[T], w, h: int, wnd: var RenBuf) =
+  self.mWinPmap.create(w, h, self.mBpp)
+  let stride = if self.mFlipY: self.mWinPmap.stride() else: -self.mWinPmap.stride()
+  wnd.attach(self.mWinPmap.buf(),
+             self.mWinPmap.width(),
+             self.mWinPmap.height(),
              stride)
 
-proc convertPmap(dst, src: var RenderingBuffer, format: PixFormat) =
+proc convertPmap[RenBuf](dst, src: var RenBuf, format: PixFormat) =
   case format
   of pix_format_gray8: discard
   of pix_format_gray16: color_conv(dst, src, color_conv_gray16_to_gray8)
@@ -165,46 +165,51 @@ proc convertPmap(dst, src: var RenderingBuffer, format: PixFormat) =
   of pix_format_rgba64: color_conv(dst, src, color_conv_rgba64_to_bgra32)
   else: discard
 
-proc displayPmap(self: var PlatformSpecific, dc: HDC, src: var RenderingBuffer) =
+proc displayPmap[T,RenBuf](self: var PlatformSpecific[T], dc: HDC, src: var RenBuf) =
+  type ValueT = getValueT(RenBuf)
   if self.mSysFormat == self.mFormat:
-    self.mPmapWindow.draw(dc)
+    self.mWinPmap.draw(dc)
   else:
     var
-      pmap = initPixelMap()
-      rbuf = initRenderingBuffer()
+      pmap = initPixelMap[ValueT]()
+      rbuf = construct(RenBuf)
 
-    pmap.create(self.mPmapWindow.width(), self.mPmapWindow.height(), self.mSysBpp)
+    pmap.create(self.mWinPmap.width(), self.mWinPmap.height(), self.mSysBpp)
     rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
     convertPmap(rbuf, src, self.mFormat)
     pmap.draw(dc)
 
-proc savePmap(self: var PlatformSpecific, fn: string, idx: int, src: var RenderingBuffer): bool =
+proc savePmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, src: var RenBuf): bool =
+  type ValueT = getValueT(RenBuf)
   if self.mSysFormat == self.mFormat:
-    return self.mPmapImage[idx].saveAsBmp(fn)
+    return self.mImgPmap[idx].saveAsBmp(fn)
   else:
     var
-      pmap = initPixelMap()
-      rbuf = initRenderingBuffer()
+      pmap = initPixelMap[ValueT]()
+      rbuf = construct(RenBuf)
 
-    pmap.create(self.mPmapImage[idx].width(), self.mPmapImage[idx].height(), self.mSysBpp)
-    rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
+    pmap.create(self.mImgPmap[idx].width(), self.mImgPmap[idx].height(), self.mSysBpp)
+    rbuf.attach(pmap.buf(), pmap.width(),
+      pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
     convertPmap(rbuf, src, self.mFormat)
     return pmap.saveAsBmp(fn)
 
-proc loadPmap(self: var PlatformSpecific, fn: string, idx: int, dst: var RenderingBuffer): bool =
+proc loadPmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, dst: var RenBuf): bool =
+  type ValueT = getValueT(RenBuf)
   var
-    pmap= initPixelMap()
-    rbuf = initRenderingBuffer()
+    pmap= initPixelMap[ValueT]()
+    rbuf = construct(RenBuf)
 
   if not pmap.loadFromBmp(fn): return false
 
-  rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
-  self.mPmapImage[idx].create(pmap.width(), pmap.height(), self.mBpp, 0)
+  rbuf.attach(pmap.buf(), pmap.width(),
+    pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
+  self.mImgPmap[idx].create(pmap.width(), pmap.height(), self.mBpp, 0)
 
-  dst.attach(self.mPmapImage[idx].buf(),
-             self.mPmapImage[idx].width(),
-             self.mPmapImage[idx].height(),
-             if self.mFlipY: self.mPmapImage[idx].stride() else: -self.mPmapImage[idx].stride())
+  dst.attach(self.mImgPmap[idx].buf(),
+             self.mImgPmap[idx].width(),
+             self.mImgPmap[idx].height(),
+             if self.mFlipY: self.mImgPmap[idx].stride() else: -self.mImgPmap[idx].stride())
 
   case self.mFormat
   of pix_format_gray8:
@@ -307,12 +312,13 @@ proc loadPmap(self: var PlatformSpecific, fn: string, idx: int, dst: var Renderi
   else: discard
   result = true
 
-proc translate(self: var PlatformSpecific, keyCode: int): KeyCode =
+proc translate[T](self: var PlatformSpecific[T], keyCode: int): KeyCode =
   self.mLastTranslatedKey = if keyCode > 255: key_none else: self.mKeyMap[keyCode]
   result = self.mLastTranslatedKey
 
-proc init[T](self: GenericPlatform[T], format: PixFormat, flipY: bool) =
-  self.mSpecific = initPlatformSpecific(format, flipY)
+proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
+  type ValueT = getValueT(R)
+  self.mSpecific = initPlatformSpecific[ValueT](format, flipY)
   self.mFormat = format
   self.mBpp = self.mSpecific.mBpp
   self.mWindowFlags = {}
@@ -322,12 +328,12 @@ proc init[T](self: GenericPlatform[T], format: PixFormat, flipY: bool) =
   self.mInitialHeight = 10
   self.mCaption = "Anti-Grain Geometry Application"
 
-proc caption[T](self: GenericPlatform[T], cap: string) =
+proc caption[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
   if self.mSpecific.mHwnd != NULL:
     discard setWindowText(self.mSpecific.mHwnd, self.mCaption)
 
-proc loadImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
+proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
   if idx < maxImages:
     var fileName = toLowerAscii(file)
     if rfind(fileName, ".bmp") == -1:
@@ -335,7 +341,7 @@ proc loadImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
     return self.mSpecific.loadPmap(fileName, idx, self.mRbufImage[idx])
   result = true
 
-proc saveImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
+proc saveImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
   if idx < maxImages:
     var fileName = toLowerAscii(file)
     if rfind(fileName, ".bmp") == -1:
@@ -343,20 +349,20 @@ proc saveImg[T](self: GenericPlatform[T], idx: int, file: string): bool =
     return self.mSpecific.savePmap(fileName, idx, self.mRbufImage[idx])
   result = true
 
-proc createImg[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool =
+proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
   var
     w = w
     h = h
 
   if idx < maxImages:
-    if w  == 0: w = self.mSpecific.mPmapWindow.width()
-    if h == 0: h = self.mSpecific.mPmapWindow.height()
+    if w  == 0: w = self.mSpecific.mWinPmap.width()
+    if h == 0: h = self.mSpecific.mWinPmap.height()
 
-    self.mSpecific.mPmapImage[idx].create(w, h, self.mSpecific.mBpp)
-    var stride = self.mSpecific.mPmapImage[idx].stride()
-    self.mRbufImage[idx].attach(self.mSpecific.mPmapImage[idx].buf(),
-                                self.mSpecific.mPmapImage[idx].width(),
-                                self.mSpecific.mPmapImage[idx].height(),
+    self.mSpecific.mImgPmap[idx].create(w, h, self.mSpecific.mBpp)
+    var stride = self.mSpecific.mImgPmap[idx].stride()
+    self.mRbufImage[idx].attach(self.mSpecific.mImgPmap[idx].buf(),
+                                self.mSpecific.mImgPmap[idx].width(),
+                                self.mSpecific.mImgPmap[idx].height(),
                                 if self.mFlipY: stride else: - stride)
     return true
   result = false
@@ -364,20 +370,20 @@ proc createImg[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool =
 proc getKeyFlags(wflags: int): InputFlags =
   if (wflags and MK_LBUTTON) != 0: result.incl mouseLeft
   if (wflags and MK_RBUTTON) != 0: result.incl mouseRight
-  if (wflags and MK_SHIFT  ) != 0: result.incl kbd_shift
-  if (wflags and MK_CONTROL) != 0: result.incl kbd_ctrl
+  if (wflags and MK_SHIFT  ) != 0: result.incl kbdShift
+  if (wflags and MK_CONTROL) != 0: result.incl kbdCtrl
 
-proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): LPARAM {.stdcall.} =
+proc windowProc[T,R](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): LPARAM {.stdcall.} =
   var
     ps: PAINTSTRUCT
     paintDC: HDC
-    app: GenericPlatform[T]
+    app: GenericPlatform[T,R]
     cs = cast[LPCREATESTRUCT](lParam)
 
   if iMsg == WM_CREATE:
-    app = cast[GenericPlatform[T]](cs.lpCreateParams)
+    app = cast[GenericPlatform[T,R]](cs.lpCreateParams)
   else:
-    app = cast[GenericPlatform[T]](getWindowLongPtr(hWnd, GWLP_USER_DATA))
+    app = cast[GenericPlatform[T,R]](getWindowLongPtr(hWnd, GWLP_USER_DATA))
 
   #if app == nil:
   #  if iMsg == WM_DESTROY:
@@ -487,9 +493,9 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
     app.mSpecific.mLastTranslatedKey = key_none
     case wParam
     of VK_CONTROL:
-      app.mSpecific.mInputFlags.incl kbd_ctrl
+      app.mSpecific.mInputFlags.incl kbdCtrl
     of VK_SHIFT:
-      app.mSpecific.mInputFlags.incl kbd_shift
+      app.mSpecific.mInputFlags.incl kbdShift
     else:
       discard app.mSpecific.translate(wParam)
 
@@ -528,9 +534,9 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
     app.mSpecific.mLastTranslatedKey = key_none
     case wParam
     of VK_CONTROL:
-      app.mSpecific.mInputFlags.excl kbd_ctrl
+      app.mSpecific.mInputFlags.excl kbdCtrl
     of VK_SHIFT:
-      app.mSpecific.mInputFlags.excl kbd_shift
+      app.mSpecific.mInputFlags.excl kbdShift
     else: discard
   of WM_CHAR, WM_SYSCHAR:
     if app.mSpecific.mLastTranslatedKey == key_none:
@@ -560,7 +566,7 @@ proc windowProc[T](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): L
     app.mSpecific.mCurrentDC = NULL
   result = ret
 
-proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): bool =
+proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   if self.mSpecific.mSysFormat == pix_format_undefined:
     return false
 
@@ -570,7 +576,7 @@ proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): 
     wc: WNDCLASS
 
   wc.lpszClassName = WC("AGGAppClass")
-  wc.lpfnWndProc   = windowProc[T]
+  wc.lpfnWndProc   = windowProc[T,R]
   wc.style         = WINUINT(wflags)
   wc.hInstance     = windowsInstance
   wc.hIcon         = loadIcon(0, IDI_APPLICATION)
@@ -617,7 +623,7 @@ proc init[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags): 
     discard showWindow(self.mSpecific.mHwnd, SW_SHOW)
   result = true
 
-proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags, fileName: string): bool =
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
   if paramCount() > 0:
     if paramStr(1) == "-v":
       if self.init(width, height, {window_hidden}):
@@ -627,7 +633,7 @@ proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags, 
         return false
   result = self.init(width, height, flags)
 
-proc run[T](self: GenericPlatform[T]): int =
+proc run[T,R](self: GenericPlatform[T,R]): int =
   var
     msg: MSG
 
@@ -645,31 +651,31 @@ proc run[T](self: GenericPlatform[T]): int =
         self.onIdle()
   result = int(msg.wParam)
 
-proc forceRedraw[T](self: GenericPlatform[T]) =
+proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
   self.mSpecific.mRedrawFlags = true
   discard invalidateRect(self.mSpecific.mHwnd, nil, FALSE)
 
-proc updateWindow[T](self: GenericPlatform[T]) =
+proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   var dc = getDC(self.mSpecific.mHwnd)
   self.mSpecific.displayPmap(dc, self.mRBufWindow)
   releaseDC(self.mSpecific.mHwnd, dc)
 
-proc imgExt[T](self: GenericPlatform[T]): string = ".bmp"
+proc imgExt[T,R](self: GenericPlatform[T,R]): string = ".bmp"
 
-proc rawDisplayHandler[T](self: GenericPlatform[T]): pointer =
+proc rawDisplayHandler[T,R](self: GenericPlatform[T,R]): pointer =
   cast[pointer](self.mSpecific.mCurrentDC)
 
-proc message[T](self: GenericPlatform[T], msg: string) =
+proc message[T,R](self: GenericPlatform[T,R], msg: string) =
   messageBox(self.mSpecific.mHwnd, msg, "AGG Message", MB_OK)
 
-proc startTimer[T](self: GenericPlatform[T]) =
+proc startTimer[T,R](self: GenericPlatform[T,R]) =
   queryPerformanceCounter(self.mSpecific.mSwStart)
 
-proc elapsedTime[T](self: GenericPlatform[T]): float64 =
+proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
   var stop: LARGE_INTEGER
   queryPerformanceCounter(stop)
   result = float64(stop.QuadPart - self.mSpecific.mSwStart.QuadPart) * 1000.0 /
     float64(self.mSpecific.mSwFreq.QuadPart)
 
-proc fullFileName[T](self: GenericPlatform[T], fileName: string): string =
+proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName

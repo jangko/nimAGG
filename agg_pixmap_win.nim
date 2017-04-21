@@ -1,16 +1,16 @@
 import winapi, agg_basics
 
 type
-  PixelMap* = object
+  PixelMap*[T] = object
     mBmp: ptr BITMAPINFO
-    mBuf: ptr uint8
+    mBuf: ptr T
     mBpp: int
     mIsInternal: bool
     mImgSize: int
     mFullSize: int
-    mBuffer: seq[uint8]
+    mBuffer: seq[T]
 
-proc initPixelMap*(): PixelMap =
+proc initPixelMap*[T](): PixelMap[T] =
   result.mBmp = nil
   result.mBuf = nil
   result.mBpp = 0
@@ -19,7 +19,7 @@ proc initPixelMap*(): PixelMap =
   result.mFullSize = 0
   result.mBuffer = nil
 
-proc destroy*(self: var PixelMap) =
+proc destroy*[T](self: var PixelMap[T]) =
   self.mBmp = nil
   self.mIsInternal = false
   self.mBuf = nil
@@ -28,7 +28,7 @@ proc calcPaletteSize(clrUsed, bitsPerPixel: int): int =
   var paletteSize = 0
   if bitsPerPixel <= 8:
     paletteSize = clrUsed
-    
+
     if paletteSize == 0:
       paletteSize = 1 shl bitsPerPixel
 
@@ -61,7 +61,7 @@ proc calcRowLen(width, bitsPerPixel: int): int =
   else: n = 0
   result = ((n + 3) shr 2) shl 2
 
-proc createBitmapInfo*(self: var PixelMap, width, height, bitsPerPixel: int): ptr BITMAPINFO =
+proc createBitmapInfo*[T](self: var PixelMap[T], width, height, bitsPerPixel: int): ptr BITMAPINFO =
   var
     lineLen = calcRowLen(width, bitsPerPixel)
     imgSize = lineLen * height
@@ -69,11 +69,11 @@ proc createBitmapInfo*(self: var PixelMap, width, height, bitsPerPixel: int): pt
     fullSize = sizeof(BITMAPINFOHEADER) + rgbSize + imgSize
 
   if self.mBuffer.isNil:
-    self.mBuffer = newSeq[uint8](fullSize)
-    
+    self.mBuffer = newSeq[T](fullSize div sizeof(T))
+
   if self.mBuffer.len < fullSize:
     self.mBuffer.setLen(fullSize)
-    
+
   var bmp = cast[ptr BITMAPINFO](self.mBuffer[0].addr)
 
   bmp.bmiHeader.biSize   = DWORD(sizeof(BITMAPINFOHEADER))
@@ -119,15 +119,15 @@ proc calcImagePtr(bmp: ptr BITMAPINFO): ptr uint8 =
   if bmp == nil: return nil
   result = cast[ptr uint8](bmp) + calcHeaderSize(bmp)
 
-proc createFromBmp(self: var PixelMap, bmp: ptr BITMAPINFO) =
+proc createFromBmp[T](self: var PixelMap[T], bmp: ptr BITMAPINFO) =
   if bmp != nil:
     let stride = calcRowLen(bmp.bmiHeader.biWidth, bmp.bmiHeader.biBitCount)
     self.mImgSize   = stride * bmp.bmiHeader.biHeight
     self.mFullSize  = calcFullSize(bmp)
     self.mBmp       = bmp
-    self.mBuf       = calcImagePtr(bmp)
+    self.mBuf       = cast[ptr T](calcImagePtr(bmp))
 
-proc create*(self: var PixelMap, width, height: int, org: int, clearVal: int = 256) =
+proc create*[T](self: var PixelMap[T], width, height: int, org: int, clearVal: int = 256) =
   var
     width = width
     height = height
@@ -143,7 +143,7 @@ proc create*(self: var PixelMap, width, height: int, org: int, clearVal: int = 2
   if clearVal <= 255:
     setMem(self.mBuf, clearVal, self.mImgSize)
 
-proc createDibSectionFromArgs(self: var PixelMap, hdc: HDC,
+proc createDibSectionFromArgs[T](self: var PixelMap[T], hdc: HDC,
   width, height, bitsPerPixel: int): HBITMAP =
   var
     lineLen  = calcRowLen(width, bitsPerPixel)
@@ -151,7 +151,7 @@ proc createDibSectionFromArgs(self: var PixelMap, hdc: HDC,
     rgbSize  = calcPaletteSize(0, bitsPerPixel) * sizeof(RGBQUAD)
     fullSize = sizeof(BITMAPINFOHEADER) + rgbSize
 
-  self.mBuffer = newSeq[uint8](fullSize)
+  self.mBuffer = newSeq[T](fullSize div sizeof(T))
   var bmp = cast[ptr BITMAPINFO](self.mBuffer[0].addr)
 
   bmp.bmiHeader.biSize   = DWORD(sizeof(BITMAPINFOHEADER))
@@ -178,7 +178,7 @@ proc createDibSectionFromArgs(self: var PixelMap, hdc: HDC,
 
   result = hBitmap
 
-proc createDibSection*(self: var PixelMap, hdc: HDC, width, height: int,
+proc createDibSection*[T](self: var PixelMap[T], hdc: HDC, width, height: int,
   org: int, clearVal: int): HBITMAP =
   var
     width = width
@@ -197,11 +197,11 @@ proc createDibSection*(self: var PixelMap, hdc: HDC, width, height: int,
     setMem(self.mBuf, clearVal, self.mImgSize)
   result = hBitmap
 
-proc clear*(self: var PixelMap, clearVal: int) =
+proc clear*[T](self: var PixelMap[T], clearVal: int) =
   if self.mBuf != nil:
     setMem(self.mBuf, clearVal, self.mImgSize)
 
-proc attachToBmp*(self: var PixelMap, bmp: ptr BITMAPINFO) =
+proc attachToBmp*[T](self: var PixelMap[T], bmp: ptr BITMAPINFO) =
   if bmp != nil:
     self.destroy()
     self.createFromBmp(bmp)
@@ -268,7 +268,7 @@ proc draw*(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT = nil, bmpRect: pt
       self.mBmp[],          # address of structure with bitmap info.
       DIB_RGB_COLORS)       # RGB or palette indexes
 
-proc draw*(self: var PixelMap, hdc: HDC, x, y: int, scale: float64) =
+proc draw*[T](self: var PixelMap[T], hdc: HDC, x, y: int, scale: float64) =
   if self.mBmp == nil or self.mBuf == nil: return
 
   var
@@ -283,7 +283,7 @@ proc draw*(self: var PixelMap, hdc: HDC, x, y: int, scale: float64) =
   self.draw(hdc, rect.addr, nil)
 
 
-proc blend(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT, bmpRect: ptr RECT) =
+proc blend[T](self: var PixelMap[T], hdc: HDC, deviceRect: ptr RECT, bmpRect: ptr RECT) =
   when not defined(AGG_BMP_ALPHA_BLEND):
     self.draw(hdc, deviceRect, bmpRect)
   else:
@@ -343,7 +343,7 @@ proc blend(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT, bmpRect: ptr RECT
     deleteObject(bmp)
     deleteObject(memDC)
 
-proc blend*(self: var PixelMap, hdc: HDC, x, y: int, scale: float64) =
+proc blend*[T](self: var PixelMap[T], hdc: HDC, x, y: int, scale: float64) =
   if self.mBmp == nil or self.mBuf == nil: return
   var
     width  = int(self.mBmp.bmiHeader.biWidth.float64 * scale)
@@ -355,16 +355,16 @@ proc blend*(self: var PixelMap, hdc: HDC, x, y: int, scale: float64) =
   rect.right  = LONG(x + width)
   rect.bottom = LONG(y + height)
   self.blend(hdc, rect.addr, nil)
-  
+
 type
   BMPHeader = object
     fileSize: DWORD
     reserved1: WORD
     reserved2: WORD
     offset: DWORD
-    
-proc loadFromBmp(self: var PixelMap, fd: File): bool =
-  var 
+
+proc loadFromBmp[T](self: var PixelMap[T], fd: File): bool =
+  var
     signature: WORD
     bmh: BMPHeader
     bmi: ptr BITMAPINFO
@@ -375,7 +375,7 @@ proc loadFromBmp(self: var PixelMap, fd: File): bool =
   if signature != 0x4D42: return false
 
   bmpSize = bmh.fileSize - sizeof(BITMAPFILEHEADER)
-  self.mBuffer = newSeq[uint8](bmpSize)
+  self.mBuffer = newSeq[T](bmpSize div sizeof(T))
   bmi = cast[ptr BITMAPINFO](self.mBuffer[0].addr)
 
   if fd.readBuffer(bmi, bmpSize) != bmpSize: return false
@@ -386,7 +386,7 @@ proc loadFromBmp(self: var PixelMap, fd: File): bool =
   self.mIsInternal = true
   result = true
 
-proc loadFromBmp*(self: var PixelMap, fileName: string): bool =
+proc loadFromBmp*[T](self: var PixelMap[T], fileName: string): bool =
   var
     fd = open(fileName, fmRead)
 
@@ -394,24 +394,24 @@ proc loadFromBmp*(self: var PixelMap, fileName: string): bool =
     result = self.loadFromBmp(fd)
     fd.close()
 
-proc saveAsBmp(self: PixelMap, fd: File): bool =
+proc saveAsBmp[T](self: PixelMap[T], fd: File): bool =
   if self.mBmp == nil: return false
 
-  var 
-    signature = WORD(0x4D42)      
+  var
+    signature = WORD(0x4D42)
     bmh: BMPHeader
-    
+
   bmh.offset    = DWORD(calcHeaderSize(self.mBmp) + 14)
   bmh.fileSize  = DWORD(bmh.offset + self.mImgSize)
   bmh.reserved1 = 0
   bmh.reserved2 = 0
-  
+
   discard fd.writeBuffer(signature.addr, sizeof(WORD))
   discard fd.writeBuffer(bmh.addr, sizeof(bmh))
   discard fd.writeBuffer(self.mBmp, self.mFullSize)
   result = true
-  
-proc saveAsBmp*(self: PixelMap, fileName: string): bool =
+
+proc saveAsBmp*[T](self: PixelMap[T], fileName: string): bool =
   var
     fd = open(filename, fmWrite)
 
@@ -419,16 +419,17 @@ proc saveAsBmp*(self: PixelMap, fileName: string): bool =
     result = self.saveAsBmp(fd)
     fd.close()
 
-proc buf*(self: PixelMap): ptr uint8 =
+proc buf*[T](self: PixelMap[T]): ptr T =
   result = self.mBuf
 
-proc width*(self: PixelMap): int =
+proc width*[T](self: PixelMap[T]): int =
   result = self.mBmp.bmiHeader.biWidth
 
-proc height*(self: PixelMap): int =
+proc height*[T](self: PixelMap[T]): int =
   result = self.mBmp.bmiHeader.biHeight
 
-proc stride*(self: PixelMap): int =
+proc stride*[T](self: PixelMap[T]): int =
   result = calcRowLen(self.mBmp.bmiHeader.biWidth, self.mBmp.bmiHeader.biBitCount)
+  result = result div sizeof(T)
 
-proc bpp*(self: PixelMap): int = self.mBpp
+proc bpp*[T](self: PixelMap[T]): int = self.mBpp

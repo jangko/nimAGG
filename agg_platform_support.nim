@@ -40,34 +40,34 @@ type
 # This list can be (and will be!) extended in future.
 type
   PixFormat* = enum
-    pix_format_undefined = 0,  # By default. No conversions are applied
-    pix_format_bw,             # 1 bit per color B/W
-    pix_format_gray8,          # Simple 256 level grayscale
-    pix_format_gray16,         # Simple 65535 level grayscale
-    pix_format_rgb555,         # 15 bit rgb. Depends on the byte ordering!
-    pix_format_rgb565,         # 16 bit rgb. Depends on the byte ordering!
-    pix_format_rgbAAA,         # 30 bit rgb. Depends on the byte ordering!
-    pix_format_rgbBBA,         # 32 bit rgb. Depends on the byte ordering!
-    pix_format_bgrAAA,         # 30 bit bgr. Depends on the byte ordering!
-    pix_format_bgrABB,         # 32 bit bgr. Depends on the byte ordering!
-    pix_format_rgb24,          # R-G-B, one byte per color component
-    pix_format_bgr24,          # B-G-R, native win32 BMP format.
-    pix_format_rgba32,         # R-G-B-A, one byte per color component
-    pix_format_argb32,         # A-R-G-B, native MAC format
-    pix_format_abgr32,         # A-B-G-R, one byte per color component
-    pix_format_bgra32,         # B-G-R-A, native win32 BMP format
-    pix_format_rgb48,          # R-G-B, 16 bits per color component
-    pix_format_bgr48,          # B-G-R, native win32 BMP format.
-    pix_format_rgba64,         # R-G-B-A, 16 bits byte per color component
-    pix_format_argb64,         # A-R-G-B, native MAC format
-    pix_format_abgr64,         # A-B-G-R, one byte per color component
-    pix_format_bgra64,         # B-G-R-A, native win32 BMP format
+    pix_format_undefined  # By default. No conversions are applied
+    pix_format_bw         # 1 bit per color B/W
+    pix_format_gray8      # Simple 256 level grayscale
+    pix_format_gray16     # Simple 65535 level grayscale
+    pix_format_rgb555     # 15 bit rgb. Depends on the byte ordering!
+    pix_format_rgb565     # 16 bit rgb. Depends on the byte ordering!
+    pix_format_rgbAAA     # 30 bit rgb. Depends on the byte ordering!
+    pix_format_rgbBBA     # 32 bit rgb. Depends on the byte ordering!
+    pix_format_bgrAAA     # 30 bit bgr. Depends on the byte ordering!
+    pix_format_bgrABB     # 32 bit bgr. Depends on the byte ordering!
+    pix_format_rgb24      # R-G-B one byte per color component
+    pix_format_bgr24      # B-G-R native win32 BMP format.
+    pix_format_rgba32     # R-G-B-A one byte per color component
+    pix_format_argb32     # A-R-G-B native MAC format
+    pix_format_abgr32     # A-B-G-R one byte per color component
+    pix_format_bgra32     # B-G-R-A native win32 BMP format
+    pix_format_rgb48      # R-G-B 16 bits per color component
+    pix_format_bgr48      # B-G-R native win32 BMP format.
+    pix_format_rgba64     # R-G-B-A 16 bits byte per color component
+    pix_format_argb64     # A-R-G-B native MAC format
+    pix_format_abgr64     # A-B-G-R one byte per color component
+    pix_format_bgra64     # B-G-R-A native win32 BMP format
 
 
 # Mouse and keyboard flags. They can be different on different platforms
 # and the ways they are obtained are also different. But in any case
 # the system dependent flags should be mapped into these ones. The meaning
-# of that is as follows. For example, if kbd_ctrl is set it means that the
+# of that is as follows. For example, if kbdCtrl is set it means that the
 # ctrl key is pressed and being held at the moment. They are also used in
 # the overridden methods such as onMouseMove(), onMouseButtonDown(),
 # on_mouse_button_dbl_click(), onMouseButtonUp(), on_key().
@@ -75,15 +75,15 @@ type
 # meaning. They mean that the respective button is being released, but
 # the meaning of the keyboard flags remains the same.
 # There's absolut minimal set of flags is used because they'll be most
-# probably supported on different platforms. Even the mouse_right flag
+# probably supported on different platforms. Even the mouseRight flag
 # is restricted because Mac's mice have only one button, but AFAIK
 # it can be simulated with holding a special key on the keydoard.
 type
   InputFlag* = enum
     mouseLeft
-    mouse_right
-    kbd_shift
-    kbd_ctrl
+    mouseRight
+    kbdShift
+    kbdCtrl
 
   InputFlags* = set[InputFlag]
 
@@ -179,7 +179,6 @@ type
     mNumCtrl: int
     mCurCtrl: int
 
-
 proc initCtrlContainer*(): CtrlContainer =
   result.mNumCtrl = 0
   result.mCurCtrl = -1
@@ -227,66 +226,42 @@ proc setCur*(self: var CtrlContainer, x, y: float64): bool =
     return true
   result = false
 
-# A predeclaration of the platform dependent class. Since we do not
-# know anything here the only we can have is just a pointer to this
-# class as a data member. It should be created and destroyed explicitly
-# in the constructor/destructor of the platform_support class.
-# Although the pointer to platform_specific is public the application
-# cannot have access to its members or methods since it does not know
-# anything about them and it's a perfect incapsulation :-)
-#class platform_specific;
-
-
-# This class is a base one to the apllication classes. It can be used
+# This class is a base one to the application classes. It can be used
 # as follows:
 #
-#  class the_application : public agg::platform_support
-#  {
-#  public:
-#      the_application(unsigned bpp, bool flip_y) :
-#          platform_support(bpp, flip_y)
+#  type
+#    App = ref object of PlatformSupport
 #      . . .
+#      # your app field(s)
 #
-#      #override stuff . . .
-#      virtual proc on_init()
-#      {
-#         . . .
-#      }
+#  proc newApp(format: PixFormat, flipY: bool): App =
+#    new(result)
+#    PlatformSupport(result).init(format, flipY)
 #
-#      virtual proc on_draw()
-#      {
-#          . . .
-#      }
+#  #override stuff . . .
+#  method onInit(app: App) =
+#    . . .
 #
-#      virtual proc on_resize(int sx, int sy)
-#      {
-#          . . .
-#      }
-#      # . . . and so on, see virtual functions
+#  method onDraw(app: App) =
+#    . . .
 #
+#  method onResize(app: App, sx, sy: int) =
+#    . . .
 #
-#      #any your own stuff . . .
-#  };
+#  # . . . and so on, see virtual functions
 #
+#  #any your own stuff . . .
 #
-#  int agg_main(int argc, char* argv[])
-#  {
-#      the_application app(pix_format_rgb24, true)
-#      app.caption("AGG Example. Lion")
+#  proc main(): int =
+#    var app = newApp(pix_format_bgr24, flipY)
+#    app.caption("AGG Example. Anti-Aliasing Demo")
 #
-#      if(app.init(500, 400, agg::window_resize))
-#      {
-#          return app.run()
-#      }
-#      return 1;
-#  }
+#    if app.init(frameWidth, frameHeight, {window_resize}, "aa_demo"):
+#      return app.run()
 #
-# The reason to have agg_main() instead of just main() is that SDL
-# for Windows requires including SDL.h if you define main(). Since
-# the demo applications cannot rely on any platform/library specific
-# stuff it's impossible to include SDL.h into the application files.
-# The demo applications are simple and their use is restricted, so,
-# this approach is quite reasonable.
+#    result = 1
+#
+#  discard main()
 
 const
   maxImages* = 16
@@ -294,7 +269,7 @@ const
 type
   PlatformBase* = ref object of RootObj
 
-  GenericPlatform*[T] = ref object of PlatformBase
+  GenericPlatform*[T,RenBuf] = ref object of PlatformBase
     mCtrls: CtrlContainer
 
     # Sorry, I'm too tired to describe the private
@@ -302,8 +277,8 @@ type
     # platforms for details.
     mFormat: PixFormat
     mBpp: int
-    mRbufWindow: RenderingBuffer
-    mRbufImage: array[maxImages, RenderingBuffer]
+    mRbufWindow: RenBuf
+    mRbufImage: array[maxImages, RenBuf]
     mWindowFlags: WindowFlags
     mWaitMode: bool
     mFlipY: bool
@@ -315,13 +290,13 @@ type
 
 # format - see enum PixFormat
 # flip_y - true if you want to have the Y-axis flipped vertically.
-proc init*[T](self: GenericPlatform[T], format: PixFormat, flipY: bool)
+proc init*[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool)
 
 # Setting the windows caption (title). Should be able
 # to be called at least before calling init().
 # It's perfect if they can be called anytime.
-proc caption*[T](self: GenericPlatform[T], cap: string)
-proc caption*[T](self: GenericPlatform[T]): string =
+proc caption*[T,R](self: GenericPlatform[T,R], cap: string)
+proc caption*[T,R](self: GenericPlatform[T,R]): string =
   self.mCaption
 
 # These 3 methods handle working with images. The image
@@ -332,9 +307,9 @@ proc caption*[T](self: GenericPlatform[T]): string =
 # to determine the initial size of the window depending on
 # the size of the loaded image.
 # The argument "idx" is the number of the image 0...maxImages-1
-proc loadImg*[T](self: GenericPlatform[T], idx: int, file: string): bool
-proc saveImg*[T](self: GenericPlatform[T], idx: int, file: string): bool
-proc createImg*[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool
+proc loadImg*[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool
+proc saveImg*[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool
+proc createImg*[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool
 
 
 # init() and run(). See description before the class for details.
@@ -344,17 +319,17 @@ proc createImg*[T](self: GenericPlatform[T], idx: int, w = 0, h = 0): bool
 # some on_init() event handler when the window is created but
 # not yet displayed. The rbuf_window() method (see below) is
 # accessible from on_init().
-proc init*[T](self: GenericPlatform[T], width, height: int, flags: WindowFlags, fileName: string): bool
-proc run*[T](self: GenericPlatform[T]): int
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool
+proc run*[T,R](self: GenericPlatform[T,R]): int
 
 # The very same parameters that were used in the constructor
-proc format*[T](self: GenericPlatform[T]): PixFormat =
+proc format*[T,R](self: GenericPlatform[T,R]): PixFormat =
   self.mFormat
 
-proc flipY*[T](self: GenericPlatform[T]): bool =
+proc flipY*[T,R](self: GenericPlatform[T,R]): bool =
   self.mFlipY
 
-proc bpp*[T](self: GenericPlatform[T]): int =
+proc bpp*[T,R](self: GenericPlatform[T,R]): int =
   self.mBpp
 
 # The following provides a very simple mechanism of doing someting
@@ -363,10 +338,10 @@ proc bpp*[T](self: GenericPlatform[T]): int =
 # When it's false it calls on_idle() when the event queue is empty.
 # The mode can be changed anytime. This mechanism is satisfactory
 # to create very simple animations.
-proc waitMode*[T](self: GenericPlatform[T]): bool =
+proc waitMode*[T,R](self: GenericPlatform[T,R]): bool =
   self.mWaitMode
 
-proc waitMode*[T](self: GenericPlatform[T], waitMode: bool) =
+proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool) =
   self.mWaitMode = waitMode
 
 # These two functions control updating of the window.
@@ -377,8 +352,8 @@ proc waitMode*[T](self: GenericPlatform[T], waitMode: bool) =
 # update_window() results in just putting immediately the content
 # of the currently rendered buffer to the window without calling
 # on_draw().
-proc forceRedraw*[T](self: GenericPlatform[T])
-proc updateWindow*[T](self: GenericPlatform[T])
+proc forceRedraw*[T,R](self: GenericPlatform[T,R])
+proc updateWindow*[T,R](self: GenericPlatform[T,R])
 
 
 # So, finally, how to draw anythig with AGG? Very simple.
@@ -389,26 +364,26 @@ proc updateWindow*[T](self: GenericPlatform[T])
 # are not displayed directly, they should be copied to or
 # combined somehow with the rbuf_window(). rbuf_window() is
 # the only buffer that can be actually displayed.
-proc rbufWindow*[T](self: GenericPlatform[T]): var RenderingBuffer =
+proc rbufWindow*[T,R](self: GenericPlatform[T,R]): var R =
   self.mRbufWindow
 
-proc rbufImg*[T](self: GenericPlatform[T], idx: int): var RenderingBuffer =
+proc rbufImg*[T,R](self: GenericPlatform[T,R], idx: int): var R =
   self.mRbufImage[idx]
 
 # Returns file extension used in the implementation for the particular
 # system.
-proc imgExt*[T](self: GenericPlatform[T]): string
+proc imgExt*[T,R](self: GenericPlatform[T,R]): string
 
-proc copyImgToWindow*[T](self: GenericPlatform[T], idx: int) =
+proc copyImgToWindow*[T,R](self: GenericPlatform[T,R], idx: int) =
   if idx < maxImages and self.rbufImg(idx).buf() != nil:
     self.rbufWindow().copyFrom(self.rbufImg(idx))
 
-proc copyWindowToImg*[T](self: GenericPlatform[T], idx: int) =
+proc copyWindowToImg*[T,R](self: GenericPlatform[T,R], idx: int) =
   if idx < maxImages:
     discard self.createImg(idx, self.rbufWindow().width(), self.rbufWindow().height())
     self.rbufImg(idx).copyFrom(self.rbufWindow())
 
-proc copyImgToImg*[T](self: GenericPlatform[T], idxTo, idxFrom: int) =
+proc copyImgToImg*[T,R](self: GenericPlatform[T,R], idxTo, idxFrom: int) =
   if idxFrom < maxImages and idxTo < maxImages and self.rbufImg(idxFrom).buf() != nil:
     discard self.createImg(idxTo, self.rbufImg(idxFrom).width(), self.rbufImg(idxFrom).height())
     self.rbufImg(idxTo).copyFrom(self.rbufImg(idxFrom))
@@ -442,7 +417,7 @@ method onPostDraw*(self: PlatformBase, rawHandler: pointer) {.base.} = discard
 # included into the basic AGG package do).
 # If you don't need a particular control to be scaled automatically
 # call ctrl::no_transform() after adding.
-proc addCtrl*[T](self: GenericPlatform[T], c: CtrlBase) =
+proc addCtrl*[T,R](self: GenericPlatform[T,R], c: CtrlBase) =
   self.mCtrls.add(c)
   c.transform(self.mResizeMtx)
 
@@ -459,7 +434,7 @@ proc addCtrl*[T](self: GenericPlatform[T], c: CtrlBase) =
 # width(), height(), initial_width(), and initial_height() must be
 # clear to understand with no comments :-)
 
-proc transAffineResizing*[T](self: GenericPlatform[T], width, height: int) =
+proc transAffineResizing*[T,R](self: GenericPlatform[T,R], width, height: int) =
   if window_keep_aspect_ratio in self.mWindowFlags:
     #double sx = double(width) / double(self.mInitialWidth)
     #double sy = double(height) / double(self.mInitialHeight)
@@ -474,22 +449,22 @@ proc transAffineResizing*[T](self: GenericPlatform[T], width, height: int) =
     self.mResizeMtx = transAffineScaling(float64(width) / float64(self.mInitialWidth),
      float64(height) / float64(self.mInitialHeight))
 
-proc transAffineResizing*[T](self: GenericPlatform[T]): var TransAffine =
+proc transAffineResizing*[T,R](self: GenericPlatform[T,R]): var TransAffine =
   self.mResizeMtx
 
-proc width*[T](self: GenericPlatform[T]): float64 =
+proc width*[T,R](self: GenericPlatform[T,R]): float64 =
   self.mRbufWindow.width().float64
 
-proc height*[T](self: GenericPlatform[T]): float64 =
+proc height*[T,R](self: GenericPlatform[T,R]): float64 =
   self.mRbufWindow.height().float64
 
-proc initialWidth*[T](self: GenericPlatform[T]): float64 =
+proc initialWidth*[T,R](self: GenericPlatform[T,R]): float64 =
   self.mInitialWidth.float64
 
-proc initialHeight*[T](self: GenericPlatform[T]): float64 =
+proc initialHeight*[T,R](self: GenericPlatform[T,R]): float64 =
   self.mInitialHeight.float64
 
-proc windowFlags*[T](self: GenericPlatform[T]): WindowFlags =
+proc windowFlags*[T,R](self: GenericPlatform[T,R]): WindowFlags =
   self.mWindowFlags
 
 # Get raw display handler depending on the system.
@@ -499,18 +474,18 @@ proc windowFlags*[T](self: GenericPlatform[T]): WindowFlags =
 # If it's null the raw_display_handler is not supported. Also, there's
 # no guarantee that this function is implemented, so, in some
 # implementations you may have simply an unresolved symbol when linking.
-proc rawDisplayHandler*[T](self: GenericPlatform[T]): pointer
+proc rawDisplayHandler*[T,R](self: GenericPlatform[T,R]): pointer
 
 # display message box or print the message to the console
 # (depending on implementation)
-proc message*[T](self: GenericPlatform[T], msg: string)
+proc message*[T,R](self: GenericPlatform[T,R], msg: string)
 
 # Stopwatch functions. Function elapsed_time() returns time elapsed
 # since the latest start_timer() invocation in millisecods.
 # The resolutoin depends on the implementation.
 # In Win32 it uses QueryPerformanceFrequency() / QueryPerformanceCounter().
-proc startTimer*[T](self: GenericPlatform[T])
-proc elapsedTime*[T](self: GenericPlatform[T]): float64
+proc startTimer*[T,R](self: GenericPlatform[T,R])
+proc elapsedTime*[T,R](self: GenericPlatform[T,R]): float64
 
 
 # Get the full file name. In most cases it simply returns
@@ -526,8 +501,23 @@ proc elapsedTime*[T](self: GenericPlatform[T]): float64
 # FILE* fd = fopen(full_file_name("some.file"), "r")
 # instead of
 # FILE* fd = fopen("some.file", "r")
-proc fullFileName*[T](self: GenericPlatform[T], fileName: string): string
+proc fullFileName*[T,R](self: GenericPlatform[T,R], fileName: string): string
 
-include agg_win_platform_support
+# A predeclaration of the platform dependent class. Since we do not
+# know anything here the only we can have is just a pointer to this
+# class as a data member. It should be created and destroyed explicitly
+# in the constructor/destructor of the platform_support class.
+# Although the pointer to platform_specific is public the application
+# cannot have access to its members or methods since it does not know
+# anything about them and it's a perfect incapsulation :-)
+#class platform_specific;
+when defined(windows) and not defined(platform_null):
+  include agg_platform_win
+else:
+  include agg_platform_null
+
 type
-  PlatformSupport* = GenericPlatform[PlatformSpecific]
+  # ValueT = 8 bit
+  PlatformSupport* = GenericPlatform[PlatformSpecific[uint8], RenderingBuffer]
+  # ValueT = 16 bit
+  PlatformSupport16* = GenericPlatform[PlatformSpecific[uint16], RenderingBuffer16]

@@ -82,7 +82,9 @@ const
 type
   ValueT = uint8
 
-  RendererT = RendererBase[PixFmtBgr24]
+  PixFmt = PixFmtBgr24
+
+  RendererT = RendererBase[PixFmt]
 
   App = ref object of PlatformSupport
     mX: array[3, float64]
@@ -92,7 +94,7 @@ type
     mIdx: int
     mSlider1: SliderCtrl[Rgba8]
     mSlider2: SliderCtrl[Rgba8]
-    pf: PixFmtBgr24
+    pf: PixFmt
     rb: RendererT
     sl: ScanlineU8
     ras: RasterizerScanlineAA
@@ -133,7 +135,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
 method onDraw(app: App) =
   var
-    pf  = initPixFmtBgr24(app.rbufWindow())
+    pf  = construct(PixFmt, app.rbufWindow())
     rb  = initRendererBase(pf)
 
   app.ren.setRenderer(rb)
