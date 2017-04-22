@@ -32,6 +32,13 @@ type
   BYTE* = uint8
   WORD* = int16
 
+  LARGE_INTEGER* = int64
+  ULARGE_INTEGER* = int64
+  PLARGE_INTEGER* = ptr LARGE_INTEGER
+  TLARGEINTEGER* = int64
+  PULARGE_INTEGER* = ptr ULARGE_INTEGER
+  TULARGEIINTEGER* = int64
+
   LONG_PTR* = ByteAddress
   WPARAM* = LONG_PTR
   LPARAM* = LONG_PTR
@@ -148,12 +155,12 @@ type
   PPAINTSTRUCT* = ptr PAINTSTRUCT
 
   BITMAPFILEHEADER* {.final, pure.} = object
-    bfType*: int16
-    bfSize*: DWord
-    bfReserved1*: int16
-    bfReserved2*: int16
-    bfOffBits*: DWord
-
+    bfType*: WORD
+    bfSize*: DWORD
+    bfReserved1*: WORD
+    bfReserved2*: WORD
+    bfOffBits*: DWORD
+  
   BITMAPINFOHEADER* {.final, pure.} = object
     biSize*: DWORD
     biWidth*: LONG
@@ -237,8 +244,8 @@ type
   TTTPOLYGONHEADER* = TTPOLYGONHEADER
   PTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
 
-  APFXARRAY {.unchecked.} = array[0..0, POINTFX] 
-  
+  APFXARRAY {.unchecked.} = array[0..0, POINTFX]
+
   TTPOLYCURVE* {.final, pure.} = object
     wType*: int16
     cpfx*: int16
@@ -258,14 +265,19 @@ type
   LPGLYPHMETRICS* = ptr GLYPHMETRICS
   TGLYPHMETRICS* = GLYPHMETRICS
   PGLYPHMETRICS* = ptr GLYPHMETRICS
+  
+  MakeIntResourceA* = cstring
+  MakeIntResourceW* = PWideChar
 
 when defined(winUnicode):
   type
     WNDCLASS* = WNDCLASSW
+    MAKEINTRESOURCE* = MakeIntResourceW
 else:
   type
     WNDCLASS* = WNDCLASSA
-
+    MAKEINTRESOURCE* = MakeIntResourceA
+    
 const
   TRUE* = 1
   FALSE* = 0
@@ -1118,6 +1130,78 @@ const
   DCX_INTERSECTRGN* = 0x00000080
   DCX_VALIDATE* = 0x00200000
 
+  # GetSysColor
+  COLOR_3DDKSHADOW* = 21
+  COLOR_3DFACE* = 15
+  COLOR_3DHILIGHT* = 20
+  COLOR_3DLIGHT* = 22
+  COLOR_BTNHILIGHT* = 20
+  COLOR_3DSHADOW* = 16
+  COLOR_ACTIVEBORDER* = 10
+  COLOR_ACTIVECAPTION* = 2
+  COLOR_APPWORKSPACE* = 12
+  COLOR_BACKGROUND* = 1
+  COLOR_DESKTOP* = 1
+  COLOR_BTNFACE* = 15
+  COLOR_BTNHIGHLIGHT* = 20
+  COLOR_BTNSHADOW* = 16
+  COLOR_BTNTEXT* = 18
+  COLOR_CAPTIONTEXT* = 9
+  COLOR_GRAYTEXT* = 17
+  COLOR_HIGHLIGHT* = 13
+  COLOR_HIGHLIGHTTEXT* = 14
+  COLOR_INACTIVEBORDER* = 11
+  COLOR_INACTIVECAPTION* = 3
+  COLOR_INACTIVECAPTIONTEXT* = 19
+  COLOR_INFOBK* = 24
+  COLOR_INFOTEXT* = 23
+  COLOR_MENU* = 4
+  COLOR_MENUTEXT* = 7
+  COLOR_SCROLLBAR* = 0
+  COLOR_WINDOW* = 5
+  COLOR_WINDOWFRAME* = 6
+  COLOR_WINDOWTEXT* = 8
+
+  # Mouse messages
+  MK_CONTROL* = 8
+  MK_LBUTTON* = 1
+  MK_MBUTTON* = 16
+  MK_RBUTTON* = 2
+  MK_SHIFT* = 4
+  
+  # PeekMessage
+  PM_NOREMOVE* = 0
+  PM_REMOVE* = 1
+  PM_NOYIELD* = 2
+  
+  # GetIconInfo
+  IDC_ARROW* =       cast[MAKEINTRESOURCE](32512)
+  IDC_IBEAM* =       cast[MAKEINTRESOURCE](32513)
+  IDC_WAIT* =        cast[MAKEINTRESOURCE](32514)
+  IDC_CROSS* =       cast[MAKEINTRESOURCE](32515)
+  IDC_UPARROW* =     cast[MAKEINTRESOURCE](32516)
+  IDC_SIZE* =        cast[MAKEINTRESOURCE](32640)  # OBSOLETE: use IDC_SIZEALL
+  IDC_ICON* =        cast[MAKEINTRESOURCE](32641)  # OBSOLETE: use IDC_ARROW
+  IDC_SIZENWSE* =    cast[MAKEINTRESOURCE](32642)
+  IDC_SIZENESW* =    cast[MAKEINTRESOURCE](32643)
+  IDC_SIZEWE* =      cast[MAKEINTRESOURCE](32644)
+  IDC_SIZENS* =      cast[MAKEINTRESOURCE](32645)
+  IDC_SIZEALL* =     cast[MAKEINTRESOURCE](32646)
+  IDC_NO* =          cast[MAKEINTRESOURCE](32648)
+  IDC_HAND* =        cast[MAKEINTRESOURCE](32649)
+  IDC_APPSTARTING* = cast[MAKEINTRESOURCE](32650)
+  IDC_HELP* =        cast[MAKEINTRESOURCE](32651)
+
+  IDI_APPLICATION* = cast[MAKEINTRESOURCE](32512)
+  IDI_HAND* =        cast[MAKEINTRESOURCE](32513)
+  IDI_QUESTION* =    cast[MAKEINTRESOURCE](32514)
+  IDI_EXCLAMATION* = cast[MAKEINTRESOURCE](32515)
+  IDI_ASTERISK* =    cast[MAKEINTRESOURCE](32516)
+  IDI_WINLOGO* =     cast[MAKEINTRESOURCE](32517)
+  IDI_WARNING* =     IDI_EXCLAMATION
+  IDI_ERROR* =       IDI_HAND
+  IDI_INFORMATION* = IDI_ASTERISK
+
 proc RGB*(r, g, b: int): COLORREF =
   result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
 
@@ -1150,6 +1234,12 @@ proc LOBYTE*(w: int32): int8 =
 
 proc LOWORD*(L: int32): int16 =
   result = toU16(L)
+
+proc HIWORD*(L: LPARAM): int =
+  HIWORD(int32(L))
+
+proc LOWORD*(L: LPARAM): int =
+  LOWORD(int32(L))
 
 proc MAKELONG*(a, b: int32): LONG =
   result = a and 0x0000ffff'i32 or b shl 16'i32
@@ -1222,8 +1312,11 @@ proc createWindowEx*(dwExStyle: DWORD, className, windowName: string, dwStyle: D
       X.cint, Y.cint, nWidth.cint, nHeight.cint,
       hwndParent, hMenu, hInstance, lpParam)
 
-proc showWindow*(wnd: HWND, nCmdShow: int32): WINBOOL {.stdcall,
+proc ShowWindow*(wnd: HWND, nCmdShow: int32): WINBOOL {.stdcall,
     dynlib: "user32", importc: "ShowWindow", discardable.}
+
+template showWindow*(wnd: HWND, nCmdShow: int): WINBOOL =
+  ShowWindow(wnd, nCmdShow.cint)
 
 proc getClientRect*(wnd: HWND, lpRect: LPRECT): WINBOOL {.stdcall,
     dynlib: "user32", importc: "GetClientRect", discardable.}
@@ -1347,7 +1440,7 @@ template getWindowLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
   when defined(winUnicode): GetWindowLongPtrW(wnd, nIndex)
   else: GetWindowLongPtrA(wnd, nIndex)
 
-template getClasLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
+template getClassLongPtr*(wnd: HWND, nIndex: int32): LONG_PTR =
   when defined(winUnicode): GetClassLongPtrW(wnd, nIndex)
   else: GetClassLongPtrA(wnd, nIndex)
 
@@ -1486,3 +1579,75 @@ proc getDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetDC".}
 proc getDCEx*(wnd: HWND, hrgnClip: HRGN, flags: DWORD): HDC{.stdcall, dynlib: "user32", importc: "GetDCEx".}
 proc getWindowDC*(wnd: HWND): HDC{.stdcall, dynlib: "user32", importc: "GetWindowDC".}
 proc releaseDC*(wnd: HWND, hDC: HDC): int32{.stdcall, dynlib: "user32", importc: "ReleaseDC".}
+
+proc queryPerformanceCounter*(lpPerformanceCount: var LARGE_INTEGER): WINBOOL{.
+    stdcall, dynlib: "kernel32", importc: "QueryPerformanceCounter".}
+proc queryPerformanceFrequency*(lpFrequency: var LARGE_INTEGER): WINBOOL{.stdcall,
+    dynlib: "kernel32", importc: "QueryPerformanceFrequency".}
+
+proc MoveWindow(wnd: HWND, X: int32, Y: int32, nWidth: int32, nHeight: int32,
+                 bRepaint: WINBOOL): WINBOOL{.stdcall, dynlib: "user32", importc: "MoveWindow".}
+
+template moveWindow*(wnd: HWND, x, y, nWidth, nHeight: int, bRepaint: WINBOOL): WINBOOL =
+  MoveWindow(wnd, x.cint, y.cint, nWidth.cint, nHeight.cint, bRepaint)
+
+proc invalidateRect*(wnd: HWND, lpRect: var RECT, bErase: WINBOOL): WINBOOL{.
+    stdcall, dynlib: "user32", importc: "InvalidateRect".}
+
+proc invalidateRect*(wnd: HWND, lpRect: LPRECT, bErase: WINBOOL): WINBOOL{.
+    stdcall, dynlib: "user32", importc: "InvalidateRect".}
+
+proc getCapture*(): HWND{.stdcall, dynlib: "user32", importc: "GetCapture".}
+proc setCapture*(wnd: HWND): HWND{.stdcall, dynlib: "user32", importc: "SetCapture".}
+proc releaseCapture*(): WINBOOL{.stdcall, dynlib: "user32", importc: "ReleaseCapture".}
+
+proc SetWindowTextA*(wnd: HWND, lpString: LPCSTR): WINBOOL{.stdcall,
+    dynlib: "user32", importc: "SetWindowTextA".}
+
+proc SetWindowTextW*(wnd: HWND, lpString: LPCWSTR): WINBOOL{.stdcall,
+    dynlib: "user32", importc: "SetWindowTextW".}
+
+template setWindowText*(wnd: HWND, lpString: string): WINBOOL =
+  when defined(winUnicode):
+    SetWindowTextW(wnd, WC(lpString))
+  else:
+    SetWindowTextA(wnd, lpString.cstring)
+
+proc peekMessage*(lpMsg: LPMSG, wnd: HWND, wMsgFilterMin: WINUINT, wMsgFilterMax: WINUINT,
+  wRemoveMsg: WINUINT): WINBOOL{.stdcall, dynlib: "user32", importc: "PeekMessageW".}
+  
+proc LoadIconA*(hInstance: HINST, lpIconName: LPCSTR): HICON{.stdcall,
+    dynlib: "user32", importc: "LoadIconA".}
+    
+proc LoadIconW*(hInstance: HINST, lpIconName: LPCWSTR): HICON{.stdcall,
+    dynlib: "user32", importc: "LoadIconW".}
+    
+proc LoadCursorA*(hInstance: HINST, lpCursorName: LPCSTR): HCURSOR{.stdcall,
+    dynlib: "user32", importc: "LoadCursorA".}
+    
+proc LoadCursorW*(hInstance: HINST, lpCursorName: LPCWSTR): HCURSOR{.stdcall,
+    dynlib: "user32", importc: "LoadCursorW".}
+
+template loadIcon*(hInstance: HINST, lpIconName: LPCSTR or LPCWSTR): HICON =
+  when defined(winUnicode):
+    LoadIconW(hInstance, lpIconName)
+  else:
+    LoadIconA(hInstance, lpIconName)
+    
+template loadCursor*(hInstance: HINST, lpCursorName: LPCSTR or LPCWSTR): HCURSOR =
+  when defined(winUnicode):
+    LoadCursorW(hInstance, lpCursorName)
+  else:
+    LoadCursorA(hInstance, lpCursorName)
+    
+template loadIcon*(hInstance: HINST, lpIconName: string): HICON =
+  when defined(winUnicode):
+    LoadIconW(hInstance, WC(lpIconName))
+  else:
+    LoadIconA(hInstance, lpIconName.cstring)
+    
+template loadCursor*(hInstance: HINST, lpCursorName: string): HCURSOR =
+  when defined(winUnicode):
+    LoadCursorW(hInstance, WC(lpCursorName))
+  else:
+    LoadCursorA(hInstance, lpCursorName.cstring)

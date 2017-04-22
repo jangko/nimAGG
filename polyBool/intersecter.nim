@@ -159,7 +159,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
       var i = eps.linesIntersect(a1, a2, b1, b2)
 
       if i.alongA == NoIntersection and i.alongB == NoIntersection:
-        # edgess are parallel or coincident
+        # edges are parallel or coincident
 
         # if points aren't collinear, then the edges are parallel, so no intersections
         if not eps.pointsCollinear(a1, a2, b1):

@@ -75,7 +75,8 @@ var subjects = @[
   "ex_particle_demo",
   "ex_test_poly_bool",
   "ex_poly_bool",
-  "ex_gradients"]
+  "ex_gradients",
+  "ex_svg_test"]
 
 when defined(windows):
   subjects.add "ex_trans_curve1"
@@ -98,10 +99,13 @@ when defined(release):
 when not defined(cpu64):
   addSwitch("cpu:i386")
 
+when not defined(windows):
+  addSwitch("define:platform_null")
+
 for c in subjects:
   echo c
   exec "nim c --verbosity:0 --hints:off $1 $2" % [switches, c]
   when defined(windows):
-    exec c
+    exec c & " -v"
   else:
-    exec "./" & c
+    exec "./" & c & " -v"

@@ -30,6 +30,25 @@ type
   RenderingBuffer16* = RowAccessor[uint16]
   RenderingBufferCached16* = RowPtrCache[uint16]
 
+template getValueT*[T](x: typedesc[RowAccessor[T]]): typedesc = T
+template getValueT*[T](x: typedesc[RowPtrCache[T]]): typedesc = T
+template getValueT*[T](x: typedesc[DynaRow[T]]): typedesc = T
+
+template construct*[T](x: typedesc[RowAccessor[T]], a, b, c, d: typed): untyped =
+  initRowAccessor[T](a, b, c, d)
+
+template construct*[T](x: typedesc[RowAccessor[T]]): untyped =
+  initRowAccessor[T](nil, 0, 0, 0)
+
+template construct*[T](x: typedesc[RowPtrCache[T]], a, b, c, d: typed): untyped =
+  initRowPtrCache[T](a, b, c, d)
+
+template construct*[T](x: typedesc[RowPtrCache[T]]): untyped =
+  initRowPtrCache[T]()
+
+template construct*[T](x: typedesc[DynaRow[T]], a, b, c: typed): untyped =
+  initDynaRow[T](a, b, c)
+
 proc attach*[T](self: var RowAccessor[T], buf: ptr T, width, height, stride: int) =
   self.buf = buf
   self.start = buf
@@ -225,4 +244,3 @@ proc copyFrom*[T](self, src: var DynaRow[T]) =
 
   for y in 0.. <h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), self.byteWidth)
-
