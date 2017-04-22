@@ -12,6 +12,7 @@ Those bugfixes are:
   - inheriting partial specialization generic object
   - type alias via template
   - call proc of partial/specialized/some generic object by subtype object
+  - generic proc forward declaration
   - generic object with generic field(s) type obtained via template*
 
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG

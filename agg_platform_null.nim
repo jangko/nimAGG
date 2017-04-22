@@ -7,7 +7,10 @@ type
     mPixElem: int
     mBuffer: seq[T]
 
-proc create[T](self: var PixelMap[T], width, height, PixElem) =
+proc initPixelMap[T](): PixelMap[T] =
+  discard
+
+proc create[T](self: var PixelMap[T], width, height, PixElem: int) =
   self.mWidth = width
   self.mHeight = height
   self.mPixElem = PixElem
@@ -18,13 +21,23 @@ proc width[T](self: PixelMap[T]): int =
 
 proc height[T](self: PixelMap[T]): int =
   self.mHeight
-  
+
 proc stride[T](self: PixelMap[T]): int =
   self.mWidth * self.mPixElem
 
 proc buf[T](self: var PixelMap[T]): ptr T =
   self.mBuffer[0].addr
-  
+
+proc save(self: PixelMap[uint8], fn: string): bool =
+  if self.mPixElem == 1:
+    saveBMP8(fn, self.mBuffer, self.mWidth, self.mHeight)
+  elif self.mPixElem == 4:
+    saveBMP32(fn, self.mBuffer, self.mWidth, self.mHeight)
+  elif self.mPixElem == 3:
+    saveBMP24(fn, self.mBuffer, self.mWidth, self.mHeight)
+  else:
+    doAssert(false)
+
 type
   PlatformSpecific[T] = object
     mFormat: PixFormat
@@ -35,8 +48,9 @@ type
     mWinPmap: PixelMap[T]
     mImgPmap: array[maxImages, PixelMap[T]]
     mStartTime: float64
+    mFileName: string
 
-proc initPlatformSpecific[T](format: PixFormat[T], flipY: bool): PlatformSpecific =
+proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   result.mFormat = format
   result.mSysFormat = pix_format_undefined
   result.mFlipY = flipY
@@ -50,214 +64,83 @@ proc initPlatformSpecific[T](format: PixFormat[T], flipY: bool): PlatformSpecifi
     result.mSysPixElem = 1
   of pix_format_gray16:
     result.mSysFormat = pix_format_gray8
-    result.mPixElem = 2
-    result.mSysBpp = 8
+    result.mPixElem = 1
+    result.mSysPixElem = 1
   of pix_format_rgb565, pix_format_rgb555:
-    result.mSysFormat = pix_format_rgb555
-    result.mBpp = 16
-    result.mSysBpp = 16
+    result.mSysFormat = pix_format_rgb24
+    result.mPixElem = 2
+    result.mSysPixElem = 3
   of pix_format_rgbAAA, pix_format_bgrAAA,
      pix_format_rgbBBA, pix_format_bgrABB:
-    result.mSysFormat = pix_format_bgr24
-    result.mBpp = 32
-    result.mSysBpp = 24
+    result.mSysFormat = pix_format_rgb24
+    result.mPixElem = 2
+    result.mSysPixElem = 3
   of pix_format_rgb24, pix_format_bgr24:
-    result.mSysFormat = pix_format_bgr24
-    result.mBpp = 24
-    result.mSysBpp = 24
+    result.mSysFormat = pix_format_rgb24
+    result.mPixElem = 3
+    result.mSysPixElem = 3
   of pix_format_rgb48, pix_format_bgr48:
-    result.mSysFormat = pix_format_bgr24
-    result.mBpp = 48
-    result.mSysBpp = 24
+    result.mSysFormat = pix_format_rgb24
+    result.mPixElem = 3
+    result.mSysPixElem = 3
   of pix_format_bgra32, pix_format_abgr32,
      pix_format_argb32, pix_format_rgba32:
-    result.mSysFormat = pix_format_bgra32
-    result.mBpp = 32
-    result.mSysBpp = 32
+    result.mSysFormat = pix_format_rgba32
+    result.mPixElem = 4
+    result.mSysPixElem = 4
   of pix_format_bgra64, pix_format_abgr64,
      pix_format_argb64, pix_format_rgba64:
-    result.mSysFormat = pix_format_bgra32
-    result.mBpp = 64
-    result.mSysBpp = 32
+    result.mSysFormat = pix_format_rgba32
+    result.mPixElem = 4
+    result.mSysPixElem = 4
   else: discard
 
-proc createPmap[T,RenBuf](self: var PlatformSpecific[T], width, height: int, wnd: var RenBuf) =
-  self.mWinPmap.create(width, height, self.mBpp)
-  let stride = if self.mFlipY: self.mWinPmap.stride() else: -self.mWinPmap.stride()
-  wnd.attach(self.mWinPmap.buf(), self.mWinPmap.width(),
-             self.mWinPmap.height(), stride)
+proc createPmap[T,RenBuf](self: var PlatformSpecific[T], w, h: int, wnd: var RenBuf) =
+  self.mWinPmap.create(w, h, self.mPixElem)
+  let stride = if self.mFlipY: -self.mWinPmap.stride() else: self.mWinPmap.stride()
+  wnd.attach(self.mWinPmap.buf(), self.mWinPmap.width(), self.mWinPmap.height(), stride)
 
 proc convertPmap[RenBuf](dst, src: var RenBuf, format: PixFormat) =
   case format
-  of pix_format_gray8: discard
-  of pix_format_gray16: color_conv(dst, src, color_conv_gray16_to_gray8)
-  of pix_format_rgb565: color_conv(dst, src, color_conv_rgb565_to_rgb555)
-  of pix_format_rgbAAA: color_conv(dst, src, color_conv_rgbAAA_to_bgr24)
-  of pix_format_bgrAAA: color_conv(dst, src, color_conv_bgrAAA_to_bgr24)
-  of pix_format_rgbBBA: color_conv(dst, src, color_conv_rgbBBA_to_bgr24)
-  of pix_format_bgrABB: color_conv(dst, src, color_conv_bgrABB_to_bgr24)
-  of pix_format_rgb24:  color_conv(dst, src, color_conv_rgb24_to_bgr24)
-  of pix_format_rgb48:  color_conv(dst, src, color_conv_rgb48_to_bgr24)
-  of pix_format_bgr48:  color_conv(dst, src, color_conv_bgr48_to_bgr24)
-  of pix_format_abgr32: color_conv(dst, src, color_conv_abgr32_to_bgra32)
-  of pix_format_argb32: color_conv(dst, src, color_conv_argb32_to_bgra32)
-  of pix_format_rgba32: color_conv(dst, src, color_conv_rgba32_to_bgra32)
-  of pix_format_bgra64: color_conv(dst, src, color_conv_bgra64_to_bgra32)
-  of pix_format_abgr64: color_conv(dst, src, color_conv_abgr64_to_bgra32)
-  of pix_format_argb64: color_conv(dst, src, color_conv_argb64_to_bgra32)
-  of pix_format_rgba64: color_conv(dst, src, color_conv_rgba64_to_bgra32)
+  of pix_format_gray16: colorConv(dst, src, color_conv_gray16_to_gray8)
+  of pix_format_rgb565: colorConv(dst, src, color_conv_rgb565_to_rgb24)
+  of pix_format_rgb555: colorConv(dst, src, color_conv_rgb555_to_rgb24)
+  of pix_format_rgbAAA: colorConv(dst, src, color_conv_rgbAAA_to_rgb24)
+  of pix_format_bgrAAA: colorConv(dst, src, color_conv_bgrAAA_to_rgb24)
+  of pix_format_rgbBBA: colorConv(dst, src, color_conv_rgbBBA_to_rgb24)
+  of pix_format_bgrABB: colorConv(dst, src, color_conv_bgrABB_to_rgb24)
+  of pix_format_bgr24:  colorConv(dst, src, color_conv_bgr24_to_rgb24)
+  of pix_format_rgb48:  colorConv(dst, src, color_conv_rgb48_to_rgb24)
+  of pix_format_bgr48:  colorConv(dst, src, color_conv_bgr48_to_rgb24)
+  of pix_format_argb32: colorConv(dst, src, color_conv_argb32_to_rgba32)
+  of pix_format_abgr32: colorConv(dst, src, color_conv_abgr32_to_rgba32)
+  of pix_format_bgra32: colorConv(dst, src, color_conv_bgra32_to_rgba32)
+  of pix_format_bgra64: colorConv(dst, src, color_conv_bgra64_to_rgba32)
+  of pix_format_abgr64: colorConv(dst, src, color_conv_abgr64_to_rgba32)
+  of pix_format_argb64: colorConv(dst, src, color_conv_argb64_to_rgba32)
+  of pix_format_rgba64: colorConv(dst, src, color_conv_rgba64_to_rgba32)
   else: discard
-
-proc displayPmap[T,RenBuf](self: var PlatformSpecific[T], dc: HDC, src: var RenBuf) =
-  if self.mSysFormat == self.mFormat:
-    self.mWinPmap.draw(dc)
-  else:
-    var
-      pmap = initPixelMap()
-      rbuf = construct(RenBuf)
-
-    pmap.create(self.mWinPmap.width(), self.mWinPmap.height(), self.mSysBpp)
-    rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
-    convertPmap(rbuf, src, self.mFormat)
-    pmap.draw(dc)
 
 proc savePmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, src: var RenBuf): bool =
   if self.mSysFormat == self.mFormat:
-    return self.mImgPmap[idx].saveAsBmp(fn)
+    return self.mImgPmap[idx].save(fn)
   else:
-    var
-      pmap = initPixelMap()
-      rbuf = construct(RenBuf)
+    var rbuf = initRenderingBuffer()
+    var pmap = initPixelMap[uint8]()
 
-    pmap.create(self.mImgPmap[idx].width(), self.mImgPmap[idx].height(), self.mSysBpp)
-    rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
+    pmap.create(self.mImgPmap[idx].width(), self.mImgPmap[idx].height(), self.mSysPixElem)
+    rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: -pmap.stride() else: pmap.stride())
     convertPmap(rbuf, src, self.mFormat)
-    return pmap.saveAsBmp(fn)
+    return pmap.save(fn)
 
 proc loadPmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, dst: var RenBuf): bool =
-  var
-    pmap= initPixelMap()
-    rbuf = construct(RenBuf)
-
-  if not pmap.loadFromBmp(fn): return false
-
-  rbuf.attach(pmap.buf(), pmap.width(), pmap.height(), if self.mFlipY: pmap.stride() else: -pmap.stride())
-  self.mImgPmap[idx].create(pmap.width(), pmap.height(), self.mBpp, 0)
-
-  dst.attach(self.mImgPmap[idx].buf(),
-             self.mImgPmap[idx].width(),
-             self.mImgPmap[idx].height(),
-             if self.mFlipY: self.mImgPmap[idx].stride() else: -self.mImgPmap[idx].stride())
-
-  case self.mFormat
-  of pix_format_gray8:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_gray8)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_gray8)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_gray8)
-    else: discard
-
-  of pix_format_gray16:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_gray16)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_gray16)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_gray16)
-    else: discard
-  of pix_format_rgb555:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgb555)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgb555)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgb555)
-    else: discard
-  of pix_format_rgb565:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgb565)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgb565)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgb565)
-    else: discard
-  of pix_format_rgb24:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgb24)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgb24)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgb24)
-    else: discard
-  of pix_format_bgr24:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_bgr24)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_bgr24)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_bgr24)
-    else: discard
-  of pix_format_rgb48:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgb48)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgb48)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgb48)
-    else: discard
-  of pix_format_bgr48:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_bgr48)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_bgr48)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_bgr48)
-    else: discard
-  of pix_format_abgr32:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_abgr32)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_abgr32)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_abgr32)
-    else: discard
-  of pix_format_argb32:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_argb32)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_argb32)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_argb32)
-    else: discard
-  of pix_format_bgra32:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_bgra32)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_bgra32)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_bgra32)
-    else: discard
-  of pix_format_rgba32:
-    case pmap.bpp()
-    of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgba32)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgba32)
-    of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgba32)
-    else: discard
-  of pix_format_abgr64:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_abgr64)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_abgr64)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_abgr64)
-    else: discard
-  of pix_format_argb64:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_argb64)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_argb64)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_argb64)
-    else: discard
-  of pix_format_bgra64:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_bgra64)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_bgra64)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_bgra64)
-    else: discard
-  of pix_format_rgba64:
-    case pmap.bpp()
-    #of 16: color_conv(dst, rbuf, color_conv_rgb555_to_rgba64)
-    of 24: color_conv(dst, rbuf, color_conv_bgr24_to_rgba64)
-    #of 32: color_conv(dst, rbuf, color_conv_bgra32_to_rgba64)
-    else: discard
-  else: discard
-  result = true
-
-proc translate[T](self: var PlatformSpecific[T], keyCode: int): KeyCode =
-  self.mLastTranslatedKey = if keyCode > 255: key_none else: self.mKeyMap[keyCode]
-  result = self.mLastTranslatedKey
+  discard
 
 proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
-  self.mSpecific = initPlatformSpecific[T](format, flipY)
+  type ValueT = getValueT(R)
+  self.mSpecific = initPlatformSpecific[ValueT](format, flipY)
   self.mFormat = format
-  self.mBpp = self.mSpecific.mBpp
+  self.mBpp    = self.mSpecific.mPixElem * sizeof(T)
   self.mWindowFlags = {}
   self.mWaitMode = true
   self.mFlipY = flipY
@@ -267,8 +150,6 @@ proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
 
 proc caption[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
-  if self.mSpecific.mHwnd != NULL:
-    discard setWindowText(self.mSpecific.mHwnd, self.mCaption)
 
 proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
   if idx < maxImages:
@@ -295,17 +176,16 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
     if w  == 0: w = self.mSpecific.mWinPmap.width()
     if h == 0: h = self.mSpecific.mWinPmap.height()
 
-    self.mSpecific.mImgPmap[idx].create(w, h, self.mSpecific.mBpp)
+    self.mSpecific.mImgPmap[idx].create(w, h, self.mSpecific.mPixElem)
     var stride = self.mSpecific.mImgPmap[idx].stride()
     self.mRbufImage[idx].attach(self.mSpecific.mImgPmap[idx].buf(),
                                 self.mSpecific.mImgPmap[idx].width(),
                                 self.mSpecific.mImgPmap[idx].height(),
-                                if self.mFlipY: stride else: - stride)
+                                if self.mFlipY: -stride else: stride)
     return true
   result = false
 
-
-proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
   if self.mSpecific.mSysFormat == pix_format_undefined:
     return false
 
@@ -315,19 +195,18 @@ proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlag
   self.mInitialWidth = width
   self.mInitialHeight = height
   self.onInit()
-  result = true
 
-proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
   if paramCount() > 0:
     if paramStr(1) == "-v":
-      if self.init(width, height, {window_hidden}):
-        self.onDraw()
-        self.copyWindowToImg(maxImages - 1)
-        discard self.saveImg(maxImages - 1, fileName)
-        return false
-  result = self.init(width, height, flags)
+      self.onDraw()
+      self.copyWindowToImg(maxImages - 1)
+      discard self.saveImg(maxImages - 1, fileName)
+      return false
+
+  result = true
 
 proc run[T,R](self: GenericPlatform[T,R]): int =
+  self.onDraw()
   result = 0
 
 proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
