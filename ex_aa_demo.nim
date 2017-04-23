@@ -80,8 +80,6 @@ const
   flipY = true
 
 type
-  ValueT = uint8
-
   PixFmt = PixFmtBgr24
 
   RendererT = RendererBase[PixFmt]
@@ -94,9 +92,8 @@ type
     mIdx: int
     mSlider1: SliderCtrl[Rgba8]
     mSlider2: SliderCtrl[Rgba8]
-    pf: PixFmt
-    rb: RendererT
     sl: ScanlineU8
+    rb: RendererT
     ras: RasterizerScanlineAA
     ren: RendererEnlarge[RendererT]
 
