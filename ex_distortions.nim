@@ -2,8 +2,8 @@ import agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_ellipse, agg_trans_
 import agg_conv_transform, agg_pixfmt_rgb, agg_span_allocator, agg_span_image_filter_rgb
 import agg_scanline_u, agg_renderer_scanline, agg_span_interpolator_linear
 import agg_span_interpolator_adaptor, agg_span_gradient, agg_image_accessors
-import ctrl_slider, ctrl_rbox, agg_color_rgba, agg_renderer_base, nimBMP
-import math, agg_image_filters, os, strutils, agg_basics
+import ctrl_slider, ctrl_rbox, agg_color_rgba, agg_renderer_base
+import math, agg_image_filters, os, strutils, agg_basics, agg_platform_support
 
 const gradientColors = [
   255'u8, 255, 255, 255,
@@ -321,7 +321,7 @@ proc newDistortionWave(): DistortionWave =
   PeriodicDistortion(result).init()
 
 method calculate(self: DistortionWave, x, y: var int) =
-  calculate_wave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
+  calculateWave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
 
 type
   DistortionSwirl = ref object of PeriodicDistortion
@@ -331,7 +331,7 @@ proc newDistortionSwirl(): DistortionSwirl =
   PeriodicDistortion(result).init()
 
 method calculate(self: DistortionSwirl, x, y: var int) =
-  calculate_swirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
+  calculateSwirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
 
 type
   DistortionSwirlWave = ref object of PeriodicDistortion
@@ -341,8 +341,8 @@ proc newDistortionSwirlWave(): DistortionSwirlWave =
   PeriodicDistortion(result).init()
 
 method calculate(self: DistortionSwirlWave, x, y: var int) =
-  calculate_swirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
-  calculate_wave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
+  calculateSwirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
+  calculateWave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
 
 type
   DistortionWaveSwirl = ref object of PeriodicDistortion
@@ -352,16 +352,17 @@ proc newDistortionWaveSwirl(): DistortionWaveSwirl =
   PeriodicDistortion(result).init()
 
 method calculate(self: DistortionWaveSwirl, x, y: var int) =
-  calculate_wave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
-  calculate_swirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
+  calculateWave(x, y, self.mCx, self.mCy, self.mPeriod, self.mAmplitude, self.mPhase)
+  calculateSwirl(x, y, self.mCx, self.mCy, self.mAmplitude, self.mPhase)
 
 const
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-  App = object
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
+
+  App = ref object of PlatformSupport
     angle: SliderCtrl[Rgba8]
     scale: SliderCtrl[Rgba8]
     amplitude: SliderCtrl[Rgba8]
@@ -369,15 +370,22 @@ type
     distortion: RboxCtrl[Rgba8]
     centerX, centerY, phase: float64
     gradientColors: array[256, Rgba8]
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.angle      = newSliderCtrl[Rgba8](5,      5,    150,     12,    not flipY)
   result.scale      = newSliderCtrl[Rgba8](5,      5+15, 150,     12+15, not flipY)
   result.period     = newSliderCtrl[Rgba8](5+170,  5,    150+170, 12,    not flipY)
   result.amplitude  = newSliderCtrl[Rgba8](5+170,  5+15, 150+170, 12+15, not flipY)
   result.distortion = newRboxCtrl[Rgba8](480,    5,    600,     90,    not flipY)
+
+  result.addCtrl(result.angle)
+  result.addCtrl(result.scale)
+  result.addCtrl(result.period)
+  result.addCtrl(result.amplitude)
+  result.addCtrl(result.distortion)
 
   result.centerX = 0.0
   result.centerY = 0.0
@@ -407,64 +415,43 @@ proc initApp(): App =
       gradientColors[i * 4 + 2],
       gradientColors[i * 4 + 3])
 
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
+var
+  dist: PeriodicDistortion
+  distWave = newDistortionWave()
+  distSwirl = newDistortionSwirl()
+  distWaveSwirl = newDistortionWaveSwirl()
+  distSwirlWave = newDistortionSwirlWave()
+  
+method onInit(app: App) =
+  app.centerX = app.rbufImg(0).width().float64 / 2.0 + 10.0
+  app.centerY = app.rbufImg(0).height().float64 / 2.0 + 10.0 + 40.0
 
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc onDraw() =
-  var app = initApp()
-  app.loadImage(0, "spheres")
-
+method onDraw(app: App) =
+  
   var
-    width  = app.rbufImage(0).width() + 300
-    height = app.rbufImage(0).height() + 40 + 20
+    imgWidth = app.rbufImg(0).width().float64
+    imgHeight = app.rbufImg(0).height().float64
 
-  app.centerX = app.rbufImage(0).width().float64 / 2.0 + 10.0
-  app.centerY = app.rbufImage(0).height().float64 / 2.0 + 10.0 + 40.0
-
-  var
-    imgWidth = app.rbufImage(0).width().float64
-    imgHeight = app.rbufImage(0).height().float64
-
-    buffer = newString(width * height * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), width, height, -width * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
-    imgPixf= initPixFmtRgb24(app.rbufImage(0))
-    rb     = initRendererBase(pf)
-    srcMtx = initTransAffine()
-    imgMtx = initTransAffine()
-    sa     = initSpanAllocator[Rgba8]()
+    pf      = construct(PixFmt, app.rbufWindow())
+    imgPixf = construct(PixFmt, app.rbufImg(0))
+    rb      = initRendererBase(pf)
+    srcMtx  = initTransAffine()
+    imgMtx  = initTransAffine()
+    sa      = initSpanAllocator[Rgba8]()
 
   rb.clear(initRgba(1.0, 1.0, 1.0))
 
   srcMtx *= transAffineTranslation(-imgWidth/2, -imgHeight/2)
   srcMtx *= transAffineRotation(app.angle.value() * pi / 180.0)
   srcMtx *= transAffineTranslation(imgWidth/2 + 10, imgHeight/2 + 10 + 40)
-  #src_mtx *= trans_affine_resizing()
+  srcMtx *= transAffineResizing(app)
 
   imgMtx *= transAffineTranslation(-imgWidth/2, -imgHeight/2)
   imgMtx *= transAffineRotation(app.angle.value() * pi / 180.0)
   imgMtx *= transAffineScaling(app.scale.value())
   imgMtx *= transAffineTranslation(imgWidth/2 + 10, imgHeight/2 + 10 + 40)
-  #img_mtx *= trans_affine_resizing()
-  img_mtx.invert()
-
-  var
-    dist: PeriodicDistortion
-    distWave = newDistortionWave()
-    distSwirl = newDistortionSwirl()
-    distWaveSwirl = newDistortionWaveSwirl()
-    distSwirlWave = newDistortionSwirlWave()
+  imgMtx *= transAffineResizing(app)
+  imgMtx.invert()
 
   case app.distortion.curItem()
   of 0: dist = distWave
@@ -483,47 +470,23 @@ proc onDraw() =
   imgMtx.transform(cx, cy)
   dist.center(cx, cy)
 
-  #typedef agg::span_interpolator_adaptor<agg::span_interpolator_linear<>,
-  #                                      periodic_distortion> interpolator_type;
-
   var
     inter = initSpanInterpolatorAdaptor[SpanInterpolatorLinear[TransAffine]](imgMtx, dist)
     imgSrc = initImageAccessorClip(imgPixf, initRgba(1,1,1))
 
-#[
-        // Version without filtering (nearest neighbor)
-        //------------------------------------------
-        typedef agg::span_image_filter_rgb_nn<img_source_type,
-                                              interpolator_type> span_gen_type;
-        span_gen_type sg(img_src, interpolator)
-        //------------------------------------------
-]#
+    # Version without filtering (nearest neighbor)
+    #sga = initSpanImageFilterRgbNN(imgSrc, inter)
+
+    #filter = initImageFilter[ImageFilterKaiser]()
+    #sga = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
+
+    #filter = initImageFilter[ImageFilterSpline36]()
+    #sga = initSpanImageFilterRgb(imgSrc, inter, filter)
 
   # Version with "hardcoded" bilinear filter and without
   # image_accessor (direct filter, the old variant)
-  var sg = initSpanImageFilterRgbBilinearClip(imgPixf, initRgba(1,1,1), inter)
-
-#[/*
-        // Version with arbitrary 2x2 filter
-        //------------------------------------------
-        typedef agg::span_image_filter_rgb_2x2<img_source_type,
-                                               interpolator_type> span_gen_type;
-        agg::image_filter<agg::image_filter_kaiser> filter;
-        span_gen_type sg(img_src, interpolator, filter)
-        //------------------------------------------
-*/
-/*
-        // Version with arbitrary filter
-        //------------------------------------------
-        typedef agg::span_image_filter_rgb<img_source_type,
-                                           interpolator_type> span_gen_type;
-        agg::image_filter<agg::image_filter_spline36> filter;
-        span_gen_type sg(img_src, interpolator, filter)
-        //------------------------------------------
-*/]#
-
-
   var
+    sg = initSpanImageFilterRgbBilinearClip(imgPixf, initRgba(1,1,1), inter)
     ras = initRasterizerScanlineAA()
     sl  = initScanlineU8()
     r   = imgWidth
@@ -536,17 +499,12 @@ proc onDraw() =
   ras.addPath(tr)
   renderScanlinesAA(ras, sl, rb, sa, sg)
 
-  #srcMtx *= ~trans_affine_resizing()
+  srcMtx *= ~transAffineResizing(app)
   srcMtx *= transAffineTranslation(imgWidth - imgWidth/10, 0.0)
-  #srcMtx *= trans_affine_resizing()
+  srcMtx *= transAffineResizing(app)
 
   ras.addPath(tr)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(0,0,0))
-
-  #typedef agg::span_gradient<initRgba8,
-  #                          interpolator_type,
-  #                          agg::gradient_circle,
-  #                          color_array_type> gradient_span_gen;
 
   var
     gradF: GradientCircle
@@ -559,12 +517,12 @@ proc onDraw() =
   gr1Mtx *= transAffineScaling(0.8)
   gr1Mtx *= transAffineRotation(app.angle.value() * pi / 180.0)
   gr1Mtx *= transAffineTranslation(imgWidth - imgWidth/10 + imgWidth/2 + 10, imgHeight/2 + 10 + 40)
-  #gr1_mtx *= trans_affine_resizing()
+  gr1Mtx *= transAffineResizing(app)
 
   gr2Mtx *= transAffineRotation(app.angle.value() * pi / 180.0)
   gr2Mtx *= transAffineScaling(app.scale.value())
   gr2Mtx *= transAffineTranslation(imgWidth - imgWidth/10 + imgWidth/2 + 10 + 50, imgHeight/2 + 10 + 40 + 50)
-  #gr2_mtx *= trans_affine_resizing()
+  gr2Mtx *= transAffineResizing(app)
   gr2Mtx.invert()
 
   cx = app.centerX + imgWidth - imgWidth/10
@@ -584,6 +542,40 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.amplitude)
   renderCtrl(ras, sl, rb, app.period)
   renderCtrl(ras, sl, rb, app.distortion)
-  saveBMP24("distortions.bmp", buffer, width, height)
 
-onDraw()
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.centerX = x.float64
+    app.centerY = y.float64
+    app.forceRedraw()
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.centerX = x.float64
+    app.centerY = y.float64
+    app.forceRedraw()
+
+method onIdle(app: App) =
+  app.phase += 15.0 * pi / 180.0
+  if app.phase > pi * 200.0: app.phase -= pi * 200.0
+  app.forceRedraw()
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("Image and Gradient Distortions")
+
+  if not app.loadImg(0, "resources" & DirSep & "spheres.bmp"):
+    app.message("failed to load spheres.bmp")
+    return 1
+
+  let
+    frameWidth  = app.rbufImg(0).width() + 300
+    frameHeight = app.rbufImg(0).height() + 40 + 20
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "distortions"):
+    app.waitMode(false)
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -5,6 +5,7 @@ import agg_trans_perspective, agg_blur, agg_color_rgba, agg_path_storage
 import ctrl_slider, ctrl_rbox, ctrl_cbox, ctrl_polygon, agg_trans_affine
 import agg_renderer_base, nimBMP, agg_color_gray, agg_conv_transform
 import agg_color_conv, agg_color_conv_rgb8, times, agg_gsv_text, strutils
+import agg_platform_support
 
 var
   gradient_colors = [
@@ -270,18 +271,12 @@ const
   frameHeight = 330
   flipY = true
 
-when defined(grayMode):
-  type LutType = Gray8
-  const pixWidth = 1
-else:
-  type LutType = Rgba8
-  const pixWidth = 3
-  
 type
-  ValueT = uint8
+  LutType = Rgba8
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
 
-type
-  App = object
+  App = ref object of PlatformSupport
     how: RboxCtrl[Rgba8]
     radius: SliderCtrl[Rgba8]
     shadow: PolygonCtrl[Rgba8]
@@ -290,12 +285,15 @@ type
     ras: RasterizerScanlineAA
     sl: ScanlineP8
     shapeBounds: RectD
-    gray8Buf: seq[uint8]
+    gray8Buf: seq[ValueT]
     gray8Rbuf: RenderingBuffer
     gray8Rbuf2: RenderingBuffer
     colorLut: seq[LutType]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.how = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 55.0, not flipY)
   result.radius = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 130 + 300.0, 10.0 + 8.0 + 4.0, not flipY)
   result.shadow = newPolygonCtrl[Rgba8](4)
@@ -303,6 +301,10 @@ proc initApp(): App =
   result.shape = initConvCurve(result.path)
   result.ras = initRasterizerScanlineAA()
   result.sl = initScanlineP8()
+
+  result.addCtrl(result.how)
+  result.addCtrl(result.shadow)
+  result.addCtrl(result.radius)
 
   result.how.textSize(8)
   result.how.addItem("Single Color")
@@ -381,58 +383,41 @@ proc initApp(): App =
   result.colorLut = newSeq[LutType](256)
   var p = gradient_colors[0].addr
   for i in 0..255:
-    when defined(grayMode):
-      result.colorLut[i] = initGray8(p[0])
-    else:
-      result.colorLut[i] = initRgba8(p[0], p[1], p[2], if i > 63: 255 else: i * 4) #p[3])
+    result.colorLut[i] = initRgba8(p[0], p[1], p[2], if i > 63: 255 else: i * 4) #p[3])
     #result.colorLut[i].premultiply()
     inc(p, 4)
 
-  result.gray8Buf = @[]
-  result.gray8Rbuf = initRenderingBuffer()
+  result.gray8Buf = newSeq[ValueT](frameWidth * frameHeight)
+  result.gray8Rbuf = initRenderingBuffer(result.gray8Buf[0].addr, frameWidth, frameHeight, frameWidth)
   result.gray8Rbuf2 = initRenderingBuffer()
 
-proc onResize(app: var App, sx, sy: int) =
+method onResize(app: App, sx, sy: int) =
   app.gray8Buf.setLen(sx * sy)
   app.gray8Rbuf.attach(app.gray8Buf[0].addr, sx, sy, sx)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-  
-  when defined(grayMode):
-    var pixf   = initPixfmtGray8(rbuf)
-  else:
-    var pixf   = initPixfmtRgb24(rbuf)
-    
-  var
-    renb   = initRendererBase(pixf)
+    pf   = construct(PixFmt, app.rbufWindow())
+    rb   = initRendererBase(pf)
     shadowPersp = initTransPerspective(app.shapeBounds.x1, app.shapeBounds.y1,
                                        app.shapeBounds.x2, app.shapeBounds.y2,
                                        app.shadow.polygon())
     shadowTrans = initConvTransform(app.shape, shadowPersp)
 
-  app.onResize(frameWidth, frameHeight)
   app.ras.clipBox(0, 0, frameWidth, frameHeight)
 
   var
     pixfGray8 = initPixfmtGray8(app.gray8Rbuf)
-    renbGray8 = initRendererBase(pixfGray8)
+    rbGray8 = initRendererBase(pixfGray8)
 
-  renbGray8.clear(initGray8(0))
-  
-  when defined(grayMode):
-    renb.clear(initGray8(150))
-  else:
-    renb.clear(initRgba(1, 0.95, 0.95))
-  
-  let startTime = cpuTime()
-  
+  rbGray8.clear(initGray8(0))
+  rb.clear(initRgba(1, 0.95, 0.95))
+
+  app.startTimer()
+
   # Render shadow
   app.ras.addPath(shadowTrans)
-  renderScanlinesAAsolid(app.ras, app.sl, renbGray8, initGray8(255))
+  renderScanlinesAAsolid(app.ras, app.sl, rbGray8, initGray8(255))
 
   # Calculate the bounding box and extend it by the blur radius
   var bbox: RectD
@@ -453,32 +438,33 @@ proc onDraw() =
       stackBlurGray8(pixf2, uround(app.radius.value()), uround(app.radius.value()))
 
     if app.how.curItem() == 0:
-      when defined(grayMode):
-        renb.blendFromColor(pixf2, initGray8(100), nil, int(bbox.x1), int(bbox.y1))
-      else:
-        renb.blendFromColor(pixf2, initRgba8(0, 100, 0), nil, int(bbox.x1), int(bbox.y1))  
+      rb.blendFromColor(pixf2, initRgba8(0, 100, 0), nil, int(bbox.x1), int(bbox.y1))
     else:
-      renb.blendFromLut(pixf2, app.colorLut[0].addr, nil, int(bbox.x1), int(bbox.y1))
-  
-  let endTime = cpuTime() - startTime
+      rb.blendFromLut(pixf2, app.colorLut[0].addr, nil, int(bbox.x1), int(bbox.y1))
+
+  let t1 = app.elapsedTime()
   var
     t = initGsvText()
     st = initConvStroke(t)
-    
+
   t.size(10.0)
   st.width(1.5)
   t.startPoint(140.0, 30.0)
-  t.text(endTime.formatFloat(ffDecimal, 2) & " ms")
+  t.text(t1.formatFloat(ffDecimal, 2) & " ms")
   app.ras.addPath(st)
-  renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0,0,0))
-        
-  renderCtrl(app.ras, app.sl, renb, app.how)
-  renderCtrl(app.ras, app.sl, renb, app.radius)
-  renderCtrl(app.ras, app.sl, renb, app.shadow)
- 
-  when defined(grayMode):
-    saveBMP8("blend_color.bmp", buffer, frameWidth, frameHeight)
-  else:
-    saveBMP24("blend_color.bmp", buffer, frameWidth, frameHeight)
-    
-onDraw()
+  renderScanlinesAAsolid(app.ras, app.sl, rb, initRgba(0,0,0))
+
+  renderCtrl(app.ras, app.sl, rb, app.how)
+  renderCtrl(app.ras, app.sl, rb, app.radius)
+  renderCtrl(app.ras, app.sl, rb, app.shadow)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Gaussian and Stack Blur")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "blend_color"):
+    return app.run()
+
+  result = 1
+
+discard main()
