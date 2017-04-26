@@ -2,8 +2,8 @@ import agg_basics, agg_rendering_buffer, agg_conv_transform, agg_conv_stroke
 import agg_scanline_p, agg_renderer_scanline
 import agg_rasterizer_outline_aa, agg_rasterizer_scanline_aa, agg_pattern_filters_rgba
 import agg_renderer_outline_aa, agg_renderer_outline_image, agg_pixfmt_rgb
-import ctrl_slider, ctrl_bezier, nimBMP, agg_color_rgba, agg_renderer_base
-import strutils, os
+import ctrl_slider, ctrl_bezier, agg_color_rgba, agg_renderer_base
+import strutils, os, agg_platform_support
 
 const
   brightnessToAlpha = [
@@ -57,13 +57,15 @@ const
      19,  18,  17,  15,  14,  13,  12,  11,   9,   8,   7,   6,   4,   3,   2,   1]
 
 type
+  PixFmt = PixFmtBgr24
+
   PatternSrcBrightnessToAlphaRgba8 = object
     mRb: ptr RenderingBuffer
-    mPf: PixfmtRgb24
+    mPf: PixFmt
 
 proc initPatternSrcBrightnessToAlphaRgba8(rb: var RenderingBuffer): PatternSrcBrightnessToAlphaRgba8 =
   result.mRb = rb.addr
-  result.mPf = initPixFmtRgb24(result.mRb[])
+  result.mPf = construct(PixFmt, result.mRb[])
 
 proc width(self: PatternSrcBrightnessToAlphaRgba8): int =
   self.mPf.width()
@@ -78,14 +80,10 @@ proc pixel(self: PatternSrcBrightnessToAlphaRgba8, x, y: int): Rgba8 =
 const
   frameWidth = 540
   frameHeight = 450
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
+  App = ref object of PlatformSupport
     ctrlColor: Rgba8
     curve1: BezierCtrl[Rgba8]
     curve2: BezierCtrl[Rgba8]
@@ -98,10 +96,11 @@ type
     curve9: BezierCtrl[Rgba8]
     scaleX: SliderCtrl[Rgba8]
     startX: SliderCtrl[Rgba8]
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.ctrlColor = construct(Rgba8, initRgba(0, 0.3, 0.5, 0.3))
   result.scaleX = newSliderCtrl[Rgba8](5.0,   5.0, 240.0, 12.0, not flipY)
   result.startX = newSliderCtrl[Rgba8](250.0, 5.0, 495.0, 12.0, not flipY)
@@ -115,6 +114,18 @@ proc initApp(): App =
   result.curve7 = newBezierCtrl[Rgba8]()
   result.curve8 = newBezierCtrl[Rgba8]()
   result.curve9 = newBezierCtrl[Rgba8]()
+
+  result.addCtrl(result.scaleX)
+  result.addCtrl(result.startX)
+  result.addCtrl(result.curve1)
+  result.addCtrl(result.curve2)
+  result.addCtrl(result.curve3)
+  result.addCtrl(result.curve4)
+  result.addCtrl(result.curve5)
+  result.addCtrl(result.curve6)
+  result.addCtrl(result.curve7)
+  result.addCtrl(result.curve8)
+  result.addCtrl(result.curve9)
 
   result.curve1.lineColor(result.ctrlColor)
   result.curve2.lineColor(result.ctrlColor)
@@ -156,21 +167,7 @@ proc initApp(): App =
   result.startX.value(0.0)
   result.startX.noTransform()
 
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
-
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc drawCurve[Pattern, Rasterizer, Renderer, PatternSource, VertexSource](app: var App,
+proc drawCurve[Pattern, Rasterizer, Renderer, PatternSource, VertexSource](app: App,
   pat: var Pattern, ras: var Rasterizer, ren: var Renderer, src: var PatternSource, vs: var VertexSource) =
 
   pat.create(src)
@@ -178,57 +175,32 @@ proc drawCurve[Pattern, Rasterizer, Renderer, PatternSource, VertexSource](app: 
   ren.startX(app.startX.value())
   ras.addPath(vs)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf  = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-    #ren    = initRendererScanlineAASolid(rb)
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineP8()
-
-  app.loadImage(0, "1")
-  app.loadImage(1, "2")
-  app.loadImage(2, "3")
-  app.loadImage(3, "4")
-  app.loadImage(4, "5")
-  app.loadImage(5, "6")
-  app.loadImage(6, "7")
-  app.loadImage(7, "8")
-  app.loadImage(8, "9")
 
   rb.clear(initRgba(1.0, 1.0, 0.95))
 
   var
-    p1 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(0))
-    p2 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(1))
-    p3 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(2))
-    p4 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(3))
-    p5 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(4))
-    p6 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(5))
-    p7 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(6))
-    p8 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(7))
-    p9 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(8))
+    p1 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(0))
+    p2 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(1))
+    p3 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(2))
+    p4 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(3))
+    p5 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(4))
+    p6 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(5))
+    p7 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(6))
+    p8 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(7))
+    p9 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(8))
     filter: PatternFilterBilinearRgba8
     patt   = initLineImagePattern(filter)
     renImg = initRendererOutlineImage(rb, patt)
     rasImg = initRasterizerOutlineAA(renImg)
 
-  #var
-  #  w = app.bmp[0].width.cint
-  #  h = app.bmp[0].height.cint
-  #  data = app.bmp[0].data.cstring
 
   app.drawCurve(patt, rasImg, renImg, p1, app.curve1.curve())
-  #for y in 0.. <p1.height():
-  #  for x in 0.. <p1.width():
-  #    let c = p1.pixel(x, y)
-  #    echo "$1 $2 $3 $4" % [$c.r, $c.g, $c.b, $c.a]
-
-  #echo "---"
-  #var buf = test_pattern(data, w, h, patt.data())
   app.drawCurve(patt, rasImg, renImg, p2, app.curve2.curve())
   app.drawCurve(patt, rasImg, renImg, p3, app.curve3.curve())
   app.drawCurve(patt, rasImg, renImg, p4, app.curve4.curve())
@@ -251,7 +223,25 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.scaleX)
   renderCtrl(ras, sl, rb, app.startX)
 
-  #copyMem(buffer.cstring, buf, buffer.len)
-  saveBMP24("line_patterns.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Drawing Lines with Image Patterns")
 
-onDraw()
+  if not app.loadImg(0, "resources" & DirSep & "1") or
+     not app.loadImg(1, "resources" & DirSep & "2") or
+     not app.loadImg(2, "resources" & DirSep & "3") or
+     not app.loadImg(3, "resources" & DirSep & "4") or
+     not app.loadImg(4, "resources" & DirSep & "5") or
+     not app.loadImg(5, "resources" & DirSep & "6") or
+     not app.loadImg(6, "resources" & DirSep & "7") or
+     not app.loadImg(7, "resources" & DirSep & "8") or
+     not app.loadImg(8, "resources" & DirSep & "9"):
+    app.message("failed to load needed resources 1..9.bmp")
+    return 1
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "line_patterns"):
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -288,5 +288,5 @@ proc hitTest*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]; tx,
   if not self.navigateScanline(ty): return false
   var sl = initScanlineHitTest(tx)
 
-  self.sweepScanline(sl)
-  result = sl.hit()
+  discard self.sweepScanline(sl)
+  result = sl.getHit()

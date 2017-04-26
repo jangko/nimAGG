@@ -11,7 +11,7 @@ proc initSpanImageFilterRgbaNN*[S,I](src: var S, inter: var I): SpanImageFilterR
   base(result).init(src, inter)
 
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaNN[S,I], span: ptr ColorT, x, y, len: int) =
-  type 
+  type
     base = SpanImageFilter[S,I]
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
@@ -47,7 +47,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinear[S,I], span: ptr
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -121,7 +121,7 @@ proc initSpanImageFilterRgbaBilinearClipAux*[S,I,ColorT](src: var S,
   type base = SpanImageFilter[S, I]
   base(result).init(src, inter)
   result.mBackColor = backColor
-  
+
 proc initSpanImageFilterRgbaBilinearClip*[S,I,ColorT](src: var S,
   backColor: ColorT, inter: var I): auto =
   type ColorS = getColorT(S)
@@ -129,14 +129,14 @@ proc initSpanImageFilterRgbaBilinearClip*[S,I,ColorT](src: var S,
     initSpanImageFilterRgbaBilinearClipAux[S,I,ColorS](src, construct(ColorS, backColor), inter)
   else:
     initSpanImageFilterRgbaBilinearClipAux(src, backColor, inter)
-    
+
 proc backgroundColor*[S,I,ColorT](self: SpanImageFilterRgbaBilinearClip[S,I,ColorT]): ColorT = self.mBackColor
 proc backgroundColor*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT], v: ColorT) = self.mBackColor = v
 
 proc prepare*[S,I,ColorT](self: SpanImageFilterRgbaBilinearClip[S,I,ColorT]) =
   type base = SpanImageFilter[S, I]
   base(self).prepare()
-  
+
 proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT],
   span: ptr ColorT, x, y, len: int) =
   type
@@ -144,7 +144,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgbaBilinearClip[S,I,ColorT]
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -313,10 +313,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     CalcT = getCalcT(ColorT)
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
     baseMask = CalcT(getBaseMask(ColorT))
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -328,7 +328,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba2x2[S,I], span: ptr Colo
     span = span
 
   weightArray += ((base(self).filter().diameter() div 2 - 1) shl imageSubpixelShift)
-  
+
   doWhile len != 0:
     var xHr, yHr: int
     base(self).interpolator().coordinates(xHr, yHr)
@@ -415,10 +415,10 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
     base = SpanImageFilter[S,I]
     ValueT = getValueT(ColorT)
     OrderT = getOrderT(S)
-    
+
   const
-    baseMask  = getBaseMask(ColorT) 
-    
+    baseMask  = getBaseMask(ColorT)
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -516,11 +516,12 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgbaAffine[S,I], span: ptr
     base = SpanImageResampleAffine[S,I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
-    
+    ValueT = getValueT(ColorT)
+
   const
     downscaleShift = imageFilterShift
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
 
@@ -536,7 +537,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgbaAffine[S,I], span: ptr
     y = y
     span = span
     len = len
-    
+
   doWhile len != 0:
     base(self).interpolator().coordinates(x, y)
     x += base(self).filterDxInt() - radiusX
@@ -614,11 +615,12 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
     base = SpanImageResample[S,I]
     LongT = getLongT(ColorT)
     OrderT = getOrderT(S)
-    
+    ValueT = getValueT(ColorT)
+
   const
     downscaleShift = imageFilterShift
     baseMask  = getBaseMask(ColorT)
-    
+
   base(self).interpolator().begin(x.float64 + base(self).filterDxDbl(),
                                   y.float64 + base(self).filterDyDbl(), len)
   var
@@ -630,7 +632,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
     y = y
     span = span
     len = len
-    
+
   doWhile len != 0:
     var
       rx, ry: int

@@ -2,50 +2,76 @@ import agg_trans_affine, agg_conv_stroke, agg_rasterizer_scanline_aa
 import agg_rendering_buffer, agg_scanline_u, agg_renderer_scanline
 import agg_gamma_lut, agg_basics, agg_gamma_lut, agg_pixfmt_rgb
 import agg_renderer_base, agg_color_rgba, agg_path_storage
-import nimBMP, agg_gamma_functions, agg_ellipse
+import agg_gamma_functions, agg_ellipse, ctrl_slider, agg_platform_support
 
 const
   frameWidth = 400
   frameHeight = 320
-  pixWidth = 3
+  flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24Gamma[GammaLut8]
 
-#pixfmtRgb24Gamma(PixFmt, GammaLut8)
+  App = ref object of PlatformSupport
+    mThickness: SliderCtrl[Rgba8]
+    mGamma: SliderCtrl[Rgba8]
+    mContrast: SliderCtrl[Rgba8]
+    mRx, mRy: float64
 
-proc onDraw() =
-  const
-    thickness = 1.0
-    kGamma     = 1.0
-    contrast  = 1.0
-    rx = frameWidth.float64 / 3.0
-    ry = frameHeight.float64 / 3.0
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
 
+  result.mThickness = newSliderCtrl[Rgba8](5, 5,    400-5, 11,    not flipY)
+  result.mGamma     = newSliderCtrl[Rgba8](5, 5+15, 400-5, 11+15, not flipY)
+  result.mContrast  = newSliderCtrl[Rgba8](5, 5+30, 400-5, 11+30, not flipY)
+
+  result.addCtrl(result.mThickness)
+  result.addCtrl(result.mGamma)
+  result.addCtrl(result.mContrast)
+
+  result.mThickness.label("Thickness=$1")
+  result.mGamma.label("Gamma=$1")
+  result.mContrast.label("Contrast")
+
+  result.mThickness.setRange(0.0, 3.0)
+  result.mGamma.setRange(0.5, 3.0)
+  result.mContrast.setRange(0.0, 1.0)
+
+  result.mThickness.value(1.0)
+  result.mGamma.value(1.0)
+  result.mContrast.value(1.0)
+
+method onInit(app: App) =
+  app.mRx = app.width() / 3.0
+  app.mRy = app.height() / 3.0
+
+method onDraw(app: App) =
   var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = initGammaLut8(kGamma)
-    pf     = initPixfmtRgb24Gamma(rbuf, gamma)
+    g      = app.mGamma.value()
+    gamma  = initGammaLut8(g)
+    pf     = construct(PixFmt, app.rbufWindow(), gamma)
     rb     = initRendererBase(pf)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
     path   = initPathStorage()
+    w      = app.width().int
+    h      = app.height().int
 
   rb.clear(initRgba(1, 1, 1))
 
   var
-    dark = 1.0 - contrast
-    light = contrast
+    dark = 1.0 - app.mContrast.value()
+    light = app.mContrast.value()
 
-  rb.copyBar(0,0,frameWidth div 2, frameHeight, initRgba(dark,dark,dark))
-  rb.copyBar(frameWidth div 2+1,0, frameWidth, frameHeight,  initRgba(light,light,light))
-  rb.copyBar(0,frameHeight div 2+1, frameWidth, frameHeight, initRgba(1.0,dark,dark))
+  rb.copyBar(0,0,w div 2, h, initRgba(dark,dark,dark))
+  rb.copyBar(w div 2+1,0, w, h,  initRgba(light,light,light))
+  rb.copyBar(0,h div 2+1, w, h, initRgba(1.0,dark,dark))
 
   var
-    x = (frameWidth.float64 - 256.0) / 2.0
+    x = (app.width() - 256.0) / 2.0
     y = 50.0
-    gp = initGammaPower(kGamma)
+    gp = initGammaPower(g)
 
   path.removeAll()
   for i in 0..255:
@@ -65,36 +91,60 @@ proc onDraw() =
   renderScanlinesAASolid(ras, sl, rb, initRgba8(80,127,80))
 
   var
-    width2  = frameWidth.float64 / 2
-    height2 = frameHeight.float64 / 2
-    ell     = initEllipse(width2, height2, rx, ry, 150)
+    width2  = app.width() / 2
+    height2 = app.height() / 2
+    ell     = initEllipse(width2, height2, app.mRx, app.mRy, 150)
     poly    = initconvStroke(ell)
 
-  poly.width(thickness)
+  poly.width(app.mThickness.value())
   ras.reset()
   ras.addPath(poly)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(255,0,0))
 
-  ell.init(width2, height2, rx-5.0, ry-5.0, 150)
+  ell.init(width2, height2, app.mRx-5.0, app.mRy-5.0, 150)
   ras.reset()
   ras.addPath(poly)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(0,255,0))
 
-  ell.init(width2, height2, rx-10.0, ry-10.0, 150)
+  ell.init(width2, height2, app.mRx-10.0, app.mRy-10.0, 150)
   ras.reset()
   ras.addPath(poly)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(0,0,255))
 
-  ell.init(width2, height2, rx-15.0, ry-15.0, 150)
+  ell.init(width2, height2, app.mRx-15.0, app.mRy-15.0, 150)
   ras.reset()
   ras.addPath(poly)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(0,0,0))
 
-  ell.init(width2, height2, rx-20.0, ry-20.0, 150)
+  ell.init(width2, height2, app.mRx-20.0, app.mRy-20.0, 150)
   ras.reset()
   ras.addPath(poly)
   renderScanlinesAASolid(ras, sl, rb, initRgba8(255,255,255))
 
-  saveBMP24("gamma_correction.bmp", buffer, frameWidth, frameHeight)
+  renderCtrl(ras, sl, rb, app.mThickness)
+  renderCtrl(ras, sl, rb, app.mGamma)
+  renderCtrl(ras, sl, rb, app.mContrast)
 
-onDraw()
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  var
+    x = float64(x)
+    y = float64(y)
+
+  if mouseLeft in flags:
+    app.mRx = abs(app.width()/2 - x)
+    app.mRy = abs(app.height()/2 - y)
+    app.forceRedraw()
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  app.onMouseButtonDown(x, y, flags)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Thin red ellipse")
+
+  if app.init(frameWidth, frameHeight, {}, "gamma_correction"):
+    return app.run()
+
+  result = 1
+
+discard main()

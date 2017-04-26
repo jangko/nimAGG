@@ -2,25 +2,22 @@ import agg_rasterizer_scanline_aa, agg_ellipse, agg_trans_affine, agg_conv_trans
 import agg_scanline_u, agg_scanline_p, agg_image_accessors, agg_renderer_scanline
 import agg_span_allocator, agg_span_interpolator_linear, agg_pixfmt_rgb
 import agg_span_image_filter_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox
-import agg_color_rgba, nimBMP, os, strutils, times, math, agg_rendering_buffer
+import agg_color_rgba, os, strutils, times, math, agg_rendering_buffer
 import agg_renderer_base, agg_gsv_text, agg_conv_stroke, agg_basics
-import agg_image_filters
+import agg_image_filters, agg_platform_support
 
 const
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  PixFmtPre = PixFmtBgr24Pre
 
-type
-  App = object
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
+  App = ref object of PlatformSupport
     radius, step: SliderCtrl[Rgba8]
     filters: RboxCtrl[Rgba8]
     normalize: CboxCtrl[Rgba8]
-    run: CboxCtrl[Rgba8]
+    runTest: CboxCtrl[Rgba8]
     singleStep: CboxCtrl[Rgba8]
     refresh: CboxCtrl[Rgba8]
     curAngle: float64
@@ -28,14 +25,25 @@ type
     numPix: float64
     time1, time2: float64
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.step   = newSliderCtrl[Rgba8](115,  5,    400, 11,     not flipY)
   result.radius = newSliderCtrl[Rgba8](115,  5+15, 400, 11+15,  not flipY)
-  result.filters = newRboxCtrl[Rgba8](0.0, 0.0, 110.0, 210.0, not flipY)
-  result.normalize   = newCboxCtrl[Rgba8](8.0, 215.0, "Normalize Filter", not flipY)
-  result.run         = newCboxCtrl[Rgba8](8.0, 245.0, "RUN Test!", not flipY)
-  result.single_step = newCboxCtrl[Rgba8](8.0, 230.0, "Single Step", not flipY)
-  result.refresh     = newCboxCtrl[Rgba8](8.0, 265.0, "Refresh", not flipY)
+  result.filters    = newRboxCtrl[Rgba8](0.0, 0.0, 110.0, 210.0, not flipY)
+  result.normalize  = newCboxCtrl[Rgba8](8.0, 215.0, "Normalize Filter", not flipY)
+  result.runTest    = newCboxCtrl[Rgba8](8.0, 245.0, "RUN Test!", not flipY)
+  result.singleStep = newCboxCtrl[Rgba8](8.0, 230.0, "Single Step", not flipY)
+  result.refresh    = newCboxCtrl[Rgba8](8.0, 265.0, "Refresh", not flipY)
+
+  result.addCtrl(result.step)
+  result.addCtrl(result.radius)
+  result.addCtrl(result.filters)
+  result.addCtrl(result.normalize)
+  result.addCtrl(result.runTest)
+  result.addCtrl(result.singleStep)
+  result.addCtrl(result.refresh)
 
   result.curAngle = 0.0
   result.curFilter = 1
@@ -45,7 +53,7 @@ proc initApp(): App =
 
   result.time1 = 0.0
   result.time2 = 0.0
-  result.run.textSize(7.5)
+  result.runTest.textSize(7.5)
   result.singleStep.textSize(7.5)
   result.normalize.textSize(7.5)
   result.refresh.textSize(7.5)
@@ -81,34 +89,13 @@ proc initApp(): App =
   result.filters.backgroundColor(initRgba(0.0, 0.0, 0.0, 0.1))
   result.filters.textSize(6.0)
   result.filters.textThickness(0.85)
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
 
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc getBmp(app: var App, idx: int): var BmpResult[string] =
-  app.bmp[idx]
-
-proc copyImgToImg(app: var App, dst, src: int) =
-  deepCopy(app.bmp[dst], app.bmp[src])
-  app.rbuf[dst] = initRenderingBuffer(cast[ptr ValueT](app.bmp[dst].data[0].addr),
-    app.bmp[dst].width, app.bmp[dst].height, app.bmp[dst].width * pixWidth)
-
-proc transformImage(app: var App, angle: float64) =
+proc transformImage(app: App, angle: float64) =
   var
-    width   = app.rbufImage(0).width().float64
-    height  = app.rbufImage(0).height().float64
-    pixf    = initPixfmtRgb24(app.rbufImage(0))
-    pixfPre = initPixfmtRgb24Pre(app.rbufImage(0))
+    width   = app.rbufImg(0).width().float64
+    height  = app.rbufImg(0).height().float64
+    pixf    = construct(PixFmt, app.rbufImg(0))
+    pixfPre = construct(PixfmtPre, app.rbufImg(0))
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
     ras     = initRasterizerScanlineAA()
@@ -136,7 +123,7 @@ proc transformImage(app: var App, angle: float64) =
     inter = initSpanInterpolatorLinear(imgMtx)
     filter  = initImageFilterLut()
     norm    = app.normalize.status()
-    pixfImg = initPixFmtRgb24(app.rbufImage(1))
+    pixfImg = construct(PixFmt, app.rbufImg(1))
     source  = initImageAccessorClip(pixfImg, rgbaPre(0,0,0,0))
     #stroke = initConvStroke(ell)
     #ren = initRendererScanlineAASolid(rb)
@@ -187,28 +174,10 @@ proc transformImage(app: var App, angle: float64) =
   else:
     discard
 
-proc onDraw() =
-  var app    = initApp()
-  app.loadImage(0, "spheres")
-
-  app.copyImgToImg(1, 0)
-  app.copyImgToImg(2, 0)
-  app.transformImage(0.0)
-
+method onDraw(app: App) =
   var
-    w = app.rbufImage(0).width() + 110
-    h = app.rbufImage(0).height() + 40
-
-  if w < 305: w = 305
-  if h < 325: h = 325
-
-  var
-    buffer = newString(w * h * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), w, h, -w * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-
-    #mtx    = initTransAffine()
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineP8()
     buf    = "NSteps=" & $app.numSteps
@@ -216,7 +185,7 @@ proc onDraw() =
     pt     = initConvStroke(t)
 
   rb.clear(initRgba(1.0, 1.0, 1.0))
-  rb.copyFrom(app.rbufImage(0), nil, 110, 35)
+  rb.copyFrom(app.rbufImg(0), nil, 110, 35)
 
   t.startPoint(10.0, 295.0)
   t.size(10.0)
@@ -226,12 +195,7 @@ proc onDraw() =
   renderScanlinesAASolid(ras, sl, rb, initrgba(0,0,0))
 
   if app.time1 != app.time2 and app.numPix > 0.0:
-
-  #when defined(AGG_ACCURATE_TIME):
     buf = "$1 Kpix/sec" % [(app.numPix / (app.time2 - app.time1)).formatFloat(ffDecimal, 2)]
-  #else:
-    #buf = "$1 Kpix/sec" % [app.numPix / 1000.0 /(double(m_time2 - m_time1) / CLOCKS_PER_SEC))
-
     t.startPoint(10.0, 310.0)
     t.text(buf)
     ras.addPath(pt)
@@ -242,11 +206,79 @@ proc onDraw() =
 
   renderCtrl(ras, sl, rb, app.step)
   renderCtrl(ras, sl, rb, app.filters)
-  renderCtrl(ras, sl, rb, app.run)
+  renderCtrl(ras, sl, rb, app.runTest)
   renderCtrl(ras, sl, rb, app.normalize)
   renderCtrl(ras, sl, rb, app.singleStep)
   renderCtrl(ras, sl, rb, app.refresh)
 
-  saveBMP24("image_filters.bmp", buffer, w, h)
+method onCtrlChange(app: App) =
+  if app.singleStep.status():
+    app.curAngle += app.step.value()
+    app.copyImgToImg(1, 0)
+    app.transformImage(app.step.value())
+    inc app.numSteps
+    app.forceRedraw()
+    app.singleStep.status(false)
 
-onDraw()
+  if app.runTest.status():
+    app.startTimer()
+    app.time2 = app.elapsedTime()
+    app.time1 = app.time2
+    app.numPix = 0.0
+    app.waitMode(false)
+
+  if app.refresh.status() or app.filters.curItem() != app.curFilter:
+    app.startTimer()
+    app.time1 = 0
+    app.time2 = 0
+    app.numPix = 0.0
+    app.curAngle = 0.0
+    app.copyImgToImg(1, 2)
+    app.transformImage(0.0)
+    app.refresh.status(false)
+    app.curFilter = app.filters.curItem()
+    app.numSteps = 0
+    app.forceRedraw()
+
+method onIdle(app: App) =
+  if app.runTest.status():
+    if app.curAngle < 360.0:
+      app.curAngle += app.step.value()
+      app.copyImgToImg(1, 0)
+      app.startTimer()
+      app.transformImage(app.step.value())
+      app.time2 += app.elapsedTime()
+      inc app.numSteps
+    else:
+      app.curAngle = 0.0
+      app.waitMode(true)
+      app.runTest.status(false)
+    app.forceRedraw()
+  else:
+    app.waitMode(true)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("Image transformation filters comparison")
+
+  if not app.loadImg(0, "resources" & DirSep & "spheres.bmp"):
+    app.message("failed to load spheres.bmp")
+    return 1
+
+  app.copyImgToImg(1, 0)
+  app.copyImgToImg(2, 0)
+  app.transformImage(0.0)
+
+  var
+    w = app.rbufImg(0).width() + 110
+    h = app.rbufImg(0).height() + 40
+
+  if w < 305: w = 305
+  if h < 325: h = 325
+
+  if app.init(w, h, {}, "image_filters"):
+    return app.run()
+
+  result = 1
+
+discard main()

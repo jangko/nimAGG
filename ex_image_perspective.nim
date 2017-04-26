@@ -3,32 +3,36 @@ import agg_renderer_scanline, agg_path_storage, agg_conv_transform, agg_trans_af
 import agg_trans_bilinear, agg_trans_perspective, agg_span_interpolator_linear
 import agg_span_interpolator_trans, agg_span_allocator, agg_image_accessors
 import ctrl_rbox, ctrl_polygon, agg_pixfmt_rgba, agg_span_image_filter_rgba
-import agg_renderer_base, agg_color_rgba, nimBMP, strutils, os, math
-import agg_image_filters, agg_gsv_text, times
+import agg_renderer_base, agg_color_rgba, strutils, os, math
+import agg_image_filters, agg_gsv_text, agg_platform_support
 
 const
   frameWidth = 600
   frameHeight = 600
-  pixWidth = 4
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgra32
+  PixFmtPre = PixFmtBgra32Pre
 
-type
-  App = object
+  App = ref object of PlatformSupport
     quad: PolygonCtrl[Rgba8]
     transType: RboxCtrl[Rgba8]
     testFlag: bool
     ras: RasterizerScanlineAA
     sl: ScanlineU8
     x1, y1, x2, y2: float64
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.quad = newPolygonCtrl[Rgba8](4, 5.0)
   result.transType = newRboxCtrl[Rgba8](460, 5.0, 420+170.0, 60.0, not flipY)
+
+  result.addCtrl(result.quad)
+  result.addCtrl(result.transType)
+
   result.testFlag = false
   result.transType.textSize(8)
   result.transType.textThickness(1)
@@ -40,38 +44,16 @@ proc initApp(): App =
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
 
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
-
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP32("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-
-  let numPix = app.bmp[idx].width*app.bmp[idx].height
-  for i in 0.. <numPix:
-    app.bmp[idx].data[i * 4 + 3] = 255.chr
-
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, -app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc getBmp(app: var App, idx: int): var BmpResult[string] =
-  app.bmp[idx]
-
-proc init(app: var App) =
+method onInit(app: App) =
   let
     d = 0.0
-    width = frameWidth.float64
-    height = frameHeight.float64
+    width = app.width()
+    height = app.height()
 
   app.x1 = d
   app.y1 = d
-  app.x2 = app.rbufImage(0).width().float64 - d
-  app.y2 = app.rbufImage(0).height().float64 - d
+  app.x2 = app.rbufImg(0).width().float64 - d
+  app.y2 = app.rbufImg(0).height().float64 - d
 
   app.quad.xn(0) = 100
   app.quad.yn(0) = 100
@@ -82,26 +64,18 @@ proc init(app: var App) =
   app.quad.xn(3) = 100
   app.quad.yn(3) = height - 100
 
-proc onDraw() =
-  var app = initApp()
-  app.loadImage(0, "spheres")
-
+method onDraw(app: App) =
   var
-    buffer  = newString(frameWidth * frameHeight * pixWidth)
-    rbuf    = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    width   = frameWidth.float64
-    height  = frameHeight.float64
-    pixf    = initPixfmtRgba32(rbuf)
-    pixfPre = initPixfmtRgba32Pre(rbuf)
+    pixf    = construct(PixFmt, app.rbufWindow())
+    pixfPre = construct(PixFmtPre, app.rbufWindow())
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
     sa      = initSpanAllocator[Rgba8]()
     filterKernel: ImageFilterBilinear
     filter  = initImageFilterLut(filterKernel, false)
-    pixfImg = initPixfmtRgba32(app.rbufImage(0))
+    pixfImg = construct(PixFmt, app.rbufImg(0))
     imgSrc  = initImageAccessorClone(pixfImg)
 
-  app.init()
   rb.clear(initRgba(1, 1, 1))
 
   if app.transType.curItem() == 0:
@@ -117,14 +91,14 @@ proc onDraw() =
 
   # Prepare the polygon to rasterize. Here we need to fill
   # the destination (transformed) polygon.
-  app.ras.clipBox(0, 0, width, height)
+  app.ras.clipBox(0, 0, app.width(), app.height())
   app.ras.reset()
   app.ras.moveToD(app.quad.xn(0), app.quad.yn(0))
   app.ras.lineToD(app.quad.xn(1), app.quad.yn(1))
   app.ras.lineToD(app.quad.xn(2), app.quad.yn(2))
   app.ras.lineToD(app.quad.xn(3), app.quad.yn(3))
 
-  let startTime = cpuTime()
+  app.startTimer()
   case app.transType.curItem()
   of 0:
     # Note that we consruct an affine matrix that transforms
@@ -169,7 +143,7 @@ proc onDraw() =
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else: discard
 
-  let tm = cpuTime() - startTime
+  let tm = app.elapsedTime()
 
   var
     t = initGsvText()
@@ -187,6 +161,17 @@ proc onDraw() =
 
   renderCtrl(app.ras, app.sl, rb, app.transType)
 
-  saveBMP32("pattern_perspective.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgra32, flipY)
+  app.caption("AGG Example. Image Perspective Transformations")
 
-onDraw()
+  if not app.loadImg(0, "resources" & DirSep & "spheres.bmp"):
+    app.message("failed to load spheres.bmp")
+    return 1
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "image_perspective"):
+    return app.run()
+
+  result = 1
+
+discard main()
