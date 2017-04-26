@@ -1,7 +1,7 @@
 import agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_ellipse
 import agg_trans_affine, agg_conv_transform, agg_conv_stroke
 import agg_pixfmt_rgb, agg_scanline_p, agg_renderer_scanline, agg_image_filters
-import agg_renderer_base, agg_color_rgba, agg_path_storage, nimBMP
+import agg_renderer_base, agg_color_rgba, agg_path_storage, agg_platform_support
 import math, agg_basics, strutils, ctrl_slider, ctrl_cbox
 
 type
@@ -48,11 +48,7 @@ proc initImageF[Filter](name: string): ImageF[Filter] =
 const
   frameWidth = 780
   frameHeight = 300
-  pixWidth = 3
   flipY = true
-
-type
-  ValueT = uint8
 
 proc initFilters(): array[16, FilterBase] =
   result[0 ] = initImageFNoRadius[ImageFilterBilinear]("bilinear")
@@ -73,7 +69,9 @@ proc initFilters(): array[16, FilterBase] =
   result[15] = initImageF[ImageFilterBlackman]("blackman")
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     mRadius: SliderCtrl[Rgba8]
     mBilinear: CboxCtrl[Rgba8]
     mBicubic: CboxCtrl[Rgba8]
@@ -92,9 +90,13 @@ type
     mLanczos: CboxCtrl[Rgba8]
     mBlackman: CboxCtrl[Rgba8]
     mFilters: array[16, CboxCtrl[Rgba8]]
+    filters: array[16, FilterBase]
 
-proc initApp(): App =
-  result.mRadius   = newSliderCtrl[Rgba8](5.0, 5.0, 780-5, 10.0,       not flipY)
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
+  result.mRadius   = newSliderCtrl[Rgba8](5.0, 5.0, 780-5, 10.0,     not flipY)
   result.mBilinear = newCboxCtrl[Rgba8](8.0, 30.0+15*0,  "bilinear", not flipY)
   result.mBicubic  = newCboxCtrl[Rgba8](8.0, 30.0+15*1,  "bicubic ", not flipY)
   result.mSpline16 = newCboxCtrl[Rgba8](8.0, 30.0+15*2,  "spline16", not flipY)
@@ -129,37 +131,37 @@ proc initApp(): App =
   result.mFilters[14] = result.mLanczos
   result.mFilters[15] = result.mBlackman
 
+  for x in result.mFilters:
+    result.addCtrl(x)
+
+  result.addCtrl(result.mRadius)
   result.mRadius.setRange(2.0, 8.0)
   result.mRadius.value(4.0)
   result.mRadius.label("Radius=$1")
 
-proc onDraw() =
-  var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
-    rb     = initRendererBase(pf)
-    ren    = initRendererScanlineAASolid(rb)
-    sl     = initScanlineP8()
-    ras    = initRasterizerScanlineAA()
+  result.filters = initFilters()
 
-    initial_width = frameWidth.float64
-    initial_height = frameHeight.float64
+method onDraw(app: App) =
+  var
+    pf  = construct(PixFmt, app.rbufWindow())
+    rb  = initRendererBase(pf)
+    ren = initRendererScanlineAASolid(rb)
+    sl  = initScanlineP8()
+    ras = initRasterizerScanlineAA()
+
+    initial_width = app.initialWidth()
+    initial_height = app.initialHeight()
     x_start  = 125.0
     x_end    = initial_width - 15.0
     y_start  = 10.0
     y_end    = initial_height - 10.0
     x_center = (x_start + x_end) / 2
     ys = y_start + (y_end - y_start) / 6.0
-    mRadius = 4.0
+    mRadius = app.mRadius.value()
 
     path   = initPathStorage()
     pl     = initConvStroke(path)
-    mtx    = initTransAffine()
-    tr     = initConvTransform(pl, mtx)
-    filters = initFilters()
-
+    tr     = initConvTransform(pl, transAffineResizing(app))
 
   proc setBackground() =
     rb.clear(initRgba(1.0, 1.0, 1.0))
@@ -181,15 +183,14 @@ proc onDraw() =
     renderScanlines(ras, sl, ren)
     pl.width(1.0)
 
-  var i = 0
-  for filter in filters:
-    for c in app.mFilters:
-      c.status(false)
+  setBackground()
 
-    app.mFilters[i].status(true)
+  for i in 0.. <app.filters.len:
+    if not app.mFilters[i].status(): continue
 
-    setBackground()
+    var filter = app.filters[i]
     filter.setRadius(mRadius)
+
     var
       radius = filter.radius()
       n = int(radius * 256 * 2)
@@ -243,15 +244,19 @@ proc onDraw() =
     ren.color(initRgba8(0, 0, 100, 255))
     renderScanlines(ras, sl, ren)
 
-    for c in mitems(app.mFilters):
-      renderCtrl(ras, sl, rb, c)
+  for c in mitems(app.mFilters):
+    renderCtrl(ras, sl, rb, c)
 
-    if app.mSinc.status() or app.mLanczos.status() or app.mBlackman.status():
-      renderCtrl(ras, sl, rb, app.mRadius)
+  if app.mSinc.status() or app.mLanczos.status() or app.mBlackman.status():
+    renderCtrl(ras, sl, rb, app.mRadius)
 
-    let name = "image_filter_graph_$1_$2.bmp" % [$i, filter.name]
-    echo name
-    saveBMP24(name, buffer, frameWidth, frameHeight)
-    inc i
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("Image filters' shape comparison")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "image_filter_graph"):
+    return app.run()
+
+  result = 1
+
+discard main()

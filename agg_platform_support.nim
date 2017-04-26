@@ -375,7 +375,7 @@ proc rbufImg*[T,R](self: GenericPlatform[T,R], idx: int): var R =
 proc imgExt*[T,R](self: GenericPlatform[T,R]): string
 
 proc copyImgToWindow*[T,R](self: GenericPlatform[T,R], idx: int) =
-  if idx < maxImages and self.rbufImg(idx).buf() != nil:
+  if idx < maxImages and self.rbufImg(idx).getBuf() != nil:
     self.rbufWindow().copyFrom(self.rbufImg(idx))
 
 proc copyWindowToImg*[T,R](self: GenericPlatform[T,R], idx: int) =
@@ -384,7 +384,7 @@ proc copyWindowToImg*[T,R](self: GenericPlatform[T,R], idx: int) =
     self.rbufImg(idx).copyFrom(self.rbufWindow())
 
 proc copyImgToImg*[T,R](self: GenericPlatform[T,R], idxTo, idxFrom: int) =
-  if idxFrom < maxImages and idxTo < maxImages and self.rbufImg(idxFrom).buf() != nil:
+  if idxFrom < maxImages and idxTo < maxImages and self.rbufImg(idxFrom).getBuf() != nil:
     discard self.createImg(idxTo, self.rbufImg(idxFrom).width(), self.rbufImg(idxFrom).height())
     self.rbufImg(idxTo).copyFrom(self.rbufImg(idxFrom))
 
@@ -403,7 +403,7 @@ method onIdle*(self: PlatformBase) {.base.} = discard
 method onMouseMove*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
 method onMouseButtonDown*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
 method onMouseButtonUp*(self: PlatformBase, x, y: int, flags: InputFlags) {.base.} = discard
-method onKey*(self: PlatformBase, x, y: int, key: int, flags: InputFlags) {.base.} = discard
+method onKey*(self: PlatformBase, x, y, key: int, flags: InputFlags) {.base.} = discard
 method onCtrlChange*(self: PlatformBase) {.base.} = discard
 method onDraw*(self: PlatformBase) {.base.} = discard
 method onPostDraw*(self: PlatformBase, rawHandler: pointer) {.base.} = discard

@@ -1,39 +1,47 @@
 import agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_p
 import agg_renderer_scanline, agg_gsv_text, agg_conv_stroke, agg_path_storage
-import ctrl_gamma, agg_renderer_base, agg_color_rgba, nimBMP, agg_ellipse
+import ctrl_gamma, agg_renderer_base, agg_color_rgba, agg_ellipse
 import agg_pixfmt_rgb, agg_trans_affine, agg_conv_transform, agg_basics
+import agg_platform_support
 
 const
   frameWidth = 500
   frameHeight = 400
   flipY = true
-  pixWidth = 3
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
 
-proc onDraw() =
+  App = ref object of PlatformSupport
+    mGamma: GammaCtrl[Rgba8]
+    
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
+  result.mGamma = newGammaCtrl[Rgba8](10.0, 10.0, 300.0, 200.0, not flipY)
+  result.mGamma.textSize(10.0, 12.0)
+  
+  result.addCtrl(result.mGamma)
+  
+method onDraw(app: App) =
   var
-    ctrl   = newGammaCtrl[Rgba8](10.0, 10.0, 300.0, 200.0, not flipY)
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pixf   = initPixfmtRgb24(rbuf)
-    rb     = initRendererBase(pixf)
-    ewidth = frameWidth.float64 / 2.0 - 10.0
-    ecenter= frameWidth / 2.0
+    pf     = construct(PixFmt, app.rbufWindow())
+    rb     = initRendererBase(pf)
+    ewidth = app.initialWidth() / 2.0 - 10.0
+    ecenter= app.initialWidth() / 2.0
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineP8()
 
   rb.clear(initRgba(1, 1, 1))
-  ctrl.textSize(10.0, 12.0)
-  renderCtrl(ras, sl, rb, ctrl)
-  ras.gamma(ctrl)
+
+  renderCtrl(ras, sl, rb, app.mGamma)
+  ras.gamma(app.mGamma)
 
   var
     ellipse = initEllipse()
     poly    = initConvStroke(ellipse)
-    aff     = initTransAffine()
-    tpoly   = initConvTransform(poly, aff)
+    tpoly   = initConvTransform(poly, transAffineResizing(app))
     color   = initRgba8(0, 0, 0)
 
   ellipse.init(ecenter, 220, ewidth, 15, 100)
@@ -104,7 +112,7 @@ proc onDraw() =
 
   var mtx = initTransAffine()
   mtx *= transAffineSkewing(0.15, 0.0)
-  #mtx *= trans_affine_resizing()
+  mtx *= transAffineResizing(app)
   var
     text = initGsvText()
     text1 = initGsvTextOutline(text, mtx)
@@ -134,10 +142,17 @@ proc onDraw() =
     mtx.reset()
     mtx *= transAffineRotation(float64(i) / 35.0 * pi * 2.0)
     mtx *= transAffineTranslation(400, 130)
-    #mtx *= transAffine_resizing()
+    mtx *= transAffineResizing(app)
     ras.addPath(trans, 0)
     renderScanlinesAASolid(ras, sl, rb, color)
 
-  saveBMP24("gamma_ctrl.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("Anti-Aliasing Gamma Correction")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "gamma_ctrl"):
+    return app.run()
+
+  result = 1
+
+discard main()

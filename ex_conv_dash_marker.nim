@@ -2,20 +2,19 @@ import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_conv_st
 import agg_conv_dash, agg_conv_curve, agg_conv_contour, agg_conv_smooth_poly1
 import agg_conv_marker, agg_arrowhead, agg_vcgen_markers_term, agg_scanline_u
 import agg_renderer_scanline, agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox
-import agg_color_rgba, agg_renderer_base, nimBMP, agg_array, agg_path_storage
-import math
+import agg_color_rgba, agg_renderer_base, agg_array, agg_path_storage
+import math, agg_platform_support
 
 const
   frameWidth = 500
   frameHeight = 330
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
+  
+  App = ref object of PlatformSupport
     cap: RboxCtrl[Rgba8]
     width: SliderCtrl[Rgba8]
     smooth: SliderCtrl[Rgba8]
@@ -25,13 +24,22 @@ type
     dx, dy: float64
     idx: int
     
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.idx = -1
   result.cap = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 80.0, not flipY)
   result.width = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 130 + 150.0, 10.0 + 8.0 + 4.0, not flipY)
   result.smooth = newSliderCtrl[Rgba8](130 + 150.0 + 10.0, 10.0 + 4.0, 500 - 10.0, 10.0 + 8.0 + 4.0, not flipY)
   result.close = newCboxCtrl[Rgba8](130 + 10.0, 10.0 + 4.0 + 16.0,    "Close Polygons", not flipY)
   result.evenOdd = newCboxCtrl[Rgba8](130 + 150.0 + 10.0, 10.0 + 4.0 + 16.0, "Even-Odd Fill", not flipY)
+
+  result.addCtrl(result.cap)
+  result.addCtrl(result.width)
+  result.addCtrl(result.smooth)
+  result.addCtrl(result.close)
+  result.addCtrl(result.evenOdd)
   
   result.x[0] = 57  + 100; result.y[0] = 60.0
   result.x[1] = 369 + 100; result.y[1] = 170.0
@@ -55,14 +63,10 @@ proc initApp(): App =
   
 podAutoVector(AutoVec, VertexD, 20)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-    #ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
  
@@ -137,6 +141,13 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.close)
   renderCtrl(ras, sl, rb, app.evenOdd)
         
-  saveBMP24("conv_dash_marker.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Line Join")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {}, "conv_dash_marker"):
+    return app.run()
+
+  result = 1
+
+discard main()

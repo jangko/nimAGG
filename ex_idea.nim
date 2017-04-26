@@ -1,7 +1,7 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_p
 import agg_renderer_scanline, agg_trans_affine, agg_conv_stroke, agg_conv_transform
 import ctrl_cbox, ctrl_slider, agg_pixfmt_rgb, agg_color_rgba, agg_renderer_base
-import nimBMP, math, agg_path_storage, agg_gamma_functions
+import nimBMP, math, agg_path_storage, agg_gamma_functions, agg_platform_support
 
 const
   frameWidth = 250
@@ -80,7 +80,9 @@ proc transform(self: Roundoff, x, y: var float64) =
   y = math.floor(y + 0.5)
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     attr: array[3, PathAttributes]
     path: PathStorage
     nPaths: int
@@ -95,7 +97,10 @@ type
     angleDelta: SliderCtrl[Rgba8]
     redrawFlag: bool
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.path = initPathStorage()
   result.nPaths = 0
   result.pFlag = fillNonZero
@@ -107,6 +112,13 @@ proc initApp(): App =
   result.draft = newCboxCtrl[Rgba8](130, 3, "Draft", not flipY)
   result.roundoff = newCboxCtrl[Rgba8](175, 3, "Roundoff", not flipY)
   result.angleDelta = newSliderCtrl[Rgba8](10, 21, 250-10, 27, not flipY)
+
+  result.addCtrl(result.rotate)
+  result.addCtrl(result.evenOdd)
+  result.addCtrl(result.draft)
+  result.addCtrl(result.roundoff)
+  result.addCtrl(result.angleDelta)
+
   result.redrawFlag = true
 
   result.angleDelta.label("Step=$1 degree")
@@ -143,21 +155,15 @@ proc initApp(): App =
   result.roundoff.textSize(7)
   result.angleDelta.value(0.01)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    pixf   = initPixfmtRgb24(rbuf)
-    rb     = initRendererBase(pixf)
+    pf  = construct(PixFmt, app.rbufWindow())
+    rb     = initRendererBase(pf)
     roundOff: Roundoff
-    width  = frameWidth.float64
-    height = frameHeight.float64
+    width  = app.width()
+    height = app.height()
     mtx    = initTransAffine()
     fill   = initConvTransform(app.path, mtx)
-
-  app.dx = width
-  app.dy = height
 
   if app.redrawFlag:
     app.ras.gamma(initGammaNone())
@@ -208,6 +214,29 @@ proc onDraw() =
       else:
         renderScanlinesAASolid(app.ras, app.sl, rb, app.attr[i].strokeColor)
 
-  saveBMP24("idea.bmp", buffer, frameWidth, frameHeight)
+method onInit(app: App) =
+  app.dx = app.rbufWindow().width().float64
+  app.dy = app.rbufWindow().height().float64
 
-onDraw()
+method onResize(app: App, sx, sy: int) =
+  app.redrawFlag = true
+
+method onIdle(app: App) =
+  app.angle += app.angleDelta.value()
+  if app.angle > 360.0: app.angle -= 360.0
+  app.forceRedraw()
+
+method onCtrlChange(app: App) =
+  app.waitMode(not app.rotate.status())
+  app.redrawFlag = true
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Idea")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "idea"):
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -1,8 +1,8 @@
 import agg_basics, agg_rendering_buffer, agg_conv_transform, agg_conv_stroke
-import agg_scanline_p, agg_renderer_scanline
+import agg_scanline_p, agg_renderer_scanline, agg_platform_support
 import agg_rasterizer_outline_aa, agg_rasterizer_scanline_aa, agg_pattern_filters_rgba
 import agg_renderer_outline_aa, agg_renderer_outline_image, agg_pixfmt_rgb
-import ctrl_slider, ctrl_polygon, nimBMP, agg_color_rgba, agg_renderer_base
+import ctrl_slider, ctrl_polygon, agg_color_rgba, agg_renderer_base
 import strutils, os, agg_trans_affine, agg_path_storage, agg_gsv_text, agg_math
 
 const
@@ -57,13 +57,14 @@ const
      19,  18,  17,  15,  14,  13,  12,  11,   9,   8,   7,   6,   4,   3,   2,   1]
 
 type
+  PixFmt = PixFmtBgr24
   PatternSrcBrightnessToAlphaRgba8 = object
     mRb: ptr RenderingBuffer
-    mPf: PixfmtRgb24
+    mPf: PixFmt
 
 proc initPatternSrcBrightnessToAlphaRgba8(rb: var RenderingBuffer): PatternSrcBrightnessToAlphaRgba8 =
   result.mRb = rb.addr
-  result.mPf = initPixFmtRgb24(result.mRb[])
+  result.mPf = construct(PixFmt, result.mRb[])
 
 proc width(self: PatternSrcBrightnessToAlphaRgba8): int =
   self.mPf.width()
@@ -78,27 +79,29 @@ proc pixel(self: PatternSrcBrightnessToAlphaRgba8, x, y: int): Rgba8 =
 const
   frameWidth = 500
   frameHeight = 500
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
+  App = ref object of PlatformSupport
     ctrlColor: Rgba8
     line1: PolygonCtrl[Rgba8]
     scaleX: SliderCtrl[Rgba8]
     startX: SliderCtrl[Rgba8]
     scale: TransAffine
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.ctrlColor = construct(Rgba8, initRgba(0, 0.3, 0.5, 0.3))
   result.scaleX = newSliderCtrl[Rgba8](5.0,   5.0, 240.0, 12.0, not flipY)
   result.startX = newSliderCtrl[Rgba8](250.0, 5.0, 495.0, 12.0, not flipY)
   result.line1 = newPolygonCtrl[Rgba8](5)
+  
+  result.addCtrl(result.scaleX)
+  result.addCtrl(result.startX)
+  result.addCtrl(result.line1)
+  
   result.scale = initTransAffine()
 
   result.line1.lineColor(result.ctrlColor)
@@ -126,44 +129,27 @@ proc initApp(): App =
   result.startX.value(0.0)
   result.startX.noTransform()
 
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
-
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc drawPolyline[Rasterizer, Renderer](app: var App, ras: var Rasterizer, ren: var Renderer, polyLine: var openArray[float64], numPoints: int) =
+proc drawPolyline[Rasterizer, Renderer](app: App, ras: var Rasterizer, ren: var Renderer, 
+  polyLine: var openArray[float64], numPoints: int) =
   var
     vs = initPolyPlainAdaptor(polyline, numPoints, app.line1.close())
     trans = initConvTransform(vs, app.scale);
 
   ras.addPath(trans)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineP8()
 
-  app.loadImage(0, "1")
   rb.clear(initRgba(0.5, 0.75, 0.85))
   ras.clipBox(0, 0, frameWidth, frameHeight)
 
   var
-    p1 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImage(0))
+    p1 = initPatternSrcBrightnessToAlphaRgba8(app.rbufImg(0))
     filter: PatternFilterBilinearRgba8
     patt   = initLineImagePattern(filter)
     renImg = initRendererOutlineImage(rb, patt)
@@ -251,7 +237,18 @@ proc onDraw() =
   ras.addPath(pt)
   ren.color(initRgba(0,0,0))
   renderScanlines(ras, sl, ren)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Drawing Lines with Image Patterns")
 
-  saveBMP24("line_patterns_clip.bmp", buffer, frameWidth, frameHeight)
+  if not app.loadImg(0, "resources" & DirSep & "1"):
+    app.message("failed to load needed resources 1.bmp")
+    return 1
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "line_patterns_clip"):
+    return app.run()
+
+  result = 1
+
+discard main()
+

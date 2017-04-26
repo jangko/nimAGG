@@ -2,19 +2,18 @@ import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_conv_st
 import agg_conv_dash, agg_conv_curve, agg_conv_contour, agg_conv_smooth_poly1
 import agg_conv_marker, agg_arrowhead, agg_vcgen_markers_term, agg_scanline_p
 import agg_renderer_scanline, agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, agg_color_rgba
-import agg_renderer_base, nimBMP, agg_path_storage
+import agg_renderer_base, agg_path_storage, agg_platform_support
 
 const
   frameWidth = 500
   frameHeight = 330
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
+  
+  App = ref object of PlatformSupport
     join: RboxCtrl[Rgba8]
     cap: RboxCtrl[Rgba8]
     width: SliderCtrl[Rgba8]
@@ -23,12 +22,20 @@ type
     dx, dy: float64
     idx: int
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.idx = -1
   result.join = newRboxCtrl[Rgba8](10.0, 10.0, 133.0, 80.0, not flipY)
   result.cap  = newRboxCtrl[Rgba8](10.0, 80.0 + 10.0, 133.0, 80.0 + 80.0, not flipY)
   result.width = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 500.0 - 10.0, 10.0 + 8.0 + 4.0, not flipY)
   result.miterLimit= newSliderCtrl[Rgba8](130 + 10.0, 20.0 + 10.0 + 4.0, 500.0 - 10.0, 20.0 + 10.0 + 8.0 + 4.0, not flipY)
+
+  result.addCtrl(result.join)
+  result.addCtrl(result.cap)
+  result.addCtrl(result.width)
+  result.addCtrl(result.miterLimit)
 
   result.x[0] = 57  + 100; result.y[0] = 60
   result.x[1] = 369 + 100; result.y[1] = 170
@@ -56,14 +63,10 @@ proc initApp(): App =
   result.width.noTransform()
   result.miterLimit.noTransform()
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-    #ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
     ras    = initRasterizerScanlineAA()
     path   = initPathStorage()
@@ -124,6 +127,13 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.width)
   renderCtrl(ras, sl, rb, app.miterLimit)
 
-  saveBMP24("conv_stroke.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Line Join")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {}, "conv_stroke"):
+    return app.run()
+
+  result = 1
+
+discard main()

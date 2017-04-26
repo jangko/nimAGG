@@ -4,6 +4,7 @@ import agg_pixfmt_rgb, agg_pixfmt_rgba, agg_pixfmt_gray, agg_bounding_rect
 import agg_trans_perspective, agg_blur, ctrl_slider, ctrl_rbox, ctrl_cbox, ctrl_polygon
 import agg_blur, agg_renderer_base, agg_color_rgba, agg_color_gray, agg_path_storage
 import agg_trans_affine, agg_conv_transform, nimBMP, times, agg_gsv_text, strutils
+import agg_platform_support
 
 const
   frameWidth = 440
@@ -12,10 +13,10 @@ const
   pixWidth = 3
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
 
-type
-  App = object
+  App = ref object of PlatformSupport
     how: RboxCtrl[Rgba8]
     chr, chg, chb: CboxCtrl[Rgba8]
     radius: SliderCtrl[Rgba8]
@@ -28,14 +29,25 @@ type
     rbuf2: RenderingBuffer
     stackBlur: StackBlur[Rgba8, StackBlurCalcRgb]
     recursiveBlur: RecursiveBlur[Rgba8, RecursiveBlurCalcRgb]
-    
-proc initApp(): App =
+
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.how = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 70.0, not flipY)
   result.radius = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 130 + 300.0, 10.0 + 8.0 + 4.0, not flipY)
   result.shadow = newPolygonCtrl[Rgba8](4)
   result.chr = newCboxCtrl[Rgba8](10.0, 80.0,  "Red", not flipY)
   result.chg = newCboxCtrl[Rgba8](10.0, 95.0,  "Green", not flipY)
   result.chb = newCboxCtrl[Rgba8](10.0, 110.0, "Blue", not flipY)
+
+  result.addCtrl(result.how)
+  result.addCtrl(result.radius)
+  result.addCtrl(result.shadow)
+  result.addCtrl(result.chr)
+  result.addCtrl(result.chg)
+  result.addCtrl(result.chb)
+
   result.path = initPathStorage()
   result.shape = initConvCurve(result.path)
   result.ras = initRasterizerScanlineAA()
@@ -119,28 +131,25 @@ proc initApp(): App =
   result.shadow.yn(3) = result.shapeBounds.y2
   result.shadow.lineColor(initRgba(0, 0.3, 0.5, 0.3))
 
-pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 2, PixfmtGray8R)
-pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 1, PixfmtGray8G)
-pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 0, PixfmtGray8B)
+pixFmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 2, PixFmtGray8R)
+pixFmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 1, PixFmtGray8G)
+pixFmtAlphaBlendGray(BlenderGray8, RenderingBuffer, pixWidth, 0, PixFmtGray8B)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pixf   = initPixfmtRgb24(rbuf)
-    renb   = initRendererBase(pixf)
+    pf   = construct(PixFmt, app.rbufWindow())
+    rb   = initRendererBase(pf)
     shadowPersp = initTransPerspective(app.shapeBounds.x1, app.shapeBounds.y1,
                                        app.shapeBounds.x2, app.shapeBounds.y2,
                                        app.shadow.polygon())
     shadowTrans = initConvTransform(app.shape, shadowPersp)
 
-  renb.clear(initRgba(1.0, 1.0, 1.0))
+  rb.clear(initRgba(1.0, 1.0, 1.0))
   app.ras.clipBox(0, 0, frameWidth, frameHeight)
 
   # Render shadow
   app.ras.addPath(shadowTrans)
-  renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0.2,0.3,0.0))
+  renderScanlinesAAsolid(app.ras, app.sl, rb, initRgba(0.2,0.3,0.0))
 
   # Calculate the bounding box and extend it by the blur radius
   var bbox: RectD
@@ -162,71 +171,74 @@ proc onDraw() =
     bbox.x2 += app.radius.value()
     bbox.y2 += app.radius.value()
 
-  #var buf2 = newString(buffer.len)
-  #copyMem(buf2.cstring, buffer.cstring, buffer.len)  
-  #test_blur(buf2, frameWidth, frameHeight, pixWidth, bbox) 
-  #echo "---"
-  let startTime = cpuTime()
+  app.startTimer()
   if app.how.curItem() != 2:
     # Create a new pixel renderer and attach it to the main one as a child image.
     # It returns true if the attachment suceeded. It fails if the rectangle
     # (bbox) is fully clipped.
-    var pixf2 = initPixfmtRgb24(app.rbuf2)
-    if pixf2.attach(pixf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
+    var pf2 = initPixFmtRgb24(app.rbuf2)
+    if pf2.attach(pf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
       # Blur it
       if app.how.curItem() == 0:
         # More general method, but 30-40% slower.
-        #m_stack_blur.blur(pixf2, agg::uround(m_radius.value()));
-    
+        #m_stack_blur.blur(pf2, agg::uround(m_radius.value()));
+
         # Faster, but bore specific.
         # Works only for 8 bits per channel and only with radii <= 254.
-        stackBlurRgb24(pixf2, uround(app.radius.value()), uround(app.radius.value()))
+        stackBlurRgb24(pf2, uround(app.radius.value()), uround(app.radius.value()))
       else:
         # True Gaussian Blur, 3-5 times slower than Stack Blur,
         # but still constant time of radius. Very sensitive
         # to precision, doubles are must here.
-        app.recursiveBlur.blur(pixf2, app.radius.value())
+        app.recursiveBlur.blur(pf2, app.radius.value())
   else:
     # Blur separate channels
     if app.chr.status():
-      var pixf2r = initPixfmtGray8R(app.rbuf2)
-      if pixf2r.attach(pixf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
-        stackBlurGray8(pixf2r, uround(app.radius.value()), uround(app.radius.value()))
+      var pf2r = initPixFmtGray8R(app.rbuf2)
+      if pf2r.attach(pf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
+        stackBlurGray8(pf2r, uround(app.radius.value()), uround(app.radius.value()))
 
     if app.chg.status():
-      var pixf2g = initPixfmtGray8G(app.rbuf2)
-      if pixf2g.attach(pixf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
-        stackBlurGray8(pixf2g, uround(app.radius.value()), uround(app.radius.value()))
+      var pf2g = initPixFmtGray8G(app.rbuf2)
+      if pf2g.attach(pf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
+        stackBlurGray8(pf2g, uround(app.radius.value()), uround(app.radius.value()))
 
     if app.chb.status():
-      var pixf2b = initPixfmtGray8B(app.rbuf2)
-      if pixf2b.attach(pixf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
-        stackBlurGray8(pixf2b, uround(app.radius.value()), uround(app.radius.value()))
+      var pf2b = initPixFmtGray8B(app.rbuf2)
+      if pf2b.attach(pf, int(bbox.x1), int(bbox.y1), int(bbox.x2), int(bbox.y2)):
+        stackBlurGray8(pf2b, uround(app.radius.value()), uround(app.radius.value()))
 
-  let endTime = cpuTime() - startTime
-  renderCtrl(app.ras, app.sl, renb, app.shadow)
+  let t1 = app.elapsedTime()
+  renderCtrl(app.ras, app.sl, rb, app.shadow)
 
   # Render the shape itself
   app.ras.addPath(app.shape)
-  renderScanlinesAASolid(app.ras, app.sl, renb, initRgba(0.6,0.9,0.7, 0.8))
+  renderScanlinesAASolid(app.ras, app.sl, rb, initRgba(0.6,0.9,0.7, 0.8))
 
   var
     t = initGsvText()
     st = initConvStroke(t)
-  
+
   t.size(10.0)
   st.width(1.5)
   t.startPoint(140.0, 30.0)
-  t.text(endTime.formatFloat(ffDecimal, 2) & " ms")
+  t.text(t1.formatFloat(ffDecimal, 2) & " ms")
   app.ras.addPath(st)
-  renderScanlinesAAsolid(app.ras, app.sl, renb, initRgba(0,0,0))
-  
-  renderCtrl(app.ras, app.sl, renb, app.how)
-  renderCtrl(app.ras, app.sl, renb, app.radius)
-  renderCtrl(app.ras, app.sl, renb, app.chr)
-  renderCtrl(app.ras, app.sl, renb, app.chg)
-  renderCtrl(app.ras, app.sl, renb, app.chb)
+  renderScanlinesAAsolid(app.ras, app.sl, rb, initRgba(0,0,0))
 
-  saveBMP24("blur.bmp", buffer, frameWidth, frameHeight)
+  renderCtrl(app.ras, app.sl, rb, app.how)
+  renderCtrl(app.ras, app.sl, rb, app.radius)
+  renderCtrl(app.ras, app.sl, rb, app.chr)
+  renderCtrl(app.ras, app.sl, rb, app.chg)
+  renderCtrl(app.ras, app.sl, rb, app.chb)
 
-onDraw()
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Gaussian and Stack Blur")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "blur"):
+    return app.run()
+
+  result = 1
+
+discard main()

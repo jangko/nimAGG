@@ -1,30 +1,36 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_conv_curve
 import agg_conv_contour, agg_conv_stroke, agg_scanline_p, agg_renderer_scanline
 import agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox, agg_color_rgba, agg_renderer_base
-import agg_path_storage, agg_trans_affine, agg_conv_transform, nimBMP
+import agg_path_storage, agg_trans_affine, agg_conv_transform, agg_platform_support
 
 const
   frameWidth = 440
   frameHeight = 330
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
+  
+  App = ref object of PlatformSupport
     close: RboxCtrl[Rgba8]
     width: SliderCtrl[Rgba8]
     autoDetect: CboxCtrl[Rgba8]
     path: PathStorage
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.close = newRboxCtrl[Rgba8](10.0, 10.0, 130.0, 80.0, not flipY)
   result.width = newSliderCtrl[Rgba8](130 + 10.0, 10.0 + 4.0, 130 + 300.0, 10.0 + 8.0 + 4.0, not flipY)
   result.autoDetect = newCboxCtrl[Rgba8](130 + 10.0, 10.0 + 4.0 + 16.0,
     "Autodetect orientation if not defined", not flipY)
 
+  result.addCtrl(result.close)
+  result.addCtrl(result.width)
+  result.addCtrl(result.autoDetect)
+  
   result.close.addItem("Close")
   result.close.addItem("Close CW")
   result.close.addItem("Close CCW")
@@ -34,7 +40,7 @@ proc initApp(): App =
   result.width.label("Width=$1")
   result.path = initPathStorage()
 
-proc composePath(app: var App) =
+proc composePath(app: App) =
 
   var flag = 0.uint
   if app.close.curItem() == 1: flag = pathFlagsCw
@@ -86,14 +92,10 @@ proc composePath(app: var App) =
   app.path.curve3(22.41, 4.74, 28.47, 9.62)
   app.path.closePolygon(flag)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-    #ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
     ras    = initRasterizerScanlineAA()
     mtx    = initTransAffine()
@@ -120,6 +122,13 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.width)
   renderCtrl(ras, sl, rb, app.autoDetect)
 
-  saveBMP24("conv_contour.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Contour Tool & Polygon Orientation")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {}, "conv_contour"):
+    return app.run()
+
+  result = 1
+
+discard main()

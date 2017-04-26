@@ -3,21 +3,21 @@ import agg_renderer_scanline, agg_path_storage, agg_conv_transform, agg_trans_af
 import agg_trans_bilinear, agg_trans_perspective, agg_span_interpolator_linear
 import agg_span_interpolator_trans, agg_span_allocator, agg_image_accessors
 import ctrl_rbox, ctrl_polygon, agg_pixfmt_rgba, agg_span_image_filter_rgba
-import agg_renderer_base, agg_color_rgba, nimBMP, strutils, os, math
+import agg_renderer_base, agg_color_rgba, strutils, os, math
 import agg_image_filters, agg_span_subdiv_adaptor, agg_gamma_lut, ctrl_slider
-import agg_span_interpolator_persp, times, agg_gsv_text, agg_conv_stroke
+import agg_span_interpolator_persp, agg_gsv_text, agg_conv_stroke
+import agg_platform_support
 
 const
   frameWidth = 600
   frameHeight = 600
-  pixWidth = 4
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgra32
+  PixFmtPre = PixFmtBgra32Pre
 
-type
-  App = object
+  App = ref object of PlatformSupport
     gammaLut: GammaLut8
     gamma, blur: SliderCtrl[Rgba8]
 
@@ -29,16 +29,22 @@ type
     ras: RasterizerScanlineAA
     sl: ScanlineU8
     x1, y1, x2, y2: float64
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.quad = newPolygonCtrl[Rgba8](4, 5.0)
   result.gammaLut = initGammaLut8(2.0)
   result.transType = newRboxCtrl[Rgba8](400, 5.0, 430+170.0, 100.0, not flipY)
   result.gamma = newSliderCtrl[Rgba8](5.0, 5.0+15*0, 400-5, 10.0+15*0, not flipY)
   result.blur  = newSliderCtrl[Rgba8](5.0, 5.0+15*1, 400-5, 10.0+15*1, not flipY)
   result.oldGamma = 2.0
+
+  result.addCtrl(result.quad)
+  result.addCtrl(result.transType)
+  result.addCtrl(result.gamma)
+  result.addCtrl(result.blur)
 
   result.testFlag = false
   result.transType.textSize(7)
@@ -57,43 +63,22 @@ proc initApp(): App =
   result.blur.setRange(0.5, 2.0)
   result.blur.value(1.0)
   result.blur.label("Blur=$1")
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
 
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP32("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-
-  let numPix = app.bmp[idx].width*app.bmp[idx].height
-  for i in 0.. <numPix:
-    app.bmp[idx].data[i * 4 + 3] = 255.chr
-
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, -app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc getBmp(app: var App, idx: int): var BmpResult[string] =
-  app.bmp[idx]
-
-proc init(app: var App) =
+method onInit(app: App) =
   app.x1 = 0.0
   app.y1 = 0.0
-  app.x2 = app.rbufImage(0).width().float64
-  app.y2 = app.rbufImage(0).height().float64
+  app.x2 = app.rbufImg(0).width().float64
+  app.y2 = app.rbufImg(0).height().float64
 
   var
     x1 = app.x1
     y1 = app.y1
     x2 = app.x2
     y2 = app.y2
-    dx = frameWidth.float64 / 2.0 - (x2 - x1) / 2.0
-    dy = frameHeight.float64 / 2.0 - (y2 - y1) / 2.0
+    dx = app.width() / 2.0 - (x2 - x1) / 2.0
+    dy = app.height() / 2.0 - (y2 - y1) / 2.0
 
   app.quad.xn(0) = floor(x1 + dx)
   app.quad.yn(0) = floor(y1 + dy)
@@ -104,31 +89,25 @@ proc init(app: var App) =
   app.quad.xn(3) = floor(x1 + dx)
   app.quad.yn(3) = floor(y2 + dy)
 
-  var pixf = initPixfmtRgba32(app.rbufImage(0))
+  var pixf = initPixfmtRgba32(app.rbufImg(0))
   pixf.applyGammaDir(app.gammaLut)
 
-proc onDraw() =
-  var app     = initApp()
-  app.loadImage(0, "spheres")
-  app.init()
-
+method onDraw(app: App) =
   var
-    buffer  = newString(frameWidth * frameHeight * pixWidth)
-    rbuf    = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    width   = frameWidth.float64
-    height  = frameHeight.float64
-    pixf    = initPixfmtRgba32(rbuf)
-    pixfPre = initPixfmtRgba32Pre(rbuf)
+    width   = app.width()
+    height  = app.height()
+    pixf    = construct(PixFmt, app.rbufWindow())
+    pixfPre = construct(PixFmtPre, app.rbufWindow())
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
     ren     = initRendererScanlineAASolid(rb)
 
   if app.gamma.value() != app.oldGamma:
-     app.gammaLut.gamma(app.gamma.value())
-     app.loadImage(0, "spheres")
-     var pixf = initPixfmtRgba32(app.rbufImage(0))
-     pixf.applyGammaDir(app.gammaLut)
-     app.oldGamma = app.gamma.value()
+    app.gammaLut.gamma(app.gamma.value())
+    if app.loadImg(0, "resources" & DirSep & "spheres.bmp"):
+      var pixf = construct(PixFmt, app.rbufImg(0))
+      pixf.applyGammaDir(app.gammaLut)
+      app.oldGamma = app.gamma.value()
 
   rb.clear(initRgba(1, 1, 1))
 
@@ -159,10 +138,10 @@ proc onDraw() =
     sa = initSpanAllocator[Rgba8]()
     filterKernel: ImageFilterBilinear
     filter  = initImageFilterLut(filterKernel, false)
-    pixfImg = initPixfmtRgba32(app.rbufImage(0))
+    pixfImg = initPixfmtRgba32(app.rbufImg(0))
     imgSrc  = initImageAccessorClone(pixfImg)
 
-  let startTime = cpuTime()
+  app.startTimer()
   case app.transType.curItem()
   of 0:
     var
@@ -213,7 +192,7 @@ proc onDraw() =
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else: discard
 
-  let tm = cpuTime() - startTime
+  let tm = app.elapsedTime()
   pixf.applyGammaInv(app.gammaLut)
 
   var
@@ -233,6 +212,18 @@ proc onDraw() =
   renderCtrl(app.ras, app.sl, rb, app.transType)
   renderCtrl(app.ras, app.sl, rb, app.gamma)
   renderCtrl(app.ras, app.sl, rb, app.blur)
-  saveBMP32("pattern_resample.bmp", buffer, frameWidth, frameHeight)
 
-onDraw()
+proc main(): int =
+  var app = newApp(pix_format_bgra32, flipY)
+  app.caption("AGG Example. Image Transformations with Resampling")
+
+  if not app.loadImg(0, "resources" & DirSep & "spheres.bmp"):
+    app.message("failed to load spheres.bmp")
+    return 1
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "image_resample"):
+    return app.run()
+
+  result = 1
+
+discard main()

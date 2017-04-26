@@ -1,12 +1,12 @@
 import math, agg_basics, ctrl_slider, ctrl_rbox, ctrl_cbox
 import agg_path_storage, agg_gradient_lut, agg_scanline_u
 import agg_rasterizer_scanline_aa, agg_color_rgba, agg_rendering_buffer
-import agg_pixfmt_rgb, agg_renderer_base, nimBMP, make_arrows, make_gb_poly
+import agg_pixfmt_rgb, agg_renderer_base, make_arrows, make_gb_poly
 import agg_conv_stroke, agg_conv_curve, agg_bounding_rect, agg_trans_affine
 import agg_conv_transform, agg_span_gradient_contour, agg_span_interpolator_linear
 import agg_span_gradient, agg_span_allocator, agg_renderer_scanline
 import agg_span_gradient_image, agg_pixfmt_rgba, ctrl_polygon
-import agg_trans_perspective
+import agg_trans_perspective, agg_platform_support
 
 const Puzzle = [0x02'u8, 0x51, 0xAE, 0xFF, 0x00, 0x5C, 0xB0, 0xFF,
   0x0A, 0x85, 0xFF, 0xFF, 0x3B, 0x87, 0x95, 0xFF, 0x28, 0x27, 0x12, 0xFF, 0x5C, 0x6F, 0x03,
@@ -1119,7 +1119,10 @@ proc initGradientConicAngle(): GradientConicAngle =
 template construct*(x: typedesc[GradientConicAngle]): untyped = initGradientConicAngle()
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+  RendererT = RendererBase[PixFmt]
+  
+  App = ref object of PlatformSupport
     polygons, gradient: RboxCtrl[Rgba8]
     stroke, reflect: CboxCtrl[Rgba8]
     contour, sliderD: array[2, SliderCtrl[Rgba8]]
@@ -1130,20 +1133,15 @@ type
     star, glyph: PathStorage
     gamma: float64
     gradientColors: array[2..11, GradientLut]
-    buffer: string
-    rbuf: RenderingBuffer
-    pf: PixfmtRgb24
-    rb: RendererBase[PixfmtRgb24]
-
-
+    pf: PixFmt
+    rb: RendererT
+    mInit: bool
+    mLast: int
+    
 const
   frameWidth = 520
   frameHeight = 520
-  pixWidth = 3
   flipY = true
-
-type
-  ValueT = uint8
 
 proc buildGlyph(path: var PathStorage) =
   path.moveTo(28.47, 6.45)
@@ -1191,7 +1189,7 @@ proc buildGlyph(path: var PathStorage) =
   path.curve3(22.41, 4.74, 28.47, 9.62)
   path.closePolygon()
 
-proc buildGradients(app: var App) =
+proc buildGradients(app: App) =
   var rgba: Rgba8
 
   app.gradientColors[2] = initGradientLut(1024)
@@ -1464,7 +1462,10 @@ proc buildStar(path: var PathStorage) =
   path.closePolygon()
 
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.gradient = newRboxCtrl[Rgba8](145.0, 5.0, 300.0, 90.0, not flipY)
   result.polygons = newRboxCtrl[Rgba8](5, 5, 135, 90, not flipY)
 
@@ -1526,12 +1527,20 @@ proc initApp(): App =
   result.star.buildStar()
   result.buildGradients()
 
-  result.buffer = newString(frameWidth * frameHeight * pixWidth)
-  result.rbuf   = initRenderingBuffer(cast[ptr ValueT](result.buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-  result.pf     = initPixfmtRgb24(result.rbuf)
-  result.rb     = initRendererBase(result.pf)
+  result.addCtrl(result.polygons)
+  result.addCtrl(result.gradient)
+  result.addCtrl(result.stroke)
+  result.addCtrl(result.reflect)
+  result.addCtrl(result.contour[0])
+  result.addCtrl(result.sliderD[0])
+  result.addCtrl(result.contour[1])
+  result.addCtrl(result.sliderD[1])  
+  result.addCtrl(result.colors)
+  result.addCtrl(result.persp)
+  result.mInit = true
+  result.mLast = result.polygons.curItem()
 
-proc renderContourAux[GradFunc, T2, TR](app: var App, gradFunc: var GradFunc, t2: var T2, D1, D2: float64, gmt: var TR) =
+proc renderContourAux[GradFunc, T2, TR](app: App, gradFunc: var GradFunc, t2: var T2, D1, D2: float64, gmt: var TR) =
   var
     colorF = app.gradientColors[trunc(app.colors.value()).int]
     spanInterpolator = initSpanInterpolatorLinear(gmt)
@@ -1543,19 +1552,19 @@ proc renderContourAux[GradFunc, T2, TR](app: var App, gradFunc: var GradFunc, t2
   app.ras.addPath(t2)
   renderScanLines(app.ras, app.sl, ren)
 
-proc renderContour[GradFunc, T2, TR](app: var App, gradFunc: var GradFunc, t2: var T2, D1, D2: float64, gmt: var TR) =
+proc renderContour[GradFunc, T2, TR](app: App, gradFunc: var GradFunc, t2: var T2, D1, D2: float64, gmt: var TR) =
   if app.reflect.status():
     var gradRefl = initGradientReflectAdaptor(gradFunc)
     app.renderContourAux(gradRefl, t2, D1, D2, gmt)
   else:
     app.renderContourAux(gradFunc, t2, D1, D2, gmt)
 
-proc performRendering[VertexSource](app: var App, vs: var VertexSource, contour: var PathStorage) =
+proc performRendering[VertexSource](app: App, vs: var VertexSource, contour: var PathStorage) =
   let bb = boundingRectD(vs, 0)
-  var scale = (frameWidth.float64 - 120.0) / (bb.x2 - bb.x1)
+  var scale = (app.width() - 120.0) / (bb.x2 - bb.x1)
 
-  if scale > (frameHeight.float64 - 120.0) / (bb.y2 - bb.y1):
-    scale = (frameHeight.float64 - 120.0) / (bb.y2 - bb.y1)
+  if scale > (app.height() - 120.0) / (bb.y2 - bb.y1):
+    scale = (app.height() - 120.0) / (bb.y2 - bb.y1)
 
   var mtx = initTransAffine()
   mtx.translate(-bb.x1, -bb.y1)
@@ -1576,19 +1585,21 @@ proc performRendering[VertexSource](app: var App, vs: var VertexSource, contour:
   mtx.transform(px1, py1)
   mtx.transform(px2, py2)
 
-  app.persp.xn(0) = px1
-  app.persp.yn(0) = py1
-  app.persp.xn(1) = px2
-  app.persp.yn(1) = py1
-  app.persp.xn(2) = px2
-  app.persp.yn(2) = py2
-  app.persp.xn(3) = px1
-  app.persp.yn(3) = py2
-
-  tat.transform(app.persp.xn(0), app.persp.yn(0))
-  tat.transform(app.persp.xn(1), app.persp.yn(1))
-  tat.transform(app.persp.xn(2), app.persp.yn(2))
-  tat.transform(app.persp.xn(3), app.persp.yn(3))
+  if app.mInit:
+    app.persp.xn(0) = px1
+    app.persp.yn(0) = py1
+    app.persp.xn(1) = px2
+    app.persp.yn(1) = py1
+    app.persp.xn(2) = px2
+    app.persp.yn(2) = py2
+    app.persp.xn(3) = px1
+    app.persp.yn(3) = py2
+  
+    tat.transform(app.persp.xn(0), app.persp.yn(0))
+    tat.transform(app.persp.xn(1), app.persp.yn(1))
+    tat.transform(app.persp.xn(2), app.persp.yn(2))
+    tat.transform(app.persp.xn(3), app.persp.yn(3))
+    app.mInit = false
 
   # Add Perspective Transformation
   var
@@ -1596,8 +1607,12 @@ proc performRendering[VertexSource](app: var App, vs: var VertexSource, contour:
     trpg = initTransPerspective(app.persp.polygon(), px1, py1, px2, py2)
     T2   = initConvTransform(T1, trpp)
 
-  if not trpp.isValid(): return
-  if not trpg.isValid(): return
+  #if not trpp.isValid(): 
+  #  echo "PP" 
+  #  return
+  #if not trpg.isValid(): 
+  #  echo "PG"
+  #  return
 
   path.joinPath(T1)
 
@@ -1657,7 +1672,7 @@ proc performRendering[VertexSource](app: var App, vs: var VertexSource, contour:
       app.ras.addPath(stroke)
       renderScanLines(app.ras, app.sl, ren)
 
-proc render(app: var App) =
+proc render(app: App) =
   case app.polygons.curItem()
   of 0: # Simple path
     app.performRendering(app.star, app.star)
@@ -1682,11 +1697,11 @@ proc render(app: var App) =
 
   else:
     discard
-
-proc onDraw() =
-  var
-    app    = initApp()
-
+    
+method onDraw(app: App) =
+  app.pf = construct(PixFmt, app.rbufWindow())
+  app.rb = initRendererBase(app.pf)
+  
   app.rb.clear(initRgba(1.0, 1.0, 1.0))
   app.render()
 
@@ -1700,7 +1715,98 @@ proc onDraw() =
   renderCtrl(app.ras, app.sl, app.rb, app.sliderD[1])
   renderCtrl(app.ras, app.sl, app.rb, app.colors)
   renderCtrl(app.ras, app.sl, app.rb, app.persp)
+  
+method onCtrlChange(app: App) =
+  if app.mLast != app.polygons.curItem():
+    app.mLast = app.polygons.curItem()
+    app.mInit = true
 
-  saveBMP24("gradient_contour.bmp", app.buffer, frameWidth, frameHeight)
+method onResize(app: App, sx, sy: int) =
+  app.mInit = true
+  
+const
+  angle = 10.0
+  zoom_up = 1.1
+  zoom_down = 0.9
 
-onDraw()
+proc bbox(persp: PolygonCtrl[Rgba8]): RectD =
+  result.x1 = persp.xn(0)
+  result.y1 = persp.yn(0)
+  result.x2 = persp.xn(1)
+  result.y2 = persp.yn(2)
+  if persp.yn(1) < result.y1:
+    result.y1 = persp.yn(1)
+  if persp.xn(2) > result.x2:
+    result.x2 = persp.xn(2)
+  if persp.xn(3) < result.x1:
+    result.x1 = persp.xn(3)
+  if persp.yn(3) > result.y2:
+    result.y2 = persp.yn(3)
+    
+proc rotate(app: App, a: float64, persp: PolygonCtrl[Rgba8], bb: RectD) =
+  var tat = transAffineTranslation(-(bb.x1 + (bb.x2 - bb.x1) / 2), -(bb.y1 + (bb.y2 - bb.y1) / 2))
+  tat.transform(persp.xn(0), persp.yn(0))
+  tat.transform(persp.xn(1), persp.yn(1))
+  tat.transform(persp.xn(2), persp.yn(2))
+  tat.transform(persp.xn(3), persp.yn(3))
+  
+  var tar = transAffineRotation(deg2rad(a))
+  tar.transform(persp.xn(0), persp.yn(0))
+  tar.transform(persp.xn(1), persp.yn(1))
+  tar.transform(persp.xn(2), persp.yn(2))
+  tar.transform(persp.xn(3), persp.yn(3))
+  
+  var tt2 = transAffineTranslation(bb.x1 + (bb.x2 - bb.x1) / 2, bb.y1 + (bb.y2 - bb.y1) / 2)
+  tt2.transform(persp.xn(0), persp.yn(0))
+  tt2.transform(persp.xn(1), persp.yn(1))
+  tt2.transform(persp.xn(2), persp.yn(2))
+  tt2.transform(persp.xn(3), persp.yn(3))
+  app.forceRedraw()
+  
+proc zoom(app: App, z: float64, persp: PolygonCtrl[Rgba8], bb: RectD) =
+  var tat = transAffineTranslation(-(bb.x1 + (bb.x2 - bb.x1) / 2), -(bb.y1 + (bb.y2 - bb.y1) / 2))
+  tat.transform(persp.xn(0), persp.yn(0))
+  tat.transform(persp.xn(1), persp.yn(1))
+  tat.transform(persp.xn(2), persp.yn(2))
+  tat.transform(persp.xn(3), persp.yn(3))
+  
+  var tas = transAffineScaling(z)
+  tas.transform(persp.xn(0), persp.yn(0))
+  tas.transform(persp.xn(1), persp.yn(1))
+  tas.transform(persp.xn(2), persp.yn(2))
+  tas.transform(persp.xn(3), persp.yn(3))
+  
+  var tt2 = transAffineTranslation(bb.x1 + (bb.x2 - bb.x1) / 2, bb.y1 + (bb.y2 - bb.y1) / 2)
+  tt2.transform(persp.xn(0), persp.yn(0))
+  tt2.transform(persp.xn(1), persp.yn(1))
+  tt2.transform(persp.xn(2), persp.yn(2))
+  tt2.transform(persp.xn(3), persp.yn(3))
+  app.forceRedraw()
+  
+method onKey(app: App, x, y, key: int, flags: InputFlags) =
+  if key == key_kp_plus.ord:
+    var bb = bbox(app.persp)
+    app.rotate(-angle, app.persp, bb)
+
+  if key == key_kp_minus.ord:
+    var bb = bbox(app.persp)
+    app.rotate(angle, app.persp, bb)
+
+  if key == key_page_up.ord:
+    var bb = bbox(app.persp)
+    app.zoom(zoom_up, app.persp, bb)
+
+  if key == key_page_down.ord:
+    var bb = bbox(app.persp)
+    app.zoom(zoom_down, app.persp, bb)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. More gradients: Contour, Bitmap & Assymetric Conic")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "gradients_contour"):
+    return app.run()
+
+  result = 1
+
+discard main()

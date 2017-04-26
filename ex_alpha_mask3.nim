@@ -4,43 +4,47 @@ import agg_conv_stroke, agg_gsv_text, agg_pixfmt_rgb, agg_pixfmt_gray, agg_math_
 import agg_pixfmt_amask_adaptor, agg_span_allocator, agg_alpha_mask_u8, agg_color_gray
 import make_arrows, make_gb_poly, nimBMP, agg_path_storage, agg_trans_affine
 import agg_conv_transform, strutils, times, agg_conv_curve
-import ctrl_slider, ctrl_cbox, ctrl_rbox
+import ctrl_rbox, agg_platform_support
 
 const
   frameWidth = 640
   frameHeight = 520
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  ColorT = getColorT(PixFmt)
+  ValueT = getValueT(ColorT)
 
-type
-  App = object
+  App = ref object of PlatformSupport
     polygons: RboxCtrl[Rgba8]
     operation: RBoxCtrl[Rgba8]
     alphaMask: AmaskNoClipGray8
-    alphaBuf: string
+    alphaBuf: seq[ValueT]
     alphaRbuf: RenderingBuffer
     ras: RasterizerScanlineAA
     sl: ScanlineP8
     mx, my: float64
-    buffer: string
-    rbuf: RenderingBuffer
-    
-proc initApp(cx, cy: int): App =    
-  result.polygons = newRboxCtrl[Rgba8](5.0,     5.0, 5.0+205.0,  110.0, not flipY)
+
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
+  result.polygons  = newRboxCtrl[Rgba8](5.0,     5.0, 5.0+205.0,  110.0, not flipY)
   result.operation = newRboxCtrl[Rgba8](555.0,   5.0, 555.0+80.0, 55.0, not flipY)
-  result.alphaBuf  = newString(cx * cy)
-  result.alphaRbuf = initRenderingBuffer(cast[ptr ValueT](result.alphaBuf[0].addr), cx, cy, cx)
+
+  result.alphaBuf  = newSeq[ValueT](frameWidth * frameHeight)
+  result.alphaRbuf = initRenderingBuffer(result.alphaBuf[0].addr, frameWidth, frameHeight, frameWidth)
   result.alphaMask = initAmaskNoClipGray8(result.alphaRbuf)
-  result.mx = frameWidth.float64 / 2.0
-  result.my = frameHeight.float64 / 2.0
+
+  result.mx = 0
+  result.my = 0
   result.operation.addItem("AND")
   result.operation.addItem("SUB")
   result.operation.curItem(0)
   result.operation.noTransform()
-  
+  result.addCtrl(result.operation)
+
   result.polygons.addItem("Two Simple Paths")
   result.polygons.addItem("Closed Stroke")
   result.polygons.addItem("Great Britain and Arrows")
@@ -48,21 +52,20 @@ proc initApp(cx, cy: int): App =
   result.polygons.addItem("Spiral and Glyph")
   result.polygons.curItem(3)
   result.polygons.noTransform()
-  
+  result.addCtrl(result.polygons)
+
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineP8()
-  
-  result.buffer = newString(frameWidth * frameHeight * pixWidth)
-  result.rbuf   = initRenderingBuffer(cast[ptr ValueT](result.buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    
-proc drawText(app: var App, x, y: float64, text: string) =
+
+
+proc drawText(app: App, x, y: float64, text: string) =
   var
     txt = initGsvText()
     stroke = initConvStroke(txt)
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
-  
+
   stroke.width(1.5)
   stroke.lineCap(roundCap)
   txt.size(10.0)
@@ -71,14 +74,23 @@ proc drawText(app: var App, x, y: float64, text: string) =
   app.ras.addPath(stroke)
   ren.color(initRgba(0.0, 0.0, 0.0))
   renderScanlines(app.ras, app.sl, ren)
-  
-proc generateAlphaMask[VertexSource](app: var App, vs: var VertexSource) =
+
+proc generateAlphaMask[VertexSource](app: App, vs: var VertexSource) =
+  var
+    cx = app.width().int
+    cy = app.height().int
+
+  if app.alphaBuf.len < cx * cy:
+    app.alphaBuf = newSeq[ValueT](cx * cy)
+    app.alphaRbuf.attach(app.alphaBuf[0].addr, cx, cy, cx)
+    app.alphaMask = initAmaskNoClipGray8(app.alphaRbuf)
+
   var
     pixf = initPixFmtGray8(app.alphaRbuf)
     rb   = initRendererBase(pixf)
     ren  = initRendererScanlineAASolid(rb)
 
-  var startTime = cpuTime()
+  app.startTimer()
   if app.operation.curItem() == 0:
     rb.clear(initGray8(0))
     ren.color(initGray8(255))
@@ -89,33 +101,33 @@ proc generateAlphaMask[VertexSource](app: var App, vs: var VertexSource) =
   app.ras.addPath(vs)
   renderScanlines(app.ras, app.sl, ren)
 
-  let endTime = cpuTime()
-  let renTime = formatFloat(endtime - startTime, ffDecimal, 3)
+  let t1 = app.elapsedTime()
+  let renTime = formatFloat(t1, ffDecimal, 3)
   let text = "Generate AlphaMask: $1ms" % [renTime]
-  app.drawText(250, 20, text)  
+  app.drawText(250, 20, text)
 
-proc performRendering[VertexSource](app: var App, vs: var VertexSource) =
+proc performRendering[VertexSource](app: App, vs: var VertexSource) =
   var
-    pf    = initPixFmtRgb24(app.rbuf)
+    pf    = construct(PixFmt, app.rbufWindow())
     pixfa = initPixFmtAmaskAdaptor(pf, app.alphaMask)
     rbase = initRendererBase(pixfa)
     ren   = initRendererScanlineAASolid(rbase)
 
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
 
-  var startTime = cpuTime()
+  app.startTimer()
   app.ras.reset()
   app.ras.addPath(vs)
   renderScanlines(app.ras, app.sl, ren)
 
-  let endTime = cpuTime()
-  let renTime = formatFloat(endtime - startTime, ffDecimal, 3)
+  let t1 = app.elapsedTime()
+  let renTime = formatFloat(t1, ffDecimal, 3)
   let text = "Render with AlphaMask: $1ms" % [renTime]
   app.drawText(250, 5, text)
 
-proc renderGBSpiral(app: var App) =
+proc renderGBSpiral(app: App) =
   var
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sp     = initSpiral(app.mx, app.my, 10, 150, 30, 0.0)
@@ -148,15 +160,15 @@ proc renderGBSpiral(app: var App) =
   app.generateAlphaMask(trans)
   app.performRendering(stroke)
 
-proc renderSimplePaths(app: var App) =
+proc renderSimplePaths(app: App) =
   var
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
 
   ps1.moveTo(x+140, y+145)
   ps1.lineTo(x+225, y+44)
@@ -196,15 +208,15 @@ proc renderSimplePaths(app: var App) =
   app.generateAlphaMask(ps1)
   app.performRendering(ps2)
 
-proc renderClosedStroke(app: var App) =
+proc renderClosedStroke(app: App) =
   var
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
     stroke = initConvStroke(ps2)
 
   stroke.width(10.0)
@@ -241,9 +253,9 @@ proc renderClosedStroke(app: var App) =
   app.generateAlphaMask(ps1)
   app.performRendering(stroke)
 
-proc renderGBArrow(app: var App) =
+proc renderGBArrow(app: App) =
   var
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     gbPoly = initPathStorage()
@@ -258,7 +270,7 @@ proc renderGBArrow(app: var App) =
   mtx1 *= transAffineScaling(2.0)
 
   mtx2 = mtx1
-  mtx2 *= transAffineTranslation(app.mx - frameHeight.float64/2, app.my - frameHeight.float64/2)
+  mtx2 *= transAffineTranslation(app.mx - app.width()/2, app.my - app.height()/2)
 
   var
     transGBPoly = initConvTransform(gbPoly, mtx1)
@@ -274,7 +286,7 @@ proc renderGBArrow(app: var App) =
   app.ras.addPath(stroke_gbPoly)
   ren.color(initRgba(0, 0, 0))
   renderScanlines(app.ras, app.sl, ren)
-  
+
   app.ras.reset()
   app.ras.addPath(transArrows)
   ren.color(initRgba(0.0, 0.5, 0.5, 0.1))
@@ -283,9 +295,9 @@ proc renderGBArrow(app: var App) =
   app.generateAlphaMask(transGBPoly)
   app.performRendering(transArrows)
 
-proc renderSpiralAndGlyph(app: var App) =
+proc renderSpiralAndGlyph(app: App) =
   var
-    pf     = initPixFmtRgb24(app.rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sp     = initSpiral(app.mx, app.my, 10, 150, 30, 0.0)
@@ -361,13 +373,16 @@ proc renderSpiralAndGlyph(app: var App) =
 
   app.generateAlphaMask(stroke)
   app.performRendering(curve)
-  
-proc onDraw() =
+
+method onInit(app: App) =
+  app.mx = app.width() / 2.0
+  app.my = app.height() / 2.0
+
+method onDraw(app: App) =
   var
-    app = initApp(frameWidth, frameHeight)
-    pf  = initPixFmtRgb24(app.rbuf)
+    pf  = construct(PixFmt, app.rbufWindow())
     rb  = initRendererBase(pf)
-      
+
   rb.clear(initRgba(1,1,1))
 
   case app.polygons.curItem()
@@ -380,7 +395,30 @@ proc onDraw() =
 
   renderCtrl(app.ras, app.sl, rb, app.polygons)
   renderCtrl(app.ras, app.sl, rb, app.operation)
-        
-  saveBMP24("alpha_mask3.bmp", app.buffer, frameWidth, frameHeight)
 
-onDraw()
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.mx = x.float64
+    app.my = y.float64
+    app.forceRedraw()
+
+  if mouseRight in flags:
+    var buf = "$1 $2" % [$x, $y]
+    app.message(buf)
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.mx = x.float64
+    app.my = y.float64
+    app.forceRedraw()
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Alpha-Mask as a Polygon Clipper")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "alpha_mask"):
+    return app.run()
+
+  result = 1
+
+discard main()

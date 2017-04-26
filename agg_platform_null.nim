@@ -147,6 +147,7 @@ proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   self.mInitialWidth = 10
   self.mInitialHeight = 10
   self.mCaption = "Anti-Grain Geometry Application"
+  self.mResizeMtx = initTransAffine()
 
 proc caption[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
@@ -224,10 +225,10 @@ proc message[T,R](self: GenericPlatform[T,R], msg: string) =
   echo msg
 
 proc startTimer[T,R](self: GenericPlatform[T,R]) =
-  self.mStartTime = cpuTime()
+  self.mSpecific.mStartTime = cpuTime()
 
 proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
-  result = cpuTime() - self.mStartTime
+  result = cpuTime() - self.mSpecific.mStartTime
 
 proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName

@@ -1,8 +1,6 @@
 import agg_pixmap_win, winapi, strutils
 
-var
-  windowsInstance = HINST(NULL)
-  windowsCmdShow  = 0
+var windowsInstance = HINST(NULL)
 
 type
   PlatformSpecific[T] = object
@@ -327,6 +325,7 @@ proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   self.mInitialWidth = 10
   self.mInitialHeight = 10
   self.mCaption = "Anti-Grain Geometry Application"
+  self.mResizeMtx = initTransAffine()
 
 proc caption[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
@@ -627,6 +626,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
   if paramCount() > 0:
     if paramStr(1) == "-v":
       if self.init(width, height, {window_hidden}):
+        self.mResizeMtx = initTransAffine()
         self.onDraw()
         self.copyWindowToImg(maxImages - 1)
         discard self.saveImg(maxImages - 1, fileName)
@@ -658,7 +658,7 @@ proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
 proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   var dc = getDC(self.mSpecific.mHwnd)
   self.mSpecific.displayPmap(dc, self.mRBufWindow)
-  releaseDC(self.mSpecific.mHwnd, dc)
+  discard releaseDC(self.mSpecific.mHwnd, dc)
 
 proc imgExt[T,R](self: GenericPlatform[T,R]): string = ".bmp"
 
@@ -666,16 +666,16 @@ proc rawDisplayHandler[T,R](self: GenericPlatform[T,R]): pointer =
   cast[pointer](self.mSpecific.mCurrentDC)
 
 proc message[T,R](self: GenericPlatform[T,R], msg: string) =
-  messageBox(self.mSpecific.mHwnd, msg, "AGG Message", MB_OK)
+  discard messageBox(self.mSpecific.mHwnd, msg, "AGG Message", MB_OK)
 
 proc startTimer[T,R](self: GenericPlatform[T,R]) =
-  queryPerformanceCounter(self.mSpecific.mSwStart)
+  discard queryPerformanceCounter(self.mSpecific.mSwStart)
 
 proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
   var stop: LARGE_INTEGER
-  queryPerformanceCounter(stop)
-  result = float64(stop.QuadPart - self.mSpecific.mSwStart.QuadPart) * 1000.0 /
-    float64(self.mSpecific.mSwFreq.QuadPart)
+  discard queryPerformanceCounter(stop)
+  result = float64(stop - self.mSpecific.mSwStart) * 1000.0 /
+    float64(self.mSpecific.mSwFreq)
 
 proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName

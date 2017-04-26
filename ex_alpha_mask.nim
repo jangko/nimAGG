@@ -1,15 +1,21 @@
 import agg_basics, agg_rendering_buffer, agg_color_rgba, agg_color_gray
 import agg_path_storage, agg_conv_transform, agg_bounding_rect, agg_renderer_scanline
-import agg_pixfmt_rgb, agg_pixfmt_gray, agg_scanline_u, agg_scanline_p, agg_renderer_base, agg_trans_affine
-import parse_lion, nimBMP, agg_rasterizer_scanline_aa, agg_alpha_mask_u8, agg_ellipse, random
+import agg_pixfmt_rgb, agg_pixfmt_gray, agg_scanline_u, agg_scanline_p
+import agg_renderer_base, agg_trans_affine, agg_ellipse, random
+import parse_lion, nimBMP, agg_rasterizer_scanline_aa, agg_alpha_mask_u8
+import math, agg_platform_support
 
 const
   frameWidth = 512
   frameHeight = 400
-  pixWidth = 3
+  flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  ColorT = getColorT(PixFmt)
+  ValueT = getValueT(ColorT)
+
+  App = ref object of PlatformSupport
 
 var
   alphaBuf  = newString(frameWidth * frameHeight)
@@ -36,20 +42,69 @@ proc generateAlphaMask(cx, cy: int) =
     ren.color(initGray8(random(0xFF).uint, random(0xFF).uint))
     renderScanlines(ras, sl, ren)
 
-generateAlphaMask(frameWidth, frameHeight)
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
 
-var
-  buffer = newString(frameWidth * frameHeight * pixWidth)
-  rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-  pf     = initPixFmtRgb24(rbuf)
-  rb     = initRendererBase(pf)
-  sl     = initScanlineU8Am(alphaMask)
-  ren    = initRendererScanlineAASolid(rb)
+method onResize*(app: App, sx, sy: int) =
+  generateAlphaMask(sx, sy)
 
-rb.clear(initRgba(1,1,1))
+method onDraw(app: App) =
+  var
+    pf     = construct(PixFmt, app.rbufWindow())
+    rb     = initRendererBase(pf)
+    sl     = initScanlineU8Am(alphaMask)
+    ren    = initRendererScanlineAASolid(rb)
+    width  = app.width()
+    height = app.height()
 
-var trans = initConvTransform(lion.path, lion.mtx)
+  rb.clear(initRgba(1,1,1))
 
-renderAllPaths(ras, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
+  var mtx  = initTransAffine()
+  mtx *= transAffineTranslation(-lion.baseDx, -lion.baseDy)
+  mtx *= transAffineScaling(lion.scale, lion.scale)
+  mtx *= transAffineRotation(lion.angle + pi)
+  mtx *= transAffineSkewing(lion.skewX/1000.0, lion.skewY/1000.0)
+  mtx *= transAffineTranslation(width/2, height/2)
+  var trans = initConvTransform(lion.path, mtx)
 
-saveBMP24("alpha_mask.bmp", buffer, frameWidth, frameHeight)
+  renderAllPaths(ras, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
+
+proc transform(width, height, x, y: float64) =
+  var
+    x = x  - (width / 2)
+    y = y - (height / 2)
+
+  lion.angle = arctan2(y, x)
+  lion.scale = sqrt(y * y + x * x) / 100.0
+
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  var
+    x = float64(x)
+    y = float64(y)
+
+  if mouseLeft in flags:
+    var
+      width = app.width()
+      height = app.height()
+    transform(width, height, x, y)
+    app.forceRedraw()
+
+  if mouseRight in flags:
+    lion.skewX = x
+    lion.skewY = y
+    app.forceRedraw()
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  app.onMouseButtonDown(x, y, flags)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Lion with Alpha-Masking")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "alpha_mask"):
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -3,15 +3,13 @@ import agg_scanline_u, agg_renderer_scanline, agg_pixfmt_rgb
 import agg_gamma_lut, agg_conv_dash, agg_conv_stroke, agg_span_gradient
 import agg_span_interpolator_linear, agg_span_gouraud_rgba, agg_span_allocator
 import agg_color_rgba, agg_renderer_base, nimBMP, math, agg_trans_affine, agg_ellipse
-import strutils, random, times
+import strutils, random, agg_platform_support, ctrl_slider
+import agg_gamma_functions
 
 const
-  frameWidth = 600
-  frameHeight = 480
-  pixWidth = 3
-
-type
-  ValueT = uint8
+  frameWidth = 480
+  frameHeight = 350
+  flipY = false
 
 type
   SimpleVertexSource = object
@@ -99,8 +97,14 @@ proc draw*[Ras, Ren, Scanline](self: var DashedLine[Ras, Ren, Scanline], x1, y1,
   renderScanlines(self.mRas[], self.mSl[], self.mRen[])
 
 type
-  PixFmt = PixfmtRgb24Gamma[GammaLut8] 
+  PixFmt = PixfmtBgr24Gamma[GammaLut8]
   ColorT = getColorT(PixFmt)
+
+  App = ref object of PlatformSupport
+    mGamma: GammaLut8
+    mSlider: SliderCtrl[Rgba8]
+    sl: ScanlineU8
+    ras: RasterizerScanlineAA
 
 proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffine, gradient_d2 = 100.0) =
   let
@@ -111,8 +115,7 @@ proc calc_linear_gradient_transform(x1, y1, x2, y2: float64, mtx: var TransAffin
   mtx *= transAffineRotation(arctan2(dy, dx))
   mtx *= transAffineTranslation(x1 + 0.5, y1 + 0.5)
   mtx.invert()
-  
-  
+
 # A simple function to form the gradient color array
 # consisting of 3 colors, "begin", "middle", "end"
 proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
@@ -123,24 +126,37 @@ proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
   for i in 0.. <256:
     arr[i] = start.gradient(stop, i.float64 / 255.0)
 
-proc onDraw() =
-  var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = initGammaLut8(1.5)
-    pixf   = initPixfmtRgb24Gamma(rbuf, gamma)
-    renBase= initRendererBase(pixf)
-    renSl  = initRendererScanlineAASolid(renBase)
-    sl     = initScanlineU8()
-    ras    = initRasterizerScanlineAA()
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
 
-  renBase.clear(initRgba(0,0,0))
-  var
-    dash = initDashedLine(ras, renSl, sl)
-    cx = frameWidth.float64 / 2.0
-    cy = frameHeight.float64 / 2.0
+  result.mGamma = initGammaLut8(1.0)
+  result.mSlider = newSliderCtrl[Rgba8](3, 3, 480-3, 8, not flipY)
 
-  renSl.color(initRgba(1.0, 1.0, 1.0, 0.2))
+  result.addCtrl(result.mSlider)
+  result.mSlider.setRange(0.1, 3.0)
+  result.mSlider.value(1.6)
+  result.mSlider.label("Gamma=$1")
+
+  result.sl  = initScanlineU8()
+  result.ras = initRasterizerScanlineAA()
+
+method onDraw(app: App) =
+  var
+    pf  = construct(PixFmt, app.rbufWindow(), app.mGamma)
+    rb  = initRendererBase(pf)
+    ren = initRendererScanlineAASolid(rb)
+
+  app.mGamma.gamma(app.mSlider.value())
+
+  rb.clear(initRgba(0,0,0))
+
+  var
+    dash = initDashedLine(app.ras, ren, app.sl)
+    cx = app.width() / 2.0
+    cy = app.height() / 2.0
+
+  ren.color(initRgba(1.0, 1.0, 1.0, 0.2))
   for i in countdown(180, 0):
     let n = 2.0 * pi * i.float64 / 180.0
     dash.draw(cx + min(cx, cy) * sin(n), cy + min(cx, cy) * cos(n),
@@ -153,38 +169,37 @@ proc onDraw() =
     spanAllocator = initSpanAllocator[ColorT]()
     gradientColors: array[256, ColorT]
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
-    renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
-    dashGradient = initDashedLine(ras, renGradient, sl)
+    renGradient = initRendererScanlineAA(rb, spanAllocator, spanGradient)
+    dashGradient = initDashedLine(app.ras, renGradient, app.sl)
 
   var
     x1, y1, x2, y2: float64
 
   for ii in 1..20:
     let i = ii.float64
-    renSl.color(initRgba(1,1,1))
+    ren.color(initRgba(1,1,1))
 
     # integral point sizes 1..20
     var ell = initEllipse(20 + i * (i + 1) + 0.5,
                      20.5, i / 2.0, i / 2.0, 8 + ii)
-    ras.reset()
-    ras.addPath(ell)
-    renderScanlines(ras, sl, renSl)
+    app.ras.reset()
+    app.ras.addPath(ell)
+    renderScanlines(app.ras, app.sl, ren)
 
     # fractional point sizes 0..2
-    ell.init(18 + i * 4 + 0.5, 33 + 0.5,
-            i/20.0, i/20.0, 8)
-    ras.reset()
-    ras.addPath(ell)
-    renderScanlines(ras, sl, renSl)
+    ell.init(18 + i * 4 + 0.5, 33 + 0.5, i/20.0, i/20.0, 8)
+    app.ras.reset()
+    app.ras.addPath(ell)
+    renderScanlines(app.ras, app.sl, ren)
 
 
     # fractional point positioning
     ell.init(18 + i * 4 + (i-1) / 10.0 + 0.5,
             27 + (i - 1) / 10.0 + 0.5,
             0.5, 0.5, 8)
-    ras.reset()
-    ras.addPath(ell)
-    renderScanlines(ras, sl, renSl)
+    app.ras.reset()
+    app.ras.addPath(ell)
+    renderScanlines(app.ras, app.sl, ren)
 
     # integral line widths 1..20
     fillColorArray(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
@@ -245,10 +260,25 @@ proc onDraw() =
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 2.0 - (i - 1) / 10.0, 3.0)
 
+    ren.color(initRgba(1,1,1))
+    if i <= 10:
+      # integral line width, horz aligned (mipmap test)
+      dash.draw(125.5, 119.5 + (i + 2) * (i / 2.0),
+                135.5, 119.5 + (i + 2) * (i / 2.0),
+                i, 0.0)
+
+    # fractional line width 0..2, 1 px H
+    dash.draw(17.5 + i * 4, 192, 18.5 + i * 4, 192, i / 10.0, 0)
+
+    # fractional line positioning, 1 px H
+    dash.draw(17.5 + i * 4 + (i - 1) / 10.0, 186,
+              18.5 + i * 4 + (i - 1) / 10.0, 186,
+              1.0, 0)
+
   #triangles
   let
-    width = frameWidth.float64
-    height = frameHeight.float64
+    width = app.width()
+    height = app.height()
 
   for ii in 1..13:
     let i = ii.float64
@@ -259,42 +289,39 @@ proc onDraw() =
                                    height - 20 - i * (i + 1),
                                    gradientMtx)
 
-    ras.reset()
-    ras.moveToD(width - 150, height - 20 - i * (i + 1.5))
-    ras.lineToD(width - 20,  height - 20 - i * (i + 1))
-    ras.lineToD(width - 20,  height - 20 - i * (i + 2))
-    renderScanlines(ras, sl, renGradient)
+    app.ras.reset()
+    app.ras.moveToD(width - 150, height - 20 - i * (i + 1.5))
+    app.ras.lineToD(width - 20,  height - 20 - i * (i + 1))
+    app.ras.lineToD(width - 20,  height - 20 - i * (i + 2))
+    renderScanlines(app.ras, app.sl, renGradient)
 
-  saveBMP24("aa_test.bmp", buffer, frameWidth, frameHeight)
+  # Reset AA Gamma and render the controls
+  app.ras.gamma(initGammaPower(1.0))
+  renderCtrl(app.ras, app.sl, rb, app.mSlider)
 
-proc drawRandom() =
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
   randomize()
   var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    gamma  = initGammaLut8(1.5)
-    pixf   = initPixfmtRgb24Gamma(rbuf, gamma)
-    renBase= initRendererBase(pixf)
-    renSl  = initRendererScanlineAASolid(renBase)
-    sl     = initScanlineU8()
-    ras    = initRasterizerScanlineAA()
+    pf  = construct(PixFmt, app.rbufWindow(), app.mGamma)
+    rb  = initRendererBase(pf)
+    ren = initRendererScanlineAASolid(rb)
 
-  renBase.clear(initRgba(0,0,0))
+  rb.clear(initRgba(0,0,0))
 
   let
     w = frameWidth.float64
     h = frameHeight.float64
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0..20000:
     let r = random(20.0) + 1.0
     var ell = initEllipse(random(w), random(h), r/2, r/2, int(r) + 10)
-    ras.reset()
-    ras.addPath(ell)
-    renderScanlines(ras, sl, renSl)
-    renSl.color(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)))
+    app.ras.reset()
+    app.ras.addPath(ell)
+    renderScanlines(app.ras, app.sl, ren)
+    ren.color(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)))
 
-  let t1 = cpuTime() - startTime
+  let t1 = app.elapsedTime()
   var
     gradientF = initGradientX()
     gradientMtx = initTransAffine()
@@ -302,13 +329,13 @@ proc drawRandom() =
     spanAllocator = initSpanAllocator[ColorT]()
     gradientColors: array[256, ColorT]
     spanGradient = initSpanGradient(spanInterpolator, gradientF, gradientColors, 0, 100)
-    renGradient = initRendererScanlineAA(renBase, spanAllocator, spanGradient)
-    dashGradient = initDashedLine(ras, renGradient, sl)
+    renGradient = initRendererScanlineAA(rb, spanAllocator, spanGradient)
+    dashGradient = initDashedLine(app.ras, renGradient, app.sl)
 
   var
     x1, y1, x2, y2, x3, y3: float64
 
-  startTime = cpuTime()
+  app.startTimer()
   for i in 0..2000:
     x1 = random(w)
     y1 = random(h)
@@ -322,13 +349,13 @@ proc drawRandom() =
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 10.0, 0)
 
-  let t2 = cpuTime() - startTime
+  let t2 = app.elapsedTime()
 
   var
     spanGouraud = initSpanGouraudRgba[ColorT]()
-    renGouraud  = initRendererScanlineAA(renBase, spanAllocator, spanGouraud)
+    renGouraud  = initRendererScanlineAA(rb, spanAllocator, spanGouraud)
 
-  startTime = cpuTime()
+  app.startTimer()
   for i in 0..2000:
     x1 = random(w)
     y1 = random(h)
@@ -341,15 +368,24 @@ proc drawRandom() =
                         initRgba(random(1.0), random(1.0), random(1.0), random(1.0)),
                         initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
     spanGouraud.triangle(x1, y1, x2, y2, x3, y3, 0.0)
-    ras.addPath(spanGouraud)
-    renderScanlines(ras, sl, renGouraud)
+    app.ras.addPath(spanGouraud)
+    renderScanlines(app.ras, app.sl, renGouraud)
 
-  let t3 = cpuTime() - startTime
+  let t3 = app.elapsedTime()
 
-  echo "Points=$1K/sec, Lines=$2K/sec, Triangles=$3K/sec" % [formatFloat(20000.0/t1/1000, ffDecimal, 3),
-    formatFloat(2000.0/t2/1000, ffDecimal, 3), formatFloat(2000.0/t3/1000, ffDecimal, 3)]
+  var buf = "Points=$1K/sec, Lines=$2K/sec, Triangles=$3K/sec" % [formatFloat(20000.0/t1, ffDecimal, 3),
+    formatFloat(2000.0/t2, ffDecimal, 3), formatFloat(2000.0/t3, ffDecimal, 3)]
 
-  saveBMP24("aa_test2.bmp", buffer, frameWidth, frameHeight)
+  app.message(buf)
+  app.updateWindow()
 
-drawRandom()
-onDraw()
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Anti-Aliasing Test")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "aa_test"):
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -1,38 +1,19 @@
-import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasterizer_outline
-import agg_conv_stroke, agg_conv_dash, agg_conv_curve, agg_conv_contour, agg_conv_marker
+import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa
+import agg_rasterizer_outline, agg_conv_stroke, agg_conv_dash
+import agg_conv_curve, agg_conv_contour, agg_conv_marker
 import agg_conv_marker_adaptor, agg_conv_concat, agg_arrowhead
-import agg_vcgen_markers_term, agg_scanline_p, agg_scanline_u, agg_renderer_scanline
-import agg_renderer_primitives, agg_span_allocator, agg_span_gradient, agg_span_interpolator_linear
-import agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox, nimBMP, random, agg_curves
-import agg_color_rgba, agg_renderer_base, agg_ellipse, agg_trans_affine, agg_gamma_functions
+import agg_vcgen_markers_term, agg_scanline_p, agg_scanline_u
+import agg_renderer_scanline, agg_renderer_primitives, agg_span_allocator
+import agg_span_gradient, agg_span_interpolator_linear
+import agg_pixfmt_rgb, ctrl_slider, ctrl_rbox, ctrl_cbox
+import random, agg_curves, agg_color_rgba, agg_renderer_base
+import agg_ellipse, agg_trans_affine, agg_gamma_functions
+import agg_platform_support, strutils
 
 const
   frameWidth = 700
   frameHeight = 530
   flipY = true
-  pixWidth = 3
-
-type
-  ValueT = uint8
-
-#typedef agg::pixfmt_bgr24 pixfmt;
-#typedef pixfmt::color_type color_type;
-#typedef agg::renderer_base<pixfmt> base_renderer;
-#typedef agg::renderer_primitives<base_renderer> primitives_renderer;
-#
-#typedef agg::renderer_scanline_aa_solid<base_renderer>  solid_renderer;
-#typedef agg::renderer_scanline_bin_solid<base_renderer> draft_renderer;
-#
-#typedef agg::gradient_radial_d gradient_function;
-#typedef agg::span_interpolator_linear<> interpolator;
-#typedef agg::pod_auto_array<color_type, 256> color_array_type;
-#typedef agg::span_gradient<color_type, interpolator, gradient_function, color_array_type> gradient_span_gen;
-#typedef agg::span_allocator<color_type> gradient_span_alloc;
-#
-#typedef agg::renderer_scanline_aa<base_renderer, gradient_span_alloc, gradient_span_gen> gradient_renderer;
-#
-#typedef agg::rasterizer_scanline_aa<> scanline_rasterizer;
-#typedef agg::rasterizer_outline<primitives_renderer> outline_rasterizer;
 
 type
   Node = object
@@ -276,7 +257,9 @@ proc vertex[S](self: var DashStrokeFineArrow[S], x, y: var float64): uint =
 
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     mType: RboxCtrl[Rgba8]
     mWidth: SliderCtrl[Rgba8]
     benchmark: CboxCtrl[Rgba8]
@@ -289,10 +272,11 @@ type
     gradientColors: array[256, Rgba8]
     draw: int
     sl: ScanlineU8
-    buffer: string
-    rbuf: RenderingBuffer
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.mType = newRboxCtrl[Rgba8](-1, -1, -1, -1, not flipY)
   result.mWidth = newSliderCtrl[Rgba8](110+80, 8.0, 110+200.0+80, 8.0 + 7.0, not flipY)
   result.benchmark = newCboxCtrl[Rgba8](110+200+80+8, 8.0-2.0, "Benchmark", not flipY)
@@ -301,6 +285,15 @@ proc initApp(): App =
   result.draft = newCboxCtrl[Rgba8](200+200+80+8, 8.0-2.0, "Draft Mode", not flipY)
   result.noArrow = newCboxCtrl[Rgba8](300+200+80+8, 8.0-2.0, "No Arrow", not flipY)
   result.translucent = newCboxCtrl[Rgba8](110+80, 8.0-2.0+15.0, "Translucent Mode", not flipY)
+
+  result.addCtrl(result.mType)
+  result.addCtrl(result.mWidth)
+  result.addCtrl(result.benchmark)
+  result.addCtrl(result.drawNodes)
+  result.addCtrl(result.drawEdges)
+  result.addCtrl(result.draft)
+  result.addCtrl(result.noArrow)
+  result.addCtrl(result.translucent)
 
   result.noArrow.status(true)
   result.sl = initScanlineU8()
@@ -332,15 +325,9 @@ proc initApp(): App =
   for i in 0..255:
     result.gradientColors[i] = initRgba8(c1.gradient(c2, float64(i) / 255.0))
 
-  result.buffer = newString(frameWidth * frameHeight * pixWidth)
-  result.rbuf   = initRenderingBuffer(cast[ptr ValueT](result.buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-
-proc width(app: App): float64 = app.rbuf.width().float64
-proc height(app: App): float64 = app.rbuf.height().float64
-
-proc draw_nodes_draft(app: var App) =
+proc draw_nodes_draft(app: App) =
   var
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
     prim   = initRendererPrimitives(rb)
 
@@ -352,10 +339,10 @@ proc draw_nodes_draft(app: var App) =
     prim.fillColor(app.gradientColors[50])
     prim.solidEllipse(int(n.x), int(n.y), 4, 4)
 
-proc draw_nodes_fine(app: var App, ras: var RasterizerScanlineAA) =
+proc draw_nodes_fine(app: App, ras: var RasterizerScanlineAA) =
   var
     sa = initSpanAllocator[Rgba8]()
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
 
   for i in 0.. <app.graph.getNumNodes():
@@ -396,7 +383,7 @@ type
   SolidRenderer = RendererScanlineAASolid[BaseRenderer, Rgba8]
   DraftRenderer = RendererScanlineBinSolid[BaseRenderer, Rgba8]
 
-proc render_edge_fine[Source](app: var App, ras: var RasterizerScanlineAA,
+proc render_edge_fine[Source](app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer, src: var Source) =
   var
     x, y: float64
@@ -430,7 +417,7 @@ proc render_edge_fine[Source](app: var App, ras: var RasterizerScanlineAA,
   else:
     discard
 
-proc strokeDraft[S, R](app: var App, a: var S, b: float64, ras: var R) =
+proc strokeDraft[S, R](app: App, a: var S, b: float64, ras: var R) =
   if app.noArrow.status():
     var s = initStrokeDraftSimple(a, b)
     ras.addPath(s)
@@ -438,7 +425,7 @@ proc strokeDraft[S, R](app: var App, a: var S, b: float64, ras: var R) =
     var s = initStrokeDraftArrow(a, b)
     ras.addPath(s)
 
-proc dashStrokeDraft[S, R](app: var App, a: var S, b, c, d: float64, ras: var R) =
+proc dashStrokeDraft[S, R](app: App, a: var S, b, c, d: float64, ras: var R) =
   if app.noArrow.status():
     var s = initDashStrokeDraftSimple(a, b, c, d)
     ras.addPath(s)
@@ -446,7 +433,7 @@ proc dashStrokeDraft[S, R](app: var App, a: var S, b, c, d: float64, ras: var R)
     var s = initDashStrokeDraftArrow(a, b, c, d)
     ras.addPath(s)
 
-proc strokeFine[S,R](app: var App, a: var S, b: float64, ras: var R,
+proc strokeFine[S,R](app: App, a: var S, b: float64, ras: var R,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
   if app.noArrow.status():
     var s = initStrokeFineSimple(a, b)
@@ -455,7 +442,7 @@ proc strokeFine[S,R](app: var App, a: var S, b: float64, ras: var R,
     var s = initStrokeFineArrow(a, b)
     app.render_edge_fine(ras, renFine, renDraft, s)
 
-proc dashStrokeFine[S,R](app: var App, a: var S, b, c, d: float64, ras: var R,
+proc dashStrokeFine[S,R](app: App, a: var S, b, c, d: float64, ras: var R,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
   if app.noArrow.status():
     var s = initDashStrokeFineSimple(a, b, c, d)
@@ -464,9 +451,9 @@ proc dashStrokeFine[S,R](app: var App, a: var S, b, c, d: float64, ras: var R,
     var s = initDashStrokeFineArrow(a, b, c, d)
     app.render_edge_fine(ras, renFine, renDraft, s)
 
-proc draw_lines_draft(app: var App) =
+proc draw_lines_draft(app: App) =
   var
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
@@ -485,9 +472,9 @@ proc draw_lines_draft(app: var App) =
     prim.lineColor(initRgba8(r, g, b, a))
     app.strokeDraft(ln, app.mWidth.value(), ras)
 
-proc draw_curves_draft(app: var App) =
+proc draw_curves_draft(app: App) =
   var
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
@@ -506,9 +493,9 @@ proc draw_curves_draft(app: var App) =
     prim.lineColor(initRgba8(r, g, b, a))
     app.strokeDraft(c, app.mWidth.value(), ras)
 
-proc draw_dashes_draft(app: var App) =
+proc draw_dashes_draft(app: App) =
   var
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
@@ -527,7 +514,7 @@ proc draw_dashes_draft(app: var App) =
     prim.lineColor(initRgba8(r, g, b, a))
     app.dashStrokeDraft(c, 6.0, 3.0, app.mWidth.value(), ras)
 
-proc draw_lines_fine(app: var App, ras: var RasterizerScanlineAA,
+proc draw_lines_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
 
   for i in 0.. <app.graph.getNumEdges():
@@ -540,7 +527,7 @@ proc draw_lines_fine(app: var App, ras: var RasterizerScanlineAA,
     app.strokeFine(ln, app.mWidth.value(), ras, renFine, renDraft)
 
 
-proc draw_curves_fine(app: var App, ras: var RasterizerScanlineAA,
+proc draw_curves_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
   for i in 0.. <app.graph.getNumEdges():
     var
@@ -551,7 +538,7 @@ proc draw_curves_fine(app: var App, ras: var RasterizerScanlineAA,
 
     app.strokeFine(c, app.mWidth.value(), ras, renFine, renDraft)
 
-proc draw_dashes_fine(app: var App, ras: var RasterizerScanlineAA,
+proc draw_dashes_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
   for i in 0.. <app.graph.getNumEdges():
     var
@@ -562,7 +549,7 @@ proc draw_dashes_fine(app: var App, ras: var RasterizerScanlineAA,
 
     app.dashStrokeFine(c, 6.0, 3.0, app.mWidth.value(), ras, renFine, renDraft)
 
-proc draw_polygons(app: var App, ras: var RasterizerScanlineAA,
+proc draw_polygons(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
 
   if app.mType.curItem() == 4:
@@ -578,7 +565,7 @@ proc draw_polygons(app: var App, ras: var RasterizerScanlineAA,
   ras.gamma(initGammaNone())
 
 
-proc draw_scene(app: var App, ras: var RasterizerScanlineAA,
+proc draw_scene(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
 
   ras.gamma(initGammaNone())
@@ -605,10 +592,9 @@ proc draw_scene(app: var App, ras: var RasterizerScanlineAA,
       of 3, 4: app.draw_polygons(ras, renFine, renDraft)
       else: discard
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    pixf   = initPixfmtRgb24(app.rbuf)
+    pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
     ras    = initRasterizerScanlineAA()
     renFine  = initRendererScanlineAASolid(rb)
@@ -627,6 +613,60 @@ proc onDraw() =
   renderCtrl(ras, app.sl, rb, app.noArrow)
   renderCtrl(ras, app.sl, rb, app.translucent)
 
-  saveBMP24("graph_test.bmp", app.buffer, frameWidth, frameHeight)
+method onCtrlChange(app: App) =
+  if app.benchmark.status():
+    app.onDraw()
+    app.updateWindow()
 
-onDraw()
+    var
+      pixf   = initPixfmtRgb24(app.rbufWindow())
+      rb     = initRendererBase(pixf)
+      ras    = initRasterizerScanlineAA()
+      renFine  = initRendererScanlineAASolid(rb)
+      renDraft = initRendererScanlineBinSolid(rb)
+      buf: string
+
+    if app.draft.status():
+      app.startTimer()
+      for i in 0.. <10:
+        app.draw_scene(ras, renFine, renDraft)
+      let t1 = app.elapsedTime()
+      buf = "$1f milliseconds" % [t1.formatFloat(ffDecimal, 3)]
+    else:
+      var times: array[5, float64]
+      for x in 0.. <4:
+        app.draw = x
+        app.startTimer()
+        for i in 0.. <10:
+          app.draw_scene(ras, renFine, renDraft)
+        times[app.draw] = app.elapsedTime()
+
+      app.draw = 3
+
+      times[4]  = times[3]
+      times[3] -= times[2]
+      times[2] -= times[1]
+      times[1] -= times[0]
+
+      buf = "  pipeline  add_path         sort       render       total\n$1 $2 $3 $4 $5" % [
+        times[0].formatFloat(ffDecimal, 3),
+        times[1].formatFloat(ffDecimal, 3),
+        times[2].formatFloat(ffDecimal, 3),
+        times[3].formatFloat(ffDecimal, 3),
+        times[4].formatFloat(ffDecimal, 3)]
+
+    app.message(buf)
+
+    app.benchmark.status(false)
+    app.forceRedraw()
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Line Join")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "graph_test"):
+    return app.run()
+
+  result = 1
+
+discard main()

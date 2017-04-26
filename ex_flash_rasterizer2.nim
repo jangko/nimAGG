@@ -3,13 +3,12 @@ import agg_conv_curve, agg_conv_stroke, agg_gsv_text, agg_scanline_u
 import agg_renderer_scanline, agg_rasterizer_scanline_aa
 import agg_span_allocator, agg_gamma_lut, agg_pixfmt_rgba, agg_bounding_rect
 import agg_color_rgba, nimBMP, agg_trans_affine, strutils, agg_basics, agg_math
-import random, os, strutils, agg_renderer_base, math, times
+import random, os, strutils, agg_renderer_base, math, agg_platform_support
 
 const
   frameWidth = 655
   frameHeight = 520
   flipY = false
-  pixWidth = 4
 
 type
   ValueT = uint8
@@ -38,9 +37,10 @@ proc initCompoundShape(): CompoundShape =
   result.minStyle = 0x7FFFFFFF
   result.maxStyle = -0x7FFFFFFF
 
-proc open(self: var CompoundShape, name: string) =
+proc open(self: var CompoundShape, name: string): bool =
   self.fd = open(name, fmRead)
-
+  result = self.fd != nil
+  
 proc readNext(self: var CompoundShape): bool =
   self.path.removeAll()
   self.styles.setLen(0)
@@ -158,14 +158,19 @@ proc modify_vertex(self: var CompoundShape, i: int, x, y: float64) =
   self.path.modifyVertex(i, x, y)
 
 type
-  App = object
+  PixFmt = PixFmtBgra32Pre
+
+  App = ref object of PlatformSupport
     shape: CompoundShape
     colors: array[100, Rgba8]
     scale: TransAffine
     gamma: GammaLut8
     pointIdx: int
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
   result.shape = initCompoundShape()
   result.scale = initTransAffine()
   result.pointIdx = -1
@@ -178,23 +183,17 @@ proc initApp(): App =
     result.colors[i].applyGammaDir(result.gamma)
     result.colors[i].premultiply()
 
-proc open(app: var App, name: string): bool =
+proc open(app: App, name: string): bool =
   app.shape.open("resources$1$2" % [$DirSep, name])
 
-proc readNext(app: var App) =
+proc readNext(app: App) =
   discard app.shape.readNext()
   app.shape.scale(frameWidth.float64, frameHeight.float64)
 
-proc onDraw() =
-  var app    = initApp()
-  discard app.open("shapes.txt")
-  app.readNext()
-
+method onDraw(app: App) =
   var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixWidth)
-    pixf   = initPixfmtBgra32Pre(rbuf)
-    rb     = initRendererBase(pixf)
+    pf     = construct(PixFmt, app.rbufWindow())
+    rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
@@ -240,7 +239,7 @@ proc onDraw() =
 
   ras.autoClose(false)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for s in app.shape.minStyle..app.shape.maxStyle:
     ras.reset()
     for i in 0.. <app.shape.paths():
@@ -254,11 +253,11 @@ proc onDraw() =
           tmpPath.invertPolygon(0)
           ras.addPath(tmpPath)
     renderScanlinesAASolid(ras, sl, rb, app.colors[s])
-  let tfill = (cpuTime() - startTime) * 1000.0
+  let tfill = app.elapsedTime()
 
   ras.autoClose(true)
   # Draw strokes
-  startTime = cpuTime()
+  app.startTimer()
   stroke.width(sqrt(app.scale.scale()))
   stroke.lineJoin(roundJoin)
   stroke.lineCap(roundCap)
@@ -268,7 +267,7 @@ proc onDraw() =
       ras.addPath(stroke, app.shape.style(i).pathId)
       ren.color(initRgba8(0,0,0, 128))
       renderScanlines(ras, sl, ren)
-  let tstroke = (cpuTime() - startTime) * 1000.0
+  let tstroke = app.elapsedTime()
 
   var
     t   = initGsvText()
@@ -291,8 +290,81 @@ proc onDraw() =
   renderScanlines(ras, sl, ren)
 
   if app.gamma.gamma() != 1.0:
-    pixf.applyGammaInv(app.gamma)
+    pf.applyGammaInv(app.gamma)
 
-  saveBMP32("flash_rasterizer.bmp", buffer, frameWidth, frameHeight)
+method onKey(app: App, x, y, key: int, flags: InputFlags) =
+  var 
+    x = x.float64
+    y = y.float64
+    
+  if key == ' '.ord:
+    discard app.shape.readNext()
+    app.shape.scale(app.width(), app.height())
+    app.forceRedraw()
+  
+  if key == '+'.ord or key == key_kp_plus.ord:
+      app.scale *= transAffineTranslation(-x, -y)
+      app.scale *= transAffineScaling(1.1)
+      app.scale *= transAffineTranslation(x, y)
+      app.forceRedraw()
+  
+  if key == '-'.ord or key == key_kp_minus.ord:
+    app.scale *= transAffineTranslation(-x, -y)
+    app.scale *= transAffineScaling(1/1.1)
+    app.scale *= transAffineTranslation(x, y)
+    app.forceRedraw()
+  
+  if key == key_left.ord:
+    app.scale *= transAffineTranslation(-x, -y)
+    app.scale *= transAffineRotation(-pi / 20.0)
+    app.scale *= transAffineTranslation(x, y)
+    app.forceRedraw()
+  
+  if key == key_right.ord:
+    app.scale *= transAffineTranslation(-x, -y)
+    app.scale *= transAffineRotation(pi / 20.0)
+    app.scale *= transAffineTranslation(x, y)
+    app.forceRedraw()
+ 
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.onMouseButtonUp(x, y, flags)
+  else:
+    if app.pointIdx >= 0:
+      var
+        xd = x.float64
+        yd = y.float64
+      app.scale.inverseTransform(xd, yd)
+      app.shape.modifyVertex(app.pointIdx, xd, yd)
+      app.forceRedraw()
 
-onDraw()
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    var
+      xd = x.float64
+      yd = y.float64
+      r  = 4.0 / app.scale.scale()
+    app.scale.inverseTransform(xd, yd)
+    app.pointIdx = app.shape.hitTest(xd, yd, r)
+    app.forceRedraw()
+
+method onMouseButtonUp(app: App, x, y: int, flags: InputFlags) =
+  app.pointIdx = -1
+
+proc main(): int =
+  var app = newApp(pix_format_bgra32, flipY)
+  app.caption("AGG Example - Flash Rasterizer")
+  
+  if not app.open("shapes.txt"):
+    app.message("failed to load shapes.txt")
+    return 1
+
+  app.readNext()
+  app.readNext()
+  
+  if app.init(frameWidth, frameHeight, {window_resize}, "flash_rasterizer2"):
+    return app.run()
+
+  result = 1
+
+discard main()

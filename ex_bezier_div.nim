@@ -4,6 +4,7 @@ import agg_pattern_filters_rgba, agg_renderer_outline_aa, agg_renderer_outline_i
 import agg_bezier_arc, agg_pixfmt_rgb, ctrl_slider, ctrl_bezier, ctrl_rbox, ctrl_cbox
 import agg_renderer_base, agg_color_rgba, times, agg_basics, agg_math, agg_vertex_sequence
 import math, agg_path_storage, nimBMP, agg_ellipse, agg_gsv_text, strutils, random
+import agg_platform_support
 
 proc bezier4Point(x1, y1, x2, y2, x3, y3, x4, y4, mu: float64; x, y: var float64) =
    var mum1, mum13, mu3: float64
@@ -18,14 +19,13 @@ proc bezier4Point(x1, y1, x2, y2, x3, y3, x4, y4, mu: float64; x, y: var float64
 const
   frameWidth = 655
   frameHeight = 520
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  ValueT = getValueT(PixFmt)
 
-type
-  App = object
+  App = ref object of PlatformSupport
     ctrlColor: Rgba8
     curve1: BezierCtrl[Rgba8]
     angleTolerance: SliderCtrl[Rgba8]
@@ -41,7 +41,10 @@ type
     lineCap: RboxCtrl[Rgba8]
     curCaseType: int
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.ctrlColor = construct(Rgba8, initRgba(0, 0.3, 0.5, 0.8))
   result.curve1 = newBezierCtrl[Rgba8]()
   result.angleTolerance     = newSliderCtrl[Rgba8](5.0, 5.0, 240.0, 12.0            , not flipY)
@@ -56,6 +59,19 @@ proc initApp(): App =
   result.lineJoin           = newRboxCtrl[Rgba8](535.0, 295.0, 535.0+115.0,   385.0 , not flipY)
   result.lineCap            = newRboxCtrl[Rgba8](535.0, 395.0, 535.0+115.0,   455.0 , not flipY)
   result.curCaseType = -1
+
+  result.addCtrl(result.curve1)
+  result.addCtrl(result.angleTolerance)
+  result.addCtrl(result.approximationScale)
+  result.addCtrl(result.cuspLimit)
+  result.addCtrl(result.width)
+  result.addCtrl(result.showPoints)
+  result.addCtrl(result.showOutline)
+  result.addCtrl(result.curveType)
+  result.addCtrl(result.caseType)
+  result.addCtrl(result.innerJoin)
+  result.addCtrl(result.lineJoin)
+  result.addCtrl(result.lineCap)
 
   result.curve1.lineColor(result.ctrlColor)
   result.curve1.curve(170.0, 424.0, 13.0, 87.0, 488.0, 423.0, 26.0, 333.0)
@@ -130,7 +146,7 @@ proc initApp(): App =
   result.lineCap.noTransform()
 
 proc measureTime[Curve](app: App, curve: var Curve): float64 =
-  let startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <100:
     var x, y: float64
     curve.init(app.curve1.x1(), app.curve1.y1(),
@@ -141,7 +157,7 @@ proc measureTime[Curve](app: App, curve: var Curve): float64 =
     var cmd = curve.vertex(x, y)
     while not isStop(cmd):
       cmd = curve.vertex(x, y)
-  result = cpuTime() - startTime
+  result = app.elapsedTime()
 
 proc findPoint[Path](path: var Path, dist: float64, i, j: var int): bool =
   j = path.len - 1
@@ -162,7 +178,7 @@ proc initCurvePoint(x1, y1, mu1: float64): CurvePoint =
   result.y = y1
   result.mu = mu1
 
-proc calcMaxError[Curve](app: var App, curve: var Curve, scale: float64,  maxAngleError: var float64): float64 =
+proc calcMaxError[Curve](app: App, curve: var Curve, scale: float64,  maxAngleError: var float64): float64 =
   curve.approximationScale(app.approximationScale.value() * scale)
   curve.init(app.curve1.x1(), app.curve1.y1(),
              app.curve1.x2(), app.curve1.y2(),
@@ -237,7 +253,7 @@ proc calcMaxError[Curve](app: var App, curve: var Curve, scale: float64,  maxAng
   maxAngleError = aerr * 180.0 / pi
   result = maxError * scale
 
-proc on_ctrl_change(app: var App) =
+method onCtrlChange(app: App) =
   if app.caseType.curItem() != app.curCaseType:
     case app.caseType.curItem()
     of 0: #m_of_type.add_item("Random");
@@ -267,19 +283,17 @@ proc on_ctrl_change(app: var App) =
       app.curve1.curve(100, 100, 413, 304, 264, 286, 264, 284)
     else:
       discard
+    app.forceRedraw()
     app.curCaseType = app.caseType.curItem()
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
-    rb     = initRendererBase(pf)
-    ren    = initRendererScanlineAASolid(rb)
-    ras    = initRasterizerScanlineAA()
-    sl     = initScanlineU8()
-    path   = initPathStorage()
+    pf   = construct(PixFmt, app.rbufWindow())
+    rb   = initRendererBase(pf)
+    ren  = initRendererScanlineAASolid(rb)
+    ras  = initRasterizerScanlineAA()
+    sl   = initScanlineU8()
+    path = initPathStorage()
     x, y: float64
     curveTime = 0.0
     curve  = initCurve4()
@@ -399,6 +413,13 @@ proc onDraw() =
   renderCtrl(ras, sl, rb, app.lineJoin)
   renderCtrl(ras, sl, rb, app.lineCap)
 
-  saveBMP24("bezier_div.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Bezier Div")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "bezier_div"):
+    return app.run()
+
+  result = 1
+
+discard main()
