@@ -2,8 +2,7 @@ import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_rasteri
 import agg_path_storage, agg_conv_stroke, agg_conv_transform, agg_bounding_rect
 import agg_scanline_u, agg_scanline_p, agg_pixfmt_rgb, agg_renderer_base, agg_renderer_outline_aa
 import agg_rasterizer_outline_aa, agg_renderer_scanline, agg_span_allocator, agg_ellipse
-import agg_trans_affine, agg_color_rgba
-import parse_lion, nimBMP
+import agg_trans_affine, agg_color_rgba, parse_lion, agg_platform_support
 
 type
   SpanSimpleBlurRgb24[OrderT] = object
@@ -68,36 +67,48 @@ proc generate*[OrderT, ColorT](self: var SpanSimpleBlurRgb24[OrderT], span: ptr 
 const
   frameWidth = 512
   frameHeight = 400
-  pixWidth = 3
+  flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
 
-proc onDraw() =
+  App = ref object of PlatformSupport
+    cx, cy: float64
+    lion: Lion
+
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
+  result.lion   = parseLion(frameWidth, frameHeight)
+  result.cx     = 100.0
+  result.cy     = 102.0
+
+method onDraw(app: App) =
   var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
     sl2    = initScanlineU8()
     ras2   = initRasterizerScanlineAA()
-    lion   = parseLion(frameWidth, frameHeight)
-    trans  = initConvTransform(lion.path, lion.mtx)
-    cx     = 100.0
-    cy     = 102.0
-  
+    mtx    = initTransAffine()
+    trans  = initConvTransform(app.lion.path, mtx)
+
   rb.clear(initRgba(1, 1, 1))
 
-  lion.mtx *= transAffineTranslation(-frameWidth.float64/4, 0)
-  #lion.mtx *= transAffineResizing()
+  mtx *= transAffineTranslation(-app.lion.baseDx, -app.lion.baseDy)
+  mtx *= transAffineScaling(app.lion.scale, app.lion.scale)
+  mtx *= transAffineRotation(app.lion.angle + pi)
+  mtx *= transAffineSkewing(app.lion.skewX/1000.0, app.lion.skewY/1000.0)
+  mtx *= transAffineTranslation(app.initialWidth()/4, app.initialHeight()/2)
+  mtx *= transAffineResizing(app)
 
-  renderAllPaths(ras2, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
+  renderAllPaths(ras2, sl, ren, trans, app.lion.colors, app.lion.pathIdx, app.lion.numPaths)
 
-  #mtx *= ~trans_affine_resizing();
-  lion.mtx *= transAffineTranslation(frameWidth.float64/2, 0)
-  #mtx *= trans_affine_resizing();
+  mtx *= ~transAffineResizing(app)
+  mtx *= transAffineTranslation(app.initialWidth()/2, 0)
+  mtx *= transAffineResizing(app)
 
   var
     profile = initLineProfileAA()
@@ -106,10 +117,10 @@ proc onDraw() =
 
   profile.width(1.0)
   ras.roundCap(true)
-  ras.renderAllPaths(trans, lion.colors, lion.pathIdx, lion.numPaths)
+  ras.renderAllPaths(trans, app.lion.colors, app.lion.pathIdx, app.lion.numPaths)
 
   var
-    ell = initEllipse(cx, cy, 100.0, 100.0, 100)
+    ell = initEllipse(app.cx, app.cy, 100.0, 100.0, 100)
     ell_stroke1 = initConvStroke(ell)
     ell_stroke2 = initConvStroke(ell_stroke1)
 
@@ -121,14 +132,12 @@ proc onDraw() =
   renderScanlines(ras2, sl, ren)
 
   var
-    buffer2 = newString(frameWidth * frameHeight * pixWidth)
-    rbuf2   = initRenderingBuffer(cast[ptr ValueT](buffer2[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    sg = initSpanSimpleBlurRgb24[OrderRgb](rbuf2)
+    sg = initSpanSimpleBlurRgb24[OrderBgr](app.rbufImg(0))
     sa = initSpanAllocator[Rgba8]()
 
   ras2.addPath(ell)
 
-  rbuf2.copyFrom(rbuf)
+  app.copyWindowToImg(0)
   renderScanlinesAA(ras2, sl2, rb, sa, sg)
 
   # More blur if desired :-)
@@ -137,6 +146,13 @@ proc onDraw() =
   #rbuf2.copyFrom(rbuf)
   #renderScanlinesAA(ras2, sl2, rb, sa, sg)
 
-  saveBMP24("simple_blur.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Lion with blur")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "simple_blur"):
+    return app.run()
+
+  result = 1
+
+discard main()

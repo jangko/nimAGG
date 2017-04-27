@@ -1,27 +1,25 @@
 import agg_basics, agg_rendering_buffer, agg_scanline_u, agg_scanline_bin, agg_renderer_scanline
 import agg_renderer_primitives, agg_rasterizer_scanline_aa, agg_conv_curve, agg_conv_contour
 import agg_pixfmt_rgb, agg_gamma_lut, agg_font_win32_tt, agg_font_types, agg_font_cache_manager
-import ctrl_slider, ctrl_cbox, ctrl_rbox, agg_color_rgba, agg_renderer_base, nimBMP
-import os, strutils, winapi, agg_trans_affine, agg_gamma_functions
+import ctrl_slider, ctrl_cbox, ctrl_rbox, agg_color_rgba, agg_renderer_base
+import os, strutils, winapi, agg_trans_affine, agg_gamma_functions, agg_platform_support
 import agg_scanline_storage_bin, agg_scanline_storage_aa, agg_path_storage_integer
 
 const
   frameWidth = 640
   frameHeight = 520
-  pixWidth = 3
   flipY = true
 
 gammaLut(GammaLut86, uint8, uint16, 8, 16)
 
 type
-  ValueT = uint8
-
   FontEngineType  = FontEngineWin32TTInt16
   FontManagerType = FontCacheManagerWin16
   ConvCurveType = ConvCurve[pathAdaptorT(FontManagerType)]
   ConvContourType = ConvContour[ConvCurveType]
+  PixFmt = PixFmtBgr24
 
-  App = object
+  App = ref object of PlatformSupport
     mRenType: RBoxCtrl[Rgba8]
     mHeight: SliderCtrl[Rgba8]
     mWidth: SliderCtrl[Rgba8]
@@ -48,7 +46,10 @@ proc loadText(): string =
     result.add line
   f.close()
 
-proc initApp(hdc: HDC): App =
+proc newApp(format: PixFormat, flipY: bool, hdc: HDC): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.mRenType     = newRboxCtrl[Rgba8](5.0, 5.0, 5.0+150.0,   110.0,  not flipY)
   result.mHeight      = newSliderCtrl[Rgba8](160, 10.0, 640-5.0,    18.0,   not flipY)
   result.mWidth       = newSliderCtrl[Rgba8](160, 30.0, 640-5.0,    38.0,   not flipY)
@@ -57,6 +58,16 @@ proc initApp(hdc: HDC): App =
   result.mHinting     = newCboxCtrl[Rgba8](160, 65.0, "Hinting", not flipY)
   result.mKerning     = newCboxCtrl[Rgba8](160, 80.0, "Kerning", not flipY)
   result.mPerformance = newCboxCtrl[Rgba8](160, 95.0, "Test Performance", not flipY)
+
+  result.addCtrl(result.mRenType)
+  result.addCtrl(result.mHeight)
+  result.addCtrl(result.mWidth)
+  result.addCtrl(result.mWeight)
+  result.addCtrl(result.mGamma)
+  result.addCtrl(result.mHinting)
+  result.addCtrl(result.mKerning)
+  result.addCtrl(result.mPerformance)
+
   result.mFEng = newFontEngineWin32TTInt16(hdc)
   result.mFMan = newFontCacheManagerWin16(result.mFEng)
   result.mOldHeight = 0.0
@@ -127,7 +138,7 @@ proc getRenType(app: App): GlyphRendering =
 const
   textFlip = false
 
-proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: var App, ras: var Rasterizer,
+proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasterizer,
   sl: var Scanline, renSolid: var RenSolid, renBin: var RenBin): int =
 
   var
@@ -204,56 +215,56 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: var App, ras: var Ras
   result = numGlyphs
 
 
-proc onDraw(hdc: HDC) =
+method onDraw(app: App) =
   var
-    app = initApp(hdc)
-    buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     renSolid = initRendererScanlineAASolid(rb)
     renbin   = initRendererScanlineBinSolid(rb)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
 
-  for i in 0..4:
-    app.mRenType.curItem(i)
-    rb.clear(initRgba(1,1,1))
+  rb.clear(initRgba(1,1,1))
 
-    if app.mHeight.value() != app.mOldHeight:
-      app.mOldHeight = app.mHeight.value()
-      app.mWidth.value(app.mOldHeight)
+  if app.mHeight.value() != app.mOldHeight:
+    app.mOldHeight = app.mHeight.value()
+    app.mWidth.value(app.mOldHeight)
 
-    if app.mRenType.curItem() == 3:
-      # When rendering in mono format,
-      # Set threshold gamma = 0.5
-      var gamma = initGammaThreshold(app.mGamma.value() / 2.0)
-      app.mFEng.gamma(gamma)
-    else:
-      var gamma = initGammaNone()
-      app.mFEng.gamma(gamma)
-      app.mGammaLut.gamma(app.mGamma.value())
+  if app.mRenType.curItem() == 3:
+    # When rendering in mono format,
+    # Set threshold gamma = 0.5
+    var gamma = initGammaThreshold(app.mGamma.value() / 2.0)
+    app.mFEng.gamma(gamma)
+  else:
+    var gamma = initGammaNone()
+    app.mFEng.gamma(gamma)
+    app.mGammaLut.gamma(app.mGamma.value())
 
 
-    discard app.drawText(ras, sl, renSolid, renBin)
+  discard app.drawText(ras, sl, renSolid, renBin)
 
-    ras.gamma(initGammaPower(1.0))
+  ras.gamma(initGammaPower(1.0))
 
-    renderCtrl(ras, sl, rb, app.mRenType)
-    renderCtrl(ras, sl, rb, app.mHeight)
-    renderCtrl(ras, sl, rb, app.mWidth)
-    renderCtrl(ras, sl, rb, app.mWeight)
-    renderCtrl(ras, sl, rb, app.mGamma)
-    renderCtrl(ras, sl, rb, app.mHinting)
-    renderCtrl(ras, sl, rb, app.mKerning)
-    renderCtrl(ras, sl, rb, app.mPerformance)
-    let name = "truetype_test$1.bmp" % [$i]
-    echo name
-    saveBMP24(name, buffer, frameWidth, frameHeight)
+  renderCtrl(ras, sl, rb, app.mRenType)
+  renderCtrl(ras, sl, rb, app.mHeight)
+  renderCtrl(ras, sl, rb, app.mWidth)
+  renderCtrl(ras, sl, rb, app.mWeight)
+  renderCtrl(ras, sl, rb, app.mGamma)
+  renderCtrl(ras, sl, rb, app.mHinting)
+  renderCtrl(ras, sl, rb, app.mKerning)
+  renderCtrl(ras, sl, rb, app.mPerformance)
 
-proc main() =
+proc main(): int =
   var dc = getDC(0)
-  onDraw(dc)
-  discard releaseDC(0, dc)
+  var app = newApp(pix_format_bgr24, flipY, dc)
+  app.caption("AGG Example. Rendering TrueType Fonts with WinAPI")
 
-main()
+  if app.init(frameWidth, frameHeight, {}, "truetype_test"):
+    let ret = app.run()
+    discard releaseDC(0, dc)
+    return ret
+
+  discard releaseDC(0, dc)
+  result = 1
+
+discard main()

@@ -167,6 +167,7 @@ proc initParser*(path: var PathRenderer): Parser =
   result.mPathFlag = false
   result.mTitle = ""
 
+proc title*(self: Parser): string = self.mTitle
 proc parseNode(self: var Parser, node: XmlNode)
 proc parseAttr(self: var Parser, name, value: string): bool
 

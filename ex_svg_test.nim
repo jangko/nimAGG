@@ -1,21 +1,20 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_p
 import agg_renderer_scanline, agg_pixfmt_rgb, ctrl_slider, agg_color_rgba
-import agg_renderer_base, nimBMP, os, agg_gamma_functions, times
+import agg_renderer_base, os, agg_gamma_functions, times
 import agg_gsv_text, agg_conv_stroke, agg_trans_affine, agg_conv_transform
-import agg_path_storage, agg_conv_contour, strutils
+import agg_path_storage, agg_conv_contour, strutils, agg_platform_support
 
 import svg_parser, svg_path_renderer
 
 const
   frameWidth = 512
   frameHeight = 600
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
 
-  App = object
+  App = ref object of PlatformSupport
     mPath: PathRenderer
 
     mExpand: SliderCtrl[Rgba8]
@@ -25,13 +24,23 @@ type
 
     mMinX, mMinY, mMaxX, mMaxY: float64
     mX, mY, mDx, mDy: float64
+    mCurSvg: int
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.mPath = initPathRenderer()
   result.mExpand = newSliderCtrl[Rgba8](5,     5,    256-5, 11,    not flipY)
   result.mGamma  = newSliderCtrl[Rgba8](5,     5+15, 256-5, 11+15, not flipY)
   result.mScale  = newSliderCtrl[Rgba8](256+5, 5,    512-5, 11,    not flipY)
   result.mRotate = newSliderCtrl[Rgba8](256+5, 5+15, 512-5, 11+15, not flipY)
+
+  result.addCtrl(result.mExpand)
+  result.addCtrl(result.mGamma )
+  result.addCtrl(result.mScale )
+  result.addCtrl(result.mRotate)
+
   result.mMinX = 0.0
   result.mMinY = 0.0
   result.mMaxX = 0.0
@@ -56,20 +65,24 @@ proc initApp(): App =
   result.mRotate.label("Rotate=$1")
   result.mRotate.setRange(-180.0, 180.0)
   result.mRotate.value(180.0)
+  result.mCurSvg = 0
 
-proc parseSvg(app: var App, fname: string) =
+const
+  svg = ["b8","clinton","cowboy","lion","longhorn","mcseem2","picasso","tiger","xenia4"]
+
+proc parseSvg(app: App, fname: string) =
   var p = initParser(app.mPath)
   p.parse("resources" & DirSep & fname & ".svg")
   app.mPath.arrangeOrientations()
   app.mPath.boundingRect(app.mMinX, app.mMinY, app.mMaxX, app.mMaxY)
-  #caption(p.title())
+  app.caption(p.title())
 
-proc onDraw(fileName: string) =
+method onInit(app: App) =
+  app.parseSvg(svg[app.mCurSvg])
+
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
@@ -77,17 +90,15 @@ proc onDraw(fileName: string) =
     mtx    = initTransAffine()
     gamma  = initGammaPower(app.mGamma.value())
 
-  app.parseSvg(fileName)
-
   rb.clear(initRgba(1, 1, 1))
 
   var
-    width = frameWidth.float64
-    height = frameHeight.float64
+    width  = app.width()
+    height = app.height()
     w = app.mMaxX - app.mMinX
     h = app.mMaxY - app.mMinY
-    scaleX = 1.0
-    scaleY = 1.0
+    scaleX = app.mScale.value()
+    scaleY = app.mScale.value()
 
   if w > width:
     scaleX = width / w
@@ -102,15 +113,15 @@ proc onDraw(fileName: string) =
   mtx.flipX()
   mtx *= transAffineScaling(scaleX, scaleY)
   mtx *= transAffineRotation(deg2rad(app.mRotate.value()))
-  mtx *= transAffineTranslation((app.mMinX + app.mMaxX) * 0.5 + app.mX, (app.mMinY + app.mMaxY) * 0.5 + app.mY + 50)  
-  
+  mtx *= transAffineTranslation((app.mMinX + app.mMaxX) * 0.5 + app.mX, (app.mMinY + app.mMaxY) * 0.5 + app.mY + 50)
+
   app.mPath.expand(app.mExpand.value())
 
-  var startTime = cpuTime()
+  app.startTimer()
   app.mPath.render(ras, sl, ren, mtx, rb.clipBox(), 1.0)
 
   var
-    tm = cpuTime() - startTime
+    tm = app.elapsedTime()
     vertexCount = app.mPath.vertexCount()
     gammaNone = initGammaNone()
     t = initGsvText()
@@ -147,12 +158,20 @@ proc onDraw(fileName: string) =
   #        c.b = gl.inv(c.b)
   #        rb.copy_pixel(x, y, c)
 
-  let name = "svg $1.bmp" % [fileName]
-  echo name
-  saveBMP24(name, buffer, frameWidth, frameHeight)
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseRight in flags:
+    app.mCurSvg = (app.mCurSvg + 1) mod svg.len
+    app.mPath.removeAll()
+    app.parseSvg(svg[app.mCurSvg])
+    app.forceRedraw()
 
-const
-  svg = ["b8","clinton","cowboy","lion","longhorn","mcseem2","picasso","tiger","xenia4"]
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. SVG Viewer")
 
-for name in svg:
-  onDraw(name)
+  if app.init(frameWidth, frameHeight, {}, "svg_test"):
+    return app.run()
+
+  result = 1
+
+discard main()

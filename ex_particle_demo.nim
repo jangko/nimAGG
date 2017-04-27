@@ -3,16 +3,12 @@ import agg_renderer_base, ctrl_slider, ctrl_cbox, agg_span_allocator
 import agg_span_gradient, agg_gsv_text, agg_renderer_scanline, agg_scanline_u
 import agg_rasterizer_scanline_aa, agg_conv_stroke, agg_ellipse
 import agg_trans_affine, agg_span_interpolator_linear, random, math
-import nimBMP, times, strutils
+import agg_platform_support, strutils, agg_math
 
 const
   frameWidth = 600
   frameHeight = 500
-  pixWidth = 4
   flipY = true
-
-type
-  ValueT = uint8
 
 type
   GradientTricolor = object
@@ -46,7 +42,11 @@ proc `[]`(self: GradientTricolor, idx: int): Rgba8 =
     result.a = ValueT((((self.mC3.a.CalcT - self.mC2.a.CalcT) * idx.CalcT) + (self.mC2.a.CalcT shl baseshift)) shr baseShift)
 
 type
-  App = ref object
+  PixFmt = PixFmtBgra32
+  PixFmtPre = PixFmtBgra32Pre
+  ValueT = getValueT(PixFmt)
+
+  App = ref object of PlatformSupport
     mAngle, mCenterScale: float64
     mParticlesValue: float64
     mSpeedValue: float64
@@ -71,33 +71,15 @@ type
 
     mRunFlag, mUseCacheFlag, mFirstTime: bool
 
-    mPixF: PixFmtRgba32
-    mPixFPre: PixFmtRgba32Pre
-
-    mRenb: RendererBase[PixFmtRgba32]
-    mRenbPre: RendererBase[PixFmtRgba32Pre]
-
-    mRen: RendererScanLineAASolid[RendererBase[PixFmtRgba32], Rgba8]
     mSl: ScanLineU8
     mRas: RasterizerScanLineAA
-    buffer: seq[ValueT]
-    rbuf: RenderingBuffer
 
-proc newApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
   var app = new(App)
+  PlatformSupport(app).init(format, flipY)
+
   app.mSl = initScanlineU8()
   app.mRas = initRasterizerScanLineAA()
-
-  app.buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-  app.rbuf   = initRenderingBuffer(app.buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-
-  app.mPixF = initPixFmtRgba32(app.rbuf)
-  app.mPixFPre = initPixFmtRgba32Pre(app.rbuf)
-
-  app.mRenb = initRendererBase(app.mPixF)
-  app.mRenbPre = initRendererBase(app.mPixFPre)
-
-  app.mRen = initRendererScanLineAASolid(app.mRenb)
 
   #app.mGradientCircle = initGradientCircle()
   app.mSpanAllocator = initSpanAllocator[Rgba8]()
@@ -147,8 +129,10 @@ proc newApp(): App =
   app.mPt = initConvStroke(app.mTxt)
   app.mPt.width(1.5)
 
-  #for i in 0.. <1000:
-  #  app.mGradients[i] = newSeq[Rgba8](256)
+  app.addCtrl(app.mParticles)
+  app.addCtrl(app.mSpeed)
+  app.addCtrl(app.mUseCache)
+  app.addCtrl(app.mRun)
 
   result = app
 
@@ -171,13 +155,13 @@ proc renderParticle[RendererBase](app: App, ren: var RendererBase; idx: int; x, 
   app.mRas.addPath(circle)
   renderScanLines(app.mRas, app.mSl, rg)
 
-proc init(app: App) =
+method onInit(app: App) =
   var
     da: int
     divisor = if app.mUseCache.status: 250.0 else: 500.0
     angle, speed, K: float64
     N = iround(app.mParticles.value())
-    disorder = true
+    disorder = false
 
   randomize()
 
@@ -238,57 +222,133 @@ proc init(app: App) =
     app.mFirstTime = false
 
   type
-    PixfmtRgba32Dyna = PixfmtAlphaBlendRgba[BlenderRgba32, DynaRow[ValueT], Pixel32Type]
+    PixFmtDyna = PixfmtAlphaBlendRgba[BlenderBgra32, DynaRow[ValueT], Pixel32Type]
 
   if app.mUseCache.status():
     for i in 0.. <N:
       let D = iround(app.mRadius[i]) * 2
-      app.mCache[i] = initDynaRow[ValueT](D, D, D * pixWidth)
+      app.mCache[i] = initDynaRow[ValueT](D, D, D * getPixelem(PixFmt))
       var
-        pixFmt = construct(PixfmtRgba32Dyna, app.mCache[i])
+        pixFmt = construct(PixFmtDyna, app.mCache[i])
         rb = initRendererBase(pixFmt)
       app.renderParticle(rb, i, D.float64 * 0.5, D.float64 * 0.5)
 
-proc onDraw(app: App) =
+method onDraw(app: App) =
   type
-    PixfmtRgba32Dyna = PixfmtAlphaBlendRgba[BlenderRgba32, DynaRow[ValueT], Pixel32Type]
+    PixFmtDyna = PixfmtAlphaBlendRgba[BlenderBgra32, DynaRow[ValueT], Pixel32Type]
 
-  app.mRas.clipBox(0, 0, frameWidth, frameHeight)
-  app.mRenb.clear(initRgba(0,0,0))
+  var
+    pixF = construct(PixFmt, app.rbufWindow())
+    pixFPre = construct(PixFmtPre, app.rbufWindow())
+
+    renb = initRendererBase(pixF)
+    renbPre = initRendererBase(pixFPre)
+    ren = initRendererScanLineAASolid(renb)
+
+  app.mRas.clipBox(0, 0, app.width(), app.height())
+  renb.clear(initRgba(0,0,0))
 
   if app.mRun.status():
-    let startTime = cpuTime()
+    app.startTimer()
 
     let N = iround(app.mParticles.value())
 
     if app.mUseCache.status():
       for i in 0.. <N:
         var
-          pixFmt = construct(PixfmtRgba32Dyna, app.mCache[i])
+          pixFmt = construct(PixFmtDyna, app.mCache[i])
           x = iround(app.mCenter[i].x - app.mRadius[i]) + 1
           y = iround(app.mCenter[i].y - app.mRadius[i]) + 1
-        app.mRenbPre.blendFrom(pixFmt, nil, x, y)
+        renbPre.blendFrom(pixFmt, nil, x, y)
     else:
       for i in 0.. <N:
-        app.renderParticle(app.mRenb, i, app.mCenter[i].x, app.mCenter[i].y)
+        app.renderParticle(renb, i, app.mCenter[i].x, app.mCenter[i].y)
 
-    let endTime = cpuTime() - startTime
+    let endTime = app.elapsedTime()
 
     let text = "$1 fps" % [(1000.0 / endTime).formatFloat(ffDecimal, 3)]
     app.mTxt.startPoint(10, 35)
     app.mTxt.text(text)
     app.mRas.addPath(app.mPt)
-    app.mRen.color(initRgba(1,1,1))
-    renderScanLines(app.mRas, app.mSl, app.mRen)
+    ren.color(initRgba(1,1,1))
+    renderScanLines(app.mRas, app.mSl, ren)
 
   # Render the controls
-  renderCtrl(app.mRas, app.mSl, app.mRenb, app.mParticles)
-  renderCtrl(app.mRas, app.mSl, app.mRenb, app.mSpeed)
-  renderCtrl(app.mRas, app.mSl, app.mRenb, app.mUseCache)
-  renderCtrl(app.mRas, app.mSl, app.mRenb, app.mRun)
+  renderCtrl(app.mRas, app.mSl, renb, app.mParticles)
+  renderCtrl(app.mRas, app.mSl, renb, app.mSpeed)
+  renderCtrl(app.mRas, app.mSl, renb, app.mUseCache)
+  renderCtrl(app.mRas, app.mSl, renb, app.mRun)
 
-  saveBMP32("particle_demo.bmp", app.buffer, frameWidth, frameHeight)
+var mCenter = 0.0
+var mDC = 0.5
 
-var app = newApp()
-app.init()
-app.onDraw()
+method onIdle(app: App) =
+  let n = app.mParticles.value().int
+
+  var
+    x1 = -100.0
+    y1 = -100.0
+    x2 = app.width() + 100.0
+    y2 = app.height() + 100.0
+    dx = cos(app.mAngle) * mCenter
+    dy = sin(app.mAngle) * mCenter
+    cx = dx + app.width() / 2
+    cy = dy + app.height() / 2
+    max_dist = sqrt(app.width() * app.width() / 2 + app.height() * app.height() / 2)
+
+  app.mAngle += 5.0 * pi / 180.0
+  mCenter += mDC
+  if mCenter > max_dist/2:
+    mCenter = max_dist/2
+    mDC = -mDC
+
+  if mCenter < 10.0:
+    mCenter = 10.0
+    mDC = -mDC
+
+  for i in 0.. <n:
+    app.mCenter[i].x += app.mDelta[i].x * app.mSpeed.value()
+    app.mCenter[i].y += app.mDelta[i].y * app.mSpeed.value()
+
+    var d = calcDistance(app.mCenter[i].x, app.mCenter[i].y, cx, cy)
+    if d > max_dist:
+      app.mCenter[i].x = cx
+      app.mCenter[i].y = cy
+
+  app.forceRedraw()
+
+method onCtrlChange(app: App) =
+  if app.mRunFlag != app.mRun.status():
+    app.waitMode(not app.mRun.status())
+    app.mRunFlag = app.mRun.status()
+    if app.mRunFlag:
+      app.onInit()
+  else:
+    var stop = false
+    if app.mUseCache.status() != app.mUseCacheFlag:
+      app.mUseCacheFlag = app.mUseCache.status()
+      stop = true
+
+    if app.mParticles.value() != app.mParticlesValue:
+      app.mParticlesValue = app.mParticles.value()
+      stop = true
+
+    if app.mSpeed.value() != app.mSpeedValue:
+      app.mSpeedValue = app.mSpeed.value()
+      stop = true
+
+    if stop:
+      app.waitMode(true)
+      app.mRun.status(false)
+
+proc main(): int =
+  var app = newApp(pix_format_bgra32, flipY)
+  app.caption("Renesis project -- Particles demo.")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "particle_demo"):
+    app.waitMode(false)
+    return app.run()
+
+  result = 1
+
+discard main()

@@ -3,7 +3,7 @@ import agg_conv_bspline, agg_conv_segmentator, agg_font_win32_tt, agg_font_cache
 import agg_font_types, agg_trans_single_path, ctrl_cbox, ctrl_slider, ctrl_polygon
 import winapi, agg_basics, agg_color_rgba, agg_pixfmt_rgb, agg_renderer_base
 import agg_conv_curve, agg_conv_transform, agg_conv_stroke, agg_path_storage_integer
-import nimBMP
+import agg_platform_support, random
 
 proc makeText(): string {.compileTime.} =
   result = "Anti-Grain Geometry is designed as a set of loosely coupled"
@@ -18,16 +18,15 @@ const text = makeText()
 const
   frameWidth = 600
   frameHeight = 600
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
-
   FontEngineType  = FontEngineWin32TTInt16
   FontManagerType = FontCacheManagerWin16
 
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     mFEng: FontEngineType
     mFMan: FontManagerType
     mPoly: PolygonCtrl[Rgba8]
@@ -39,7 +38,7 @@ type
     mDx, mDy: array[6, float64]
     mPrevAnimate: bool
 
-proc init(app: var App) =
+method onInit(app: App) =
   app.mPoly.xn(0) = 50
   app.mPoly.yn(0) = 50
   app.mPoly.xn(1) = 150 + 20
@@ -53,7 +52,10 @@ proc init(app: var App) =
   app.mPoly.xn(5) = 550
   app.mPoly.yn(5) = 550
 
-proc initApp(hdc: HDC): App =
+proc newApp(format: PixFormat, flipY: bool, hdc: HDC): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.mFEng = newFontEngineWin32TTInt16(hdc)
   result.mFMan = newFontCacheManagerWin16(result.mFEng)
   result.mPoly = newPolygonCtrl[Rgba8](6, 5.0)
@@ -64,20 +66,22 @@ proc initApp(hdc: HDC): App =
   result.mAnimate        = newCboxCtrl[Rgba8](460, 25.0, "Animate", not flipY)
   result.mPrevAnimate    = false
 
+  result.addCtrl(result.mPoly)
+  result.addCtrl(result.mNumPoints)
+  result.addCtrl(result.mClose)
+  result.addCtrl(result.mPreserveXScale)
+  result.addCtrl(result.mFixedLen)
+  result.addCtrl(result.mAnimate)
+
   result.mPreserveXScale.status(true)
   result.mFixedLen.status(true)
   result.mNumPoints.setRange(10.0, 400.0)
   result.mNumPoints.value(200.0)
   result.mNumPoints.label("Number of intermediate Points = $1")
 
-  result.init()
-
-proc onDraw(hdc: HDC) =
+method onDraw(app: App) =
   var
-    app = initApp(hdc)
-    buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
@@ -149,11 +153,56 @@ proc onDraw(hdc: HDC) =
   renderCtrl(ras, sl, rb, app.mFixedLen)
   renderCtrl(ras, sl, rb, app.mAnimate)
   renderCtrl(ras, sl, rb, app.mNumPoints)
-  saveBMP24("trans_curve1.bmp", buffer, frameWidth, frameHeight)
 
-proc main() =
+method onCtrlChange(app: App) =
+  if app.mAnimate.status() != app.mPrevAnimate:
+    if app.mAnimate.status():
+      app.onInit()
+      for i in 0.. <6:
+        app.mdx[i] = (random(1000.0) - 500.0) * 0.01
+        app.mdy[i] = (random(1000.0) - 500.0) * 0.01
+      app.waitMode(false)
+    else:
+      app.waitMode(true)
+    app.mPrevAnimate = app.mAnimate.status()
+
+
+proc movePoint(app: App, x, y, dx, dy: var float64) =
+  if x < 0.0:
+    x = 0.0
+    dx = -dx
+
+  if x > app.width():
+    x = app.width()
+    dx = -dx
+
+  if y < 0.0:
+    y = 0.0
+    dy = -dy
+
+  if y > app.height():
+    y = app.height()
+    dy = -dy
+
+  x += dx
+  y += dy
+
+method onIdle(app: App) =
+  for i in 0.. <6:
+    app.movePoint(app.mPoly.xn(i), app.mPoly.yn(i), app.mdx[i], app.mdy[i])
+  app.forceRedraw()
+
+proc main(): int =
   var dc = getDC(0)
-  onDraw(dc)
-  discard releaseDC(0, dc)
+  var app = newApp(pix_format_bgr24, flipY, dc)
+  app.caption("AGG Example. Non-linear \"Along-A-Curve\" Transformer")
 
-main()
+  if app.init(frameWidth, frameHeight, {}, "trans_curve1"):
+    let ret = app.run()
+    discard releaseDC(0, dc)
+    return ret
+
+  discard releaseDC(0, dc)
+  result = 1
+
+discard main()

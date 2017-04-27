@@ -1,17 +1,21 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_conv_stroke
-import agg_renderer_base, nimBMP, agg_path_storage, agg_pixfmt_rgb, agg_color_rgba
-import agg_scanline_p, agg_renderer_scanline
-
+import agg_renderer_base, agg_path_storage, agg_pixfmt_rgb, agg_color_rgba
+import agg_scanline_p, agg_renderer_scanline, agg_platform_support
 import polyBool/polyBool
 
 const
   frameWidth = 600
   frameHeight = 400
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
+  
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
   
 proc polygonToPath(path: var PathStorage, poly: Polygon) =
   path.removeAll()
@@ -23,13 +27,10 @@ proc polygonToPath(path: var PathStorage, poly: Polygon) =
         path.lineTo(r[i].x, r[i].y)
     path.closePolygon()
     
-proc onDraw() =
+method onDraw(app: App) =
   var
-    buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
-    #ren   = initRendererScanlineAASolid(rb)
     sl     = initScanlineP8()
     ras    = initRasterizerScanlineAA()
     path   = initPathStorage()
@@ -91,6 +92,13 @@ proc onDraw() =
   ras.addPath(path)
   renderScanlinesAAsolid(ras, sl, rb, initRgba(0.1, 1.0, 0.1))
   
-  saveBMP24("test_poly_bool.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. polyBool")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {}, "test_poly_bool"):
+    return app.run()
+
+  result = 1
+
+discard main()

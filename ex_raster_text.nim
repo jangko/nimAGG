@@ -1,17 +1,13 @@
 import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_u
 import agg_renderer_scanline, agg_pixfmt_rgb, agg_span_allocator, agg_span_gradient
 import agg_span_interpolator_linear, agg_glyph_raster_bin, agg_renderer_raster_text
-import agg_embedded_raster_fonts, ctrl_slider, ctrl_cbox, nimBMP, math
-import agg_renderer_base, agg_color_rgba, agg_trans_affine
+import agg_embedded_raster_fonts, ctrl_slider, ctrl_cbox, math
+import agg_renderer_base, agg_color_rgba, agg_trans_affine, agg_platform_support
 
 const
   frameWidth = 640
   frameHeight = 480
-  pixWidth = 3
   flipY = true
-
-type
-  ValueT = uint8
 
 type
   GradientSineRepeatAdaptor[GradientF] = object
@@ -63,13 +59,20 @@ let
     (font: verdana17_bold[0].unsafeAddr,       name: "verdana17_bold"       ),
     (font: verdana18[0].unsafeAddr,            name: "verdana18"            ),
     (font: verdana18_bold[0].unsafeAddr,       name: "verdana18_bold"       )]
+    
+type
+  PixFmt = PixFmtBgr24
 
-proc onDraw() =
+  App = ref object of PlatformSupport
+  
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)  
+  
+method onDraw(app: App) =
   var
     glyph  = initGlyphRasterBin(nil)
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pixf   = initPixfmtRgb24(rbuf)
+    pixf   = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pixf)
     rt     = initRendererRasterHtextSolid(rb, glyph)
 
@@ -103,6 +106,13 @@ proc onDraw() =
   var buf = "RADIAL REPEATING GRADIENT: A quick brown fox jumps over the lazy dog"
   rt2.renderText(5, 465, buf, not flipY)
 
-  saveBMP24("raster_text.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Raster Text")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {window_resize}, "raster_text"):
+    return app.run()
+
+  result = 1
+
+discard main()
