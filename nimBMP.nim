@@ -485,8 +485,6 @@ proc decodeBMP*(s: Stream): BMP =
   except:
     raise BMPError("error reading BMP header")
 
-  echo header
-  
   try:
     s.readLE(info)
   except:
@@ -498,8 +496,6 @@ proc decodeBMP*(s: Stream): BMP =
   if info.size != 40:
     raise BMPError("wrong BMP version, only supported version 3.0")
 
-  echo info
-  
   bmp.width = info.width
   bmp.height = info.height
   bmp.inverted = true

@@ -38,6 +38,14 @@ proc save(self: PixelMap[uint8], fn: string): bool =
   else:
     doAssert(false)
 
+proc load(self: var PixelMap[uint8], fn: string): bool =
+  var bmp = loadBmp24(fn, seq[uint8])
+  self.mWidth  = bmp.width
+  self.mHeight = bmp.height
+  self.mBuffer = bmp.data
+  self.mPixElem = 3
+  result = bmp.width != 0 and bmp.height != 0
+
 type
   PlatformSpecific[T] = object
     mFormat: PixFormat
@@ -134,7 +142,43 @@ proc savePmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, src
     return pmap.save(fn)
 
 proc loadPmap[T,RenBuf](self: var PlatformSpecific[T], fn: string, idx: int, dst: var RenBuf): bool =
-  discard
+  type ValueT = getValueT(RenBuf)
+  var
+    pmap= initPixelMap[ValueT]()
+    src = initRenderingBuffer()
+
+  if not pmap.load(fn): return false
+
+  src.attach(pmap.buf(),
+             pmap.width(),
+             pmap.height(),
+             if self.mFlipY: -pmap.stride() else: pmap.stride())
+
+  self.mImgPmap[idx].create(pmap.width(), pmap.height(), self.mSysPixElem)
+  dst.attach(self.mImgPmap[idx].buf(),
+             self.mImgPmap[idx].width(),
+             self.mImgPmap[idx].height(),
+             if self.mFlipY: -self.mImgPmap[idx].stride() else: self.mImgPmap[idx].stride())
+
+  case self.mFormat
+  of pix_format_gray8:  color_conv(dst, src, color_conv_rgb24_to_gray8)
+  of pix_format_gray16: color_conv(dst, src, color_conv_rgb24_to_gray16)
+  of pix_format_rgb555: color_conv(dst, src, color_conv_rgb24_to_rgb555)
+  of pix_format_rgb565: color_conv(dst, src, color_conv_rgb24_to_rgb565)
+  of pix_format_rgb24:  color_conv(dst, src, color_conv_rgb24_to_rgb24)
+  of pix_format_bgr24:  color_conv(dst, src, color_conv_rgb24_to_bgr24)
+  of pix_format_rgb48:  color_conv(dst, src, color_conv_rgb24_to_rgb48)
+  of pix_format_bgr48:  color_conv(dst, src, color_conv_rgb24_to_bgr48)
+  of pix_format_abgr32: color_conv(dst, src, color_conv_rgb24_to_abgr32)
+  of pix_format_argb32: color_conv(dst, src, color_conv_rgb24_to_argb32)
+  of pix_format_bgra32: color_conv(dst, src, color_conv_rgb24_to_bgra32)
+  of pix_format_rgba32: color_conv(dst, src, color_conv_rgb24_to_rgba32)
+  of pix_format_abgr64: color_conv(dst, src, color_conv_rgb24_to_abgr64)
+  of pix_format_argb64: color_conv(dst, src, color_conv_rgb24_to_argb64)
+  of pix_format_bgra64: color_conv(dst, src, color_conv_rgb24_to_bgra64)
+  of pix_format_rgba64: color_conv(dst, src, color_conv_rgb24_to_rgba64)
+  else: discard
+  result = true
 
 proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   type ValueT = getValueT(R)
