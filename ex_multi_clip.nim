@@ -3,7 +3,8 @@ import agg_color_gray, agg_renderer_mclip, agg_renderer_scanline, agg_path_stora
 import agg_conv_transform, agg_bounding_rect, agg_renderer_outline_aa, agg_renderer_primitives
 import agg_renderer_markers, agg_span_allocator, agg_span_gradient, agg_span_interpolator_linear
 import agg_rasterizer_outline_aa, agg_ellipse, agg_pixfmt_rgb, agg_color_rgba
-import nimBMP, parse_lion, agg_renderer_base, random, agg_renderer_markers, agg_trans_affine
+import parse_lion, agg_renderer_base, random, agg_renderer_markers, agg_trans_affine
+import ctrl_slider, agg_platform_support, math
 
 type
   GradientLinearColor[T] = object
@@ -41,27 +42,39 @@ proc `[]`(self: GradientLinearColor[Gray8], v: int): Gray8 =
 const
   frameWidth = 512
   frameHeight = 400
-  pixWidth = 3
+  flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
 
-proc onDraw() =
+  App = ref object of PlatformSupport
+    mNumCb: SliderCtrl[Rgba8]
+    lion: Lion
+
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
+  result.mNumCb = newSliderCtrl[Rgba8](5, 5, 150, 12, not flipY)
+  result.lion   = parseLion(frameWidth, frameHeight)
+  result.addCtrl(result.mNumCb)
+  result.mNumCb.setRange(2, 10)
+  result.mNumCb.label("N=$1")
+  result.mNumCb.noTransform()
+
+method onDraw(app: App) =
   var
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererMclip(pf)
     ren    = initRendererScanlineAASolid(rb)
     sl     = initScanlineU8()
     ras    = initRasterizerScanlineAA()
-    lion   = parseLion(frameWidth, frameHeight)
-    width  = frameWidth.float64
-    height = frameWidth.float64
+    width  = app.width()
+    height = app.height()
 
   rb.clear(initRgba(1, 1, 1))
   rb.resetClipping(false)  # Visibility: "false" means "no visible regions"
-  let n = 6 #number of block
+  let n = app.mNumCb.value().int #number of block
 
   for x in 0.. <n:
     for y in 0.. <n:
@@ -75,10 +88,16 @@ proc onDraw() =
         y2 = int(height * (yy + 1) / nn)
       rb.addClipBox(x1 + 5, y1 + 5, x2 - 5, y2 - 5)
 
+  var mtx = initTransAffine()
+  mtx *= transAffineTranslation(-app.lion.baseDx, -app.lion.baseDy)
+  mtx *= transAffineScaling(app.lion.scale, app.lion.scale)
+  mtx *= transAffineRotation(app.lion.angle + pi)
+  mtx *= transAffineSkewing(app.lion.skewX/1000.0, app.lion.skewY/1000.0)
+  mtx *= transAffineTranslation(width/2, height/2)
 
   # Render the lion
-  var trans = initConvTransform(lion.path, lion.mtx)
-  renderAllPaths(ras, sl, ren, trans, lion.colors, lion.pathIdx, lion.numPaths)
+  var trans = initConvTransform(app.lion.path, mtx)
+  renderAllPaths(ras, sl, ren, trans, app.lion.colors, app.lion.pathIdx, app.lion.numPaths)
 
   # The scanline rasterizer allows you to perform clipping to multiple
   # regions "manually", like in the following code, but the "embedded" method
@@ -103,7 +122,7 @@ proc onDraw() =
   #      renderScanlines(ras, sl, ren)
 
   # Render random Bresenham lines and markers
-  randomize()
+  #randomize()
   var m = initRendererMarkers(rb)
   for i in 0.. <50:
     m.lineColor(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
@@ -154,7 +173,38 @@ proc onDraw() =
     renderScanlinesAA(ras, sl, rb, sa, sg)
 
   rb.resetClipping(true) # "true" means "all rendering buffer is visible".
+  renderCtrl(ras, sl, rb, app.mNumCb)
 
-  saveBMP24("multi_clip.bmp", buffer, frameWidth, frameHeight)
+proc transform(app: App, width, height, x, y: float64) =
+  var
+    x = x - width / 2
+    y = y - height / 2
+  app.lion.angle = arctan2(y, x)
+  app.lion.scale = sqrt(y * y + x * x) / 100.0
 
-onDraw()
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    var
+      width = app.rbufWindow().width().float64
+      height = app.rbufWindow().height().float64
+    app.transform(width, height, x.float64, y.float64)
+    app.forceRedraw()
+
+  if mouseRight in flags:
+    app.lion.skewX = x.float64
+    app.lion.skewY = y.float64
+    app.forceRedraw()
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  app.onMouseButtonDown(x, y, flags)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Clipping to multiple rectangle regions")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "multi_clip"):
+    return app.run()
+
+  result = 1
+
+discard main()

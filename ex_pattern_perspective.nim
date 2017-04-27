@@ -3,32 +3,36 @@ import agg_renderer_scanline, agg_path_storage, agg_conv_transform, agg_trans_af
 import agg_trans_bilinear, agg_trans_perspective, agg_span_interpolator_linear
 import agg_span_interpolator_trans, agg_span_allocator, agg_image_accessors
 import ctrl_rbox, ctrl_polygon, agg_pixfmt_rgb, agg_span_image_filter_rgb
-import agg_renderer_base, agg_color_rgba, nimBMP, strutils, os, math
-import agg_image_filters
+import agg_renderer_base, agg_color_rgba, strutils, os, math
+import agg_image_filters, agg_platform_support
 
 const
   frameWidth = 600
   frameHeight = 600
-  pixWidth = 3
   flipY = true
 
 type
-  ValueT = uint8
+  PixFmt = PixFmtBgr24
+  PixFmtPre = PixFmtBgr24Pre
 
-type
-  App = object
+  App = ref object of PlatformSupport
     quad: PolygonCtrl[Rgba8]
     transType: RboxCtrl[Rgba8]
     testFlag: bool
     ras: RasterizerScanlineAA
     sl: ScanlineU8
     x1, y1, x2, y2: float64
-    bmp: seq[BmpResult[string]]
-    rbuf: seq[RenderingBuffer]
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.quad = newPolygonCtrl[Rgba8](4, 5.0)
   result.transType = newRboxCtrl[Rgba8](460, 5.0, 420+170.0, 60.0, not flipY)
+
+  result.addCtrl(result.quad)
+  result.addCtrl(result.transType)
+
   result.testFlag = false
   result.transType.textSize(8)
   result.transType.textThickness(1)
@@ -60,36 +64,15 @@ proc initApp(): App =
   result.quad.yn(2) = floor(trans_y2 + dy)
   result.quad.xn(3) = floor(trans_x1 + dx)
   result.quad.yn(3) = floor(trans_y2 + dy)
-  result.bmp = newSeq[BmpResult[string]](10)
-  result.rbuf = newSeq[RenderingBuffer](10)
 
-proc loadImage(app: var App, idx: int, name: string) =
-  app.bmp[idx] = loadBMP24("resources$1$2.bmp" % [$DirSep, name])
-  if app.bmp[idx].width == 0 and app.bmp[idx].width == 0:
-    echo "failed to load $1.bmp" % [name]
-    quit(0)
-  app.rbuf[idx] = initRenderingBuffer(cast[ptr ValueT](app.bmp[idx].data[0].addr),
-    app.bmp[idx].width, app.bmp[idx].height, app.bmp[idx].width * pixWidth)
-
-proc rbufImage(app: var App, idx: int): var RenderingBuffer =
-  result = app.rbuf[idx]
-
-proc getBmp(app: var App, idx: int): var BmpResult[string] =
-  app.bmp[idx]
-
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer  = newString(frameWidth * frameHeight * pixWidth)
-    rbuf    = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    width   = frameWidth.float64
-    height  = frameHeight.float64
-    pixf    = initPixfmtRgb24(rbuf)
-    pixfPre = initPixfmtRgb24Pre(rbuf)
+    pixf    = construct(PixFmt, app.rbufWindow())
+    pixfPre = construct(PixFmt, app.rbufWindow())
+    width   = app.width()
+    height  = app.height()
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
-
-  app.loadImage(0, "agg")
 
   if not app.testFlag:
     rb.clear(initRgba(1, 1, 1))
@@ -121,11 +104,8 @@ proc onDraw() =
   var
     sa = initSpanAllocator[Rgba8]()
     filter  = initImageFilter[ImageFilterHanning]()
-    imgPixf = initPixfmtRgb24(app.rbufImage(0))
-    imgSrc  = initImageAccessorWrap[PixFmtRgb24, RemainderT, RemainderT](imgPixf)
-
-  const
-    subdivShift = 2
+    imgPixf = construct(PixFmt, app.rbufImg(0))
+    imgSrc  = initImageAccessorWrap[PixFmt, RemainderT, RemainderT](imgPixf)
 
   case app.transType.curItem()
   of 0:
@@ -156,12 +136,23 @@ proc onDraw() =
     var mtx = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2);
     if mtx.isValid():
       var
-        inter = initSpanInterpolatorLinear(mtx)
+        inter = initSpanInterpolatorTrans(mtx)
         sg    = initSpanImageFilterRgb2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else:
     discard
 
-  saveBMP24("pattern_perspective.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Pattern Perspective Transformations")
 
-onDraw()
+  if not app.loadImg(0, "resources" & DirSep & "agg.bmp"):
+    app.message("failed to load agg.bmp")
+    return 1
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "pattern_perspective"):
+    return app.run()
+
+  result = 1
+
+discard main()

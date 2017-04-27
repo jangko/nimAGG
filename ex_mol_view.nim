@@ -1,13 +1,12 @@
 import agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanline_p, agg_renderer_scanline
 import agg_conv_transform, agg_conv_stroke, agg_bspline, agg_ellipse, agg_gsv_text
 import ctrl_slider, ctrl_scale, agg_pixfmt_rgb, agg_color_rgba, agg_renderer_base
-import parseutils, strutils, os, nimBMP, math, agg_math, agg_basics, agg_trans_affine
-import strutils
+import parseutils, strutils, os, math, agg_math, agg_basics, agg_trans_affine
+import strutils, agg_platform_support
 
 const
   frameWidth = 800
   frameHeight = 600
-  pixWidth = 3
   flipY = true
   default_num_points = 20000
 
@@ -94,7 +93,6 @@ proc read(self: var Molecule, fd: File): bool =
     numAtoms = getInt(buf, 0, 3)
     numBonds = getInt(buf, 3, 3)
 
-  #echo numAtoms, " ", numBonds
   if numAtoms == 0 or numBonds == 0:
     return false
 
@@ -104,12 +102,12 @@ proc read(self: var Molecule, fd: File): bool =
   for atom in mitems(self.atoms):
     if not fd.readLine(buf): return false
     buf = trimCRLF(buf)
-    #echo buf
+
     atom.x = getFloat(buf, 1,  10)
     atom.y = getFloat(buf, 11, 10)
     atom.label = getStr(buf, 31, 3)
     atom.charge = getInt(buf, 38, 1)
-    #echo atom.x.formatFloat(ffDecimal, 3), " ", atom.y.formatFloat(ffDecimal, 3), " ", atom.label, " ", atom.charge
+
     if atom.charge != 0: atom.charge = 4 - atom.charge
 
     case atom.label
@@ -124,11 +122,10 @@ proc read(self: var Molecule, fd: File): bool =
   for bond in mitems(self.bonds):
     if not fd.readLine(buf): return false
     buf = trimCRLF(buf)
-    #echo buf
+
     bond.idx1 = getInt(buf, 0, 3) - 1
     bond.idx2 = getInt(buf, 3, 3) - 1
 
-    #echo "$1 $2" % [$bond.idx1, $bond.idx2]
     if bond.idx1 >= numAtoms or bond.idx2 >= numAtoms: return false
 
     bond.x1 = self.atoms[bond.idx1].x
@@ -136,15 +133,9 @@ proc read(self: var Molecule, fd: File): bool =
     bond.x2 = self.atoms[bond.idx2].x
     bond.y2 = self.atoms[bond.idx2].y
 
-    #echo "$1 $2 $3 $4" % [bond.x1.formatFloat(ffDecimal, 3),
-    #  bond.y1.formatFloat(ffDecimal, 3),
-    #  bond.x2.formatFloat(ffDecimal, 3),
-    #  bond.y2.formatFloat(ffDecimal, 3)]
     bond.order    = getInt(buf, 7, 3)
     bond.stereo   = getInt(buf, 10, 3)
     bond.topology = getInt(buf, 13, 3)
-
-    #echo "$1 $2 $3" % [$bond.order, $bond.stereo, $bond.topology]
 
     self.avrLen += sqrt((bond.x1 - bond.x2) * (bond.x1 - bond.x2) +
                         (bond.y1 - bond.y2) * (bond.y1 - bond.y2))
@@ -444,7 +435,9 @@ proc vertex(self: var BondVertexGenerator, x, y: var float64): uint =
   return vertex(self.line1, x, y)
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     molecules: seq[Molecule]
     numMolecules: int
     curMolecule: int
@@ -454,7 +447,10 @@ type
     mouseMove: bool
     atomColors: array[AtomColor, Rgba8]
 
-proc initApp(name: string): App =
+proc newApp(format: PixFormat, flipY: bool, name: string): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   var
     startWidth = frameWidth.float64
     startHeight = frameHeight.float64
@@ -475,6 +471,9 @@ proc initApp(name: string): App =
 
   result.thickness.label("Thickness=$1")
   result.textSize.label("Label Size=$1")
+
+  result.addCtrl(result.thickness)
+  result.addCtrl(result.textSize)
 
   var name = "resources$1$2" % [$DirSep, name]
   var fd = open(name, fmRead)
@@ -497,18 +496,15 @@ proc initApp(name: string): App =
   result.atomColors[atom_color_P]       = initRgba8(80,50,0)
   result.atomColors[atom_color_halogen] = initRgba8(0,200,0)
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp("molecule.sdf")
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pf     = initPixFmtRgb24(rbuf)
+    pf     = construct(PixFmt, app.rbufWindow())
     rb     = initRendererBase(pf)
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineP8()
     ren    = initRendererScanlineAASolid(rb)
-    width  = frameWidth.float64
-    height = frameHeight.float64
+    width  = app.width()
+    height = app.height()
     mol    = app.molecules[app.curMolecule].addr
     min_x  =  1e100
     max_x  = -1e100
@@ -524,15 +520,6 @@ proc onDraw() =
     if atom.y < min_y: min_y = atom.y
     if atom.x > max_x: max_x = atom.x
     if atom.y > max_y: max_y = atom.y
-
-  #echo "$1 $2 $3 $4" % [min_x.formatFloat(ffDecimal, 3),
-  #  min_y.formatFloat(ffDecimal, 3),
-  #  max_x.formatFloat(ffDecimal, 3),
-  #  max_y.formatFloat(ffDecimal, 3)]
-  #echo mol.avrLen.formatFloat(ffDecimal, 3)
-  #
-  #echo "---"
-  #test_mol()
 
   mtx *= transAffineTranslation(-(max_x + min_x) * 0.5, -(max_y + min_y) * 0.5)
 
@@ -550,7 +537,7 @@ proc onDraw() =
   mtx *= transAffineRotation(app.angle)
   mtx *= transAffineScaling(app.scale, app.scale)
   mtx *= transAffineTranslation(app.centerX, app.centerY)
-  #mtx *= trans_affine_resizing()
+  mtx *= transAffineResizing(app)
 
   ren.color(initRgba(0,0,0))
   for b in mol[].bond:
@@ -595,22 +582,87 @@ proc onDraw() =
       renderScanlines(ras, sl, ren)
 
 
-  ls.approximation_scale(1.0)
+  ls.approximationScale(1.0)
 
-  #var name = initConvTransform(ls, trans_affine_resizing())
+  var name = initConvTransform(ls, transAffineResizing(app))
 
   ls.width(1.5)
   label.text(mol[].name)
   label.size(10.0)
   label.startPoint(10.0, frameHeight - 20.0)
   ras.reset()
-  #ras.addPath(name)
-  ras.addPath(ls)
+  ras.addPath(name)
   ren.color(initRgba(0,0,0))
   renderScanlines(ras, sl, ren)
 
   renderCtrl(ras, sl, rb, app.thickness)
   renderCtrl(ras, sl, rb, app.textSize)
-  saveBMP24("mol_view.bmp", buffer, frameWidth, frameHeight)
 
-onDraw()
+method onIdle(app: App) =
+  app.angle += deg2rad(0.1)
+  app.forceRedraw()
+
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  app.mouseMove = true
+  var
+    x2 = x.float64
+    y2 = y.float64
+
+  app.transAffineResizing().inverseTransform(x2, y2)
+  app.pdx = app.centerX - x2
+  app.pdy = app.centerY - y2
+  app.prevScale = app.scale
+  app.prevAngle = app.angle + pi
+  app.forceRedraw()
+
+method onMouseButtonUp(app: App, x, y: int, flags: InputFlags) =
+  app.mouseMove = false
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  var
+    x2 = float64(x)
+    y2 = float64(y)
+
+  app.transAffineResizing().inverseTransform(x2, y2)
+
+  if app.mouseMove and mouseLeft in flags:
+    var
+      dx = x2 - app.centerX
+      dy = y2 - app.centerY
+
+    app.scale = app.prevScale *
+                sqrt(dx * dx + dy * dy) /
+                sqrt(app.pdx * app.pdx + app.pdy * app.pdy)
+
+    app.angle = app.prevAngle + arctan2(dy, dx) - arctan2(app.pdy, app.pdx)
+    app.forceRedraw()
+
+  if app.mouseMove and mouseRight in flags:
+    app.centerX = x2 + app.pdx
+    app.centerY = y2 + app.pdy
+    app.forceRedraw()
+
+method onKey(app: App, x, y, key: int, flags: InputFlags) =
+  if key.KeyCode in {key_left, key_up, key_page_up}:
+    if app.curMolecule != 0:
+      dec app.curMolecule
+      app.forceRedraw()
+
+  if key.KeyCode in {key_right, key_down, key_page_down}:
+    if app.curMolecule < app.numMolecules - 1:
+      inc app.curMolecule
+      app.forceRedraw()
+
+  if key == ' '.ord:
+    app.waitMode(not app.waitMode())
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY, "molecule.sdf")
+  app.caption("AGG - A Simple SDF Molecular Viewer")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "mol_view"):
+    return app.run()
+
+  result = 1
+
+discard main()
