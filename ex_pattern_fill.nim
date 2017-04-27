@@ -4,57 +4,39 @@ import agg_scanline_p, agg_renderer_scanline, agg_span_allocator, agg_span_patte
 import agg_span_pattern_rgb, agg_span_pattern_rgba, agg_image_accessors
 import ctrl_slider, ctrl_rbox, ctrl_cbox, agg_pixfmt_rgba, agg_renderer_base
 import agg_color_rgba, nimBMP, math, agg_basics, agg_conv_stroke, agg_color_gray
-import agg_pixfmt_rgb, agg_pixfmt_gray
+import agg_pixfmt_rgb, agg_pixfmt_gray, agg_platform_support
 
-when defined(pix_format_gray):
+const pix_format = pix_format_bgra32
+
+when pix_format == pix_format_gray8:
   type
-    ColorT = Gray8
     PixFmt = PixFmtGray8
-  const pixWidth = 1
-  template initPixFmt(rbuf: untyped): untyped =
-    initPixFmtGray8(rbuf)
-  template initPixFmtPre(rbuf: untyped): untyped =
-    initPixFmtGray8Pre(rbuf)
+    PixFmtPre = PixFmtGray8Pre
   template initSpanPattern(a, b, c: untyped): untyped =
     initSpanPatternGray(a, b, c)
-  template saveBMP(n, b, w, h: typed) =
-    saveBMP8(n, buffer, w, h)
-elif defined(pix_format_rgb):
+elif pix_format == pix_format_bgr24:
   type
-    ColorT = Rgba8
-    PixFmt = PixFmtRgb24
-  const pixWidth = 3
-  template initPixFmt(rbuf: untyped): untyped =
-    initPixFmtRgb24(rbuf)
-  template initPixFmtPre(rbuf: untyped): untyped =
-    initPixFmtRgb24Pre(rbuf)
+    PixFmt = PixFmtBgr24
+    PixFmtPre = PixFmtBgr24Pre
   template initSpanPattern(a, b, c: untyped): untyped =
     initSpanPatternRgb(a, b, c)
-  template saveBMP(n, b, w, h: typed) =
-    saveBMP24(n, b, w, h)
 else:
   type
-    ColorT = Rgba8
-    PixFmt = PixFmtRgba32
-  const pixWidth = 4
-  template initPixFmt(rbuf: untyped): untyped =
-    initPixFmtRgba32(rbuf)
-  template initPixFmtPre(rbuf: untyped): untyped =
-    initPixFmtRgba32Pre(rbuf)
+    PixFmt = PixFmtBgra32
+    PixFmtPre = PixFmtBgra32Pre
   template initSpanPattern(a, b, c: untyped): untyped =
     initSpanPatternRgba(a, b, c)
-  template saveBMP(n, b, w, h: typed) =
-    saveBMP32(n, b, w, h)
+
 const
   frameWidth = 640
   frameHeight = 480
   flipY = true
 
 type
-  ValueT = uint8
+  ColorT = getColorT(PixFmt)
 
 type
-  App = object
+  App = ref object of PlatformSupport
     polygonAngle: SliderCtrl[ColorT]
     polygonScale: SliderCtrl[ColorT]
     patternAngle: SliderCtrl[ColorT]
@@ -74,19 +56,32 @@ type
     sl: ScanlineP8
     ps: PathStorage
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.patternRbuf = initRenderingBuffer()
   result.ras = initRasterizerScanlineAA()
   result.sl = initScanlineP8()
   result.ps = initPathStorage()
-  result.polygon_angle = newSliderCtrl[ColorT](5,    5,         145, 12,    not flipY)
-  result.polygon_scale = newSliderCtrl[ColorT](5,    5+14,      145, 12+14, not flipY)
-  result.pattern_angle = newSliderCtrl[ColorT](155,  5,         300, 12,    not flipY)
-  result.pattern_size  = newSliderCtrl[ColorT](155,  5+14,      300, 12+14, not flipY)
-  result.pattern_alpha = newSliderCtrl[ColorT](310,  5,         460, 12,    not flipY)
-  result.rotate_polygon = newCboxCtrl[ColorT](5,   5+14+14,    "Rotate Polygon", not flipY)
-  result.rotate_pattern = newCboxCtrl[ColorT](5,   5+14+14+14, "Rotate Pattern", not flipY)
-  result.tie_pattern    = newCboxCtrl[ColorT](155, 5+14+14,    "Tie pattern to polygon", not flipY)
+  result.polygonAngle = newSliderCtrl[ColorT](5,    5,         145, 12,    not flipY)
+  result.polygonScale = newSliderCtrl[ColorT](5,    5+14,      145, 12+14, not flipY)
+  result.patternAngle = newSliderCtrl[ColorT](155,  5,         300, 12,    not flipY)
+  result.patternSize  = newSliderCtrl[ColorT](155,  5+14,      300, 12+14, not flipY)
+  result.patternAlpha = newSliderCtrl[ColorT](310,  5,         460, 12,    not flipY)
+  result.rotatePolygon = newCboxCtrl[ColorT](5,   5+14+14,    "Rotate Polygon", not flipY)
+  result.rotatePattern = newCboxCtrl[ColorT](5,   5+14+14+14, "Rotate Pattern", not flipY)
+  result.tiePattern    = newCboxCtrl[ColorT](155, 5+14+14,    "Tie pattern to polygon", not flipY)
+
+  result.addCtrl(result.polygonAngle )
+  result.addCtrl(result.polygonScale )
+  result.addCtrl(result.patternAngle )
+  result.addCtrl(result.patternSize  )
+  result.addCtrl(result.patternAlpha )
+  result.addCtrl(result.rotatePolygon)
+  result.addCtrl(result.rotatePattern)
+  result.addCtrl(result.tiePattern   )
+
   result.flag = 0
   result.pattern = nil
   result.polygonAngle.label("Polygon Angle=$1")
@@ -102,7 +97,7 @@ proc initApp(): App =
   result.patternAlpha.label("Background Alpha=$1")
   result.patternAlpha.value(0.1)
 
-proc createStar(app: var App, xc, yc, r1, r2: float64, n: int, startAngle = 0.0) =
+proc createStar(app: App, xc, yc, r1, r2: float64, n: int, startAngle = 0.0) =
   app.ps.removeAll()
   var startAngle = startAngle * pi / 180.0
 
@@ -119,7 +114,7 @@ proc createStar(app: var App, xc, yc, r1, r2: float64, n: int, startAngle = 0.0)
       else:      app.ps.moveTo(xc + dx * r2, yc + dy * r2)
   app.ps.closePolygon()
 
-proc generatePattern(app: var App) =
+proc generatePattern(app: App) =
   let size = app.patternSize.value().int
 
   app.createStar(app.patternSize.value() / 2.0,
@@ -136,11 +131,11 @@ proc generatePattern(app: var App) =
   smooth.approximationScale(4.0)
   stroke.width(app.patternSize.value() / 15.0)
 
-  app.pattern = newSeq[uint8](size * size * pixWidth)
-  app.patternRbuf.attach(app.pattern[0].addr, size, size, size*pixWidth)
+  app.pattern = newSeq[uint8](size * size * getPixElem(PixFmt))
+  app.patternRbuf.attach(app.pattern[0].addr, size, size, size*getPixElem(PixFmt))
 
   var
-    pixf = initPixFmt(app.patternRbuf)
+    pixf = construct(PixFmt, app.patternRbuf)
     rb   = initRendererBase(pixf)
     rs   = initRendererScanlineAASolid(rb)
 
@@ -154,23 +149,21 @@ proc generatePattern(app: var App) =
   rs.color(initRgba8(0,50,80))
   renderScanlines(app.ras, app.sl, rs)
 
-proc onDraw() =
+method onInit(app: App) =
   var
-    app    = initApp()
-    initialWidth = frameWidth.float64
+    initialWidth  = frameWidth.float64
     initialHeight = frameHeight.float64
 
   app.polygonCx = initialWidth / 2.0
   app.polygonCy = initialHeight / 2.0
   app.generatePattern()
 
+method onDraw(app: App) =
   var
-    buffer  = newString(frameWidth * frameHeight * pixWidth)
-    rbuf    = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    width   = frameWidth.float64
-    height  = frameHeight.float64
-    pixf    = initPixFmt(rbuf)
-    pixfPre = initPixFmtPre(rbuf)
+    width   = app.width()
+    height  = app.height()
+    pixf    = construct(PixFmt, app.rbufWindow())
+    pixfPre = construct(PixFmtPre, app.rbufWindow())
     rb      = initRendererBase(pixf)
     rbPre   = initRendererBase(pixfPre)
     mtx     = initTransAffine()
@@ -182,7 +175,7 @@ proc onDraw() =
   mtx *= transAffineScaling(app.polygonScale.value())
   mtx *= transAffineTranslation(app.polygonCx, app.polygonCy)
 
-  var r = initialWidth / 3.0 - 8.0
+  var r = app.initialWidth() / 3.0 - 8.0
   app.createStar(app.polygonCx, app.polygonCy, r, r / 1.45, 14)
 
   type
@@ -191,7 +184,7 @@ proc onDraw() =
 
   var
     tr = initConvTransform(app.ps, mtx)
-    imgPixf = initPixFmt(app.patternRbuf)
+    imgPixf = construct(PixFmt, app.patternRbuf)
     imgSrc = initImageAccessorWrap[PixFmt, WrapX, WrapY](imgPixf)
     sa = initSpanAllocator[ColorT]()
     offsetX = 0
@@ -218,6 +211,69 @@ proc onDraw() =
   renderCtrl(app.ras, app.sl, rb, app.rotatePattern)
   renderCtrl(app.ras, app.sl, rb, app.tiePattern)
 
-  saveBMP("pattern_fill.bmp", buffer, frameWidth, frameHeight)
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    var mtx = initTransAffine()
+    mtx *= transAffineTranslation(-app.polygonCx, -app.polygonCy)
+    mtx *= transAffineRotation(app.polygonAngle.value() * pi / 180.0)
+    mtx *= transAffineScaling(app.polygonScale.value())
+    mtx *= transAffineTranslation(app.polygonCx, app.polygonCy)
 
-onDraw()
+    var r = app.initialWidth() / 3.0 - 8.0
+    app.createStar(app.polygonCx, app.polygonCy, r, r / 1.45, 14)
+
+    var tr = initConvTransform(app.ps, mtx)
+    app.ras.addPath(tr)
+    if app.ras.hitTest(x, y):
+      app.dx = x.float64 - app.polygonCx
+      app.dy = y.float64 - app.polygonCy
+      app.flag = 1
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    if app.flag != 0:
+      app.polygonCx = x.float64 - app.dx
+      app.polygonCy = y.float64 - app.dy
+      app.forceRedraw()
+  else:
+    app.onMouseButtonUp(x, y, flags)
+
+method onMouseButtonUp(app: App, x, y: int, flags: InputFlags) =
+  app.flag = 0
+
+method onCtrlChange(app: App)  =
+  if app.rotatePolygon.status() or app.rotatePattern.status():
+    app.waitMode(false)
+  else:
+    app.waitMode(true)
+
+  app.generatePattern()
+  app.forceRedraw()
+
+method onIdle(app: App)  =
+  var redraw = false
+  if app.rotatePolygon.status():
+    app.polygonAngle.value(app.polygonAngle.value() + 0.5)
+    if app.polygonAngle.value() >= 180.0:
+      app.polygonAngle.value(app.polygonAngle.value() - 360.0)
+    redraw = true
+
+  if app.rotatePattern.status():
+    app.patternAngle.value(app.patternAngle.value() - 0.5)
+    if app.patternAngle.value() <= -180.0:
+      app.patternAngle.value(app.patternAngle.value() + 360.0)
+    app.generatePattern()
+    redraw = true
+
+  if redraw: app.forceRedraw()
+
+proc main(): int =
+  var app = newApp(pix_format, flipY)
+  app.caption("AGG Example. Anti-Aliasing Demo")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "pattern_fill"):
+    return app.run()
+
+  result = 1
+
+discard main()

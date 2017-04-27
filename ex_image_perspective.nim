@@ -62,7 +62,7 @@ method onInit(app: App) =
   app.quad.xn(2) = width  - 100
   app.quad.yn(2) = height - 100
   app.quad.xn(3) = 100
-  app.quad.yn(3) = height - 100
+  app.quad.yn(3) = height - 200
 
 method onDraw(app: App) =
   var
@@ -123,7 +123,7 @@ method onDraw(app: App) =
         sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   of 2:
-    var mtx = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2);
+    var mtx = initTransPerspective(app.quad.polygon(), app.x1, app.y1, app.x2, app.y2)
     if mtx.isValid():
       # Subdivision and linear interpolation (faster, but less accurate)
       #-----------------------
@@ -138,7 +138,7 @@ method onDraw(app: App) =
 
       # Direct calculations of the coordinates
       var
-        inter = initSpanInterpolatorLinear(mtx)
+        inter = initSpanInterpolatorTrans(mtx)
         sg    = initSpanImageFilterRgba2x2(imgSrc, inter, filter)
       renderScanlinesAA(app.ras, app.sl, rbPre, sa, sg)
   else: discard

@@ -6,7 +6,7 @@ import agg_conv_stroke, agg_conv_curve, agg_bounding_rect, agg_trans_affine
 import agg_conv_transform, agg_span_gradient_contour, agg_span_interpolator_linear
 import agg_span_gradient, agg_span_allocator, agg_renderer_scanline
 import agg_span_gradient_image, agg_pixfmt_rgba, ctrl_polygon
-import agg_trans_perspective, agg_platform_support
+import agg_trans_perspective, agg_platform_support, agg_span_interpolator_trans
 
 const Puzzle = [0x02'u8, 0x51, 0xAE, 0xFF, 0x00, 0x5C, 0xB0, 0xFF,
   0x0A, 0x85, 0xFF, 0xFF, 0x3B, 0x87, 0x95, 0xFF, 0x28, 0x27, 0x12, 0xFF, 0x5C, 0x6F, 0x03,
@@ -1543,7 +1543,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 proc renderContourAux[GradFunc, T2, TR](app: App, gradFunc: var GradFunc, t2: var T2, D1, D2: float64, gmt: var TR) =
   var
     colorF = app.gradientColors[trunc(app.colors.value()).int]
-    spanInterpolator = initSpanInterpolatorLinear(gmt)
+    spanInterpolator = initSpanInterpolatorTrans(gmt)
     spanAllocator = initSpanAllocator[Rgba8]()
     sg  = initSpanGradient(spanInterpolator, gradFunc, colorF, D1, D2)
     ren = initRendererScanLineAA(app.rb, spanAllocator, sg)

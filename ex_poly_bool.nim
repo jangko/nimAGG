@@ -2,17 +2,13 @@ import agg_basics, agg_rendering_buffer, agg_rasterizer_scanline_aa, agg_scanlin
 import agg_scanline_p, agg_renderer_scanline, agg_renderer_primitives, agg_conv_curve
 import agg_conv_stroke, agg_conv_clip_polygon, agg_gsv_text, agg_pixfmt_rgb
 import ctrl_slider, ctrl_cbox, ctrl_rbox, agg_conv_poly_bool, make_arrows, make_gb_poly
-import nimBMP, agg_color_rgba, times, strutils, agg_renderer_base, agg_path_storage
-import agg_trans_affine, agg_conv_transform
+import agg_color_rgba, times, strutils, agg_renderer_base, agg_path_storage
+import agg_trans_affine, agg_conv_transform, agg_platform_support
 
 const
   frameWidth = 640
   frameHeight = 520
   flipY = true
-  pixWidth = 3
-
-type
-  ValueT = uint8
 
 # A simple counter of points and contours
 type
@@ -38,16 +34,22 @@ proc vertex[VS](self: var ConvPolyCounter[VS], x, y: var float64): uint =
   result = cmd
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     mX, mY: float64
     mPolygons: RboxCtrl[Rgba8]
     mOperation: RboxCtrl[Rgba8]
-    buffer: seq[ValueT]
-    rbuf: RenderingBuffer
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.mPolygons  = newRboxCtrl[Rgba8](5.0,     5.0, 5.0+205.0,  110.0, not flipY)
   result.mOperation = newRboxCtrl[Rgba8](555.0,   5.0, 555.0+80.0, 130.0, not flipY)
+
+  result.addCtrl(result.mPolygons)
+  result.addCtrl(result.mOperation)
 
   result.mOperation.addItem("None")
   result.mOperation.addItem("OR")
@@ -67,10 +69,7 @@ proc initApp(): App =
   result.mX = frameWidth.float64 / 2.0
   result.mY = frameHeight.float64 / 2.0
 
-  result.buffer = newSeq[ValueT](frameWidth * frameHeight * pixWidth)
-  result.rbuf   = initRenderingBuffer(result.buffer[0].addr, frameWidth, frameHeight, -frameWidth * pixWidth)
-
-proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
+proc performRendering[Scanline, Ras, Ren, Clp](app: App, sl: var Scanline,
   ras: var Ras, ren: var Ren, clp: var Clp) =
 
   if app.mOperation.curItem() == 0: return
@@ -84,19 +83,19 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
   of 5: clp.operation(polyBoolBMinusA)
   else: discard
 
-  var
-    counter = initConvPolyCounter(clp)
-    startTime = cpuTime()
+  var counter = initConvPolyCounter(clp)
+  
+  app.startTimer()
 
   counter.rewind(0)
-  let t1 = (cpuTime() - startTime)
-  startTime = cpuTime()
+  let t1 = app.elapsedTime()
+  app.startTimer()
 
-  var 
+  var
     ps = initPathStorage()
     x, y: float64
     cmd = counter.vertex(x, y)
-    
+
   while not isStop(cmd):
     if isMoveTo(cmd):
       ps.moveTo(x, y)
@@ -104,15 +103,15 @@ proc performRendering[Scanline, Ras, Ren, Clp](app: var App, sl: var Scanline,
       ps.lineTo(x, y)
     elif isClose(cmd):
       ps.closePolygon()
-      
+
     cmd = counter.vertex(x, y)
-    
-  ras.fillingRule(fillEvenOdd)    
+
+  ras.fillingRule(fillEvenOdd)
   ras.addPath(ps)
   ren.color(initRgba(0.25, 0.9, 0.25, 0.65))
   renderScanlines(ras, sl, ren)
 
-  let t2 = (cpuTime() - startTime)
+  let t2 = app.elapsedTime()
 
   var
     stroke = initConvStroke(ps)
@@ -265,9 +264,9 @@ template renderAux2(vs1, vs2, ras, sl, ren: typed) =
   renderScanlines(ras, sl, ren)
 
 
-proc renderClipper[Scanline, Ras](app: var App, sl: var Scanline, ras: var Ras) =
+proc renderClipper[Scanline, Ras](app: App, sl: var Scanline, ras: var Ras) =
   var
-    pf  = initPixFmtRgb24(app.rbuf)
+    pf  = construct(PixFmt, app.rbufWindow())
     rb  = initRendererBase(pf)
     ren = initRendererScanlineAASolid(rb)
 
@@ -360,25 +359,26 @@ proc renderClipper[Scanline, Ras](app: var App, sl: var Scanline, ras: var Ras) 
     app.performRendering(sl, ras, ren, clp)
   else: discard
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app = initApp()
-    pf  = initPixFmtRgb24(app.rbuf)
+    pf  = construct(PixFmt, app.rbufWindow())
     rb  = initRendererBase(pf)
     sl  = initScanlineU8()
     ras = initRasterizerScanlineAA()
-    
-  for op in 0..5:
-    app.mOperation.curItem(op)
-    for shape in 0..4:
-      app.mPolygons.curItem(shape)
-      rb.clear(initRgba(1,1,1))        
-      app.renderClipper(sl, ras)
-    
-      renderCtrl(ras, sl, rb, app.mPolygons)
-      renderCtrl(ras, sl, rb, app.mOperation)
-      let name = "poly_bool_$1_$2.bmp" % [$op, $shape]
-      echo name
-      saveBMP24(name, app.buffer, frameWidth, frameHeight)
 
-onDraw()
+  rb.clear(initRgba(1,1,1))
+  app.renderClipper(sl, ras)
+
+  renderCtrl(ras, sl, rb, app.mPolygons)
+  renderCtrl(ras, sl, rb, app.mOperation)
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. PolyBool")
+
+  if app.init(frameWidth, frameHeight, {window_resize}, "poly_bool"):
+    return app.run()
+
+  result = 1
+
+discard main()

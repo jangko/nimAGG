@@ -2,9 +2,9 @@ import agg_basics, agg_ellipse, agg_gamma_lut, agg_rendering_buffer
 import agg_rasterizer_scanline_aa, agg_rasterizer_compound_aa
 import agg_conv_curve, agg_conv_stroke, agg_scanline_u, agg_renderer_scanline
 import agg_span_allocator, agg_pixfmt_rgba, ctrl_slider, ctrl_cbox
-import agg_pixfmt_rgba, agg_renderer_base, agg_color_rgba, nimBMP
+import agg_pixfmt_rgba, agg_renderer_base, agg_color_rgba
 import agg_path_storage, agg_pixfmt_rgb, agg_gamma_lut, agg_rasterizer_sl_clip
-import agg_trans_affine, agg_conv_transform
+import agg_trans_affine, agg_conv_transform, agg_platform_support
 
 type
   StyleHandler = object
@@ -31,48 +31,58 @@ proc generateSpan(self: StyleHandler, span: ptr Rgba8, x, y, len, style: int) =
 const
   frameWidth = 440
   frameHeight = 330
-  pixWidth = 4
   flipY = true
 
 type
-  ValueT = uint8
-
-type
-  App = object
-    width : SliderCtrl[Rgba8]
-    alpha1: SliderCtrl[Rgba8]
-    alpha2: SliderCtrl[Rgba8]
-    alpha3: SliderCtrl[Rgba8]
-    alpha4: SliderCtrl[Rgba8]
+  PixFmt = PixFmtBgra32
+  PixFmtPre = PixFmtBgra32Pre
+  
+  App = ref object of PlatformSupport
+    mWidth : SliderCtrl[Rgba8]
+    mAlpha1: SliderCtrl[Rgba8]
+    mAlpha2: SliderCtrl[Rgba8]
+    mAlpha3: SliderCtrl[Rgba8]
+    mAlpha4: SliderCtrl[Rgba8]
     invertOrder: CboxCtrl[Rgba8]
     path: PathStorage
 
-proc initApp(): App =
-  result.width = newSliderCtrl[Rgba8](180 + 10.0, 5.0, 130 + 300.0, 12, not flipY)
-  result.alpha1 = newSliderCtrl[Rgba8](5, 5,  180, 12, not flipY)
-  result.alpha2 = newSliderCtrl[Rgba8](5, 25, 180, 32, not flipY)
-  result.alpha3 = newSliderCtrl[Rgba8](5, 45, 180, 52, not flipY)
-  result.alpha4 = newSliderCtrl[Rgba8](5, 65, 180, 72, not flipY)
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+  
+  result.mWidth = newSliderCtrl[Rgba8](180 + 10.0, 5.0, 130 + 300.0, 12, not flipY)
+  result.mAlpha1 = newSliderCtrl[Rgba8](5, 5,  180, 12, not flipY)
+  result.mAlpha2 = newSliderCtrl[Rgba8](5, 25, 180, 32, not flipY)
+  result.mAlpha3 = newSliderCtrl[Rgba8](5, 45, 180, 52, not flipY)
+  result.mAlpha4 = newSliderCtrl[Rgba8](5, 65, 180, 72, not flipY)
   result.invertOrder = newCboxCtrl[Rgba8](190, 25, "Invert Z-Order")
+  
+  result.addCtrl(result.mWidth)
+  result.addCtrl(result.mAlpha1)
+  result.addCtrl(result.mAlpha2)
+  result.addCtrl(result.mAlpha3)
+  result.addCtrl(result.mAlpha4)
+  result.addCtrl(result.invertOrder)
+  
   result.invertOrder.status(false)
-  result.width.setRange(-20.0, 50.0)
-  result.width.value(10.0)
-  result.width.label("Width=$1")
-  result.alpha1.setRange(0, 1)
-  result.alpha1.value(1)
-  result.alpha1.label("Alpha1=$1")
-  result.alpha2.setRange(0, 1)
-  result.alpha2.value(1)
-  result.alpha2.label("Alpha2=$1")
-  result.alpha3.setRange(0, 1)
-  result.alpha3.value(1)
-  result.alpha3.label("Alpha3=$1")
-  result.alpha4.setRange(0, 1)
-  result.alpha4.value(1)
-  result.alpha4.label("Alpha4=$1")
+  result.mWidth.setRange(-20.0, 50.0)
+  result.mWidth.value(10.0)
+  result.mWidth.label("Width=$1")
+  result.mAlpha1.setRange(0, 1)
+  result.mAlpha1.value(1)
+  result.mAlpha1.label("Alpha1=$1")
+  result.mAlpha2.setRange(0, 1)
+  result.mAlpha2.value(1)
+  result.mAlpha2.label("Alpha2=$1")
+  result.mAlpha3.setRange(0, 1)
+  result.mAlpha3.value(1)
+  result.mAlpha3.label("Alpha3=$1")
+  result.mAlpha4.setRange(0, 1)
+  result.mAlpha4.value(1)
+  result.mAlpha4.label("Alpha4=$1")
   result.path = initPathStorage()
 
-proc composePath(app: var App) =
+proc composePath(app: App) =
   app.path.removeAll()
   app.path.moveTo(28.47, 6.45)
   app.path.curve3(21.58, 1.12, 19.82, 0.29)
@@ -119,14 +129,11 @@ proc composePath(app: var App) =
   app.path.curve3(22.41, 4.74, 28.47, 9.62)
   app.path.closePolygon()
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app    = initApp()
-    buffer = newString(frameWidth * frameHeight * pixWidth)
-    rbuf   = initRenderingBuffer(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
-    pixf   = initPixFmtRgba32(rbuf)
+    pixf   = construct(PixFmt, app.rbufWindow())
     renb   = initRendererBase(pixf)
-    pfpre  = initPixFmtRgba32Pre(rbuf)
+    pfpre  = construct(PixFmtPre, app.rbufWindow())
     rbpre  = initRendererBase(pfpre)
     lut    = initGammaLut8(2.0)
     gr     = newSeq[Rgba8](pfpre.width())
@@ -134,8 +141,8 @@ proc onDraw() =
     sl     = initScanlineU8()
     sa     = initSpanAllocator[Rgba8]()
     rasc   = initRasterizerCompoundAA(RasterizerSlClipDbl)
-    width  = frameWidth.float64
-    height = frameHeight.float64
+    width  = app.width()
+    height = app.height()
 
   # Clear the window with a gradient
   for i in 0.. <pixf.width():
@@ -186,19 +193,19 @@ proc onDraw() =
   styles[1].premultiply()
   styles[0].premultiply()
 
-  stroke.width(app.width.value())
+  stroke.width(app.mWidth.value())
 
   rasc.reset()
-  rasc.masterAlpha(3, app.alpha1.value())
-  rasc.masterAlpha(2, app.alpha2.value())
-  rasc.masterAlpha(1, app.alpha3.value())
-  rasc.masterAlpha(0, app.alpha4.value())
+  rasc.masterAlpha(3, app.mAlpha1.value())
+  rasc.masterAlpha(2, app.mAlpha2.value())
+  rasc.masterAlpha(1, app.mAlpha3.value())
+  rasc.masterAlpha(0, app.mAlpha4.value())
 
   var
     ell = initEllipse(220.0, 180.0, 120.0, 10.0, 128, false)
     strokeEll = initConvStroke(ell)
 
-  strokeEll.width(app.width.value() / 2)
+  strokeEll.width(app.mWidth.value() / 2)
   rasc.styles(3, -1)
   rasc.addPath(strokeEll)
 
@@ -212,16 +219,22 @@ proc onDraw() =
   rasc.addPath(curve)
 
   renderScanlinesCompoundLayered(rasc, sl, rbpre, sa, sh)
-  renderCtrl(ras, sl, renb, app.width)
-  renderCtrl(ras, sl, renb, app.alpha1)
-  renderCtrl(ras, sl, renb, app.alpha2)
-  renderCtrl(ras, sl, renb, app.alpha3)
-  renderCtrl(ras, sl, renb, app.alpha4)
+  renderCtrl(ras, sl, renb, app.mWidth)
+  renderCtrl(ras, sl, renb, app.mAlpha1)
+  renderCtrl(ras, sl, renb, app.mAlpha2)
+  renderCtrl(ras, sl, renb, app.mAlpha3)
+  renderCtrl(ras, sl, renb, app.mAlpha4)
   renderCtrl(ras, sl, renb, app.invertOrder)
 
   pixf.applyGammaInv(lut)
 
-  saveBMP32("rasterizer_compound.bmp", buffer, frameWidth, frameHeight)
+proc main(): int =
+  var app = newApp(pix_format_bgra32, flipY)
+  app.caption("AGG Example. Compound Rasterizer -- Geometry Flattening")
 
-onDraw()
+  if app.init(frameWidth, frameHeight, {}, "rasterizer_compound"):
+    return app.run()
 
+  result = 1
+
+discard main()

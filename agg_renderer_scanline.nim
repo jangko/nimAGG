@@ -21,7 +21,7 @@ proc renderScanlineAASolid*[Scanline, BaseRenderer, ColorT](sl: var Scanline,
 
 proc renderScanlinesAASolid*[Rasterizer, Scanline, BaseRenderer, ColorT](ras: var Rasterizer,
   sl: var Scanline, ren: var BaseRenderer, color: ColorT) =
-  mixin reset, blendSolidHspan, blendHline
+  mixin reset, blendSolidHspan, blendHline, getColorT
 
   if ras.rewindScanlines():
     let renColor = getColorT(BaseRenderer).construct(color)

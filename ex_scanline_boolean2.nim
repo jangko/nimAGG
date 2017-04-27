@@ -3,17 +3,13 @@ import agg_scanline_p, agg_scanline_bin, agg_renderer_scanline, agg_renderer_pri
 import agg_span_solid, agg_conv_curve, agg_conv_stroke, agg_gsv_text, agg_pixfmt_rgb
 import agg_scanline_boolean_algebra, agg_scanline_storage_aa, agg_scanline_storage_bin
 import ctrl_slider, ctrl_cbox, ctrl_rbox, agg_color_rgba, agg_renderer_base
-import make_arrows, make_gb_poly, nimBMP, agg_path_storage, agg_trans_affine
-import agg_conv_transform, strutils, times
+import make_arrows, make_gb_poly, agg_path_storage, agg_trans_affine
+import agg_conv_transform, strutils, times, agg_platform_support
 
 const
   frameWidth = 655
   frameHeight = 520
-  pixWidth = 3
   flipY = true
-
-type
-  ValueT = uint8
 
 proc countSpans[Rasterizer, Scanline](ras: var Rasterizer, sl: var Scanline): int =
   if ras.rewindScanlines():
@@ -22,20 +18,28 @@ proc countSpans[Rasterizer, Scanline](ras: var Rasterizer, sl: var Scanline): in
       result += sl.numSpans()
 
 type
-  App = object
+  PixFmt = PixFmtBgr24
+
+  App = ref object of PlatformSupport
     polygons: RboxCtrl[Rgba8]
     operation: RBoxCtrl[Rgba8]
     fillRule: RboxCtrl[Rgba8]
     scanlineType: RBoxCtrl[Rgba8]
     mx, my: float64
-    buffer: string
-    rbuf: RenderingBuffer
 
-proc initApp(): App =
+proc newApp(format: PixFormat, flipY: bool): App =
+  new(result)
+  PlatformSupport(result).init(format, flipY)
+
   result.polygons     = newRboxCtrl[Rgba8](5.0,     5.0, 5.0+205.0,   110.0,  not flipY)
   result.fillRule     = newRboxCtrl[Rgba8](200,     5.0, 200+105.0,    50.0,  not flipY)
   result.scanlineType = newRboxCtrl[Rgba8](300,     5.0, 300+115.0,    70.0,  not flipY)
   result.operation    = newRboxCtrl[Rgba8](535.0,   5.0, 535.0+115.0, 145.0,  not flipY)
+
+  result.addCtrl(result.polygons)
+  result.addCtrl(result.fillRule)
+  result.addCtrl(result.scanlineType)
+  result.addCtrl(result.operation)
 
   result.polygons.addItem("Two Simple Paths")
   result.polygons.addItem("Closed Stroke")
@@ -66,12 +70,11 @@ proc initApp(): App =
   result.scanlineType.curItem(1)
   result.scanlineType.noTransform()
 
-  result.mx = frameWidth.float64 / 2.0
-  result.my = frameHeight.float64 / 2.0
-  result.buffer = newString(frameWidth * frameHeight * pixWidth)
-  result.rbuf   = initRenderingBuffer(cast[ptr ValueT](result.buffer[0].addr), frameWidth, frameHeight, -frameWidth * pixWidth)
+method onInit(app: App) =
+  app.mx = app.width() / 2.0
+  app.my = app.height() / 2.0
 
-proc getOperation(app: var App): SboolOp =
+proc getOperation(app: App): SboolOp =
   case app.operation.curItem()
   of 1: result = sbool_or
   of 2: result = sbool_and
@@ -81,7 +84,7 @@ proc getOperation(app: var App): SboolOp =
   of 6: result = sbool_b_minus_a
   else: discard
 
-proc scanlineP[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
+proc scanlineP[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   ras1, ras2: var Rasterizer, op: SBoolOp, t1, t2: var float64, numSpans: var int) =
 
   var
@@ -114,7 +117,7 @@ proc scanlineP[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
   t2 = cpuTime() - startTime
   numSpans = countSpans(storage, sl)
 
-proc scanlineU[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
+proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   ras1, ras2: var Rasterizer, op: SBoolOp, t1, t2: var float64, numSpans: var int) =
 
   var
@@ -141,7 +144,7 @@ proc scanlineU[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
   t2 = cpuTime() - startTime
   numSpans = countSpans(storage, sl)
 
-proc scanlineBin[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
+proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   ras1, ras2: var Rasterizer, op: SBoolOp, t1, t2: var float64, numSpans: var int) =
   var
     ren = initRendererScanlineBinSolid(rb)
@@ -167,12 +170,12 @@ proc scanlineBin[RendererBase, Rasterizer](app: var App, rb: var RendererBase,
   t2 = cpuTime() - startTime
   numSpans = countSpans(storage, sl)
 
-proc renderScanlineBoolean[Rasterizer](app: var App, ras1, ras2: var Rasterizer) =
+proc renderScanlineBoolean[Rasterizer](app: App, ras1, ras2: var Rasterizer) =
   if app.operation.curItem() == 0: return
   let op = app.getOperation()
 
   var
-    pixf = initPixfmtRgb24(app.rbuf)
+    pixf = construct(PixFmt, app.rbufWindow())
     rb   = initRendererBase(pixf)
     t1   = 0.0
     t2   = 0.0
@@ -202,7 +205,7 @@ proc renderScanlineBoolean[Rasterizer](app: var App, ras1, ras2: var Rasterizer)
   ren.color(initRgba(0.0, 0.0, 0.0))
   renderScanlines(ras1, sl, ren)
 
-proc renderSimplePaths[Rasterizer, Scanline, Renderer](app: var App,
+proc renderSimplePaths[Rasterizer, Scanline, Renderer](app: App,
   ras1, ras2: var Rasterizer, sl: var Scanline, ren: var Renderer) =
 
   var
@@ -247,7 +250,7 @@ proc renderSimplePaths[Rasterizer, Scanline, Renderer](app: var App,
   renderScanlines(ras2, sl, ren)
   app.renderScanlineBoolean(ras1, ras2)
 
-proc renderClosedStroke[Rasterizer, Scanline, Renderer](app: var App,
+proc renderClosedStroke[Rasterizer, Scanline, Renderer](app: App,
   ras1, ras2: var Rasterizer, sl: var Scanline, ren: var Renderer) =
   var
     ps1 = initPathStorage()
@@ -288,7 +291,7 @@ proc renderClosedStroke[Rasterizer, Scanline, Renderer](app: var App,
   renderScanlines(ras2, sl, ren)
   app.renderScanlineBoolean(ras1, ras2)
 
-proc renderGBArrow[Rasterizer, Scanline, Renderer](app: var App,
+proc renderGBArrow[Rasterizer, Scanline, Renderer](app: App,
   ras1, ras2: var Rasterizer, sl: var Scanline, ren: var Renderer) =
   var
     gbPoly = initPathStorage()
@@ -328,7 +331,7 @@ proc renderGBArrow[Rasterizer, Scanline, Renderer](app: var App,
 
   app.renderScanlineBoolean(ras1, ras2)
 
-proc renderGBSpiral[Rasterizer, Scanline, Renderer](app: var App,
+proc renderGBSpiral[Rasterizer, Scanline, Renderer](app: App,
   ras1, ras2: var Rasterizer, sl: var Scanline, ren: var Renderer) =
   var
     sp = initSpiral(app.mx, app.my, 10, 150, 30, 0.0)
@@ -363,7 +366,7 @@ proc renderGBSpiral[Rasterizer, Scanline, Renderer](app: var App,
   ras1.addPath(trans)
   app.renderScanlineBoolean(ras1, ras2)
 
-proc renderSpiralAndGlyph[Rasterizer, Scanline, Renderer](app: var App,
+proc renderSpiralAndGlyph[Rasterizer, Scanline, Renderer](app: App,
   ras1, ras2: var Rasterizer, sl: var Scanline, ren: var Renderer) =
   var
     sp     = initSpiral(app.mx, app.my, 10, 150, 30, 0.0)
@@ -439,9 +442,9 @@ proc renderSpiralAndGlyph[Rasterizer, Scanline, Renderer](app: var App,
 
   app.renderScanlineBoolean(ras1, ras2)
 
-proc renderSbool[Rasterizer](app: var App, ras1, ras2: var Rasterizer) =
+proc renderSbool[Rasterizer](app: App, ras1, ras2: var Rasterizer) =
   var
-    pixf = initPixfmtRgb24(app.rbuf)
+    pixf = construct(PixFmt, app.rbufWindow())
     rb   = initRendererBase(pixf)
     ren  = initRendererScanlineAASolid(rb)
     sl   = initScanlineP8()
@@ -459,10 +462,9 @@ proc renderSbool[Rasterizer](app: var App, ras1, ras2: var Rasterizer) =
   of 4: app.renderSpiralAndGlyph(ras1, ras2, sl, ren)
   else: discard
 
-proc onDraw() =
+method onDraw(app: App) =
   var
-    app  = initApp()
-    pf   = initPixFmtRgb24(app.rbuf)
+    pf   = construct(PixFmt, app.rbufWindow())
     rb   = initRendererBase(pf)
     sl   = initScanlineU8()
     ras  = initRasterizerScanlineAA()
@@ -477,6 +479,29 @@ proc onDraw() =
 
   app.renderSbool(ras, ras2)
 
-  saveBMP24("scanline_boolean2.bmp", app.buffer, frameWidth, frameHeight)
+method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.mx = x.float64
+    app.my = y.float64
+    app.forceRedraw()
 
-onDraw()
+  if mouseRight in flags:
+    let buf = "$1 $2" % [$x, $y]
+    app.message(buf)
+
+method onMouseMove(app: App, x, y: int, flags: InputFlags) =
+  if mouseLeft in flags:
+    app.mx = x.float64
+    app.my = y.float64
+    app.forceRedraw()
+
+proc main(): int =
+  var app = newApp(pix_format_bgr24, flipY)
+  app.caption("AGG Example. Scanline Boolean")
+
+  if app.init(frameWidth, frameHeight, {}, "scanline_boolean2"):
+    return app.run()
+
+  result = 1
+
+discard main()
