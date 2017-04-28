@@ -87,7 +87,7 @@ proc main(): int =
   var app = newApp(pix_format_bgr24, flipY)
   app.caption("AGG Example. Lion")
 
-  if app.init(frameWidth, frameHeight, {window_resize}, "lion"):
+  if app.init(frameWidth, frameHeight, {window_resize}, "lion_lens"):
     return app.run()
 
   result = 1

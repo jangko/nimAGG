@@ -513,6 +513,12 @@ proc windowProc[T,R](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM):
       of key_f2:
         app.copyWindowToImg(maxImages - 1)
         discard app.saveImg(maxImages - 1, "screenshot")
+      of key_f3:
+        echo "occupied: $1, free: $2, total: $3" % [
+          $getOccupiedMem(),
+          $getFreeMem(),
+          $getTotalMem()]
+        echo GC_getStatistics()
       else: discard
 
       if window_process_all_keys in app.windowFlags():

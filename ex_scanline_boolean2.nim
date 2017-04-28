@@ -105,16 +105,16 @@ proc scanlineP[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
@@ -132,16 +132,16 @@ proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
@@ -158,16 +158,16 @@ proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesBin(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc renderScanlineBoolean[Rasterizer](app: App, ras1, ras2: var Rasterizer) =
@@ -211,8 +211,8 @@ proc renderSimplePaths[Rasterizer, Scanline, Renderer](app: App,
   var
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
 
   ps1.moveTo(x+140, y+145)
   ps1.lineTo(x+225, y+44)
@@ -255,8 +255,8 @@ proc renderClosedStroke[Rasterizer, Scanline, Renderer](app: App,
   var
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
     stroke = initConvStroke(ps2)
 
   stroke.width(15.0)
@@ -306,7 +306,7 @@ proc renderGBArrow[Rasterizer, Scanline, Renderer](app: App,
   mtx1 *= transAffineScaling(2.0)
 
   mtx2 = mtx1
-  mtx2 *= transAffineTranslation(app.mx - frameHeight.float64/2, app.my - frameHeight.float64/2)
+  mtx2 *= transAffineTranslation(app.mx - app.height()/2, app.my - app.height()/2)
 
   var
     transGBPoly = initConvTransform(gbPoly, mtx1)

@@ -115,7 +115,7 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
       mGray8Scanline: gray8ScanlineT(FontEngine)
       mMonoAdaptor: monoAdaptorT(FontEngine)
       mMonoScanline: monoScanlineT(FontEngine)
-        
+
   template fontEngineT*(x: typedesc[name]): typedesc = FontEngine
   template pathAdaptorT*(x: typedesc[name]): typedesc = pathAdaptorT(FontEngine)
   template gray8AdaptorT*(x: typedesc[name]): typedesc = gray8AdaptorT(FontEngine)
@@ -128,20 +128,20 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
     result.mFonts = newFontCachePool(maxFonts)
     result.mEngine = engine
     result.mChangeStamp = -1
-    result.mPrevGlyph = nil 
+    result.mPrevGlyph = nil
     result.mLastGlyph = nil
-    
+
   proc resetLastGlyph*(self: name) =
     self.mPrevGlyph = nil
     self.mLastGlyph = nil
-    
+
   proc synchronize*(self: name) =
     if self.mChangeStamp != self.mEngine.changeStamp():
       self.mFonts.font(self.mEngine.fontSignature())
       self.mChangeStamp = self.mEngine.changeStamp()
       self.mPrevGlyph = nil
       self.mLastGlyph = nil
-      
+
   proc glyph*(self: name, glyphCode: int): GlyphCache =
     self.synchronize()
     let gl = self.mFonts.findGlyph(glyphCode)
@@ -156,7 +156,7 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
           self.mEngine.glyphIndex(), self.mEngine.dataSize(),
           self.mEngine.dataType(), self.mEngine.bounds(),
           self.mEngine.advanceX(), self.mEngine.advanceY())
-          
+
         if self.mLastGlyph.data.len > 0:
           self.mEngine.writeGlyphTo(self.mLastGlyph.data[0].addr)
         return self.mLastGlyph
@@ -191,7 +191,7 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
     result = false
 
   proc preCache*(self: name, start, stop: int) =
-    for x in start..stop: 
+    for x in start..stop:
       discard self.glyph(x)
 
   proc resetCache*(self: name) =

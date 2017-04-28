@@ -17,7 +17,7 @@ type
   FontManagerType = FontCacheManagerWin16
   ConvCurveType = ConvCurve[pathAdaptorT(FontManagerType)]
   ConvContourType = ConvContour[ConvCurveType]
-  PixFmt = PixFmtBgr24
+  PixFmt = PixFmtBgr24Gamma[GammaLut8]
 
   App = ref object of PlatformSupport
     mRenType: RBoxCtrl[Rgba8]
@@ -31,7 +31,7 @@ type
     mFEng: FontEngineType
     mFMan: FontManagerType
     mOldHeight: float64
-    mGammaLut: GammaLut86
+    mGammaLut: GammaLut8
 
     # Pipeline to process the vectors glyph paths (curves + contour)
     mCurves: ConvCurveType
@@ -44,6 +44,7 @@ proc loadText(): string =
   var line: string
   while f.readLine(line):
     result.add line
+    result.add " "
   f.close()
 
 proc newApp(format: PixFormat, flipY: bool, hdc: HDC): App =
@@ -73,7 +74,7 @@ proc newApp(format: PixFormat, flipY: bool, hdc: HDC): App =
   result.mOldHeight = 0.0
   result.mCurves = initConvCurve(result.mFMan.pathAdaptor())
   result.mContour = initConvContour(result.mCurves)
-  result.mGammaLut = initGammaLut86()
+  result.mGammaLut = initGammaLut8()
 
   result.mRenType.addItem("Native Mono")
   result.mRenType.addItem("Native Gray 8")
@@ -122,7 +123,6 @@ proc newApp(format: PixFormat, flipY: bool, hdc: HDC): App =
   result.mContour.autoDetectOrientation(false)
   result.mText = loadText()
 
-
 proc getRenType(app: App): GlyphRendering =
   var gren = glyph_ren_native_mono
 
@@ -135,7 +135,7 @@ proc getRenType(app: App): GlyphRendering =
   else: discard
   result = gren
 
-const
+var
   textFlip = false
 
 proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasterizer,
@@ -172,7 +172,7 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasteri
 
     var
       x  = 10.0
-      y0 = frameHeight.float64 - app.mHeight.value() - 10.0
+      y0 = app.height() - app.mHeight.value() - 10.0
       y = y0
 
     for p in app.mText:
@@ -181,7 +181,7 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasteri
         if app.mKerning.status():
           discard app.mFMan.addKerning(x, y)
 
-        if x >= frameWidth.float64 - app.mHeight.value():
+        if x >= app.width() - app.mHeight.value():
           x = 10.0
           y0 -= app.mHeight.value()
           if y0 <= 120.0: break
@@ -217,7 +217,7 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasteri
 
 method onDraw(app: App) =
   var
-    pf     = construct(PixFmt, app.rbufWindow())
+    pf     = construct(PixFmt, app.rbufWindow(), app.mGammaLut)
     rb     = initRendererBase(pf)
     renSolid = initRendererScanlineAASolid(rb)
     renbin   = initRendererScanlineBinSolid(rb)
@@ -240,7 +240,6 @@ method onDraw(app: App) =
     app.mFEng.gamma(gamma)
     app.mGammaLut.gamma(app.mGamma.value())
 
-
   discard app.drawText(ras, sl, renSolid, renBin)
 
   ras.gamma(initGammaPower(1.0))
@@ -254,12 +253,47 @@ method onDraw(app: App) =
   renderCtrl(ras, sl, rb, app.mKerning)
   renderCtrl(ras, sl, rb, app.mPerformance)
 
+method onCtrlChange(app: App) =
+  if app.mPerformance.status():
+    var
+      pf     = construct(PixFmt, app.rbufWindow(), app.mGammaLut)
+      rb     = initRendererBase(pf)
+      renSolid = initRendererScanlineAASolid(rb)
+      renbin   = initRendererScanlineBinSolid(rb)
+      sl     = initScanlineU8()
+      ras    = initRasterizerScanlineAA()
+
+    rb.clear(initRgba(1,1,1))
+
+    var numGlyphs = 0
+    app.startTimer()
+    for i in 0.. <50:
+      numGlyphs += app.drawText(ras, sl, renSolid, renBin)
+
+    let t = app.elapsedTime()
+    let gs = (numGlyphs.float64 / t) * 1000.0
+    let gms = (t / numGlyphs.float64) * 1000.0
+    var buf =  "Glyphs=$1, Time=$2ms, $3 glyps/sec, $4 microsecond/glyph" % [
+      $numGlyphs,
+      t.formatFloat(ffDecimal, 3),
+      gs.formatFloat(ffDecimal, 3),
+      gms.formatFloat(ffDecimal, 3)]
+
+    app.message(buf)
+
+    app.mPerformance.status(false)
+    app.forceRedraw()
+
+method onKey(app: App, x, y, key: int, flags: InputFlags) =
+  textFlip = not textFlip
+  app.forceRedraw()
+
 proc main(): int =
   var dc = getDC(0)
   var app = newApp(pix_format_bgr24, flipY, dc)
   app.caption("AGG Example. Rendering TrueType Fonts with WinAPI")
 
-  if app.init(frameWidth, frameHeight, {}, "truetype_test"):
+  if app.init(frameWidth, frameHeight, {window_resize}, "truetype_test"):
     let ret = app.run()
     discard releaseDC(0, dc)
     return ret

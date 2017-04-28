@@ -147,7 +147,7 @@ method onDraw(app: App) =
   var pt = initConvStroke(t)
   pt.width(1.5)
 
-  var buf = "$1 ms" % [$t3]
+  var buf = "$1 ms" % [t3.formatFloat(ffDecimal, 3)]
 
   t.startPoint(10.0, 35.0)
   t.text(buf)
