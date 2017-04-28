@@ -211,8 +211,8 @@ proc renderSimplePaths[Rasterizer, Scanline, Renderer](app: App,
   var
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
 
   ps1.moveTo(x+140, y+145)
   ps1.lineTo(x+225, y+44)
@@ -255,8 +255,8 @@ proc renderClosedStroke[Rasterizer, Scanline, Renderer](app: App,
   var
     ps1 = initPathStorage()
     ps2 = initPathStorage()
-    x = app.mx - frameWidth.float64/2 + 100
-    y = app.my - frameHeight.float64/2 + 100
+    x = app.mx - app.width()/2 + 100
+    y = app.my - app.height()/2 + 100
     stroke = initConvStroke(ps2)
 
   stroke.width(15.0)
@@ -306,7 +306,7 @@ proc renderGBArrow[Rasterizer, Scanline, Renderer](app: App,
   mtx1 *= transAffineScaling(2.0)
 
   mtx2 = mtx1
-  mtx2 *= transAffineTranslation(app.mx - frameHeight.float64/2, app.my - frameHeight.float64/2)
+  mtx2 *= transAffineTranslation(app.mx - app.height()/2, app.my - app.height()/2)
 
   var
     transGBPoly = initConvTransform(gbPoly, mtx1)
