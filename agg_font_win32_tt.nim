@@ -281,7 +281,7 @@ proc updateSignature*(self: FontEngineWin32TTBase) =
       var buf = ",$1$2$3$4$5$6" % [
         toFxHex(mtx[0]), toFxHex(mtx[1]), toFxHex(mtx[2]),
         toFxHex(mtx[3]), toFxHex(mtx[4]), toFxHex(mtx[5])]
-      self.mSignature = buf
+      self.mSignature.add buf
     inc self.mChangeStamp
 
 proc findFont*(self: FontEngineWin32TTBase, name: string): int =
@@ -621,7 +621,7 @@ proc deinit*(self: FontEngineWin32TTBase) =
     selectObject(self.mDC, self.mOldFont)
 
   for i in 0.. <self.mNumFonts:
-   deleteObject(self.mFonts[i])
+    deleteObject(self.mFonts[i])
 
 proc init*(self: FontEngineWin32TTBase, flag32: bool, dc: HDC, maxFonts = 32) =
   self.mFlag32    = flag32
