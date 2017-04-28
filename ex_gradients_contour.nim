@@ -1121,7 +1121,7 @@ template construct*(x: typedesc[GradientConicAngle]): untyped = initGradientConi
 type
   PixFmt = PixFmtBgr24
   RendererT = RendererBase[PixFmt]
-  
+
   App = ref object of PlatformSupport
     polygons, gradient: RboxCtrl[Rgba8]
     stroke, reflect: CboxCtrl[Rgba8]
@@ -1137,7 +1137,7 @@ type
     rb: RendererT
     mInit: bool
     mLast: int
-    
+
 const
   frameWidth = 520
   frameHeight = 520
@@ -1461,11 +1461,10 @@ proc buildStar(path: var PathStorage) =
   path.lineTo(32, 76)
   path.closePolygon()
 
-
 proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
   PlatformSupport(result).init(format, flipY)
-  
+
   result.gradient = newRboxCtrl[Rgba8](145.0, 5.0, 300.0, 90.0, not flipY)
   result.polygons = newRboxCtrl[Rgba8](5, 5, 135, 90, not flipY)
 
@@ -1534,7 +1533,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.addCtrl(result.contour[0])
   result.addCtrl(result.sliderD[0])
   result.addCtrl(result.contour[1])
-  result.addCtrl(result.sliderD[1])  
+  result.addCtrl(result.sliderD[1])
   result.addCtrl(result.colors)
   result.addCtrl(result.persp)
   result.mInit = true
@@ -1594,7 +1593,7 @@ proc performRendering[VertexSource](app: App, vs: var VertexSource, contour: var
     app.persp.yn(2) = py2
     app.persp.xn(3) = px1
     app.persp.yn(3) = py2
-  
+
     tat.transform(app.persp.xn(0), app.persp.yn(0))
     tat.transform(app.persp.xn(1), app.persp.yn(1))
     tat.transform(app.persp.xn(2), app.persp.yn(2))
@@ -1607,12 +1606,8 @@ proc performRendering[VertexSource](app: App, vs: var VertexSource, contour: var
     trpg = initTransPerspective(app.persp.polygon(), px1, py1, px2, py2)
     T2   = initConvTransform(T1, trpp)
 
-  #if not trpp.isValid(): 
-  #  echo "PP" 
-  #  return
-  #if not trpg.isValid(): 
-  #  echo "PG"
-  #  return
+  #if not trpp.isValid(): return
+  #if not trpg.isValid(): return
 
   path.joinPath(T1)
 
@@ -1697,11 +1692,11 @@ proc render(app: App) =
 
   else:
     discard
-    
+
 method onDraw(app: App) =
   app.pf = construct(PixFmt, app.rbufWindow())
   app.rb = initRendererBase(app.pf)
-  
+
   app.rb.clear(initRgba(1.0, 1.0, 1.0))
   app.render()
 
@@ -1715,7 +1710,7 @@ method onDraw(app: App) =
   renderCtrl(app.ras, app.sl, app.rb, app.sliderD[1])
   renderCtrl(app.ras, app.sl, app.rb, app.colors)
   renderCtrl(app.ras, app.sl, app.rb, app.persp)
-  
+
 method onCtrlChange(app: App) =
   if app.mLast != app.polygons.curItem():
     app.mLast = app.polygons.curItem()
@@ -1723,7 +1718,7 @@ method onCtrlChange(app: App) =
 
 method onResize(app: App, sx, sy: int) =
   app.mInit = true
-  
+
 const
   angle = 10.0
   zoom_up = 1.1
@@ -1742,47 +1737,47 @@ proc bbox(persp: PolygonCtrl[Rgba8]): RectD =
     result.x1 = persp.xn(3)
   if persp.yn(3) > result.y2:
     result.y2 = persp.yn(3)
-    
+
 proc rotate(app: App, a: float64, persp: PolygonCtrl[Rgba8], bb: RectD) =
   var tat = transAffineTranslation(-(bb.x1 + (bb.x2 - bb.x1) / 2), -(bb.y1 + (bb.y2 - bb.y1) / 2))
   tat.transform(persp.xn(0), persp.yn(0))
   tat.transform(persp.xn(1), persp.yn(1))
   tat.transform(persp.xn(2), persp.yn(2))
   tat.transform(persp.xn(3), persp.yn(3))
-  
+
   var tar = transAffineRotation(deg2rad(a))
   tar.transform(persp.xn(0), persp.yn(0))
   tar.transform(persp.xn(1), persp.yn(1))
   tar.transform(persp.xn(2), persp.yn(2))
   tar.transform(persp.xn(3), persp.yn(3))
-  
+
   var tt2 = transAffineTranslation(bb.x1 + (bb.x2 - bb.x1) / 2, bb.y1 + (bb.y2 - bb.y1) / 2)
   tt2.transform(persp.xn(0), persp.yn(0))
   tt2.transform(persp.xn(1), persp.yn(1))
   tt2.transform(persp.xn(2), persp.yn(2))
   tt2.transform(persp.xn(3), persp.yn(3))
   app.forceRedraw()
-  
+
 proc zoom(app: App, z: float64, persp: PolygonCtrl[Rgba8], bb: RectD) =
   var tat = transAffineTranslation(-(bb.x1 + (bb.x2 - bb.x1) / 2), -(bb.y1 + (bb.y2 - bb.y1) / 2))
   tat.transform(persp.xn(0), persp.yn(0))
   tat.transform(persp.xn(1), persp.yn(1))
   tat.transform(persp.xn(2), persp.yn(2))
   tat.transform(persp.xn(3), persp.yn(3))
-  
+
   var tas = transAffineScaling(z)
   tas.transform(persp.xn(0), persp.yn(0))
   tas.transform(persp.xn(1), persp.yn(1))
   tas.transform(persp.xn(2), persp.yn(2))
   tas.transform(persp.xn(3), persp.yn(3))
-  
+
   var tt2 = transAffineTranslation(bb.x1 + (bb.x2 - bb.x1) / 2, bb.y1 + (bb.y2 - bb.y1) / 2)
   tt2.transform(persp.xn(0), persp.yn(0))
   tt2.transform(persp.xn(1), persp.yn(1))
   tt2.transform(persp.xn(2), persp.yn(2))
   tt2.transform(persp.xn(3), persp.yn(3))
   app.forceRedraw()
-  
+
 method onKey(app: App, x, y, key: int, flags: InputFlags) =
   if key == key_kp_plus.ord:
     var bb = bbox(app.persp)
