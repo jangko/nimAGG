@@ -2,7 +2,7 @@ import agg_basics, agg_path_storage, agg_bounding_rect, math, agg_pixfmt_gray
 import agg_conv_curve, agg_rendering_buffer, agg_rasterizer_outline
 import agg_renderer_primitives, agg_renderer_base, agg_trans_affine
 import agg_conv_transform, agg_color_gray, agg_span_gradient, agg_color_rgba
-import strutils, nimBMP, agg_pixfmt_rgb
+import agg_pixfmt_rgb
 
 let Infinity = 1E20
 
@@ -88,10 +88,14 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
 
   # II. Distance Transform
   # Create Float Buffer + 0 vs CInfinity (1e20) assignment
-  var image = newSeq[float32](width * height)
+  var image = newSeq[float32](width*height)
 
-  for i in 0.. <width*height:
-    image[i] = if self.mBuffer[i] == 0: 0.0 else: Infinity
+  var k = 0
+  for y in 0.. <height:
+    for x in 0.. <width:
+      if self.mBuffer[k] == 0: image[k] = 0.0
+      else: image[k] = Infinity
+      inc k
 
   # DT of 2d
 
@@ -130,10 +134,13 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
     min = sqrt(image[0])
     max = min
 
-  for i in 0.. <width*height:
-    image[i] = sqrt(image[i])
-    if min > image[i]: min = image[i]
-    if max < image[i]: max = image[i]
+  k = 0
+  for y in 0.. <height:
+    for x in 0.. <width:
+      image[k] = sqrt(image[k])
+      if min > image[k]: min = image[k]
+      if max < image[k]: max = image[k]
+      inc k
 
   # III. Convert To Grayscale
   if min == max:
@@ -141,8 +148,11 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
   else:
     var scale = 255.0 / (max - min)
 
-    for i in 0.. <width*height:
-      self.mBuffer[i] = uint8(iround((image[i] - min) * scale))
+    k = 0
+    for y in 0.. <height:
+      for x in 0.. <width:
+        self.mBuffer[k] = uint8(iround((image[k] - min) * scale))
+        inc k
 
   # OK
   self.mWidth = width
