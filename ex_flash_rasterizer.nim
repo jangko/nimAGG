@@ -111,16 +111,12 @@ proc scale(self: var CompoundShape, w, h: float64) =
   self.affine.reset()
   var x1, y1, x2, y2: float64
   discard boundingRect(self.path, self, 0, self.styles.len, x1, y1, x2, y2)
-  #echo "$1 $2 $3 $4" % [x1.formatFloat(ffDecimal, 3), y1.formatFloat(ffDecimal, 3), x2.formatFloat(ffDecimal, 3), y2.formatFloat(ffDecimal, 3)]
   if x1 < x2 and y1 < y2:
     var vp = initTransViewport()
     vp.preserveAspectRatio(0.5, 0.5, aspectRatioMeet)
     vp.setWorldViewport(x1, y1, x2, y2)
-    #vp.print()
     vp.setDeviceViewport(0, 0, w, h)
     self.affine = vp.toAffine()
-
-  #echo self.affine.scale()
   self.curve.approximationScale(self.affine.scale())
 
 proc approximationScale(self: var CompoundShape, s: float64) =

@@ -30,13 +30,6 @@ type
     maxX: int
     maxY: int
     sorted: bool
-    
-proc print*[T](self: RasterizerCellsAA[T]) =
-  mixin print
-  echo "rascel $1 $2 $3 $4" % [$self.numBlocks, $self.maxBlocks, $self.currBlock, $self.numCells]
-  echo "$1 $2 $3 $4 $5" % [$self.minX, $self.minY, $self.maxX, $self.maxY, $self.sorted]
-  self.currCell.print()
-  self.styleCell.print()
   
 proc reset*[T](self: RasterizerCellsAA[T]) =
   self.numCells = 0
@@ -293,15 +286,17 @@ proc scanlineNumCells*[T](self: RasterizerCellsAA[T], y: int): int =
   result = self.sortedY[y - self.minY].num
 
 proc scanlineCells*[T](self: RasterizerCellsAA[T], y: int): ptr ptr T =
-  #result = self.sortedCells[self.sortedY[y - self.minY].start].addr
-  #echo y, " ", self.minY
-  result = self.sortedY[y - self.minY].cells[0].addr
+  #echo y - self.minY, " ", self.sortedY.len, " ", self.sortedY[y - self.minY].num, " ", self.sortedY[y - self.minY].cells.len
+  
+  if self.sortedY[y - self.minY].cells.len != 0:
+    result = self.sortedY[y - self.minY].cells[0].addr
+  else:
+    result = nil
 
 proc sorted*[T](self: RasterizerCellsAA[T]): bool =
   result = self.sorted
 
 proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
-  #echo "$1 $2 $3 $4 $5" % [$ey, $x1, $y1, $x2, $y2]
   var
     ex1 = sar(x1, polySubpixelShift)
     ex2 = sar(x2, polySubpixelShift)

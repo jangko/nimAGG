@@ -66,7 +66,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   
   result.invertOrder.status(false)
   result.mWidth.setRange(-20.0, 50.0)
-  result.mWidth.value(10.0)
+  result.mWidth.value(29.0)
   result.mWidth.label("Width=$1")
   result.mAlpha1.setRange(0, 1)
   result.mAlpha1.value(1)

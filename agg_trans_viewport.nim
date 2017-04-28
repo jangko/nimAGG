@@ -29,16 +29,6 @@ proc initTransViewport*(): TransViewport =
   result.mKx  = 1.0
   result.mKy  = 1.0
 
-proc f(x: float64): string =
-  result = x.formatFloat(ffDecimal, 3)
-  
-proc print*(m: TransViewport) =
-  echo "$1 $2 $3 $4" % [m.mWorld.x1.f, m.mWorld.y1.f, m.mWorld.x2.f, m.mWorld.y2.f]
-  echo "$1 $2 $3 $4" % [m.mDevice.x1.f, m.mDevice.y1.f, m.mDevice.x2.f, m.mDevice.y2.f]
-  echo "$1 $2 $3 $4" % [m.mW.x1.f, m.mW.y1.f, m.mW.x2.f, m.mW.y2.f]
-  echo "$1 $2 $3 $4" % [m.mDx1.f, m.mDy1.f, m.mKx.f, m.mKy.f]
-  echo "$1 $2 $3 $4" % [m.mAlignX.f, m.mAlignY.f, $m.mIsValid.ord, $m.mAspect.ord]
-        
 proc update*(self: var TransViewport)
 
 proc preserveAspectRatio*(self: var TransViewport, alignx, aligny: float64, aspect: AspectRatio) =

@@ -287,7 +287,7 @@ proc main(): int =
     frameWidth = app.rbufImg(0).width()
     frameHeight = app.rbufImg(0).height()
 
-  if app.init(frameWidth, frameHeight, {window_resize}, "image_alpha"):
+  if app.init(frameWidth, frameHeight, {window_resize}, "image_transform"):
     return app.run()
 
   result = 1

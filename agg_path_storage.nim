@@ -236,12 +236,11 @@ proc vertex*(self: var LineAdaptor, x, y: var float64): uint =
   self.mLine.vertex(x, y)
 
 # A container to store vertices with their flags.
-# A path consists of a number of contours separated with "move_to"
-# commands. The path storage can keep and maintain more than one
-# path.
-# To navigate to the beginning of a particular path, use rewind(path_id)
-# Where path_id is what start_new_path() returns. So, when you call
-# start_new_path() you need to store its return value somewhere else
+# A path consists of a number of contours separated with "moveTo"
+# commands. The path storage can keep and maintain more than one path.
+# To navigate to the beginning of a particular path, use rewind(pathId)
+# Where pathId is what startNewPath() returns. So, when you call
+# startNewPath() you need to store its return value somewhere else
 # to navigate to the path afterwards.
 #
 # See also: vertex_source concept

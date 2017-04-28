@@ -1,4 +1,4 @@
-nimAGG
+# nimAGG
  * [![Build Status][badge-nimagg-travisci]][nimagg-travisci]
  * [![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
 
@@ -14,6 +14,13 @@ Those bugfixes are:
   - call proc of partial/specialized/some generic object by subtype object
   - generic proc forward declaration
   - generic object with generic field(s) type obtained via template*
+
+  
+## How to build demos?
+
+```text
+nim e build.nims
+```
 
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG
 [nimagg-appveyor]: https://ci.appveyor.com/project/jangko/nimagg

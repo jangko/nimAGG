@@ -345,8 +345,6 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     fg[1] = fg[0]
     fg[2] = fg[0]
 
-    #echo "$1 $2 $3 $4" % [$xHr , $yHr, $xLr, $yLr]
-
     xHr = xHr and imageSubpixelMask
     yHr = yHr and imageSubpixelMask
 
@@ -379,13 +377,9 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     fg[1] += weight * fgPtr[].CalcT; inc fgPtr
     fg[2] += weight * fgPtr[].CalcT
 
-    #echo "$1 $2 $3 $4" % [$weight, $fg[0], $fg[1], $fg[2]]
-
     fg[0] = fg[0] shr imageFilterShift
     fg[1] = fg[1] shr imageFilterShift
     fg[2] = fg[2] shr imageFilterShift
-
-    #echo "$1 $2 $3 $4" % [$weight, $fg[0], $fg[1], $fg[2]]
 
     if fg[OrderT.R.ord] > baseMask: fg[OrderT.R.ord] = baseMask
     if fg[OrderT.G.ord] > baseMask: fg[OrderT.G.ord] = baseMask
@@ -395,8 +389,6 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgb2x2[S,I], span: ptr Color
     span.g = ValueT(fg[OrderT.G.ord])
     span.b = ValueT(fg[OrderT.B.ord])
     span.a = ValueT(baseMask)
-
-    #echo "$1 $2 $3" % [ $span.r.int, $span.g.int, $span.b.int]
 
     inc span
     inc base(self).interpolator()

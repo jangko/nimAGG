@@ -76,22 +76,6 @@ type
   VertexF* = VertexBase[float32]
   VertexD* = VertexBase[float64]
 
-proc modifyLast*[T](x: var seq[T], val: T) =
-  if x.len == 0:
-    x.add(val)
-    return
-  x[x.len-1] = val
-
-proc prev*(x: var seq[PointD], idx: int): var PointD =
-  let size = x.len
-  x[(idx + size - 1) mod size]
-
-proc next*(x: var seq[PointD], idx: int): var PointD =
-  x[(idx + 1) mod x.len]
-
-proc removeAll*(x: var seq[PointD]) =
-  x.setLen(0)
-
 template getValueT*(x: typedesc[seq[PointD]]): typedesc = PointD
 
 proc iround*(v: float64): int {.inline.} =
@@ -115,11 +99,11 @@ type
   CoverType* = uint8
 
 const
-  coverShift* = 8                 #----cover_shift
-  coverSize*  = 1 shl coverShift  #----cover_size
-  coverMask*  = coverSize - 1     #----cover_mask
-  coverNone*  = 0                 #----cover_none
-  coverFull*  = coverMask         #----cover_full
+  coverShift* = 8               
+  coverSize*  = 1 shl coverShift
+  coverMask*  = coverSize - 1   
+  coverNone*  = 0               
+  coverFull*  = coverMask       
 
   polySubpixelShift* = 8
   polySubpixelScale* = 1 shl polySubpixelShift
@@ -127,8 +111,8 @@ const
 
 type
   FillingRule* = enum
-   fillNonZero
-   fillEvenOdd
+    fillNonZero
+    fillEvenOdd
 
 const
   pi* = 3.14159265358979323846'f64
@@ -157,7 +141,7 @@ template initRectI*(x1, y1, x2, y2: untyped): untyped = initRectBase[int](x1, y1
 template initRectF*(x1, y1, x2, y2: untyped): untyped = initRectBase[float32](x1, y1, x2, y2)
 template initRectD*(x1, y1, x2, y2: untyped): untyped = initRectBase[float64](x1, y1, x2, y2)
 
-proc normalize*[T](r: var RectBase[T]) =
+proc normalize*[T](r: var RectBase[T]) {.inline.} =
   if r.x1 > r.x2: swap(r.x1, r.x2)
   if r.y1 > r.y2: swap(r.y1, r.y2)
 
@@ -168,10 +152,10 @@ proc clip*[T](r: var RectBase[T], o: RectBase[T]): bool =
   if r.y1 < o.y1: r.y1 = o.y1
   result = r.x1 <= r.x2 and r.y1 <= r.y2
 
-proc isValid*[T](r: RectBase[T]): bool =
+proc isValid*[T](r: RectBase[T]): bool {.inline.} =
   result = r.x1 <= r.x2 and r.y1 <= r.y2
 
-proc hitTest*[T](r: RectBase[T], x, y: T): bool =
+proc hitTest*[T](r: RectBase[T], x, y: T): bool {.inline.} =
   result = x >= r.x1 and x <= r.x2 and y >= r.y1 and y <= r.y2
 
 proc intersectRectangles*[Rect](r1, r2: Rect): Rect {.inline.} =
@@ -270,11 +254,27 @@ proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
 template allocU*(T: typedesc, size = 1): untyped =
   cast[ptr T](alloc(T.sizeof * size))
 
-proc min*(x, y: uint32): uint32 {.inline.} =
-  if x <= y: x else: y
-
-proc max*(x, y: uint32): uint32 {.inline.} =
-  if y <= x: x else: y
+#proc min*(x, y: uint32): uint32 {.inline.} =
+#  if x <= y: x else: y
+#
+#proc max*(x, y: uint32): uint32 {.inline.} =
+#  if y <= x: x else: y
 
 proc removeLast*[T](x: var seq[T]) {.inline.} =
   if x.len != 0: x.delete(x.len-1)
+  
+proc modifyLast*[T](x: var seq[T], val: T) =
+  if x.len == 0:
+    x.add(val)
+    return
+  x[x.len-1] = val
+
+proc prev*(x: var seq[PointD], idx: int): var PointD =
+  let size = x.len
+  x[(idx + size - 1) mod size]
+
+proc next*(x: var seq[PointD], idx: int): var PointD =
+  x[(idx + 1) mod x.len]
+
+proc removeAll*(x: var seq[PointD]) =
+  x.setLen(0)

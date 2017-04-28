@@ -105,16 +105,16 @@ proc scanlineP[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
@@ -132,16 +132,16 @@ proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
@@ -158,16 +158,16 @@ proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras1, sl, storage1)
   renderScanlines(ras2, sl, storage2)
 
-  var startTime = cpuTime()
+  app.startTimer()
   for i in 0.. <10:
     sboolCombineShapesBin(op, storage1, storage2, sl1, sl2, sl, storage)
 
-  t1 = (cpuTime() - startTime) / 10.0
+  t1 = app.elapsedTime() / 10.0
 
-  startTime = cpuTime()
+  app.startTimer()
   ren.color(initRgba(0.5, 0.0, 0, 0.5))
   renderScanlines(storage, sl, ren)
-  t2 = cpuTime() - startTime
+  t2 = app.elapsedTime()
   numSpans = countSpans(storage, sl)
 
 proc renderScanlineBoolean[Rasterizer](app: App, ras1, ras2: var Rasterizer) =

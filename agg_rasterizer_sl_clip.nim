@@ -56,14 +56,6 @@ template rasterizerSlClip(Conv, name: untyped, CoordType: typed) =
       f1: uint
       clipping: bool
       
-  proc print*(m: name) =
-    when CoordType is float64:
-      let r = m.clipBox
-      echo "sl_clip $1 $2 $3 $4" % [r.x1.formatFloat(ffDecimal, 3), r.x2.formatFloat(ffDecimal, 3), r.y1.formatFloat(ffDecimal, 3), r.y2.formatFloat(ffDecimal, 3)]
-      echo "$1 $2 $3 $4" % [m.x1.formatFloat(ffDecimal, 3), m.y1.formatFloat(ffDecimal, 3), $m.f1, $m.clipping]
-    else:
-      discard
-
   proc `init name`*(): name =
     result.clipBox = initRectBase[CoordType](0,0,0,0)
     result.x1 = 0
