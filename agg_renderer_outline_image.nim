@@ -243,8 +243,6 @@ proc initDistanceInterpolator4*(x1, y1, x2, y2, sx, sy, ex, ey, len: int,
   result.mDxEnd   = result.mDxEnd   shl lineMr_subPixelShift
   result.mDyEnd   = result.mDyEnd   shl lineMr_subPixelShift
 
-  #result.print()
-
 proc incX*(self: var DistanceInterpolator4) =
   self.mDist      += self.mDy
   self.mDistStart += self.mDyStart
