@@ -106,7 +106,7 @@ when not defined(windows):
 for c in subjects:
   echo c
   exec "nim c --verbosity:0 --hints:off $1 $2" % [switches, c]
-  #when defined(windows):
-  #  exec c & " -v"
-  #else:
-  #  exec "./" & c & " -v"
+  when defined(windows):
+    exec c & " -v"
+  else:
+    exec "./" & c & " -v"
