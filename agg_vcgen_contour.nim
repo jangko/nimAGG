@@ -1,4 +1,4 @@
-import agg_basics, agg_math_stroke, agg_vertex_sequence, agg_math
+import agg_basics, agg_math_stroke, agg_vertex_sequence, agg_math, agg_array
 
 type
   Status = enum
@@ -13,7 +13,7 @@ type
     mStroker: MathStroke
     mWidth: float64
     mSrcVertices: VertexSequence[VertexDist]
-    mOutVertices: seq[PointD]
+    mOutVertices: PodBVector[PointD]
     mStatus: Status
     mSrcVertex, mOutVertex: int
     mClosed, mOrientation: uint
@@ -23,7 +23,7 @@ proc initVcgenContour*(): VcgenContour =
   result.mStroker = initMathStroke()
   result.mWidth = 1
   result.mSrcVertices = initVertexSequence[VertexDist]()
-  result.mOutVertices = @[]
+  result.mOutVertices = initPodBVector[PointD]()
   result.mStatus = initial
   result.mSrcVertex = 0
   result.mClosed = 0

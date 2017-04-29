@@ -157,7 +157,7 @@ proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, 
     inc dv.idx
     if dv.idx >= self.mSrcVertices.len: dv.idx = 0
 
-    let v = self.mSrcVertices[dv.idx].addr
+    let v = addr(self.mSrcVertices[dv.idx])
     dv.x2 = v.x
     dv.y2 = v.y
 
@@ -194,24 +194,24 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
     if self.mSrcVertices.len >= 3:
       dv.idx = 2
 
-      var v = self.mSrcVertices[self.mSrcVertices.len - 1].addr
+      var v = addr(self.mSrcVertices[self.mSrcVertices.len - 1])
       x1    = v.x
       y1    = v.y
       lprev = v.len
 
-      v  = self.mSrcVertices[0].addr
+      v  = addr(self.mSrcVertices[0])
       x2 = v.x
       y2 = v.y
       dv.lcurr = v.len
       var prev = initLineParameters(x1, y1, x2, y2, lprev)
 
-      v = self.mSrcVertices[1].addr
+      v = addr(self.mSrcVertices[1])
       dv.x1    = v.x
       dv.y1    = v.y
       dv.lnext = v.len
       dv.curr = initLineParameters(x2, y2, dv.x1, dv.y1, dv.lcurr)
 
-      v = self.mSrcVertices[dv.idx].addr
+      v = addr(self.mSrcVertices[dv.idx])
       dv.x2 = v.x
       dv.y2 = v.y
       dv.next = initLineParameters(dv.x1, dv.y1, dv.x2, dv.y2, dv.lnext)
@@ -243,11 +243,11 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
     case self.mSrcVertices.len
       of 0, 1: discard
       of 2:
-        var v = self.mSrcVertices[0].addr
+        var v = addr(self.mSrcVertices[0])
         x1    = v.x
         y1    = v.y
         lprev = v.len
-        v     = self.mSrcVertices[1].addr
+        v     = addr(self.mSrcVertices[1])
         x2    = v.x
         y2    = v.y
         var lp = initLineParameters(x1, y1, x2, y2, lprev)
@@ -264,16 +264,16 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
       of 3:
         var
           x3, y3, lnext: int
-          v     = self.mSrcVertices[0].addr
+          v     = addr(self.mSrcVertices[0])
 
         x1    = v.x
         y1    = v.y
         lprev = v.len
-        v     = self.mSrcVertices[1].addr
+        v     = addr(self.mSrcVertices[1])
         x2    = v.x
         y2    = v.y
         lnext = v.len
-        v     = self.mSrcVertices[2].addr
+        v     = addr(self.mSrcVertices[2])
         x3    = v.x
         y3    = v.y
         var
@@ -302,24 +302,24 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
       else:
         dv.idx = 3
 
-        var v = self.mSrcVertices[0].addr
+        var v = addr(self.mSrcVertices[0])
         x1    = v.x
         y1    = v.y
         lprev = v.len
 
-        v  = self.mSrcVertices[1].addr
+        v  = addr(self.mSrcVertices[1])
         x2 = v.x
         y2 = v.y
         dv.lcurr = v.len
         var prev = initLineParameters(x1, y1, x2, y2, lprev)
 
-        v = self.mSrcVertices[2].addr
+        v = addr(self.mSrcVertices[2])
         dv.x1    = v.x
         dv.y1    = v.y
         dv.lnext = v.len
         dv.curr = initLineParameters(x2, y2, dv.x1, dv.y1, dv.lcurr)
 
-        v = self.mSrcVertices[dv.idx].addr
+        v = addr(self.mSrcVertices[dv.idx])
         dv.x2 = v.x
         dv.y2 = v.y
         dv.next = initLineParameters(dv.x1, dv.y1, dv.x2, dv.y2, dv.lnext)
