@@ -1,4 +1,4 @@
-import agg_basics, agg_vertex_sequence, agg_shorten_path
+import agg_basics, agg_vertex_sequence, agg_shorten_path, agg_array
 
 const
   maxDashes = 32
@@ -110,8 +110,8 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
 
         self.mStatus = polyline
         self.mSrcVertex = 1
-        self.mV1 = self.mSrcVertices[0].addr
-        self.mV2 = self.mSrcVertices[1].addr
+        self.mV1 = addr(self.mSrcVertices[0])
+        self.mV2 = addr(self.mSrcVertices[1])
         self.mCurrRest = self.mV1.dist
         x = self.mV1.x
         y = self.mV1.y
@@ -140,12 +140,12 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
             self.mStatus = stop
           else:
             let idx = if self.mSrcVertex >= self.mSrcVertices.len(): 0 else: self.mSrcVertex
-            self.mV2 = self.mSrcVertices[idx].addr
+            self.mV2 = addr(self.mSrcVertices[idx])
         else:
           if self.mSrcVertex >= self.mSrcVertices.len():
             self.mStatus = stop
           else:
-            self.mV2 = self.mSrcVertices[self.mSrcVertex].addr
+            self.mV2 = addr(self.mSrcVertices[self.mSrcVertex])
       return cmd
     of stop:
       cmd = pathCmdStop

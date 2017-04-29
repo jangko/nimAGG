@@ -1,4 +1,4 @@
-import agg_basics, agg_vertex_sequence
+import agg_basics, agg_vertex_sequence, agg_array
 
 type
   Status = enum
@@ -91,15 +91,14 @@ proc addPath*[VertexSource](self: var TransSinglePath, vs: var VertexSource, pat
 proc totalLength*(self: TransSinglePath): float64 =
   if self.mBaseLength >= 1e-10: return self.mBaseLength
   if self.mStatus == ready:
-    let v = self.mSrcVertices[self.mSrcVertices.len() - 1]
-    result = v.dist
+    result = self.mSrcVertices.last().dist
   else:
     result = 0.0
 
 proc transform*(self: TransSinglePath, x, y: var float64) =
   if self.mStatus == ready:
     if self.mBaseLength > 1e-10:
-      x *= self.mSrcVertices[self.mSrcVertices.len() - 1].dist / self.mBaseLength
+      x *= self.mSrcVertices.last().dist / self.mBaseLength
 
     var
       x1 = 0.0

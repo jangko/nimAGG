@@ -1,4 +1,4 @@
-import agg_basics, agg_bspline
+import agg_basics, agg_bspline, agg_array
 
 type
   Status = enum
@@ -9,7 +9,7 @@ type
     stop
 
   VcgenBspline* = object
-    mSrcVertices: seq[PointD]
+    mSrcVertices: PodBVector[PointD]
     mSplineX, mSplineY: BSpline
     mInterpolationStep: float64
     mClosed: uint
@@ -18,7 +18,7 @@ type
     mCurAbscissa, mMaxAbscissa: float64
 
 proc initVcgenBspline*(): VcgenBspline =
-  result.mSrcVertices = @[]
+  result.mSrcVertices = initPodBVector[PointD]()
   result.mSplineX = initBSpline()
   result.mSplineY = initBSpline()
   result.mInterpolationStep = 1.0/50.0
@@ -36,7 +36,7 @@ proc interpolationStep*(self: VcgenBspline): float64 =
 
 # Vertex Generator Interface
 proc removeAll*(self: var VcgenBspline) =
-  self.mSrcVertices.setLen(0)
+  self.mSrcVertices.removeAll()
   self.mClosed = 0
   self.mStatus = initial
   self.mSrcVertex = 0

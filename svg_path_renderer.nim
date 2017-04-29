@@ -2,7 +2,9 @@ import agg_path_storage, agg_conv_transform, agg_conv_stroke
 import agg_conv_curve, agg_color_rgba, agg_renderer_scanline
 import agg_rasterizer_scanline_aa, agg_basics, agg_conv_contour
 import agg_trans_affine, svg_path_tokenizer, agg_bounding_rect
-import agg_basics
+import agg_basics, agg_array
+
+export agg_array
 
 type
   ConvCount*[VertexSource] = object
@@ -78,7 +80,7 @@ proc initPathAttributes*(attr: PathAttributes, idx: int): PathAttributes =
   result.transform = attr.transform
 
 type
-  AttrStorage = seq[PathAttributes]
+  AttrStorage = PodBVector[PathAttributes]
   Curved = ConvCurve[PathStorage]
   CurvedCount = ConvCount[Curved]
   CurvedStroked = ConvStroke[CurvedCount, NullMarkers]
@@ -100,8 +102,8 @@ type
 
 proc initPathRenderer*(): PathRenderer =
   result.mStorage = initPathStorage()
-  result.mAttrStorage = @[]
-  result.mAttrStack = @[]
+  result.mAttrStorage = construct(AttrStorage)
+  result.mAttrStack = construct(AttrStorage)
 
   result.mCurved = initConvCurve(result.mStorage)
   result.mCurvedCount = initConvCount(result.mCurved)
@@ -115,8 +117,8 @@ proc initPathRenderer*(): PathRenderer =
 
 proc removeAll*(self: var PathRenderer) =
   self.mStorage.removeAll()
-  self.mAttrStorage.setLen(0)
-  self.mAttrStack.setLen(0)
+  self.mAttrStorage.removeAll()
+  self.mAttrStack.removeAll()
   self.mTransform.reset()
 
 proc vertexCount*(self: PathRenderer): int =

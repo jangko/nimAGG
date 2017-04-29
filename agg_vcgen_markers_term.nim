@@ -1,23 +1,23 @@
-import agg_basics, agg_vertex_sequence
+import agg_basics, agg_vertex_sequence, agg_array
 
 type
   CoordType = object
     x, y: float64
 
   VcgenMarkersTerm* = object
-    mMarkers: seq[CoordType]
+    mMarkers: PodBVector[CoordType]
     mCurrId: int
     mCurrIdx: int
 
 proc initVcgenMarkersTerm*(): VcgenMarkersTerm =
   result.mCurrId = 0
   result.mCurrIdx = 0
-  result.mMarkers = @[]
+  result.mMarkers = initPodBVector[CoordType]()
 
 template construct*(x: typedesc[VcgenMarkersTerm]): untyped = initVcgenMarkersTerm()
 
 proc removeAll*(self: var VcgenMarkersTerm) =
-  self.mMarkers.setLen(0)
+  self.mMarkers.removeAll()
 
 proc addVertex*(self: var VcgenMarkersTerm, x, y: float64, cmd: uint) =
   if isMoveTo(cmd):

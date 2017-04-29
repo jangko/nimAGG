@@ -1,5 +1,6 @@
-import agg_math, agg_basics
+import agg_math, agg_basics, agg_array
 
+export agg_array
 # Vertex (x, y) with the distance to the next one. The last vertex has
 # distance between the last and the first points if the polygon is closed
 # and 0.0 if it's a polyline.
@@ -33,28 +34,57 @@ proc initVertexDistCmd*(x, y: float64, cmd: uint): VertexDistCmd =
   result.cmd = cmd
 
 type
-  VertexSequence*[T] = object
-    vert: seq[T]
+  VertexSequence*[T] = object of PodBVector[T]
+    #vert: seq[T]
 
 proc initVertexSequence*[T](): VertexSequence[T] =
-  result.vert = @[]
+  type base = PodBVector[T]
+  #result.vert = @[]
+  base(result).init()
 
 proc add*[T](self: var VertexSequence[T], val: T) =
-  if self.vert.len > 1:
+  type base = PodBVector[T]
+  
+  if base(self).size() > 1:
+    let len = base(self).size()
+    if not base(self)[len-2].cmp(base(self)[len-1]):
+       base(self).removeLast()
+
+  base(self).add(val)
+
+  #[if self.vert.len > 1:
     let len = self.vert.len
     if not self.vert[len-2].cmp(self.vert[len-1]):
        self.vert.removeLast()
 
-  self.vert.add(val)
+  self.vert.add(val)]#
 
 proc modifyLast*[T](self: var VertexSequence[T], val: T) =
-  if self.vert.len == 0:
+  type base = PodBVector[T]
+  base(self).removeLast()
+  self.add(val)
+  #[if self.vert.len == 0:
     self.vert.add(val)
     return
-  self.vert[self.vert.len-1] = val
+  self.vert[self.vert.len-1] = val]#
 
 proc close*[T](self: var VertexSequence[T], closed: bool) =
-  while self.vert.len > 1:
+  type base = PodBVector[T]
+  
+  while base(self).size() > 1:
+    let len = base(self).size()
+    if base(self)[len-2].cmp(base(self)[len-1]): break
+    var t = base(self)[len-1]
+    base(self).removeLast()
+    self.modifyLast(t)
+
+  if closed:
+    while  base(self).size() > 1:
+      let len = base(self).size()
+      if base(self)[len-1].cmp(base(self)[0]): break
+      base(self).removeLast()
+
+  #[while self.vert.len > 1:
     let len = self.vert.len
     if self.vert[len-2].cmp(self.vert[len-1]): break
     var t = self.vert[len-1]
@@ -65,9 +95,9 @@ proc close*[T](self: var VertexSequence[T], closed: bool) =
     while  self.vert.len > 1:
       let len = self.vert.len
       if self.vert[len-1].cmp(self.vert[0]): break
-      self.vert.removeLast()
+      self.vert.removeLast()]#
 
-proc curr*[T](self: var VertexSequence[T], idx: int): var T =
+#[proc curr*[T](self: var VertexSequence[T], idx: int): var T =
   self.vert[idx]
 
 proc next*[T](self: var VertexSequence[T], idx: int): var T =
@@ -88,4 +118,4 @@ proc removeAll*[T](self: var VertexSequence[T]) = self.vert.setLen(0)
 
 iterator mitems*[T](self: var VertexSequence[T]): var T =
   for i in 0.. <self.vert.len:
-    yield self.vert[i]
+    yield self.vert[i]]#

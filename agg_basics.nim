@@ -99,11 +99,11 @@ type
   CoverType* = uint8
 
 const
-  coverShift* = 8               
+  coverShift* = 8
   coverSize*  = 1 shl coverShift
-  coverMask*  = coverSize - 1   
-  coverNone*  = 0               
-  coverFull*  = coverMask       
+  coverMask*  = coverSize - 1
+  coverNone*  = 0
+  coverFull*  = coverMask
 
   polySubpixelShift* = 8
   polySubpixelScale* = 1 shl polySubpixelShift
@@ -253,28 +253,3 @@ proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
 
 template allocU*(T: typedesc, size = 1): untyped =
   cast[ptr T](alloc(T.sizeof * size))
-
-#proc min*(x, y: uint32): uint32 {.inline.} =
-#  if x <= y: x else: y
-#
-#proc max*(x, y: uint32): uint32 {.inline.} =
-#  if y <= x: x else: y
-
-proc removeLast*[T](x: var seq[T]) {.inline.} =
-  if x.len != 0: x.delete(x.len-1)
-  
-proc modifyLast*[T](x: var seq[T], val: T) =
-  if x.len == 0:
-    x.add(val)
-    return
-  x[x.len-1] = val
-
-proc prev*(x: var seq[PointD], idx: int): var PointD =
-  let size = x.len
-  x[(idx + size - 1) mod size]
-
-proc next*(x: var seq[PointD], idx: int): var PointD =
-  x[(idx + 1) mod x.len]
-
-proc removeAll*(x: var seq[PointD]) =
-  x.setLen(0)
