@@ -393,7 +393,7 @@ proc stepHor*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
   var
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -429,7 +429,7 @@ proc stepVer*[Renderer](self: var LineInterpolatorAA0[Renderer]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
 
   p1[] = CoverType(base(self).mRen[].cover(s1))
@@ -535,7 +535,7 @@ proc stepHor*[R](self: var LineInterpolatorAA1[R]): bool =
     dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
     distStart = self.mDi.distStart()
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
 
   p1[] = 0
@@ -582,7 +582,7 @@ proc stepVer*[R](self: var LineInterpolatorAA1[R]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
 
@@ -643,7 +643,7 @@ proc stepHor*[R](self: var LineInterpolatorAA2[R]): bool =
   var
     distEnd, dist, dy: int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
 
   distEnd = self.mDi.distEnd()
@@ -694,7 +694,7 @@ proc stepVer*[R](self: var LineInterpolatorAA2[R]): bool =
   var
     dist, dx: int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
     distEnd = self.mDi.distEnd()
     npix = 0
@@ -815,7 +815,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
   var
     dist, dy : int
     s1 = base(self).stepHorBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
@@ -869,7 +869,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
   var
     dist, dx : int
     s1 = base(self).stepVerBase(self.mDi)
-    p0 = base(self).mCovers[0].addr + maxHalfWidth + 2
+    p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
     distEnd   = self.mDi.distEnd()
@@ -981,7 +981,7 @@ proc profile*(self: var LineProfileAA, w: float64): ptr uint8 =
   let size = self.msubPixelWidth + subPixelScale * 6
   if size > self.mProfile.len:
     self.mProfile.setLen(size)
-  result = self.mProfile[0].addr
+  result = addr(self.mProfile[0])
 
 proc set*(self: var LineProfileAA, centerWidth, smootherWidth: float64) =
   var

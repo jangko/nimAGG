@@ -1,4 +1,4 @@
-import agg_basics, macros, strutils
+import agg_basics, macros, strutils, agg_array
 
 const
   cmdMoveTo = 0
@@ -40,19 +40,19 @@ template pathStorageInteger(name: untyped, CoordShift: int = 6) =
 
   type
     name*[T] = object
-      mStorage: seq[`name VI`[T]]
+      mStorage: PodBVector[`name VI`[T]]
       mVertexIdx: int
       mClosed: bool
 
   template getValueT*[T](x: typedesc[name[T]]): typedesc = T
 
   proc `init name`*[T](): name[T] =
-    result.mStorage = @[]
+    result.mStorage = initPodBVector[`name VI`[T]]()
     result.mVertexIdx = 0
     result.mClosed = true
 
   proc removeAll*[T](self: var name[T]) =
-    self.mStorage.setLen(0)
+    self.mStorage.removeAll()
 
   proc moveTo*[T](self: var name[T], x, y: T) =
     self.mStorage.add(`init name VI`(x, y, cmdMoveTo))
