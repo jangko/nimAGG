@@ -325,13 +325,13 @@ proc init*[Renderer](self: var LineInterpolatorAABase[Renderer], ren: var Render
 
   self.mRen = ren.addr
   self.mLen = if lp.vertical == (lp.inc > 0): -lp.len else: lp.len
-  self.mX = lp.x1 shr lineSubpixelShift
-  self.mY = lp.y1 shr lineSubpixelShift
+  self.mX = sar(lp.x1, lineSubpixelShift)
+  self.mY = sar(lp.y1, lineSubpixelShift)
   self.mOldX = self.mX
   self.mOldY = self.mY
   self.mCount = if lp.vertical:
-    abs((lp.y2 shr lineSubpixelShift) - self.mY) else:
-    abs((lp.x2 shr lineSubpixelShift) - self.mX)
+    abs(sar(lp.y2, lineSubpixelShift) - self.mY) else:
+    abs(sar(lp.x2, lineSubpixelShift) - self.mX)
 
 
   self.mWidth = ren.subPixelWidth()
@@ -353,7 +353,7 @@ proc init*[Renderer](self: var LineInterpolatorAABase[Renderer], ren: var Render
 proc stepHorBase*[Renderer,DI](self: var LineInterpolatorAABase[Renderer], di: var DI): int =
   inc self.mLi
   self.mX += self.mLp[].inc
-  self.mY = (self.mLp[].y1 + self.mLi.y()) shr lineSubpixelShift
+  self.mY = sar((self.mLp[].y1 + self.mLi.y()), lineSubpixelShift)
 
   if self.mLp[].inc > 0: di.incX(self.mY - self.mOldY)
   else:                  di.decX(self.mY - self.mOldY)
@@ -364,7 +364,7 @@ proc stepHorBase*[Renderer,DI](self: var LineInterpolatorAABase[Renderer], di: v
 proc stepVerBase*[Renderer,DI](self: var LineInterpolatorAABase[Renderer], di: var DI): int =
   inc self.mLi
   self.mY += self.mLp[].inc
-  self.mX = (self.mLp[].x1 + self.mLi.y()) shr lineSubpixelShift
+  self.mX = sar((self.mLp[].x1 + self.mLi.y()), lineSubpixelShift)
 
   if self.mLp[].inc > 0: di.incY(self.mX - self.mOldX)
   else:                  di.decY(self.mX - self.mOldX)
@@ -1076,7 +1076,7 @@ proc color*[R,ColorA, ColorB](self: var RendererOutlineAA[R,ColorA], c: ColorB) 
     self.mColor = construct(ColorA, c)
   else:
     self.mColor = c
-  
+
 proc color*[R,C](self: RendererOutlineAA[R,C]): C =
   self.mColor
 
