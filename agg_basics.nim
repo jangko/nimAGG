@@ -1,4 +1,4 @@
-import math
+import math, macros
 
 template `+`*[T](p: ptr T, off: int): ptr T =
   cast[ptr type(p[])](cast[ByteAddress](p) +% off * sizeof(p[]))
@@ -76,7 +76,8 @@ type
   VertexF* = VertexBase[float32]
   VertexD* = VertexBase[float64]
 
-template getValueT*(x: typedesc[seq[PointD]]): typedesc = PointD
+#template getValueT*(x: typedesc[seq[PointD]]): typedesc = PointD
+template getValueT*[T](x: typedesc[VertexBase[T]]): typedesc = T
 
 proc iround*(v: float64): int {.inline.} =
   result = if v < 0.0: (v - 0.5).int else: (v + 0.5).int
@@ -253,3 +254,6 @@ proc isEqualEps*[T](v1, v2, epsilon: T): bool {.inline.} =
 
 template allocU*(T: typedesc, size = 1): untyped =
   cast[ptr T](alloc(T.sizeof * size))
+  
+macro callTemplate*(a: untyped): untyped =
+  result = parseExpr("init" & $a)
