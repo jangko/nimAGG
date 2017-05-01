@@ -29,6 +29,12 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.mAlpha.label("Alpha $1")
   result.mAlpha.value(0.8)
 
+method onResize(app: App, sx, sy: int) =
+  var
+    pf  = construct(PixFmt, app.rbufWindow())
+    rb  = initRendererBase(pf)
+  rb.clear(initRgba(1, 1, 1))
+
 method onDraw(app: App) =
   var
     pf  = construct(PixFmt, app.rbufWindow())
@@ -54,7 +60,6 @@ method onDraw(app: App) =
 
   # This code renders the lion:
   var trans = initConvTransform(app.lion.path, mtx)
-  rb.clear(initrgba(1, 1, 1))
   renderAllPaths(ras, sl, ren, trans, app.lion.colors, app.lion.pathIdx, app.lion.numPaths)
 
   renderCtrl(ras, sl, rb, app.mAlpha)
