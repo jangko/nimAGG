@@ -1,75 +1,4 @@
-import agg_basics, agg_math, agg_bezier_arc, strutils
-
-type
-  VertexStorage* = ref object
-    mVert: seq[VertexD]
-
-proc newVertexStorage*(): VertexStorage =
-  new(result)
-  result.mVert = @[]
-
-proc removeAll*(self: VertexStorage) =
-  self.mVert.setLen(0)
-
-proc freeAll*(self: VertexStorage) =
-  self.mVert.setLen(0)
-
-proc addVertex*(self: VertexStorage, x: float64, y: float64, cmd: uint) =
-  self.mVert.add VertexD(x:x, y:y, cmd:cmd)
-
-proc modifyVertex*(self: VertexStorage, idx: int, x: float64, y: float64) =
-  var v = self.mVert[idx].addr
-  v.x = x
-  v.y = y
-
-proc modifyVertex*(self: VertexStorage, idx: int, x: float64, y: float64, cmd: uint) =
-  var v = self.mVert[idx].addr
-  v.x   = x
-  v.y   = y
-  v.cmd = cmd
-
-proc modifyCommand*(self: VertexStorage, idx: int, cmd: uint) =
-  self.mVert[idx].cmd = cmd
-
-proc swapVertices*(self: VertexStorage, v1, v2: int) =
-  swap(self.mVert[v1], self.mVert[v2])
-
-proc lastCommand*(self: VertexStorage): uint =
-  result = if self.mVert.len > 0: self.mVert[^1].cmd else: pathCmdStop
-
-proc vertex*(self: VertexStorage, idx: int, x, y: var float64): uint =
-  var v = self.mVert[idx].addr
-  x = v.x
-  y = v.y
-  result = v.cmd
-
-proc lastVertex*(self: VertexStorage, x, y: var float64): uint =
-  if self.mVert.len == 0:
-    x = 0.0
-    y = 0.0
-    return pathCmdStop
-
-  result = self.vertex(self.mVert.len - 1, x, y)
-
-proc prevVertex*(self: VertexStorage, x, y: var float64): uint =
-  if self.mVert.len < 2:
-    x = 0.0
-    y = 0.0
-    return pathCmdStop
-  result = self.vertex(self.mVert.len - 2, x, y)
-
-proc lastX*(self: VertexStorage): float64 =
-  result = if self.mVert.len > 0: self.mVert[^1].x else: 0.0'f64
-
-proc lastY*(self: VertexStorage): float64 =
-  result = if self.mVert.len > 0: self.mVert[^1].y else: 0.0'f64
-
-proc totalVertices*(self: VertexStorage): int =
-  result = self.mVert.len
-
-proc command*(self: VertexStorage, idx: int): uint =
-  result = self.mVert[idx].cmd
-
+import agg_basics, agg_math, agg_bezier_arc, agg_vertex_block_storage
 
 type
   PolyPlainAdaptor*[T] = object
@@ -245,30 +174,35 @@ proc vertex*(self: var LineAdaptor, x, y: var float64): uint =
 #
 # See also: vertex_source concept
 
+vertexBlockStorage(VertexBlockStorage)
+
 type
   PathBase*[VC] = object
     mVert: VC
-    iter: int
+    mIter: int
 
+  VertexStorage = VertexBlockStorage[VertexD]
   PathStorage* = PathBase[VertexStorage]
 
 proc initPathBase*[VC](vertices: VC): PathBase[VC] =
   result.mVert = vertices
-  result.iter = 0
+  result.mIter = 0
 
 proc initPathBase*[VC](): PathBase[VC] =
-  result.iter = 0
+  mixin construct
+  result.mVert = construct(VC)
+  result.mIter = 0
 
 proc initPathStorage*(): auto =
-  result = initPathBase(newVertexStorage())
+  result = initPathBase[VertexStorage]()
 
 proc removeAll*[VC](self: var PathBase[VC]) =
   self.mVert.removeAll()
-  self.iter = 0
+  self.mIter = 0
 
 proc freeAll*[VC](self: var PathBase[VC]) =
   self.mVert.freeAll()
-  self.iter = 0
+  self.mIter = 0
 
 proc relToAbs*[VC](self: var PathBase[VC], x, y: var float64) =
   if self.mVert.totalVertices() != 0:
@@ -316,12 +250,12 @@ proc modifyCommand*[VC](self: var PathBase[VC], idx: int, cmd: uint) =
   self.mVert.modifyCommand(idx, cmd)
 
 proc rewind*[VC](self: var PathBase[VC], pathId: int) {.inline.} =
-  self.iter = pathId
+  self.mIter = pathId
 
 proc vertex*[VC](self: var PathBase[VC], x, y: var float64): uint {.inline.} =
-  if self.iter >= self.mVert.totalVertices(): return pathCmdStop
-  result = self.mVert.vertex(self.iter, x, y)
-  inc self.iter
+  if self.mIter >= self.mVert.totalVertices(): return pathCmdStop
+  result = self.mVert.vertex(self.mIter, x, y)
+  inc self.mIter
 
 proc startNewPath*[VC](self: var PathBase[VC]): int {.inline.} =
   if not isStop(self.mVert.lastCommand()):
@@ -702,6 +636,12 @@ proc translateAllPaths*[VC](self: var PathBase[VC], dx, dy: float64) =
 type
   VertexStlStorage*[Container] = object
     mVert: Container
+
+template construct*[T](x: typedesc[VertexStlStorage[T]]): untyped =
+  initVertexStlStorage[T]()
+
+proc initVertexStlStorage*[T](): VertexStlStorage[T] =
+  result.mVert = construct(T)
 
 proc removeAll*[C](self: var VertexStlStorage[C]) =
   self.mVert.removeAll()

@@ -13,7 +13,7 @@ template podBVector(name: untyped, SS: int = 6) =
   template blockSize*[T](x: typedesc[name[T]]): int = (1 shl blockShift(x))
   template blockMask*[T](x: typedesc[name[T]]): int = (blockSize(x) - 1)
   template getValueT*[T](x: typedesc[name[T]]): typedesc = T
-  template construct*[T](x: typedesc[name[T]]): untyped = `init name`[T]()
+  template construct*[T](x: typedesc[name[T]]): untyped = callTemplate(name)[T]()
 
   proc `init name`*[T](): name[T] =
     result.mSize = 0
@@ -21,13 +21,13 @@ template podBVector(name: untyped, SS: int = 6) =
     result.mMaxBlocks = 0
     result.mBlocks = nil
     result.mBlockPtrInc = blockSize(name[T])
-    
+
   proc `init name`*[T](blockPtrInc: int): name[T] =
     result.mSize = 0
     result.mNumBlocks = 0
     result.mMaxBlocks = 0
     result.mBlocks = nil
-    result.mBlockPtrInc = blockPtrInc    
+    result.mBlockPtrInc = blockPtrInc
 
   proc init*[T](self: var name[T]) =
     self.mSize = 0
@@ -35,7 +35,7 @@ template podBVector(name: untyped, SS: int = 6) =
     self.mMaxBlocks = 0
     self.mBlocks = nil
     self.mBlockPtrInc = blockSize(name[T])
-    
+
   proc removeAll*[T](self: var name[T]) =
     self.mSize = 0
 
@@ -139,10 +139,10 @@ template podBVector(name: untyped, SS: int = 6) =
 
   proc `[]`*[T](self: var name[T], i: int): var T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
-    
+
   proc `[]`*[T](self: name[T], i: int): T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
-    
+
   proc at*[T](self: var name[T], i: int): T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
 
@@ -173,7 +173,7 @@ template podBVector(name: untyped, SS: int = 6) =
 
   proc last*[T](self: name[T]): T =
     self.valueAt(self.mSize - 1)
-    
+
   proc byteSize*[T](self: var name[T]): int =
     result = self.mSize * sizeof(T)
 
@@ -251,6 +251,8 @@ template podAutoVector*(name: untyped, T: typed, Size: int) =
     name* = object
       mArray: array[Size, T]
       mSize: int
+
+  template construct*(x: typedesc[name]): untyped = callTemplate(name)()
 
   proc `init name`*(): name =
     result.mSize = 0
