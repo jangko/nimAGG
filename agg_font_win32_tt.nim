@@ -128,10 +128,10 @@ proc decompose_win32_glyph_bitmap_mono[Scanline, ScanlineStorage](gbuf: string,
       sl.addCell(x + j, coverFull)
      inc bits
    buf += pitch
+   
    if sl.numSpans() != 0:
      sl.finalize(y - i - 1)
      storage.render(sl)
-
 
 proc decompose_win32_glyph_bitmap_gray8[Rasterizer, Scanline, ScanlineStorage](gbuf: string,
   w, h, x, y: int, flipY: bool, ras: var Rasterizer, sl: var Scanline, storage: var ScanlineStorage) =
