@@ -83,6 +83,10 @@ when defined(windows):
   subjects.add "ex_trans_curve1"
   subjects.add "ex_trans_curve2"
   subjects.add "ex_truetype_test"
+else:
+  subjects.add "ex_trans_curve1_ft"
+  subjects.add "ex_trans_curve2_ft"
+  subjects.add "ex_freetype_test"
   
 mode = ScriptMode.Silent
 
@@ -102,6 +106,7 @@ when not defined(cpu64):
 
 when not defined(windows):
   addSwitch("define:platform_null")
+  addSwitch("define:use_freetype")
 
 for c in subjects:
   echo c
