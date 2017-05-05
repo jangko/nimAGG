@@ -8,7 +8,18 @@ dist: trusty
 matrix:
   allow_failures:
     - os: osx
-    
+
+install:
+  - wget http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz
+  - tar -xvzf freetype-2.7.1.tar.gz
+  - cd freetype-2.7.1
+  - ./configure CFLAGS="-fPIC"
+  - ./make
+  - cd objs
+  - gcc -shared -fPIC -o libfreetype.so.6 *.o
+  - cd ..
+  - cd ..
+  
 before_script:
   - set -e
   - git clone --depth 1 https://github.com/nim-lang/csources.git
@@ -23,7 +34,9 @@ before_script:
   - nim c -d:release koch
   - ./koch boot -d:release
   - cd ..
+  
 script:
+  - mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 .
   - nim e build.nims
   - nim e -d:release build.nims
   - nim c -d:release --verbosity:0 --hints:off gen_color_conv
