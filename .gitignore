@@ -4,5 +4,6 @@ intense
 result
 examples
 *.exe
+*.dll
 /*.bmp
 *.o
