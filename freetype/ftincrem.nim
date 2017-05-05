@@ -12,13 +12,13 @@ type
 
   FT_Incremental_Metrics* = ptr FT_Incremental_MetricsRec
 
-  FT_Incremental_GetGlyphDataFunc* = proc (incremental: FT_Incremental;
+  FT_Incremental_GetGlyphDataFunc* = proc(incremental: FT_Incremental;
     glyph_index: FT_UInt; adata: ptr FT_Data): FT_Error {.ftcallback.}
 
-  FT_Incremental_FreeGlyphDataFunc* = proc (incremental: FT_Incremental;
+  FT_Incremental_FreeGlyphDataFunc* = proc(incremental: FT_Incremental;
     data: ptr FT_Data) {.ftcallback.}
 
-  FT_Incremental_GetGlyphMetricsFunc* = proc (incremental: FT_Incremental;
+  FT_Incremental_GetGlyphMetricsFunc* = proc(incremental: FT_Incremental;
     glyph_index: FT_UInt; vertical: FT_Bool;
     ametrics: ptr FT_Incremental_MetricsRec): FT_Error {.ftcallback.}
 

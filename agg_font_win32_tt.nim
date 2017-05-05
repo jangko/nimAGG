@@ -326,10 +326,11 @@ proc createFont*(self: FontEngineWin32TTBase, typeFace: string, renType: GlyphRe
                                 self.mTypeFace)              # typeface name
       if self.mCurFont != NULL:
         if self.mNumFonts >= self.mMaxFonts:
-          self.mFontNames.del(0)
           if self.mOldFont != NULL: selectObject(self.mDC, self.mOldFont)
           deleteObject(self.mFonts[0])
-          self.mFonts.del(0)
+          for i in 0.. <self.mNumFonts-1:
+            shallowCopy(self.mFontNames[i], self.mFontNames[i+1])
+            shallowCopy(self.mFonts[i], self.mFonts[i+1])
           self.mNumFonts = self.mMaxFonts - 1
 
         self.updateSignature()

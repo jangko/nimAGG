@@ -6,8 +6,8 @@ else:
   const FT_LIB_NAME* = "libfreetype-6.dll"
 
 when defined(windows):
-  {.pragma: ft_import, stdcall, importc, dynlib: FT_LIB_NAME.}
-  {.pragma: ft_callback, stdcall.}
+  {.pragma: ftimport, cdecl, importc, dynlib: FT_LIB_NAME.}
+  {.pragma: ftcallback, cdecl.}
 else:
-  {.pragma: ft_import, cdecl, importc, dynlib: FT_LIB_NAME.}
-  {.pragma: ft_callback, cdecl.}
+  {.pragma: ftimport, cdecl, importc, dynlib: FT_LIB_NAME.}
+  {.pragma: ftcallback, cdecl.}

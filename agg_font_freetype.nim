@@ -2,7 +2,8 @@ import agg_scanline_storage_aa, agg_scanline_storage_bin, agg_scanline_u
 import agg_scanline_bin, agg_path_storage_integer, agg_rasterizer_scanline_aa
 import agg_conv_curve, agg_font_types, agg_trans_affine, agg_basics
 import strutils, agg_bitset_iterator, math, agg_renderer_scanline
-import freetype.freetype, freetype.ftimage, freetype.ftoutln, freetype.fttypes
+import freetype / [freetype, ftimage, ftoutln, fttypes, fterrdef]
+include freetype.ftimport
 
 type
   FontEngineFreetypeBase* = ref object of RootObj
@@ -46,7 +47,8 @@ type
     mScanlinesAA: ScanlineStorageAA8
     mScanlinesBin: ScanlineStorageBin
     mRasterizer: RasterizerScanlineAA
-
+    msg: FT_Error_Msg
+    
 proc crc32[T](crc: uint32, buf: T): uint32 =
   const kcrc32 = [ 0'u32, 0x1db71064, 0x3b6e20c8, 0x26d930ac, 0x76dc4190,
     0x6b6b51f4, 0x4db26158, 0x5005713c, 0xedb88320'u32, 0xf00f9344'u32, 0xd6d6a3e8'u32,
@@ -68,9 +70,114 @@ proc dbl_to_int26p6(p: float64): int {.inline.} =
 proc int26p6_to_dbl(p: int): float64 {.inline.} =
   result = float64(p) / 64.0
 
-proc decompose_ft_outline[PathStorage](outline: FT_Outline, flipY: bool,
-  mtx: TransAffine, path: var PathStorage): bool =
-  discard
+type
+  Decomposer[T] = object
+    mtx: TransAffine
+    path: ptr T
+    flipY: bool
+    firstTime: bool
+
+proc initDecomposer[T](mtx: TransAffine, path: var T, flipY: bool): Decomposer[T] =
+  result.mtx = mtx
+  result.path = path.addr
+  result.flipY = flipY
+  result.firstTime = true
+
+proc decomp_moveTo[T](to: var FT_Vector; user: pointer): cint {.ftcallback.} =
+  type ValueT = getValueT(T)
+  var self = cast[ptr Decomposer[T]](user)
+  if not self.firstTime: self.path[].closePolygon()
+  self.firstTime = false
+
+  var
+    x1 = int26p6_to_dbl(to.x)
+    y1 = int26p6_to_dbl(to.y)
+
+  if self.flipY: y1 = -y1
+  self.mtx.transform(x1, y1)
+  self.path[].moveTo(ValueT(dbl_to_int26p6(x1)), ValueT(dbl_to_int26p6(y1)))
+
+proc decomp_lineTo[T](to: var FT_Vector; user: pointer): cint {.ftcallback.} =
+  type ValueT = getValueT(T)
+  var self = cast[ptr Decomposer[T]](user)
+  var
+    x1 = int26p6_to_dbl(to.x)
+    y1 = int26p6_to_dbl(to.y)
+
+  if self.flipY:
+    y1 = -y1
+
+  self.mtx.transform(x1, y1)
+  self.path[].lineTo(ValueT(dbl_to_int26p6(x1)), ValueT(dbl_to_int26p6(y1)))
+
+proc decomp_conicTo[T](control, to: var FT_Vector; user: pointer): cint {.ftcallback.} =
+  type ValueT = getValueT(T)
+  var self = cast[ptr Decomposer[T]](user)
+
+  var
+    x1 = int26p6_to_dbl(control.x)
+    y1 = int26p6_to_dbl(control.y)
+    x2 = int26p6_to_dbl(to.x)
+    y2 = int26p6_to_dbl(to.y)
+
+  if self.flipY:
+    y1 = -y1
+    y2 = -y2
+
+  self.mtx.transform(x1, y1)
+  self.mtx.transform(x2, y2)
+  self.path[].curve3(ValueT(dbl_to_int26p6(x1)),
+                     ValueT(dbl_to_int26p6(y1)),
+                     ValueT(dbl_to_int26p6(x2)),
+                     ValueT(dbl_to_int26p6(y2)))
+
+proc decomp_cubicTo[T](control1, control2, to: var FT_Vector; user: pointer): cint {.ftcallback.} =
+  type ValueT = getValueT(T)
+  var self = cast[ptr Decomposer[T]](user)
+
+  var
+    x1 = int26p6_to_dbl(control1.x)
+    y1 = int26p6_to_dbl(control1.y)
+    x2 = int26p6_to_dbl(control2.x)
+    y2 = int26p6_to_dbl(control2.y)
+    x3 = int26p6_to_dbl(to.x)
+    y3 = int26p6_to_dbl(to.y)
+
+  if self.flipY:
+    y1 = -y1
+    y2 = -y2
+    y3 = -y3
+
+  self.mtx.transform(x1, y1)
+  self.mtx.transform(x2, y2)
+  self.mtx.transform(x3, y3)
+  self.path[].curve4(ValueT(dbl_to_int26p6(x1)),
+                     ValueT(dbl_to_int26p6(y1)),
+                     ValueT(dbl_to_int26p6(x2)),
+                     ValueT(dbl_to_int26p6(y2)),
+                     ValueT(dbl_to_int26p6(x3)),
+                     ValueT(dbl_to_int26p6(y3)))
+
+proc decompose_ft_outline[PathStorageT](outline: var FT_Outline, flipY: bool,
+  mtx: TransAffine, path: var PathStorageT): bool =
+
+  var decomp = initDecomposer(mtx, path, flipY)
+  var funcs: FT_Outline_Funcs
+
+  funcs.moveTo  = decomp_moveTo[PathStorageT]
+  funcs.lineTo  = decomp_lineTo[PathStorageT]
+  funcs.conicTo = decomp_conicTo[PathStorageT]
+  funcs.cubicTo = decomp_cubicTo[PathStorageT]
+  funcs.shift   = 0
+  funcs.delta   = 0
+
+  var error = outline.decompose(funcs, decomp.addr)
+  if error != 0:
+    echo "decompose error"
+    return false
+
+  result = true
+
 #[
   type ValueT = getValueT(PathStorage)
 
@@ -302,7 +409,7 @@ proc decompose_ft_bitmap_mono[Scanline, ScanlineStorage](bitmap: FT_Bitmap,
     inc(buf, int(bitmap.pitch) * int(bitmap.rows - 1))
     inc(y, int(bitmap.rows))
     pitch = -pitch
-
+  
   for i in 0.. <int(bitmap.rows):
     sl.resetSpans()
     var bits = initBitsetIterator(buf, 0)
@@ -408,6 +515,8 @@ proc init(self: FontEngineFreetypeBase, flag32: bool, maxFaces = 32) =
 
   self.mLastError = FT_Init_FreeType(self.mLibrary)
   if self.mLastError == 0: self.mLibraryInitialized = true
+  self.msg = newErrorMsg()
+  self.mAffine = initTransAffine()
 
 proc toFxHex(x: float64): string =
   let y = dbl_to_plain_fx(x)
@@ -476,8 +585,9 @@ proc loadFont*(self: FontEngineFreetypeBase, fontName: string, faceIndex: int,
     else:
       if self.mNumFaces >= self.mMaxFaces:
         discard FT_Done_Face(self.mFaces[0])
-        self.mFaces.del(0)
-        self.mFaceNames.del(0)
+        for i in 0.. <self.mNumFaces-1:
+          shallowCopy(self.mFaceNames[i], self.mFaceNames[i+1])
+          shallowCopy(self.mFaces[i], self.mFaces[i+1])
         self.mNumFaces = self.mMaxFaces - 1
 
       if fontMem != nil and fontMemSize != 0:
@@ -530,14 +640,14 @@ proc charMap*(self: FontEngineFreetypeBase, map: FT_Encoding): bool =
       return true
   result = false
 
-proc height*(self: FontEngineFreetypeBase, h: float64): bool =
+proc height*(self: FontEngineFreetypeBase, h: float64): bool {.discardable.} =
   self.mHeight = FT_F26Dot6(h * 64.0)
   if not self.mCurFace.isNil:
     self.updateCharSize()
     return true
   result = false
 
-proc width*(self: FontEngineFreetypeBase, w: float64): bool =
+proc width*(self: FontEngineFreetypeBase, w: float64): bool {.discardable.} =
   self.mWidth = FT_F26Dot6(w * 64.0)
   if not self.mCurFace.isNil:
     self.updateCharSize()
@@ -625,6 +735,7 @@ proc prepareNativeMono(self: FontEngineFreetypeBase): bool =
   self.mBounds.y1 = self.mScanlinesBin.minY()
   self.mBounds.x2 = self.mScanlinesBin.maxX() + 1
   self.mBounds.y2 = self.mScanlinesBin.maxY() + 1
+
   self.mDataSize = self.mScanlinesBin.byteSize()
   self.mDataType = glyph_data_mono
   self.mAdvanceX = int26p6_to_dbl(self.mCurFace.glyph.advance.x)
@@ -729,7 +840,7 @@ proc prepareGray8(self: FontEngineFreetypeBase): bool =
     self.mRasterizer.addPath(self.mCurves16)
 
   self.mScanlinesAA.prepare() # Remove all
-  render_scanlines(self.mRasterizer, self.mScanlineAA, self.mScanlinesAA)
+  renderScanlines(self.mRasterizer, self.mScanlineAA, self.mScanlinesAA)
   self.mBounds.x1 = self.mScanlinesAA.minX()
   self.mBounds.y1 = self.mScanlinesAA.minY()
   self.mBounds.x2 = self.mScanlinesAA.maxX() + 1
@@ -748,11 +859,11 @@ proc prepareGlyph*(self: FontEngineFreetypeBase, glyphCode: int): bool =
   if self.mLastError != 0: return false
 
   case self.mGlyphRendering
-  of glyph_ren_native_mono: return self.prepareNativeMono()
-  of glyph_ren_native_gray8: return self.prepareNativeGray8()
-  of glyph_ren_outline: return self.prepareOutline()
-  of glyph_ren_agg_mono: return self.prepareMono()
-  of glyph_ren_agg_gray8: return self.prepareGray8()
+  of glyph_ren_native_mono: result = self.prepareNativeMono()
+  of glyph_ren_native_gray8: result = self.prepareNativeGray8()
+  of glyph_ren_outline: result = self.prepareOutline()
+  of glyph_ren_agg_mono: result = self.prepareMono()
+  of glyph_ren_agg_gray8: result = self.prepareGray8()
   else: return false
 
 proc glyphIndex*(self: FontEngineFreetypeBase): int =
@@ -783,13 +894,13 @@ proc writeGlyphTo*(self: FontEngineFreetypeBase, data: ptr uint8) =
       else: self.mPath16.serialize(data)
     else: discard
 
-proc addKerning*(self: FontEngineFreetypeBase, first, second: FT_UInt, x, y: var float64): bool =
+proc addKerning*(self: FontEngineFreetypeBase, first, second: int, x, y: var float64): bool =
   const renType = {glyph_ren_outline, glyph_ren_agg_mono, glyph_ren_agg_gray8}
   let cond = not self.mCurFace.isNil and first != 0 and second != 0
 
   if cond and FT_HAS_KERNING(self.mCurFace):
     var delta: FT_Vector
-    discard FT_Get_Kerning(self.mCurFace, first, second, FT_UInt(FT_KERNING_DEFAULT), delta)
+    discard FT_Get_Kerning(self.mCurFace, FT_UInt(first), FT_UInt(second), FT_UInt(FT_KERNING_DEFAULT), delta)
     var
       dx = int26p6_to_dbl(delta.x)
       dy = int26p6_to_dbl(delta.y)
@@ -800,36 +911,73 @@ proc addKerning*(self: FontEngineFreetypeBase, first, second: FT_UInt, x, y: var
     return true
   result = false
 
-#[
 # This class uses values of type int16 (10.6 format) for the vector cache.
 # The vector cache is compact, but when rendering glyphs of height
 # more that 200 there integer overflow can occur.
-#
-class font_engine_freetype_int16 : public font_engine_freetype_base
-{
-public:
-    typedef serialized_integer_path_adaptor<int16, 6>     path_adaptor_type;
-    typedef font_engine_freetype_base::gray8_adaptor_type gray8_adaptor_type;
-    typedef font_engine_freetype_base::mono_adaptor_type  mono_adaptor_type;
-    typedef font_engine_freetype_base::scanlines_aa_type  scanlines_aa_type;
-    typedef font_engine_freetype_base::scanlines_bin_type scanlines_bin_type;
 
-    font_engine_freetype_int16(unsigned maxFaces = 32) :
-        font_engine_freetype_base(false, maxFaces) {}
+type
+  FontEngineFreetype16* = ref object of FontEngineFreetypeBase
+
+template pathAdaptorT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  SerializedIntegerPathAdaptor[int16]
+
+template gray8AdaptorT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  gray8AdaptorT(FontEngineFreetypeBase)
+
+template monoAdaptorT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  monoAdaptorT(FontEngineFreetypeBase)
+
+template scanlinesAAT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  scanlinesAAT(FontEngineFreetypeBase)
+
+template scanlinesBinT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  scanlinesBinT(FontEngineFreetypeBase)
+
+template gray8ScanlineT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  embeddedScanlineT(gray8AdaptorT(FontEngineFreetypeBase))
+
+template monoScanlineT*(x: typedesc[FontEngineFreetype16]): typedesc =
+  embeddedScanlineT(monoAdaptorT(FontEngineFreetypeBase))
+
+proc finalizer(self: FontEngineFreetype16) =
+  deinit(self)
+
+proc newFontEngineFreetype16*(maxFaces = 32): FontEngineFreetype16 =
+  new(result, finalizer)
+  result.init(false, maxFaces)
 
 # This class uses values of type int32 (26.6 format) for the vector cache.
-# The vector cache is twice larger than in font_engine_freetype_int16,
+# The vector cache is twice larger than in font_engine_win32_tt_int16,
 # but it allows you to render glyphs of very large sizes.
-#
-class font_engine_freetype_int32 : public font_engine_freetype_base
-{
-public:
-    typedef serialized_integer_path_adaptor<int32, 6>     path_adaptor_type;
-    typedef font_engine_freetype_base::gray8_adaptor_type gray8_adaptor_type;
-    typedef font_engine_freetype_base::mono_adaptor_type  mono_adaptor_type;
-    typedef font_engine_freetype_base::scanlines_aa_type  scanlines_aa_type;
-    typedef font_engine_freetype_base::scanlines_bin_type scanlines_bin_type;
 
-    font_engine_freetype_int32(unsigned maxFaces = 32) :
-        font_engine_freetype_base(true, maxFaces) {}
-]#
+type
+  FontEngineFreetype32* = ref object of FontEngineFreetypeBase
+
+template pathAdaptorT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  SerializedIntegerPathAdaptor[int32]
+
+template gray8AdaptorT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  gray8AdaptorT(FontEngineFreetypeBase)
+
+template monoAdaptorT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  monoAdaptorT(FontEngineFreetypeBase)
+
+template scanlinesAAT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  scanlinesAAT(FontEngineFreetypeBase)
+
+template scanlinesBinT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  scanlinesBinT(FontEngineFreetypeBase)
+
+template gray8ScanlineT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  embeddedScanlineT(gray8AdaptorT(FontEngineFreetypeBase))
+
+template monoScanlineT*(x: typedesc[FontEngineFreetype32]): typedesc =
+  embeddedScanlineT(monoAdaptorT(FontEngineFreetypeBase))
+
+proc finalizer(self: FontEngineFreetype32) =
+  deinit(self)
+
+proc newFontEngineFreetype32*(maxFaces = 32): FontEngineFreetype32 =
+  new(result, finalizer)
+  result.init(true, maxFaces)
+  

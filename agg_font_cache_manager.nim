@@ -1,5 +1,13 @@
-import agg_basics, agg_font_types, agg_font_win32_tt, agg_scanline_storage_bin
-import agg_scanline_storage_aa, agg_path_storage_integer
+import agg_basics, agg_font_types, agg_scanline_storage_bin
+import agg_scanline_storage_aa, agg_path_storage_integer, strutils
+
+const windowsTTEngine* = (defined(windows) or defined(use_windows_tt)) and not defined(use_freetype)
+const freeTypeEngine*  = defined(use_freetype)
+
+when windowsTTEngine:
+  import agg_font_win32_tt
+else:
+  import agg_font_freetype
 
 #const
 #  blockSize = 16384-16
@@ -78,9 +86,10 @@ proc font*(self: FontCachePool, fontSignature: string, resetCache = false) =
     self.mCurFont = self.mFonts[idx]
   else:
     if self.mNumFonts >= self.mMaxFonts:
-      self.mFonts.del(0)
+      for i in 0.. <self.mFonts.len-1:
+        shallowCopy(self.mFonts[i], self.mFonts[i+1])        
       self.mNumFonts = self.mMaxFonts - 1
-
+    
     self.mFonts[self.mNumFonts] = newFontCache()
     self.mFonts[self.mNumFonts].signature(fontSignature)
     self.mCurFont = self.mFonts[self.mNumFonts]
@@ -152,6 +161,7 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
     else:
       if self.mEngine.prepareGlyph(glyphCode):
         self.mPrevGlyph = self.mLastGlyph
+
         self.mLastGlyph = self.mFonts.cacheGlyph(glyphCode,
           self.mEngine.glyphIndex(), self.mEngine.dataSize(),
           self.mEngine.dataType(), self.mEngine.bounds(),
@@ -200,5 +210,10 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
     self.mPrevGlyph = nil
     self.mLastGlyph = nil
 
-fontCacheManager(FontCacheManagerWin16, FontEngineWin32TTInt16)
-fontCacheManager(FontCacheManagerWin32, FontEngineWin32TTInt32)
+when windowsTTEngine:
+  fontCacheManager(FontCacheManagerWin16, FontEngineWin32TTInt16)
+  fontCacheManager(FontCacheManagerWin32, FontEngineWin32TTInt32)
+else:
+  fontCacheManager(FontCacheManagerFreeType16, FontEngineFreeType16)
+  fontCacheManager(FontCacheManagerFreeType32, FontEngineFreeType32)
+

@@ -4,20 +4,20 @@ include ftimport
 type
   FTC_FaceID* = FT_Pointer
   FTC_Face_Requester* = proc(face_id: FTC_FaceID; library: FT_Library;
-                           req_data: FT_Pointer; aface: ptr FT_Face): FT_Error {.ftcallback.}
+                           req_data: FT_Pointer; aface: var FT_Face): FT_Error {.ftcallback.}
   FTC_Manager* = distinct pointer#ptr FTC_ManagerRec
   FTC_Node* = distinct pointer#ptr FTC_NodeRec
 
 proc FTC_Manager_New*(library: FT_Library; max_faces: FT_UInt; max_sizes: FT_UInt;
   max_bytes: FT_ULong; requester: FTC_Face_Requester; req_data: FT_Pointer;
-  amanager: ptr FTC_Manager): FT_Error {.ftimport.}
+  amanager: var FTC_Manager): FT_Error {.ftimport.}
 
 proc FTC_Manager_Reset*(manager: FTC_Manager) {.ftimport.}
 
 proc FTC_Manager_Done*(manager: FTC_Manager) {.ftimport.}
 
 proc FTC_Manager_LookupFace*(manager: FTC_Manager; face_id: FTC_FaceID;
-  aface: ptr FT_Face): FT_Error {.ftimport.}
+  aface: var FT_Face): FT_Error {.ftimport.}
 
 type
   FTC_ScalerRec* = object
@@ -60,13 +60,13 @@ template FTC_IMAGE_TYPE_COMPARE*(d1, d2: untyped): untyped =
 type
   FTC_ImageCache* = distinct pointer #ptr FTC_ImageCacheRec
 
-proc FTC_ImageCache_New*(manager: FTC_Manager; acache: ptr FTC_ImageCache): FT_Error {.ftimport.}
+proc FTC_ImageCache_New*(manager: FTC_Manager; acache: var FTC_ImageCache): FT_Error {.ftimport.}
 
 proc FTC_ImageCache_Lookup*(cache: FTC_ImageCache; `type`: FTC_ImageType;
-  gindex: FT_UInt; aglyph: ptr FT_Glyph; anode: ptr FTC_Node): FT_Error {.ftimport.}
+  gindex: FT_UInt; aglyph: var FT_Glyph; anode: var FTC_Node): FT_Error {.ftimport.}
 
 proc FTC_ImageCache_LookupScaler*(cache: FTC_ImageCache; scaler: FTC_Scaler;
-  load_flags: FT_ULong; gindex: FT_UInt; aglyph: ptr FT_Glyph; anode: ptr FTC_Node): FT_Error {.ftimport.}
+  load_flags: FT_ULong; gindex: FT_UInt; aglyph: var FT_Glyph; anode: var FTC_Node): FT_Error {.ftimport.}
 
 type
   FTC_SBit* = ptr FTC_SBitRec
@@ -85,10 +85,10 @@ type
 
   FTC_SBitCache* = distinct pointer#ptr FTC_SBitCacheRec
 
-proc FTC_SBitCache_New*(manager: FTC_Manager; acache: ptr FTC_SBitCache): FT_Error {.ftimport.}
+proc FTC_SBitCache_New*(manager: FTC_Manager; acache: var FTC_SBitCache): FT_Error {.ftimport.}
 
 proc FTC_SBitCache_Lookup*(cache: FTC_SBitCache; `type`: FTC_ImageType;
-  gindex: FT_UInt; sbit: ptr FTC_SBit; anode: ptr FTC_Node): FT_Error {.ftimport.}
+  gindex: FT_UInt; sbit: var FTC_SBit; anode: var FTC_Node): FT_Error {.ftimport.}
 
 proc FTC_SBitCache_LookupScaler*(cache: FTC_SBitCache; scaler: FTC_Scaler;
-  load_flags: FT_ULong; gindex: FT_UInt; sbit: ptr FTC_SBit; anode: ptr FTC_Node): FT_Error {.ftimport.}
+  load_flags: FT_ULong; gindex: FT_UInt; sbit: var FTC_SBit; anode: var FTC_Node): FT_Error {.ftimport.}

@@ -1,6 +1,6 @@
 import fttypes, tables
 
-FT_ERROR_DEF(FT_Error): [
+FT_ERROR_DEF(FT_Err): [
   {Ok, 0x00, "no error"},
   {Cannot_Open_Resource, 0x01, "cannot open resource"},
   {Unknown_File_Format, 0x02, "unknown file format"},
@@ -98,7 +98,7 @@ type
     errors: TableRef[int, string]
 
 proc newErrorMsg*(): FT_Error_Msg =
-  result.errors = FT_Error_Table.newTable()
+  result.errors = FT_Err_Table.newTable()
 
 proc errorMessage*(self: FT_Error_Msg, errorCode: int): string =
   if self.errors.hasKey(errorCode):

@@ -14,7 +14,7 @@ type
   BDF_Property* = ptr BDF_PropertyRec
 
   BDF_PropertyRec* = object
-    `type`*: BDF_PropertyType
+    typ*: BDF_PropertyType
     u*: INNER_C_UNION_3982941592
 
 proc FT_Get_BDF_Charset_ID*(face: FT_Face; acharset_encoding: ptr ptr cchar;

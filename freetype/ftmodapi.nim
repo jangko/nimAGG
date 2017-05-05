@@ -21,9 +21,9 @@ const
 
 type
   FT_Module_Interface* = FT_Pointer
-  FT_Module_Constructor* = proc (module: FT_Module): FT_Error {.ftcallback.}
-  FT_Module_Destructor* = proc (module: FT_Module) {.ftcallback.}
-  FT_Module_Requester* = proc (module: FT_Module; name: ptr cchar): FT_Module_Interface {.ftcallback.}
+  FT_Module_Constructor* = proc(module: FT_Module): FT_Error {.ftcallback.}
+  FT_Module_Destructor* = proc(module: FT_Module) {.ftcallback.}
+  FT_Module_Requester* = proc(module: FT_Module; name: ptr cchar): FT_Module_Interface {.ftcallback.}
 
   FT_Module_Class* = object
     module_flags*: FT_ULong
@@ -49,7 +49,7 @@ proc FT_New_Library*(memory: FT_Memory; alibrary: ptr FT_Library): FT_Error {.ft
 proc FT_Done_Library*(library: FT_Library): FT_Error {.ftimport.}
 
 type
-  FT_DebugHook_Func* = proc (arg: pointer) {.ftcallback.}
+  FT_DebugHook_Func* = proc(arg: pointer) {.ftcallback.}
 
 proc FT_Set_Debug_Hook*(library: FT_Library; hook_index: FT_UInt;
                        debug_hook: FT_DebugHook_Func) {.ftimport.}

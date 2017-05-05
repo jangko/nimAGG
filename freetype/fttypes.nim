@@ -70,11 +70,11 @@ template FT_IS_EMPTY*(list: untyped): untyped =
 import macros, strutils
 
 macro FT_ERROR_DEF*(name: untyped, body: untyped): untyped =
-  var list = "type\n  $1_Code* = enum\n" % [$name]
+  var list = "const\n"
   var table = "const\n  $1_Table* = {\n" % [$name]
 
   for x in body[0]:
-    list.add("    $1 = $2\n" % [$x[0], $x[1].intVal])
+    list.add("    $1_$2* = $3\n" % [$name, $x[0], $x[1].intVal])
     table.add("    $1: \"$2\",\n" % [$x[1].intVal, $x[2]])
 
   table.add "    }\n"
