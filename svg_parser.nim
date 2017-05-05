@@ -509,10 +509,3 @@ proc parse*(self: var Parser, fileName: string) =
     self.parseNode(root)
   except:
     echo getCurrentExceptionMsg()
-
-proc main() =
-  var path = initPathRenderer()
-  var parser = initParser(path)
-  parser.parse("resources\\lion.svg")
-
-main()

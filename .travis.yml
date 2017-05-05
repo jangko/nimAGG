@@ -11,7 +11,7 @@ matrix:
 
 install:
   - wget http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz
-  - tar -xvzf freetype-2.7.1.tar.gz
+  - tar -xzf freetype-2.7.1.tar.gz
   - cd freetype-2.7.1
   - ./configure CFLAGS="-fPIC"
   - make
