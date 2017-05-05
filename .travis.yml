@@ -14,7 +14,7 @@ install:
   - tar -xvzf freetype-2.7.1.tar.gz
   - cd freetype-2.7.1
   - ./configure CFLAGS="-fPIC"
-  - ./make
+  - make
   - cd objs
   - gcc -shared -fPIC -o libfreetype.so.6 *.o
   - cd ..
