@@ -1,714 +1,498 @@
-//----------------------------------------------------------------------------
-// Anti-Grain Geometry (AGG) - Version 2.5
-// A high quality rendering engine for C++
-// Copyright (C) 2002-2006 Maxim Shemanarev
-// Copyright (C) 2004 Mauricio Piacentini (SDL Support)
-// Contact: mcseem@antigrain.com
-//          mcseemagg@yahoo.com
-//          http://antigrain.com
-// 
-// AGG is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-// 
-// AGG is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with AGG; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, 
-// MA 02110-1301, USA.
-//----------------------------------------------------------------------------
-
-#include <string.h>
-#include "platform/agg_platform_support.h"
-#include "SDL.h"
-#include "SDL_byteorder.h"
-
-
-namespace agg
-{
-
-    //------------------------------------------------------------------------
-    class platform_specific
-    {
-    public:
-        platform_specific(pix_format_e format, bool flip_y);
-        ~platform_specific();
-
-        pix_format_e  m_format;
-        pix_format_e  m_sys_format;
-        bool          m_flip_y;
-        unsigned      m_bpp;
-        unsigned      m_sys_bpp;
-        unsigned      m_rmask;
-        unsigned      m_gmask;
-        unsigned      m_bmask;
-        unsigned      m_amask;
-        bool          m_update_flag;
-        bool          m_resize_flag;
-        bool          m_initialized;
-        SDL_Surface*  m_surf_screen;
-        SDL_Surface*  m_surf_window;
-        SDL_Surface*  m_surf_img[platform_support::max_images];
-        int           m_cur_x;
-        int           m_cur_y;
-	int          m_sw_start;
-    };
-
-
-
-    //------------------------------------------------------------------------
-    platform_specific::platform_specific(pix_format_e format, bool flip_y) :
-        m_format(format),
-        m_sys_format(pix_format_undefined),
-        m_flip_y(flip_y),
-        m_bpp(0),
-        m_sys_bpp(0),
-        m_update_flag(true), 
-        m_resize_flag(true),
-        m_initialized(false),
-        m_surf_screen(0),
-        m_surf_window(0),
-        m_cur_x(0),
-        m_cur_y(0)
-    {
-        memset(m_surf_img, 0, sizeof(m_surf_img));
-
-        switch(m_format)
-        {
-			case pix_format_gray8:
-            m_bpp = 8;
-            break;
-
-        case pix_format_rgb565:
-            m_rmask = 0xF800;
-            m_gmask = 0x7E0;
-            m_bmask = 0x1F;
-            m_amask = 0;
-            m_bpp = 16;
-            break;
-
-        case pix_format_rgb555:
-            m_rmask = 0x7C00;
-            m_gmask = 0x3E0;
-            m_bmask = 0x1F;
-            m_amask = 0;
-            m_bpp = 16;
-            break;
-			
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-        case pix_format_rgb24:
-			m_rmask = 0xFF;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF0000;
-            m_amask = 0;
-            m_bpp = 24;
-            break;
-
-        case pix_format_bgr24:
-            m_rmask = 0xFF0000;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF;
-            m_amask = 0;
-            m_bpp = 24;
-            break;
-
-        case pix_format_bgra32:
-            m_rmask = 0xFF0000;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF;
-            m_amask = 0xFF000000;
-            m_bpp = 32;
-            break;
-
-        case pix_format_abgr32:
-            m_rmask = 0xFF000000;
-            m_gmask = 0xFF0000;
-            m_bmask = 0xFF00;
-            m_amask = 0xFF;
-            m_bpp = 32;
-            break;
-
-        case pix_format_argb32:
-            m_rmask = 0xFF00;
-            m_gmask = 0xFF0000;
-            m_bmask = 0xFF000000;
-            m_amask = 0xFF;
-            m_bpp = 32;
-            break;
-
-        case pix_format_rgba32:
-            m_rmask = 0xFF;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF0000;
-            m_amask = 0xFF000000;
-            m_bpp = 32;
-            break;
-#else //SDL_BIG_ENDIAN (PPC)
-        case pix_format_rgb24:
-			m_rmask = 0xFF0000;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF;
-            m_amask = 0;
-            m_bpp = 24;
-            break;
-
-        case pix_format_bgr24:
-            m_rmask = 0xFF;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF0000;
-            m_amask = 0;
-            m_bpp = 24;
-            break;
-
-        case pix_format_bgra32:
-            m_rmask = 0xFF00;
-            m_gmask = 0xFF0000;
-            m_bmask = 0xFF000000;
-            m_amask = 0xFF;
-            m_bpp = 32;
-            break;
-
-        case pix_format_abgr32:
-            m_rmask = 0xFF;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF0000;
-            m_amask = 0xFF000000;
-            m_bpp = 32;
-            break;
-
-        case pix_format_argb32:
-            m_rmask = 0xFF0000;
-            m_gmask = 0xFF00;
-            m_bmask = 0xFF;
-            m_amask = 0xFF000000;
-            m_bpp = 32;
-            break;
-
-        case pix_format_rgba32:
-            m_rmask = 0xFF000000;
-            m_gmask = 0xFF0000;
-            m_bmask = 0xFF00;
-            m_amask = 0xFF;
-            m_bpp = 32;
-            break;
-#endif
-        }
-    }
-
-    //------------------------------------------------------------------------
-    platform_specific::~platform_specific()
-    {
-        int i;
-        for(i = platform_support::max_images - 1; i >= 0; --i)
-        {
-            if(m_surf_img[i]) SDL_FreeSurface(m_surf_img[i]);
-        }
-        if(m_surf_window) SDL_FreeSurface(m_surf_window);
-        if(m_surf_screen) SDL_FreeSurface(m_surf_screen);
-    }
-
-
-
-    //------------------------------------------------------------------------
-    platform_support::platform_support(pix_format_e format, bool flip_y) :
-        m_specific(new platform_specific(format, flip_y)),
-        m_format(format),
-        m_bpp(m_specific->m_bpp),
-        m_window_flags(0),
-        m_wait_mode(true),
-        m_flip_y(flip_y)
-    {
-        SDL_Init(SDL_INIT_VIDEO);
-        strcpy(m_caption, "Anti-Grain Geometry Application");
-    }
-
-
-    //------------------------------------------------------------------------
-    platform_support::~platform_support()
-    {
-        delete m_specific;
-    }
-
-
-
-    //------------------------------------------------------------------------
-    void platform_support::caption(const char* cap)
-    {
-        strcpy(m_caption, cap);
-        if(m_specific->m_initialized)
-        {
-            SDL_WM_SetCaption(cap, 0);
-        }
-    }
-    
-
-
-
-
-    //------------------------------------------------------------------------
-    bool platform_support::init(unsigned width, unsigned height, unsigned flags)
-    {
-        m_window_flags = flags;
-        unsigned wflags = SDL_SWSURFACE;
-
-        if(m_window_flags & window_hw_buffer)
-        {
-            wflags = SDL_HWSURFACE;
-        }
-
-        if(m_window_flags & window_resize)
-        {
-            wflags |= SDL_RESIZABLE;
-        }
-
-        if(m_specific->m_surf_screen) SDL_FreeSurface(m_specific->m_surf_screen);
-
-        m_specific->m_surf_screen = SDL_SetVideoMode(width, height, m_bpp, wflags);
-        if(m_specific->m_surf_screen == 0) 
-        {
-            fprintf(stderr, 
-                    "Unable to set %dx%d %d bpp video: %s\n", 
-                    width, 
-                    height, 
-                    m_bpp, 
-                    ::SDL_GetError());
-            return false;
-        }
-
-        SDL_WM_SetCaption(m_caption, 0);
-
-        if(m_specific->m_surf_window) SDL_FreeSurface(m_specific->m_surf_window);
-
-        m_specific->m_surf_window = 
-            SDL_CreateRGBSurface(SDL_HWSURFACE, 
-                                 m_specific->m_surf_screen->w, 
-                                 m_specific->m_surf_screen->h,
-                                 m_specific->m_surf_screen->format->BitsPerPixel,
-                                 m_specific->m_rmask, 
-                                 m_specific->m_gmask, 
-                                 m_specific->m_bmask, 
-                                 m_specific->m_amask);
-
-        if(m_specific->m_surf_window == 0) 
-        {
-            fprintf(stderr, 
-                    "Unable to create image buffer %dx%d %d bpp: %s\n", 
-                    width, 
-                    height, 
-                    m_bpp, 
-                    SDL_GetError());
-            return false;
-        }
-
-        m_rbuf_window.attach((unsigned char*)m_specific->m_surf_window->pixels, 
-                             m_specific->m_surf_window->w, 
-                             m_specific->m_surf_window->h, 
-                             m_flip_y ? -m_specific->m_surf_window->pitch : 
-                                         m_specific->m_surf_window->pitch);
-
-        if(!m_specific->m_initialized)
-        {
-            m_initial_width = width;
-            m_initial_height = height;
-            on_init();
-            m_specific->m_initialized = true;
-        }
-        on_resize(m_rbuf_window.width(), m_rbuf_window.height());
-        m_specific->m_update_flag = true;
-        return true;
-    }
-
-
-
-    //------------------------------------------------------------------------
-    void platform_support::update_window()
-    {
-        SDL_BlitSurface(m_specific->m_surf_window, 0, m_specific->m_surf_screen, 0);
-        SDL_UpdateRect(m_specific->m_surf_screen, 0, 0, 0, 0);
-    }
-
-
-    //------------------------------------------------------------------------
-    int platform_support::run()
-    {
-        SDL_Event event;
-        bool ev_flag = false;
-
-        for(;;)
-        {
-            if(m_specific->m_update_flag)
-            {
-                on_draw();
-                update_window();
-                m_specific->m_update_flag = false;
-            }
-
-            ev_flag = false;
-            if(m_wait_mode)
-            {
-                SDL_WaitEvent(&event);
-                ev_flag = true;
-            }
-            else
-            {
-                if(SDL_PollEvent(&event))
-                {
-                    ev_flag = true;
-                }
-                else
-                {
-                    on_idle();
-                }
-            }
-
-            if(ev_flag)
-            {
-                if(event.type == SDL_QUIT)
-                {
-                    break;
-                }
-
-                int y;
-                unsigned flags = 0;
-
-                switch (event.type) 
-                {
-                case SDL_VIDEORESIZE:
-                    if(!init(event.resize.w, event.resize.h, m_window_flags)) return false;
-                    on_resize(m_rbuf_window.width(), m_rbuf_window.height());
-                    trans_affine_resizing(event.resize.w, event.resize.h);
-                    m_specific->m_update_flag = true;
-                    break;
-
-                case SDL_KEYDOWN:
-                    {
-                        flags = 0;
-                        if(event.key.keysym.mod & KMOD_SHIFT) flags |= kbdShift;
-                        if(event.key.keysym.mod & KMOD_CTRL)  flags |= kbdCtrl;
-
-                        bool left  = false;
-                        bool up    = false;
-                        bool right = false;
-                        bool down  = false;
-
-                        switch(event.key.keysym.sym)
-                        {
-                        case key_left:
-                            left = true;
-                            break;
-
-                        case key_up:
-                            up = true;
-                            break;
-
-                        case key_right:
-                            right = true;
-                            break;
-
-                        case key_down:
-                            down = true;
-                            break;
-                        }
-
-                        if(m_ctrls.on_arrow_keys(left, right, down, up))
-                        {
-                            on_ctrl_change();
-                            force_redraw();
-                        }
-                        else
-                        {
-                            on_key(m_specific->m_cur_x,
-                                   m_specific->m_cur_y,
-                                   event.key.keysym.sym,
-                                   flags);
-                        }
-                    }
-                    break;
-
-                case SDL_MOUSEMOTION:
-                    y = m_flip_y ? 
-                        m_rbuf_window.height() - event.motion.y : 
-                        event.motion.y;
-
-                    m_specific->m_cur_x = event.motion.x;
-                    m_specific->m_cur_y = y;
-                    flags = 0;
-                    if(event.motion.state & SDL_BUTTON_LMASK) flags |= mouseLeft;
-                    if(event.motion.state & SDL_BUTTON_RMASK) flags |= mouseRight;
-
-                    if(m_ctrls.on_mouse_move(m_specific->m_cur_x, 
-                                             m_specific->m_cur_y,
-                                             (flags & mouseLeft) != 0))
-                    {
-                        on_ctrl_change();
-                        force_redraw();
-                    }
-                    else
-                    {
-                        on_mouse_move(m_specific->m_cur_x, 
-                                      m_specific->m_cur_y, 
-                                      flags);
-                    }
-		    SDL_Event eventtrash;
-		    while (SDL_PeepEvents(&eventtrash, 1, SDL_GETEVENT, SDL_EVENTMASK(SDL_MOUSEMOTION))!=0){;}
-                    break;
-
-		case SDL_MOUSEBUTTONDOWN:
-                    y = m_flip_y
-                        ? m_rbuf_window.height() - event.button.y
-                        : event.button.y;
-
-                    m_specific->m_cur_x = event.button.x;
-                    m_specific->m_cur_y = y;
-                    flags = 0;
-                    switch(event.button.button)
-                    {
-                    case SDL_BUTTON_LEFT:
-                        {
-                            flags = mouseLeft;
-
-if(m_ctrls.on_mouse_button_down(m_specific->m_cur_x,
-                                m_specific->m_cur_y))
-                            {
-                                m_ctrls.set_cur(m_specific->m_cur_x, 
-                                    m_specific->m_cur_y);
-                                on_ctrl_change();
-                                force_redraw();
-                            }
-                            else
-                            {
-                                if(m_ctrls.in_rect(m_specific->m_cur_x, 
-                                    m_specific->m_cur_y))
-                                {
-                                    if(m_ctrls.set_cur(m_specific->m_cur_x, 
-                                        m_specific->m_cur_y))
-                                    {
-                                        on_ctrl_change();
-                                        force_redraw();
-                                    }
-                                }
-                                else
-                                {
-                                    on_mouse_button_down(m_specific->m_cur_x, 
-                                        m_specific->m_cur_y, 
-                                        flags);
-                                }
-                            }
-                        }
-                        break;
-                    case SDL_BUTTON_RIGHT:
-                        flags = mouseRight;
-                        on_mouse_button_down(m_specific->m_cur_x, 
-                            m_specific->m_cur_y, 
-                            flags);
-                        break;
-                    } //switch(event.button.button)
-                    break;
-		    
-                case SDL_MOUSEBUTTONUP:
-                    y = m_flip_y
-                        ? m_rbuf_window.height() - event.button.y
-                        : event.button.y;
-
-                    m_specific->m_cur_x = event.button.x;
-                    m_specific->m_cur_y = y;
-                    flags = 0;
-                    if(m_ctrls.on_mouse_button_up(m_specific->m_cur_x, 
-                                                  m_specific->m_cur_y))
-                    {
-                        on_ctrl_change();
-                        force_redraw();
-                    }
-                    on_mouse_button_up(m_specific->m_cur_x, 
-                                       m_specific->m_cur_y, 
-                                       flags);
-                    break;
-                }
-            }
-        }
-        return 0;
-    }
-
-
-
-    //------------------------------------------------------------------------
-    const char* platform_support::img_ext() const { return ".bmp"; }
-
-    //------------------------------------------------------------------------
-    const char* platform_support::full_file_name(const char* file_name)
-    {
-        return file_name;
-    }
-
-    //------------------------------------------------------------------------
-    bool platform_support::load_img(unsigned idx, const char* file)
-    {
-        if(idx < max_images)
-        {
-            if(m_specific->m_surf_img[idx]) SDL_FreeSurface(m_specific->m_surf_img[idx]);
-
-            char fn[1024];
-            strcpy(fn, file);
-            int len = strlen(fn);
-            if(len < 4 || strcmp(fn + len - 4, ".bmp") != 0)
-            {
-                strcat(fn, ".bmp");
-            }
-
-            SDL_Surface* tmp_surf = SDL_LoadBMP(fn);
-            if (tmp_surf == 0) 
-            {
-                fprintf(stderr, "Couldn't load %s: %s\n", fn, SDL_GetError());
-                return false;
-            }
-
-            SDL_PixelFormat format;
-            format.palette = 0;
-            format.BitsPerPixel = m_bpp;
-            format.BytesPerPixel = m_bpp >> 8;
-            format.Rmask = m_specific->m_rmask;
-            format.Gmask = m_specific->m_gmask;
-            format.Bmask = m_specific->m_bmask;
-            format.Amask = m_specific->m_amask;
-            format.Rshift = 0;
-            format.Gshift = 0;
-            format.Bshift = 0;
-            format.Ashift = 0;
-            format.Rloss = 0;
-            format.Gloss = 0;
-            format.Bloss = 0;
-            format.Aloss = 0;
-            format.colorkey = 0;
-            format.alpha = 0;
-
-            m_specific->m_surf_img[idx] = 
-                SDL_ConvertSurface(tmp_surf, 
-                                   &format, 
-                                   SDL_SWSURFACE);
-
-            SDL_FreeSurface(tmp_surf);
-            
-            if(m_specific->m_surf_img[idx] == 0) return false;
-
-            m_rbuf_img[idx].attach((unsigned char*)m_specific->m_surf_img[idx]->pixels, 
-                                   m_specific->m_surf_img[idx]->w, 
-                                   m_specific->m_surf_img[idx]->h, 
-                                   m_flip_y ? -m_specific->m_surf_img[idx]->pitch : 
-                                               m_specific->m_surf_img[idx]->pitch);
-            return true;
-
-        }
-        return false;
-    }
-
-
-
-
-    //------------------------------------------------------------------------
-    bool platform_support::save_img(unsigned idx, const char* file)
-    {
-        if(idx < max_images && m_specific->m_surf_img[idx])
-        {
-            char fn[1024];
-            strcpy(fn, file);
-            int len = strlen(fn);
-            if(len < 4 || strcmp(fn + len - 4, ".bmp") != 0)
-            {
-                strcat(fn, ".bmp");
-            }
-            return SDL_SaveBMP(m_specific->m_surf_img[idx], fn) == 0;
-        }
-        return false;
-    }
-
-
-
-    //------------------------------------------------------------------------
-    bool platform_support::create_img(unsigned idx, unsigned width, unsigned height)
-    {
-        if(idx < max_images)
-        {
-
-            if(m_specific->m_surf_img[idx]) SDL_FreeSurface(m_specific->m_surf_img[idx]);
-
-             m_specific->m_surf_img[idx] = 
-                 SDL_CreateRGBSurface(SDL_SWSURFACE, 
-                                      width, 
-                                      height,
-                                      m_specific->m_surf_screen->format->BitsPerPixel,
-                                      m_specific->m_rmask, 
-                                      m_specific->m_gmask, 
-                                      m_specific->m_bmask, 
-                                      m_specific->m_amask);
-            if(m_specific->m_surf_img[idx] == 0) 
-            {
-                fprintf(stderr, "Couldn't create image: %s\n", SDL_GetError());
-                return false;
-            }
-
-            m_rbuf_img[idx].attach((unsigned char*)m_specific->m_surf_img[idx]->pixels, 
-                                   m_specific->m_surf_img[idx]->w, 
-                                   m_specific->m_surf_img[idx]->h, 
-                                   m_flip_y ? -m_specific->m_surf_img[idx]->pitch : 
-                                               m_specific->m_surf_img[idx]->pitch);
-
-            return true;
-        }
-
-        return false;
-    }
-    
-    //------------------------------------------------------------------------
-    void platform_support::start_timer()
-    {
-        m_specific->m_sw_start = SDL_GetTicks();
-    }
-
-    //------------------------------------------------------------------------
-    double platform_support::elapsed_time() const
-    {
-        int stop = SDL_GetTicks();
-        return double(stop - m_specific->m_sw_start);
-    }
-
-    //------------------------------------------------------------------------
-    void platform_support::message(const char* msg)
-    {
-        fprintf(stderr, "%s\n", msg);
-    }
-
-    //------------------------------------------------------------------------
-    void platform_support::force_redraw()
-    {
-        m_specific->m_update_flag = true;
-    }
-
-
-    //------------------------------------------------------------------------
-    void platform_support::on_init() {}
-    void platform_support::on_resize(int sx, int sy) {}
-    void platform_support::on_idle() {}
-    void platform_support::on_mouse_move(int x, int y, unsigned flags) {}
-    void platform_support::on_mouse_button_down(int x, int y, unsigned flags) {}
-    void platform_support::on_mouse_button_up(int x, int y, unsigned flags) {}
-    void platform_support::on_key(int x, int y, unsigned key, unsigned flags) {}
-    void platform_support::on_ctrl_change() {}
-    void platform_support::on_draw() {}
-    void platform_support::on_post_draw(void* raw_handler) {}
-
-
-}
-
-
-int agg_main(int argc, char* argv[]);
-
-int main(int argc, char* argv[])
-{
-    return agg_main(argc, argv);
-}
-
+import sdl2.sdl as SDL, strutils
+
+type
+  PlatformSpecific[T] = ref object
+    mFormat: PixFormat
+    mSysFormat: PixFormat
+    mFlipY: bool
+    mBpp: int
+    mSysBpp: int
+    mRMask: uint
+    mGMask: uint
+    mBMask: uint
+    mAMask: uint
+    mUpdateFlag: bool
+    mResizeFlag: bool
+    mInitialized: bool
+    mSurface: SDL.Surface
+    mWindow: SDL.Surface
+    mRenderer: SDL.Renderer
+    mSurfImg: array[maxImages, SDL.Surface]
+    mCurX: int
+    mCurY: int
+    mSwFreq: uint64
+    mSwStart: uint64
+
+proc finalizer[T](self: PlatformSpecific[T]) =
+  for x in self.mSurfImg:
+    if x != nil:
+      SDL.freeSurface(x)
+
+  if self.mSurface != nil:
+    SDL.freeSurface(self.mSurface)
+
+  if self.mRenderer != nil:
+    SDL.destroyRenderer(self.mRenderer)
+
+  if self.mWindow != nil:
+    SDL.destroyWindow(self.mWindow)
+
+proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
+  new(result, finalizer)
+  result.mFormat = format
+  result.mSysFormat = pix_format_undefined
+  result.mFlipY = flipY
+  result.mBpp = 0
+  result.mSysBpp = 0
+  result.mUpdateFlag = true
+  result.mResizeFlag = true
+  result.mInitialized = false
+  result.mSurface = nil
+  result.mWindow = nil
+  result.mRenderer = nil
+  result.mCurX = 0
+  result.mCurY = 0
+
+  case result.mFormat
+  of pix_format_gray8: result.mBpp = 8
+  of pix_format_rgb565:
+    result.mRMask = 0xF800
+    result.mGMask = 0x7E0
+    result.mBMask = 0x1F
+    result.mAMask = 0
+    result.mBpp = 16
+  of pix_format_rgb555:
+    result.mRMask = 0x7C00
+    result.mGMask = 0x3E0
+    result.mBMask = 0x1F
+    result.mAMask = 0
+    result.mBpp = 16
+  of pix_format_rgb24:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF0000
+      result.mAMask = 0
+    else:
+      result.mRMask = 0xFF0000
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF
+      result.mAMask = 0
+    result.mBpp = 24
+  of pix_format_bgr24:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF0000
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF
+      result.mAMask = 0
+    else:
+      result.mRMask = 0xFF
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF0000
+      result.mAMask = 0
+    result.mBpp = 24
+  of pix_format_bgra32:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF0000
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF
+      result.mAMask = 0xFF000000
+    else:
+      result.mRMask = 0xFF00
+      result.mGMask = 0xFF0000
+      result.mBMask = 0xFF000000
+      result.mAMask = 0xFF
+    result.mBpp = 32
+  of pix_format_abgr32:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF000000
+      result.mGMask = 0xFF0000
+      result.mBMask = 0xFF00
+      result.mAMask = 0xFF
+    else:
+      result.mRMask = 0xFF
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF0000
+      result.mAMask = 0xFF000000
+    result.mBpp = 32
+  of pix_format_argb32:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF00
+      result.mGMask = 0xFF0000
+      result.mBMask = 0xFF000000
+      result.mAMask = 0xFF
+    else:
+      result.mRMask = 0xFF0000
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF
+      result.mAMask = 0xFF000000
+    result.mBpp = 32
+  of pix_format_rgba32:
+    when system.cpuEndian == littleEndian:
+      result.mRMask = 0xFF
+      result.mGMask = 0xFF00
+      result.mBMask = 0xFF0000
+      result.mAMask = 0xFF000000
+    else:
+      result.mRMask = 0xFF000000
+      result.mGMask = 0xFF0000
+      result.mBMask = 0xFF00
+      result.mAMask = 0xFF
+    result.mBpp = 32
+  else:
+    discard
+
+  result.mSwFreq = SDL.getPerformanceFrequency()
+  result.mSwStart = SDL.getPerformanceCounter()
+
+proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
+  type ValueT = getValueT(R)
+  self.mSpecific = initPlatformSpecific[ValueT](format, flipY)
+  self.mFormat   = format
+  self.mBpp      = self.mSpecific.mBpp
+  self.mWindowFlags = 0
+  self.mWaitMode = true
+  self.mFlipY    = flipY
+  SDL.init(SDL.INIT_VIDEO)
+  self.mCaption  = "Anti-Grain Geometry Application"
+
+proc caption*[T,R](self: GenericPlatform[T,R], cap: string) =
+  self.mCaption = cap
+  if self.mSpecific.mInitialized:
+    SDL.setWindowTitle(self.mWindow, cap)
+
+proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
+  type ValueT = getValueT(R)
+  if self.mSpecific.mSurface != nil:
+    SDL.freeSurface(self.mSpecific.mSurface)
+
+  self.mSpecific.mSurface = SDL.createRGBSurface(
+    0, width, height, self.mBpp,
+    self.mSpecific.mRMask,
+    self.mSpecific.mGMask,
+    self.mSpecific.mBMask,
+    self.mSpecific.mAMask)
+
+  if self.mSpecific.mSurface == nil:
+    echo "cannot create surface"
+    return false
+
+  var s = self.mSpecific.mSurface
+
+  if self.mSpecific.mRenderer != nil:
+    SDL.destroyRenderer(self.mRenderer)
+
+  self.mSpecific.mRenderer = SDL.createRenderer(self.mSpecific.mWindow,
+    -1, SDL.RENDERER_ACCELERATED or SDL.RENDERER_PRESENTVSYNC)
+
+  SDL.lockSurface(s)
+  self.mRBufWindow.attach(cast[ptr ValueT](s.pixels), s.w, s.h,
+    if self.mFlipY: -s.pitch else: s.pitch)
+
+  if not self.mSpecific.mInitialized:
+    self.mInitialWidth = width
+    self.mInitialHeight = height
+    self.onInit()
+    self.mSpecific.mInitialized = true
+
+  self.onResize(self.mRBufWindow.width(), self.mRBufWindow.height())
+  self.mSpecific.mUpdateFlag = true
+  SDL.unlockSurface(s)
+  result = true
+
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
+  self.mWindowFlags = flags
+
+  var wflags = 0
+
+  if window_hidden notin flags:
+    wflags = wflags or SDL.WINDOW_SHOWN
+
+  if window_resize in flags:
+    wflags = wflags or SDL.WINDOW_RESIZABLE
+
+  if self.mWindow != nil:
+    SDL.destroyWindow(self.mWindow)
+
+  self.mWindow = SDL.createWindow(self.mCaption,
+    WINDOWPOS_CENTERED,
+    WINDOWPOS_CENTERED,
+    width, height, wflags)
+
+  if self.mWindow == nil:
+    echo "SDL_CreateWindow Error: ", $SDL.getError()
+    SDL.quit()
+    return false
+
+  result = self.resizeSurface(width, height)
+
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
+  if paramCount() > 0:
+    if paramStr(1) == "-v":
+      if self.init(width, height, {window_hidden}):
+        self.mResizeMtx = initTransAffine()
+        self.onDraw()
+        self.copyWindowToImg(maxImages - 1)
+        discard self.saveImg(maxImages - 1, fileName)
+        return false
+  result = self.init(width, height, flags)
+
+proc updateWindow[T,R](self: GenericPlatform[T,R]) =
+  var surface = self.mSpecific.mSurface
+  var renderer = self.mSpecific.mRenderer
+
+  var rect = SDL.Rect(x: 0, y: 0, w: surface.w, h: surface.h)
+
+  # Convert to texture
+  var texture = SDL.createTextureFromSurface(renderer, surface)
+  if texture == nil: return
+
+  # Render texture
+  if renderer.renderCopy(texture, nil, addr(rect)) != 0:
+    echo "renderer failed"
+
+  # Clean
+  SDL.destroyTexture(texture)
+
+proc run[T,R](self: GenericPlatform[T,R]): int =
+  var
+    event: SDL.Event
+    evFlag = false
+
+  while true:
+    if self.mSpecific.mUpdateFlag:
+      self.onDraw()
+      self.updateWindow()
+      self.mRenderer.renderPresent()
+      self.mSpecific.mUpdateFlag = false
+
+    evFlag = false
+    if self.mWaitMode:
+      discard SDL.waitEvent(event.addr)
+      evFlag = true
+    else:
+      if SDL.pollEvent(event.addr) != 0:
+        evFlag = true
+      else:
+        self.onIdle()
+
+    if evFlag:
+      if event.kind == SDL.QUIT:
+        break
+
+      case event.kind
+      of WINDOWEVENT:
+          if not self.resizeSurface(event.window.data1, event.window.data2):
+            return -1
+
+          self.onResize(self.mRBufwindow.width(), self.mRBufwindow.height())
+          self.transAffineResizing(event.window.data1, event.window.data2)
+          self.mSpecific.mUpdateFlag = true
+
+      of KEYDOWN:
+        var flags: InputFlags
+        if event.key.keysym.mods and KMOD_SHIFT != 0: flags.incl kbdShift
+        if event.key.keysym.mods and KMOD_CTRL  != 0: flags.incl kbdCtrl
+
+        var
+          left  = false
+          up    = false
+          right = false
+          down  = false
+
+        case event.key.keysym.sym
+        of key_left: left = true
+        of key_up: up = true
+        of key_right: right = true
+        of key_down: down = true
+
+        if self.mCtrls.onArrowKeys(left, right, down, up):
+          self.onCtrlChange()
+          self.forceRedraw()
+        else:
+          self.onKey(self.mSpecific.mCurX,
+                     self.mSpecific.mCurY,
+                     event.key.keysym.sym,
+                     flags)
+      of SDL.MOUSEMOTION:
+        var y = event.motion.y
+        if self.mFlipY:
+          y = self.mRBufwindow.height() - event.motion.y
+
+        self.mSpecific.mCurX = event.motion.x
+        self.mSpecific.mCurY = y
+
+        var flags: InputFlags
+        if event.motion.state and SDL.BUTTON_LMASK != 0: flags.incl mouseLeft
+        if event.motion.state and SDL.BUTTON_RMASK != 0: flags.incl mouseRight
+
+        if self.mCtrls.onMouseMove(self.mSpecific.mCurX,
+          self.mSpecific.mCurY, mouseLeft in flags):
+          self.onCtrlChange()
+          self.forceRedraw()
+        else:
+          self.onMouseMove(self.mSpecific.mCurX,
+                           self.mSpecific.mCurY, flags)
+
+        var eventtrash: SDL.Event
+        while SDL.peepEvents(eventtrash.addr, 1, SDL.GETEVENT, SDL.MOUSEMOTION, SDL.MOUSEMOTION) != 0:
+          discard
+
+      of SDL.MOUSEBUTTONDOWN:
+        var y = event.button.y
+        if self.mFlipY:
+          y = self.mRBufwindow.height() - event.button.y
+
+        self.mSpecific.mCurX = event.button.x
+        self.mSpecific.mCurY = y
+        var flags: InputFlags
+
+        case event.button.button
+        of SDL.BUTTON_LEFT:
+          flags.incl mouseLeft
+
+          if self.mCtrls.onMouseButtonDown(self.mSpecific.mCurX, self.mSpecific.mCurY):
+            self.mCtrls.setCur(self.mSpecific.mCurX, self.mSpecific.mCurY)
+            self.onCtrlChange()
+            self.forceRedraw()
+          else:
+            if self.mCtrls.inRect(self.mSpecific.mCurX, self.mSpecific.mCurY):
+              if self.mCtrls.setCur(self.mSpecific.mCurX, self.mSpecific.mCurY):
+                self.onCtrlChange()
+                self.forceRedraw()
+              else:
+                self.onMouseButtonDown(self.mSpecific.mCurX,
+                  self.mSpecific.mCurY, flags)
+        of SDL.BUTTON_RIGHT:
+          flags.incl mouseRight
+          self.onMouseButtonDown(self.mSpecific.mCurX,
+            self.mSpecific.mCurY, flags)
+        else: discard
+
+      of SDL.MOUSEBUTTONUP:
+        var y = event.button.y
+        if self.mFlipY:
+          y = self.mRBufwindow.height() - event.button.y
+
+        self.mSpecific.mCurX = event.button.x
+        self.mSpecific.mCurY = y
+        var flags: InputFlags
+
+        if self.mCtrls.onMouseButtonUp(self.mSpecific.mCurX, self.mSpecific.mCurY):
+          self.onCtrlChange()
+          self.forceRedraw()
+
+        self.onMouseButtonUp(self.mSpecific.mCurX,
+          self.mSpecific.mCurY, flags)
+      else:
+        discard
+
+  result = 0
+
+proc imgExt[T,R](self: GenericPlatform[T,R]): string = ".bmp"
+
+proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
+  result = fileName
+
+proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
+  type ValueT = getValueT(R)
+  if idx < maxImages:
+    if self.mSpecific.mSurfImg[idx] != nil:
+      SDL.freeSurface(self.mSpecific.mSurfImg[idx])
+
+    var fileName = toLowerAscii(file)
+    if rfind(fileName, ".bmp") == -1:
+      fileName.add ".bmp"
+
+    var tmp = SDL.loadBMP(fileName)
+    if tmp == nil:
+      echo "Couldn't load $1: $2" % [fileName, $SDL.getError()]
+      return false
+
+    var format: SDL.PixelFormat
+
+    format.palette = 0
+    format.BitsPerPixel = self.mBpp
+    format.BytesPerPixel = self.mBpp shr 8
+    format.Rmask = self.mSpecific.mRMask
+    format.Gmask = self.mSpecific.mGMask
+    format.Bmask = self.mSpecific.mBMask
+    format.Amask = self.mSpecific.mAMask
+    format.Rshift = 0
+    format.Gshift = 0
+    format.Bshift = 0
+    format.Ashift = 0
+    format.Rloss = 0
+    format.Gloss = 0
+    format.Bloss = 0
+    format.Aloss = 0
+    format.colorkey = 0
+    format.alpha = 0
+
+    self.mSpecific.mSurfImg[idx] = SDL.convertSurface(tmp,
+      format.addr, 0)
+
+    SDL.freeSurface(tmp)
+
+    if self.mSpecific.mSurfImg[idx] == nil:
+      echo "failed to convert surface"
+      return false
+
+    var s = self.mSpecific.mSurfImg[idx]
+    self.mRbufImg[idx].attach(cast[ptr ValueT](s.pixels),
+      s.w, s.h, if self.mFlipY: -s.pitch else: s.pitch)
+
+    return true
+
+  result = false
+
+proc saveImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
+  if idx < maxImages and self.mSpecific.mSurfImg[idx] != nil:
+    var fileName = toLowerAscii(file)
+    if rfind(fileName, ".bmp") == -1:
+      fileName.add ".bmp"
+    return SDL.saveBMP(self.mSpecific.mSurfImg[idx], fileName) == 0
+  result = false;
+
+proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
+  type ValueT = getValueT(R)
+
+  if idx < maxImages:
+    if self.mSpecific.mSurfImg[idx] != nil:
+      SDL.freeSurface(self.mSpecific.mSurfImg[idx])
+
+    self.mSpecific.mSurfImg[idx] = SDL.createRGBSurface(0,
+      w, h, self.mBpp,
+      self.mSpecific.mRMask,
+      self.mSpecific.mGMask,
+      self.mSpecific.mBMask,
+      self.mSpecific.mAMask)
+
+    if self.mSpecific.mSurfImg[idx] == nil:
+      echo "Couldn't create image: ", SDL.getError()
+      return false
+
+    var s = self.mSpecific.mSurfImg[idx]
+    self.mRBufImg[idx].attach(cast[ptr ValueT](s.pixels),
+      s.w, s.h, if self.mFlipY: -s.pitch else: s.pitch)
+
+    return true
+
+  result = false
+
+proc rawDisplayHandler[T,R](self: GenericPlatform[T,R]): pointer =
+  cast[pointer](self.mSpecific.mRenderer)
+
+proc startTimer[T,R](self: GenericPlatform[T,R]) =
+  self.mSpecific.mSwStart = SDL.getPerformanceCounter()
+
+proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
+  let stop = SDL.getPerformanceCounter()
+  result = float64(stop - self.mSpecific.mSwStart) * 1000.0 /
+    float64(self.mSpecific.mSwFreq)
+
+proc message[T,R](self: GenericPlatform[T,R], msg: string) =
+  echo msg
+
+proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
+  self.mSpecific.mUpdateFlag = true

@@ -511,8 +511,10 @@ proc fullFileName*[T,R](self: GenericPlatform[T,R], fileName: string): string
 # cannot have access to its members or methods since it does not know
 # anything about them and it's a perfect incapsulation :-)
 #class platform_specific;
-when defined(windows) and not defined(platform_null):
+when defined(windows) and not defined(platform_null) and not defined(platform_sdl):
   include agg_platform_win
+elif defined(platform_sdl) and not defined(platform_null):
+  include agg_platform_sdl
 else:
   include agg_platform_null
 
