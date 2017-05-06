@@ -15,7 +15,7 @@ type
     mResizeFlag: bool
     mInitialized: bool
     mSurface: SDL.Surface
-    mWindow: SDL.Surface
+    mWindow: SDL.Window
     mRenderer: SDL.Renderer
     mSurfImg: array[maxImages, SDL.Surface]
     mCurX: int
@@ -38,7 +38,7 @@ proc finalizer[T](self: PlatformSpecific[T]) =
     SDL.destroyWindow(self.mWindow)
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
-  new(result, finalizer)
+  new(result, finalizer[T])
   result.mFormat = format
   result.mSysFormat = pix_format_undefined
   result.mFlipY = flipY
@@ -96,16 +96,16 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
       result.mRMask = 0xFF0000
       result.mGMask = 0xFF00
       result.mBMask = 0xFF
-      result.mAMask = 0xFF000000
+      result.mAMask = 0xFF000000'u
     else:
       result.mRMask = 0xFF00
       result.mGMask = 0xFF0000
-      result.mBMask = 0xFF000000
+      result.mBMask = 0xFF000000'u
       result.mAMask = 0xFF
     result.mBpp = 32
   of pix_format_abgr32:
     when system.cpuEndian == littleEndian:
-      result.mRMask = 0xFF000000
+      result.mRMask = 0xFF000000'u
       result.mGMask = 0xFF0000
       result.mBMask = 0xFF00
       result.mAMask = 0xFF
@@ -113,28 +113,28 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
       result.mRMask = 0xFF
       result.mGMask = 0xFF00
       result.mBMask = 0xFF0000
-      result.mAMask = 0xFF000000
+      result.mAMask = 0xFF000000'u
     result.mBpp = 32
   of pix_format_argb32:
     when system.cpuEndian == littleEndian:
       result.mRMask = 0xFF00
       result.mGMask = 0xFF0000
-      result.mBMask = 0xFF000000
+      result.mBMask = 0xFF000000'u
       result.mAMask = 0xFF
     else:
       result.mRMask = 0xFF0000
       result.mGMask = 0xFF00
       result.mBMask = 0xFF
-      result.mAMask = 0xFF000000
+      result.mAMask = 0xFF000000'u
     result.mBpp = 32
   of pix_format_rgba32:
     when system.cpuEndian == littleEndian:
       result.mRMask = 0xFF
       result.mGMask = 0xFF00
       result.mBMask = 0xFF0000
-      result.mAMask = 0xFF000000
+      result.mAMask = 0xFF000000'u
     else:
-      result.mRMask = 0xFF000000
+      result.mRMask = 0xFF000000'u
       result.mGMask = 0xFF0000
       result.mBMask = 0xFF00
       result.mAMask = 0xFF
@@ -150,16 +150,16 @@ proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   self.mSpecific = initPlatformSpecific[ValueT](format, flipY)
   self.mFormat   = format
   self.mBpp      = self.mSpecific.mBpp
-  self.mWindowFlags = 0
+  self.mWindowFlags = {}
   self.mWaitMode = true
   self.mFlipY    = flipY
-  SDL.init(SDL.INIT_VIDEO)
+  discard SDL.init(SDL.INIT_VIDEO)
   self.mCaption  = "Anti-Grain Geometry Application"
 
 proc caption*[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
   if self.mSpecific.mInitialized:
-    SDL.setWindowTitle(self.mWindow, cap)
+    SDL.setWindowTitle(self.mSpecific.mWindow, cap)
 
 proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
   type ValueT = getValueT(R)
@@ -167,11 +167,11 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
     SDL.freeSurface(self.mSpecific.mSurface)
 
   self.mSpecific.mSurface = SDL.createRGBSurface(
-    0, width, height, self.mBpp,
-    self.mSpecific.mRMask,
-    self.mSpecific.mGMask,
-    self.mSpecific.mBMask,
-    self.mSpecific.mAMask)
+    0.cuint, width.cint, height.cint, self.mBpp.cint,
+    self.mSpecific.mRMask.cuint,
+    self.mSpecific.mGMask.cuint,
+    self.mSpecific.mBMask.cuint,
+    self.mSpecific.mAMask.cuint)
 
   if self.mSpecific.mSurface == nil:
     echo "cannot create surface"
@@ -179,13 +179,7 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
 
   var s = self.mSpecific.mSurface
 
-  if self.mSpecific.mRenderer != nil:
-    SDL.destroyRenderer(self.mRenderer)
-
-  self.mSpecific.mRenderer = SDL.createRenderer(self.mSpecific.mWindow,
-    -1, SDL.RENDERER_ACCELERATED or SDL.RENDERER_PRESENTVSYNC)
-
-  SDL.lockSurface(s)
+  discard SDL.lockSurface(s)
   self.mRBufWindow.attach(cast[ptr ValueT](s.pixels), s.w, s.h,
     if self.mFlipY: -s.pitch else: s.pitch)
 
@@ -203,7 +197,7 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
 proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   self.mWindowFlags = flags
 
-  var wflags = 0
+  var wflags: uint32 = 0
 
   if window_hidden notin flags:
     wflags = wflags or SDL.WINDOW_SHOWN
@@ -211,17 +205,25 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
   if window_resize in flags:
     wflags = wflags or SDL.WINDOW_RESIZABLE
 
-  if self.mWindow != nil:
-    SDL.destroyWindow(self.mWindow)
+  if self.mSpecific.mWindow != nil:
+    SDL.destroyWindow(self.mSpecific.mWindow)
 
-  self.mWindow = SDL.createWindow(self.mCaption,
-    WINDOWPOS_CENTERED,
-    WINDOWPOS_CENTERED,
-    width, height, wflags)
+  self.mSpecific.mWindow = SDL.createWindow(self.mCaption,
+    WINDOWPOS_CENTERED.cint,
+    WINDOWPOS_CENTERED.cint,
+    width.cint, height.cint, wflags)
 
-  if self.mWindow == nil:
+  if self.mSpecific.mWindow == nil:
     echo "SDL_CreateWindow Error: ", $SDL.getError()
-    SDL.quit()
+    return false
+
+  if self.mSpecific.mRenderer != nil:
+    SDL.destroyRenderer(self.mSpecific.mRenderer)
+
+  self.mSpecific.mRenderer = SDL.createRenderer(self.mSpecific.mWindow,
+    -1, SDL.RENDERER_ACCELERATED or SDL.RENDERER_PRESENTVSYNC)
+
+  if self.mSpecific.mRenderer == nil:
     return false
 
   result = self.resizeSurface(width, height)
@@ -263,7 +265,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
     if self.mSpecific.mUpdateFlag:
       self.onDraw()
       self.updateWindow()
-      self.mRenderer.renderPresent()
+      self.mSpecific.mRenderer.renderPresent()
       self.mSpecific.mUpdateFlag = false
 
     evFlag = false
@@ -282,6 +284,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
 
       case event.kind
       of WINDOWEVENT:
+        if event.window.event == WINDOWEVENT_RESIZED:
           if not self.resizeSurface(event.window.data1, event.window.data2):
             return -1
 
@@ -291,8 +294,8 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
 
       of KEYDOWN:
         var flags: InputFlags
-        if event.key.keysym.mods and KMOD_SHIFT != 0: flags.incl kbdShift
-        if event.key.keysym.mods and KMOD_CTRL  != 0: flags.incl kbdCtrl
+        if (event.key.keysym.mods and KMOD_SHIFT.ord) != 0: flags.incl kbdShift
+        if (event.key.keysym.mods and KMOD_CTRL.ord)  != 0: flags.incl kbdCtrl
 
         var
           left  = false
@@ -301,10 +304,11 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
           down  = false
 
         case event.key.keysym.sym
-        of key_left: left = true
-        of key_up: up = true
-        of key_right: right = true
-        of key_down: down = true
+        of SDL.K_LEFT: left = true
+        of SDL.K_UP: up = true
+        of SDL.K_RIGHT: right = true
+        of SDL.K_DOWN: down = true
+        else: discard
 
         if self.mCtrls.onArrowKeys(left, right, down, up):
           self.onCtrlChange()
@@ -312,10 +316,10 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         else:
           self.onKey(self.mSpecific.mCurX,
                      self.mSpecific.mCurY,
-                     event.key.keysym.sym,
+                     event.key.keysym.sym.int,
                      flags)
       of SDL.MOUSEMOTION:
-        var y = event.motion.y
+        var y = int(event.motion.y)
         if self.mFlipY:
           y = self.mRBufwindow.height() - event.motion.y
 
@@ -323,11 +327,13 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         self.mSpecific.mCurY = y
 
         var flags: InputFlags
-        if event.motion.state and SDL.BUTTON_LMASK != 0: flags.incl mouseLeft
-        if event.motion.state and SDL.BUTTON_RMASK != 0: flags.incl mouseRight
+        if (event.motion.state and SDL.BUTTON_LMASK) != 0: flags.incl mouseLeft
+        if (event.motion.state and SDL.BUTTON_RMASK) != 0: flags.incl mouseRight
 
-        if self.mCtrls.onMouseMove(self.mSpecific.mCurX,
-          self.mSpecific.mCurY, mouseLeft in flags):
+        let mouseLeftPressed = mouseLeft in flags
+        if self.mCtrls.onMouseMove(
+          self.mSpecific.mCurX.float64,
+          self.mSpecific.mCurY.float64, mouseLeftPressed):
           self.onCtrlChange()
           self.forceRedraw()
         else:
@@ -339,7 +345,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
           discard
 
       of SDL.MOUSEBUTTONDOWN:
-        var y = event.button.y
+        var y = int(event.button.y)
         if self.mFlipY:
           y = self.mRBufwindow.height() - event.button.y
 
@@ -350,27 +356,25 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         case event.button.button
         of SDL.BUTTON_LEFT:
           flags.incl mouseLeft
+          discard self.mCtrls.setCur(self.mSpecific.mCurX.float64, self.mSpecific.mCurY.float64)
 
-          if self.mCtrls.onMouseButtonDown(self.mSpecific.mCurX, self.mSpecific.mCurY):
-            self.mCtrls.setCur(self.mSpecific.mCurX, self.mSpecific.mCurY)
+          if self.mCtrls.onMouseButtonDown(self.mSpecific.mCurX.float64, self.mSpecific.mCurY.float64):
             self.onCtrlChange()
             self.forceRedraw()
           else:
-            if self.mCtrls.inRect(self.mSpecific.mCurX, self.mSpecific.mCurY):
-              if self.mCtrls.setCur(self.mSpecific.mCurX, self.mSpecific.mCurY):
+            if self.mCtrls.inRect(self.mSpecific.mCurX.float64, self.mSpecific.mCurY.float64):
+              if self.mCtrls.setCur(self.mSpecific.mCurX.float64, self.mSpecific.mCurY.float64):
                 self.onCtrlChange()
                 self.forceRedraw()
-              else:
-                self.onMouseButtonDown(self.mSpecific.mCurX,
-                  self.mSpecific.mCurY, flags)
+            else:
+              self.onMouseButtonDown(self.mSpecific.mCurX, self.mSpecific.mCurY, flags)
         of SDL.BUTTON_RIGHT:
           flags.incl mouseRight
-          self.onMouseButtonDown(self.mSpecific.mCurX,
-            self.mSpecific.mCurY, flags)
+          self.onMouseButtonDown(self.mSpecific.mCurX, self.mSpecific.mCurY, flags)
         else: discard
 
       of SDL.MOUSEBUTTONUP:
-        var y = event.button.y
+        var y = int(event.button.y)
         if self.mFlipY:
           y = self.mRBufwindow.height() - event.button.y
 
@@ -378,12 +382,11 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         self.mSpecific.mCurY = y
         var flags: InputFlags
 
-        if self.mCtrls.onMouseButtonUp(self.mSpecific.mCurX, self.mSpecific.mCurY):
+        if self.mCtrls.onMouseButtonUp(self.mSpecific.mCurX.float64, self.mSpecific.mCurY.float64):
           self.onCtrlChange()
           self.forceRedraw()
 
-        self.onMouseButtonUp(self.mSpecific.mCurX,
-          self.mSpecific.mCurY, flags)
+        self.onMouseButtonUp(self.mSpecific.mCurX, self.mSpecific.mCurY, flags)
       else:
         discard
 
@@ -411,13 +414,13 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
 
     var format: SDL.PixelFormat
 
-    format.palette = 0
-    format.BitsPerPixel = self.mBpp
-    format.BytesPerPixel = self.mBpp shr 8
-    format.Rmask = self.mSpecific.mRMask
-    format.Gmask = self.mSpecific.mGMask
-    format.Bmask = self.mSpecific.mBMask
-    format.Amask = self.mSpecific.mAMask
+    format.palette = nil
+    format.BitsPerPixel = uint8(self.mBpp)
+    format.BytesPerPixel = uint8(self.mBpp shr 8)
+    format.Rmask = self.mSpecific.mRMask.cuint
+    format.Gmask = self.mSpecific.mGMask.cuint
+    format.Bmask = self.mSpecific.mBMask.cuint
+    format.Amask = self.mSpecific.mAMask.cuint
     format.Rshift = 0
     format.Gshift = 0
     format.Bshift = 0
@@ -426,8 +429,6 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
     format.Gloss = 0
     format.Bloss = 0
     format.Aloss = 0
-    format.colorkey = 0
-    format.alpha = 0
 
     self.mSpecific.mSurfImg[idx] = SDL.convertSurface(tmp,
       format.addr, 0)
@@ -439,7 +440,7 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
       return false
 
     var s = self.mSpecific.mSurfImg[idx]
-    self.mRbufImg[idx].attach(cast[ptr ValueT](s.pixels),
+    self.mRbufImage[idx].attach(cast[ptr ValueT](s.pixels),
       s.w, s.h, if self.mFlipY: -s.pitch else: s.pitch)
 
     return true
@@ -461,19 +462,19 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
     if self.mSpecific.mSurfImg[idx] != nil:
       SDL.freeSurface(self.mSpecific.mSurfImg[idx])
 
-    self.mSpecific.mSurfImg[idx] = SDL.createRGBSurface(0,
-      w, h, self.mBpp,
-      self.mSpecific.mRMask,
-      self.mSpecific.mGMask,
-      self.mSpecific.mBMask,
-      self.mSpecific.mAMask)
+    self.mSpecific.mSurfImg[idx] = SDL.createRGBSurface(
+      0.cuint, w.cint, h.cint, self.mBpp.cint,
+      self.mSpecific.mRMask.cuint,
+      self.mSpecific.mGMask.cuint,
+      self.mSpecific.mBMask.cuint,
+      self.mSpecific.mAMask.cuint)
 
     if self.mSpecific.mSurfImg[idx] == nil:
       echo "Couldn't create image: ", SDL.getError()
       return false
 
     var s = self.mSpecific.mSurfImg[idx]
-    self.mRBufImg[idx].attach(cast[ptr ValueT](s.pixels),
+    self.mRBufImage[idx].attach(cast[ptr ValueT](s.pixels),
       s.w, s.h, if self.mFlipY: -s.pitch else: s.pitch)
 
     return true
