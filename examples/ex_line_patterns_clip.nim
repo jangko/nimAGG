@@ -1,5 +1,5 @@
 import agg/[basics, rendering_buffer, conv_transform, conv_stroke,
-  scanline_p, renderer_scanline, color_rgba, 
+  scanline_p, renderer_scanline, color_rgba,
   rasterizer_outline_aa, rasterizer_scanline_aa, pattern_filters_rgba,
   renderer_outline_aa, renderer_outline_image, pixfmt_rgb,
   renderer_base, trans_affine, path_storage, gsv_text, calc]

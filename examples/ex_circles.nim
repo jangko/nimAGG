@@ -1,4 +1,4 @@
-import agg/[ellipse, basics, bspline, calc, gsv_text, renderer_base, calc, 
+import agg/[ellipse, basics, bspline, calc, gsv_text, renderer_base, calc,
   rendering_buffer, scanline_p, pixfmt_rgb, rasterizer_scanline_aa,
   renderer_scanline, color_rgba, conv_transform, trans_affine, gsv_text]
 import platform.support, ctrl.slider, ctrl.scale, random, math

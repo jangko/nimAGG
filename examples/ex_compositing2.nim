@@ -1,4 +1,4 @@
-import agg/[rendering_buffer, renderer_base, rasterizer_scanline_aa, scanline_u, 
+import agg/[rendering_buffer, renderer_base, rasterizer_scanline_aa, scanline_u,
   renderer_scanline, rounded_rect, pixfmt_rgba, span_allocator, span_gradient,
   gsv_text, span_interpolator_linear, color_rgba, trans_affine, calc, ellipse,
   comp_op, pixfmt_rgb, basics]

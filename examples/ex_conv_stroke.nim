@@ -1,6 +1,6 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_stroke,
-  conv_dash, conv_curve, conv_contour, conv_smooth_poly1, conv_marker, 
-  arrowhead, vcgen_markers_term, scanline_p, renderer_scanline, pixfmt_rgb, 
+  conv_dash, conv_curve, conv_contour, conv_smooth_poly1, conv_marker,
+  arrowhead, vcgen_markers_term, scanline_p, renderer_scanline, pixfmt_rgb,
   renderer_base, path_storage, color_rgba]
 import ctrl/[slider, rbox], platform.support
 

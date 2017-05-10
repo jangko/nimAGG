@@ -1,5 +1,5 @@
 import agg/[rendering_buffer, rasterizer_scanline_aa, path_storage,
-  trans_affine, conv_transform, conv_smooth_poly1, scanline_p, 
+  trans_affine, conv_transform, conv_smooth_poly1, scanline_p,
   renderer_scanline, span_allocator, span_pattern_gray,
   span_pattern_rgb, span_pattern_rgba, image_accessors,
   pixfmt_rgba, renderer_base, color_rgba , basics, conv_stroke,

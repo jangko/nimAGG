@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
-  color_gray, renderer_mclip, renderer_scanline, path_storage, conv_transform, 
-  bounding_rect, renderer_outline_aa, renderer_primitives, renderer_markers, 
-  span_allocator, span_gradient, span_interpolator_linear, rasterizer_outline_aa, 
+  color_gray, renderer_mclip, renderer_scanline, path_storage, conv_transform,
+  bounding_rect, renderer_outline_aa, renderer_primitives, renderer_markers,
+  span_allocator, span_gradient, span_interpolator_linear, rasterizer_outline_aa,
   ellipse, pixfmt_rgb, color_rgba, renderer_base, renderer_markers, trans_affine]
 import parse_lion, random, ctrl.slider, platform.support, math
 

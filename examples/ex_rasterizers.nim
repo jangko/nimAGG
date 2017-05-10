@@ -1,5 +1,5 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa,
-  rasterizer_outline, scanline_p, scanline_bin, renderer_scanline, 
+  rasterizer_outline, scanline_p, scanline_bin, renderer_scanline,
   renderer_primitives, pixfmt_rgb, renderer_base, path_storage,
   color_rgba, gamma_functions, calc]
 import platform.support, ctrl.slider, ctrl.cbox, strutils, math

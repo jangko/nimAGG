@@ -1,5 +1,5 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_cells_aa,
-  scanline_p, ellipse, pixfmt_gray, pixfmt_rgb, color_gray, renderer_base, 
+  scanline_p, ellipse, pixfmt_gray, pixfmt_rgb, color_gray, renderer_base,
   color_rgba, renderer_scanline]
 import platform.support, ctrl.slider
 

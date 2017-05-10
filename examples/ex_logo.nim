@@ -1,8 +1,8 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   scanline_p, renderer_scanline, span_allocator, color_gray,
   span_gouraud_gray, span_solid, calc, dda_line, pixfmt_gray,
-  renderer_base, gamma_functions, span_gouraud_rgba, conv_clip_polygon, 
-  renderer_scanline, color_rgba, pixfmt_rgb, color_conv, color_conv_rgb8, 
+  renderer_base, gamma_functions, span_gouraud_rgba, conv_clip_polygon,
+  renderer_scanline, color_rgba, pixfmt_rgb, color_conv, color_conv_rgb8,
   path_storage, trans_affine, conv_transform, conv_stroke,
   bounding_rect, conv_unclose_polygon, conv_close_polygon,
   conv_shorten_path, conv_clip_polyline, conv_smooth_poly1]

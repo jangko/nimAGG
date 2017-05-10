@@ -1,6 +1,6 @@
 import agg/[basics, rendering_buffer, conv_transform, conv_stroke,
-  scanline_p, renderer_scanline, rasterizer_outline_aa, 
-  rasterizer_scanline_aa, pattern_filters_rgba, renderer_outline_aa, 
+  scanline_p, renderer_scanline, rasterizer_outline_aa,
+  rasterizer_scanline_aa, pattern_filters_rgba, renderer_outline_aa,
   renderer_outline_image, pixfmt_rgb, color_rgba, renderer_base]
 import ctrl.slider, ctrl.bezier, strutils, os, platform.support
 

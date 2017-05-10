@@ -1,5 +1,5 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_curve,
-  conv_contour, conv_stroke, scanline_p, renderer_scanline, pixfmt_rgb, 
+  conv_contour, conv_stroke, scanline_p, renderer_scanline, pixfmt_rgb,
   color_rgba, renderer_base, path_storage, trans_affine, conv_transform]
 import platform.support, ctrl/[slider, rbox, cbox]
 

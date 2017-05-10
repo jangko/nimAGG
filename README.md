@@ -19,6 +19,7 @@ Those bugfixes are:
 ## How to build demos?
 
 ```text
+cd examples
 nim e build.nims
 ```
 

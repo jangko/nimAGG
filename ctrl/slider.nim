@@ -1,4 +1,4 @@
-import agg / [basics, ellipse, trans_affine, color_rgba, gsv_text, 
+import agg / [basics, ellipse, trans_affine, color_rgba, gsv_text,
   calc, conv_stroke, path_storage]
 import ctrl_base, strutils
 
