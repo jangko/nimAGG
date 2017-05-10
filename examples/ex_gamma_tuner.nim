@@ -1,5 +1,5 @@
 import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p, gamma_lut,
-  renderer_scanline, gsv_text, conv_stroke, path_storage, renderer_base, 
+  renderer_scanline, gsv_text, conv_stroke, path_storage, renderer_base,
   color_rgba, ellipse, pixfmt_rgb, trans_affine, conv_transform, basics]
 import ctrl.rbox, ctrl.slider, math, platform.support
 

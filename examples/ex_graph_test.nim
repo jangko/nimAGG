@@ -1,6 +1,6 @@
-import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline, 
-  conv_stroke, conv_dash, conv_curve, conv_contour, conv_marker, conv_marker_adaptor, 
-  conv_concat, arrowhead, vcgen_markers_term, scanline_p, scanline_u, renderer_scanline, 
+import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline,
+  conv_stroke, conv_dash, conv_curve, conv_contour, conv_marker, conv_marker_adaptor,
+  conv_concat, arrowhead, vcgen_markers_term, scanline_p, scanline_u, renderer_scanline,
   renderer_primitives, span_allocator, span_gradient, span_interpolator_linear, pixfmt_rgb,
   curves, color_rgba, renderer_base, ellipse, trans_affine, gamma_functions]
 import ctrl/[slider, rbox, cbox], random, platform.support, strutils

@@ -1,8 +1,8 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline,
   scanline_p, path_storage, renderer_scanline, pixfmt_rgb, pixfmt_rgb_packed,
-  pixfmt_rgba, color_rgba, color_conv_rgb16, color_conv, renderer_base, pixfmt_gray, 
+  pixfmt_rgba, color_rgba, color_conv_rgb16, color_conv, renderer_base, pixfmt_gray,
   color_gray, gamma_lut]
-  
+
 import platform.nimBMP, blend_type
 
 type

@@ -1,4 +1,4 @@
-import agg/[path_storage, gradient_lut, scanline_u, rasterizer_scanline_aa, 
+import agg/[path_storage, gradient_lut, scanline_u, rasterizer_scanline_aa,
   color_rgba, rendering_buffer, pixfmt_rgb, renderer_base, conv_stroke, basics,
   conv_curve, bounding_rect, trans_affine, conv_transform, span_allocator,
   span_gradient_contour, span_interpolator_linear, span_gradient, renderer_scanline,

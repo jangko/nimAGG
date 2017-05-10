@@ -1,6 +1,6 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   scanline_p, renderer_scanline, renderer_primitives, conv_curve,
-  conv_stroke, conv_clip_polygon, gsv_text, pixfmt_rgb, color_rgba, 
+  conv_stroke, conv_clip_polygon, gsv_text, pixfmt_rgb, color_rgba,
   renderer_base, path_storage, trans_affine, conv_transform,
   conv_poly_bool]
 import ctrl/[slider, cbox, rbox], make_arrows, make_gb_poly

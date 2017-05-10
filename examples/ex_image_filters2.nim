@@ -1,6 +1,6 @@
-import agg/[basics, pixfmt_rgb, color_rgba, renderer_base, rasterizer_scanline_aa, 
+import agg/[basics, pixfmt_rgb, color_rgba, renderer_base, rasterizer_scanline_aa,
   rendering_buffer, scanline_u, trans_affine, span_interpolator_linear, span_allocator,
-  image_accessors, span_image_filter_rgb, renderer_scanline, image_filters, gamma_lut, 
+  image_accessors, span_image_filter_rgb, renderer_scanline, image_filters, gamma_lut,
   path_storage, conv_stroke]
 import strutils, ctrl/[rbox, slider, cbox], platform.support
 

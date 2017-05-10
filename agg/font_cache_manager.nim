@@ -196,8 +196,9 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
 
   proc addKerning*(self: name; x, y: var float64): bool =
     if self.mPrevGlyph != nil and self.mLastGlyph != nil:
-      return self.mEngine.addKerning(self.mPrevGlyph.glyphIndex,
+      result = self.mEngine.addKerning(self.mPrevGlyph.glyphIndex,
         self.mLastGlyph.glyphIndex, x, y)
+      return result
     result = false
 
   proc preCache*(self: name, start, stop: int) =
