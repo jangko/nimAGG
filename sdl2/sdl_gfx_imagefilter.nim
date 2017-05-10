@@ -1,6 +1,6 @@
 #
 #
-# SDL2_imageFilter.h: byte-image "filter" routines 
+# SDL2_imageFilter.h: byte-image "filter" routines
 #
 # Copyright (C) 2001-2012  Andreas Schiffler
 #

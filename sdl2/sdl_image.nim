@@ -103,7 +103,7 @@ when versionAtLeast(2, 0, 0):
       kind: cstring): Texture {.
         cdecl, importc: "IMG_LoadTextureTyped_RW", dynlib: SDL2_IMG_LIB.}
 
-# Procedures to detect a file type, given a seekable source 
+# Procedures to detect a file type, given a seekable source
 
 proc isICO*(src: ptr RWops): cint {.
     cdecl, importc: "IMG_isICO", dynlib: SDL2_IMG_LIB.}

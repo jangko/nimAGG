@@ -85,7 +85,7 @@ const
     ##  ``Warning:`` this value was `HAPTIC_SQUARE` right before 2.0.0 shipped.
     ##  Sorry, we ran out of bits, and this is important for XInput devices.
 
-# !!! FIXME: put this back when we have more bits in 2.1 
+# !!! FIXME: put this back when we have more bits in 2.1
 # const
 #   HAPTIC_SQUARE* = (1<<2)
 
@@ -699,7 +699,7 @@ type
     ##  ``HapticLeftRight``
     ##
     ##  ``HapticCustom``
-    # Common for all force feedback effects 
+    # Common for all force feedback effects
     kind*: uint16                   ##  Effect type.
     constant*: HapticConstantObj    ##  Constant effect.
     periodic*: HapticPeriodicObj    ##  Periodic effect.
@@ -1155,7 +1155,7 @@ proc hapticRumbleSupported*(haptic: Haptic): cint {.
   ##
   ##  ``hapticRumbleStop()``
 
-proc hapticRumbleInit*(haptic: Haptic): cint {.cdecl, 
+proc hapticRumbleInit*(haptic: Haptic): cint {.cdecl,
     importc: "SDL_HapticRumbleInit", dynlib: SDL2_LIB.}
   ##  Initializes the haptic device for simple rumble playback.
   ##

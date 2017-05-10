@@ -632,7 +632,7 @@ type
     ##  ``DO NOT EVER`` call ``lockAudio()`` from your callback procedure!
 
 
-type 
+type
   EffectDone_t* = proc (chan: cint; udata: pointer) {.cdecl.} ##  \
     ##  This is the prototype for effect processing procedures.
     ##
@@ -768,7 +768,7 @@ proc unregisterEffect*(channel: cint; f: EffectFunc_t): cint {.
   ##
   ##  Error messages can be retrieved from ``getError()``.
 
-proc unregisterAllEffects*(channel: cint): cint {.cdecl, 
+proc unregisterAllEffects*(channel: cint): cint {.cdecl,
     importc: "Mix_UnregisterAllEffects", dynlib: SDL2_MIX_LIB.}
   ##  This removes all effects registered to ``channel``.
   ##
@@ -1224,7 +1224,7 @@ template fadeInChannel*(channel, chunk, loops, ms: untyped): untyped =  ##  \
   ##  pick the first free unreserved channel.
   ##
   ##  ``channel`` Channel to play on,
-  ##  or `-1` for the first free unreserved channel. 
+  ##  or `-1` for the first free unreserved channel.
   ##
   ##  ``chunk`` Sample to play.
   ##

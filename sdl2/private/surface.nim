@@ -38,7 +38,7 @@ template mustLock*(s: untyped): untyped = ##  \
   ##  Evaluates to `true` if the surface needs t o be locked before access.
   (((s).flags and RLEACCEL) != 0)
 
-# 
+#
 type
   Surface* = ptr SurfaceObj
   SurfaceObj* = object ##  \
@@ -47,15 +47,15 @@ type
     ##  ``Note:`` This object should be treated as read-only, except for
     ##  ``pixels``, which, if not `nil`, contains the raw pixel data
     ##  for the surface.
-    flags*: uint32          ## Read-only 
-    format*: ptr PixelFormat ## Read-only 
+    flags*: uint32          ## Read-only
+    format*: ptr PixelFormat ## Read-only
     w*: cint
     h*: cint                ## Read-only
     pitch*: cint            ## Read-only
     pixels*: pointer        ## Read-write
-                            ## Application data associated with the surface 
+                            ## Application data associated with the surface
     userdata*: pointer      ## Read-write \
-                            ## information needed for surfaces requiring locks 
+                            ## information needed for surfaces requiring locks
     locked*: cint           ## Read-only
     lock_data*: pointer     ## Read-only \
                             ## clipping information

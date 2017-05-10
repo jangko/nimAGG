@@ -69,7 +69,7 @@ proc quit*() {.
   ##  You may, of course, use ``sdl_net.init()`` to use the functionality again.
 
 #*********************************************************************
-# IPv4 hostname resolution API                                        
+# IPv4 hostname resolution API
 #*********************************************************************
 
 type
@@ -178,7 +178,7 @@ proc getLocalAddresses*(addresses: ptr IPaddress; maxcount: cint): cint {.
   ##  ``Return`` the number of addresses saved in ``addresses``.
 
 #*********************************************************************
-# TCP network API                                                     
+# TCP network API
 #*********************************************************************
 
 type
@@ -387,7 +387,7 @@ proc tcpClose*(sock: TCPsocket) {.
   ##  ``Return`` nothing, this always succeeds for all we need to know.
 
 #*********************************************************************
-# UDP network API                                                     
+# UDP network API
 #*********************************************************************
 
 const
@@ -939,7 +939,7 @@ proc udpClose*(sock: UDPsocket) {.
   ##
 
 #*********************************************************************
-# Hooks for checking sockets for available data                       
+# Hooks for checking sockets for available data
 #*********************************************************************
 
 type
@@ -1202,7 +1202,7 @@ proc freeSocketSet*(set: SocketSet) {.
   ##
 
 #*********************************************************************
-# Error reporting procedures                                          
+# Error reporting procedures
 #*********************************************************************
 
 proc setError*(fmt: cstring) {.
@@ -1212,7 +1212,7 @@ proc getError*(): cstring {.
     cdecl, importc: "SDLNet_GetError", dynlib: SDL2_NET_LIB.}
 
 #*********************************************************************
-# Inline procedures to read/write network data                        
+# Inline procedures to read/write network data
 #*********************************************************************
 
 # Warning, some systems have data access alignment restrictions.

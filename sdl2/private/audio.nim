@@ -393,7 +393,7 @@ proc freeWAV*(audio_buf: ptr uint8) {.
   ##  This procedure frees data previously allocated with ``loadWAV_RW()``
 
 proc buildAudioCVT*(cvt: ptr AudioCVT;
-    src_format: AudioFormat; src_channels: uint8; src_rate: cint; 
+    src_format: AudioFormat; src_channels: uint8; src_rate: cint;
     dst_format: AudioFormat; dst_channels: uint8; dst_rate: cint): cint {.
       cdecl, importc: "SDL_BuildAudioCVT", dynlib: SDL2_LIB.}
   ##  This procedure takes a source format and rate and a destination format

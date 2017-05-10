@@ -364,7 +364,7 @@ type
     timestamp*: uint32
     which*: int32           ##  \
       ##  The joystick device index for the `ADDED` event,
-      ##  instance id for the `REMOVED` or `REMAPPED` event 
+      ##  instance id for the `REMOVED` or `REMAPPED` event
 
 type
   AudioDeviceEventObj* = object ##  \

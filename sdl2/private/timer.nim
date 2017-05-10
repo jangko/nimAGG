@@ -72,7 +72,7 @@ proc addTimer*(
   ##
   ##  ``Return`` a timer ID, or `0` when an error occurs.
 
-proc removeTimer*(id: TimerID): bool {.cdecl, importc: "SDL_RemoveTimer", 
+proc removeTimer*(id: TimerID): bool {.cdecl, importc: "SDL_RemoveTimer",
     dynlib: SDL2_LIB.}
   ##  Remove a timer knowing its ID.
   ##

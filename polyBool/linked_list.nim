@@ -92,4 +92,3 @@ proc newNode*[T](data: T): LinkedNode[T] =
     node.prev = nil
     node.next = nil
   result = node
-  

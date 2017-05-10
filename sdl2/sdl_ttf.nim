@@ -48,7 +48,7 @@ proc linkedVersion*(): ptr Version {.
   ##  It should NOT be used to fill a version structure, instead you should
   ##  use the ``version()`` template.
 
-# ZERO WIDTH NO-BREAKSPACE (Unicode byte order mark) 
+# ZERO WIDTH NO-BREAKSPACE (Unicode byte order mark)
 const
   UNICODE_BOM_NATIVE* = 0x0000FEFF
   UNICODE_BOM_SWAPPED* = 0x0000FFFE

@@ -215,8 +215,8 @@ proc gameControllerGetBindForAxis*(
       cdecl, importc: "SDL_GameControllerGetBindForAxis", dynlib: SDL2_LIB.}
   ##  Get the SDL joystick layer binding for this controller button mapping.
 
-proc gameControllerGetAxis*(gamecontroller: GameController; 
-                            axis: GameControllerAxis): int16 {.cdecl, 
+proc gameControllerGetAxis*(gamecontroller: GameController;
+                            axis: GameControllerAxis): int16 {.cdecl,
     importc: "SDL_GameControllerGetAxis", dynlib: SDL2_LIB.}
   ##  Get the current state of an axis control on a game controller.
   ##
@@ -232,7 +232,7 @@ type
     CONTROLLER_BUTTON_X, CONTROLLER_BUTTON_Y,
     CONTROLLER_BUTTON_BACK,
     CONTROLLER_BUTTON_GUIDE,
-    CONTROLLER_BUTTON_START, 
+    CONTROLLER_BUTTON_START,
     CONTROLLER_BUTTON_LEFTSTICK,    CONTROLLER_BUTTON_RIGHTSTICK,
     CONTROLLER_BUTTON_LEFTSHOULDER, CONTROLLER_BUTTON_RIGHTSHOULDER,
     CONTROLLER_BUTTON_DPAD_UP,      CONTROLLER_BUTTON_DPAD_DOWN,

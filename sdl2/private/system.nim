@@ -81,7 +81,7 @@ when false:
     proc iPhoneSetEventPump*(enabled: bool) {.
         cdecl, importc: "SDL_iPhoneSetEventPump", dynlib: SDL2_LIB.}
 
-  # Platform specific procedures for Android 
+  # Platform specific procedures for Android
   when defined android:
 
     proc androidGetJNIEnv*(): pointer {.

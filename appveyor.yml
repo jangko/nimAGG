@@ -33,6 +33,7 @@ build_script:
   - cd ..
 
 test_script:
+  - cd examples
   - nim e build.nims
   - nim e -d:release build.nims
   - test_color_conv.bat
