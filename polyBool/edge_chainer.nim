@@ -11,19 +11,19 @@ type
 
 proc removeHead(chain: Chain) {.inline.} =
   chain.data.delete(0)
-  
+
 proc removeTail(chain: Chain) {.inline.} =
   discard chain.data.pop()
-  
+
 proc addHead(chain: Chain, pt: PointT) {.inline.} =
   chain.data.insert(pt)
-  
+
 proc addTail(chain: Chain, pt: PointT) {.inline.} =
   chain.data.add(pt)
 
 proc join(a, b: Chain) {.inline.} =
   a.data = a.data.concat(b.data)
-  
+
 proc segmentChainer*(segments: Edges, eps: Epsilon, buildLog: BuildLog): Regions =
   var
     chains  = newSeq[Chain]()

@@ -267,13 +267,13 @@ type
 
 proc FT_New_Face*(library: FT_Library; filepathname: cstring; face_index: FT_Long;
   aface: var FT_Face): FT_Error {.ft_import.}
-  
+
 proc FT_New_Memory_Face*(library: FT_Library; file_base: cstring;
   file_size: FT_Long; face_index: FT_Long; aface: var FT_Face): FT_Error {.ft_import.}
-  
+
 proc FT_Open_Face*(library: FT_Library; args: var FT_Open_Args; face_index: FT_Long;
   aface: var FT_Face): FT_Error {.ft_import.}
-  
+
 proc FT_Attach_File*(face: FT_Face; filepathname: cstring): FT_Error {.ft_import.}
 proc FT_Attach_Stream*(face: FT_Face; parameters: var FT_Open_Args): FT_Error {.ft_import.}
 proc FT_Reference_Face*(face: FT_Face): FT_Error {.ft_import.}
@@ -303,7 +303,7 @@ proc FT_Request_Size*(face: FT_Face; req: var FT_Size_Request): FT_Error {.ft_im
 
 proc FT_Set_Char_Size*(face: FT_Face; char_width, char_height: FT_F26Dot6;
   horz_resolution, vert_resolution: FT_UInt): FT_Error {.ft_import.}
-  
+
 proc FT_Set_Pixel_Sizes*(face: FT_Face; pixel_width: FT_UInt; pixel_height: FT_UInt): FT_Error {.ft_import.}
 proc FT_Load_Glyph*(face: FT_Face; glyph_index: FT_UInt; load_flags: FT_Int32): FT_Error {.ft_import.}
 proc FT_Load_Char*(face: FT_Face; char_code: FT_ULong; load_flags: FT_Int32): FT_Error {.ft_import.}
@@ -381,13 +381,13 @@ const
 
 proc FT_Get_Kerning*(face: FT_Face; left_glyph: FT_UInt; right_glyph: FT_UInt;
   kern_mode: FT_UInt; akerning: var FT_Vector): FT_Error {.ft_import.}
-  
+
 proc FT_Get_Track_Kerning*(face: FT_Face; point_size: FT_Fixed; degree: FT_Int;
   akerning: var FT_Fixed): FT_Error {.ft_import.}
-  
+
 proc FT_Get_Glyph_Name*(face: FT_Face; glyph_index: FT_UInt; buffer: FT_Pointer;
   buffer_max: FT_UInt): FT_Error {.ft_import.}
-  
+
 proc FT_Get_Postscript_Name*(face: FT_Face): cstring {.ft_import.}
 proc FT_Select_Charmap*(face: FT_Face; encoding: FT_Encoding): FT_Error {.ft_import.}
 proc FT_Set_Charmap*(face: FT_Face; charmap: FT_CharMap): FT_Error {.ft_import.}
@@ -425,10 +425,10 @@ proc FT_Get_FSType_Flags*(face: FT_Face): FT_UShort {.ft_import.}
 
 proc FT_Face_GetCharVariantIndex*(face: FT_Face; charcode: FT_ULong;
   variantSelector: FT_ULong): FT_UInt {.ft_import.}
-  
+
 proc FT_Face_GetCharVariantIsDefault*(face: FT_Face; charcode: FT_ULong;
   variantSelector: FT_ULong): FT_Int {.ft_import.}
-  
+
 proc FT_Face_GetVariantSelectors*(face: FT_Face): ptr FT_UInt32 {.ft_import.}
 proc FT_Face_GetVariantsOfChar*(face: FT_Face; charcode: FT_ULong): ptr FT_UInt32 {.ft_import.}
 proc FT_Face_GetCharsOfVariant*(face: FT_Face; variantSelector: FT_ULong): ptr FT_UInt32 {.ft_import.}
@@ -447,7 +447,7 @@ const
 
 proc FT_Library_Version*(library: FT_Library; amajor: var FT_Int; aminor: var FT_Int;
   apatch: var FT_Int) {.ft_import.}
-  
+
 proc FT_Face_CheckTrueTypePatents*(face: FT_Face): FT_Bool {.ft_import.}
 
 proc FT_Face_SetUnpatentedHinting*(face: FT_Face; value: FT_Bool): FT_Bool {.ft_import.}

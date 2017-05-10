@@ -36,7 +36,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
     result.stop = stop
     result.thisFill = seg.thisFill
     result.thatFill.above = false
-    result.thatFill.below = false    
+    result.thatFill.below = false
 
   # event logic
   var eventRoot = initLinkedList[NodeData]()
@@ -329,7 +329,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
           else:
             ev.data.seg.thisFill.above = ev.data.seg.thisFill.below
         else:
-          # now we fill in any missing transition information, 
+          # now we fill in any missing transition information,
           # since we are all-knowing at this point
 
           if not ev.data.seg.thatFill.above and not ev.data.seg.thatFill.below:
@@ -348,7 +348,7 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
                 inside = below.data.seg.thisFill.above
             ev.data.seg.thatFill.above = inside
             ev.data.seg.thatFill.below = inside
-            
+
         if buildLog != nil:
           buildLog.status(
             ev.data.seg,
@@ -390,17 +390,17 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
       buildLog.done()
 
     return edges
-    
+
   proc addEdge(pt1, pt2: PointT) =
     var forward = eps.pointsCompare(pt1, pt2)
-    if forward == 0: 
+    if forward == 0:
       # points are equal, so we have a zero-length edge
       # just skip it
       return
 
     var seg = newEdge(if forward < 0: pt1 else: pt2, if forward < 0: pt2 else: pt1)
     discard eventAddEdge(seg, true)
-      
+
   # return the appropriate API depending on what we're doing
   if not selfIntersection:
     # performing combination of polygons, so only deal with already-processed edges
@@ -427,10 +427,10 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
       pt1 = pt2
       pt2 = region[i]
       addEdge(pt1, pt2)
-    
+
   res.startRegion = proc() =
     res.mVertex = 0
-    
+
   res.addVertex = proc(x, y: float64) =
     case res.mVertex
     of 0:
@@ -446,11 +446,11 @@ proc intersecter*(selfIntersection: bool, eps: Epsilon, buildLog: BuildLog): Pol
       addEdge(res.mLast, PointT(x: x, y: y))
       res.mLast = PointT(x: x, y: y)
       inc res.mVertex
-    
+
   res.endRegion = proc() =
     if res.mVertex >= 2:
-      addEdge(res.mLast, res.mFirst)    
-    
+      addEdge(res.mLast, res.mFirst)
+
   res.calculateSegmented = proc(inverted: bool): Edges =
     # is the polygon inverted?
     # returns edges
