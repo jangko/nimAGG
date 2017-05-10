@@ -573,8 +573,9 @@ proc sortKerningPairs*(self: FontEngineWin32TTBase) =
 proc loadKerningPairs*(self: FontEngineWin32TTBase) =
   if self.mDC != NULL and self.mCurFont != NULL:
     if self.mKerningPairs == nil:
-      self.mKerningPairs = newSeq[KERNINGPAIR](16384-16)
       self.mMaxKerningPairs = 16384-16
+      self.mMaxKerningPairs = getKerningPairs(self.mDC, DWORD(self.mMaxKerningPairs), nil)
+      self.mKerningPairs = newSeq[KERNINGPAIR](self.mMaxKerningPairs)
     self.mNumKerningPairs = getKerningPairs(self.mDC,
       DWORD(self.mMaxKerningPairs), self.mKerningPairs[0].addr)
 
