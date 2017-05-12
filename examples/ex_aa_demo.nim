@@ -91,6 +91,7 @@ type
     mIdx: int
     mSlider1: SliderCtrl[Rgba8]
     mSlider2: SliderCtrl[Rgba8]
+    mSlider3: SliderCtrl[Rgba8]
     sl: ScanlineU8
     rb: RendererT
     ras: RasterizerScanlineAA
@@ -102,6 +103,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
   result.mSlider1 = newSliderCtrl[Rgba8](80, 10,    600-10, 19,    not flipY)
   result.mSlider2 = newSliderCtrl[Rgba8](80, 10+20, 600-10, 19+20, not flipY)
+  result.mSlider3 = newSliderCtrl[Rgba8](80, 10+40, 600-10, 19+40, not flipY)
 
   result.mIdx = -1
   result.mX = [57.0, 369.0, 143.0]
@@ -109,19 +111,25 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
   result.addCtrl(result.mSlider1)
   result.addCtrl(result.mSlider2)
+  result.addCtrl(result.mSlider3)
 
   result.mSlider1.setRange(8.0, 100.0)
-  result.mSlider1.num_steps(23)
+  result.mSlider1.numSteps(23)
   result.mSlider1.value(32.0)
 
   result.mSlider2.setRange(0.1, 3.0)
   result.mSlider2.value(1.0)
 
+  result.mSlider3.setRange(0.1, 10.0)
+  result.mSlider3.value(1.5)
+
   result.mSlider1.label("Pixel size=$1")
   result.mSlider2.label("Gamma=$1")
+  result.mSlider3.label("Stroke=$1")
 
   result.mSlider1.noTransform()
   result.mSlider2.noTransform()
+  result.mSlider3.noTransform()
 
   result.sl  = initScanlineU8()
   result.ras = initRasterizerScanlineAA()
@@ -155,7 +163,7 @@ method onDraw(app: App) =
 
   var ps = initPathStorage()
   var pg = initConvStroke(ps)
-  pg.width(2.0)
+  pg.width(app.mSlider3.value())
   pg.lineCap(roundCap)
 
   ps.removeAll()
@@ -180,6 +188,7 @@ method onDraw(app: App) =
   # Render the controls
   renderCtrl(app.ras, app.sl, rb, app.mSlider1)
   renderCtrl(app.ras, app.sl, rb, app.mSlider2)
+  renderCtrl(app.ras, app.sl, rb, app.mSlider3)
 
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
   var

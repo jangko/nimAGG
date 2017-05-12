@@ -2,6 +2,8 @@
  * [![Build Status][badge-nimagg-travisci]][nimagg-travisci]
  * [![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
 
+![Screenshot](screenshot.png)
+
 This project relying on recent bugfixes of Nim compiler, so you must use devel
 branch on Github to compile this project.
 
