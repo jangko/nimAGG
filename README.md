@@ -1,10 +1,16 @@
 # nimAGG
- * [![Build Status][badge-nimagg-travisci]][nimagg-travisci]
- * [![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
+nimAGG is a Nim port of Anti Grain Geometry(AGG)
+
+High Fidelity 2D Graphics. A High Quality Rendering Engine for Nim
+
+---
+
+[![Build Status][badge-nimagg-travisci]][nimagg-travisci]
+[![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
 
 ![Screenshot](screenshot.png)
 
-This project relying on recent bugfixes of Nim compiler, so you must use devel
+This project relying on recent bugfixes of Nim compiler, so you should use devel
 branch on Github to compile this project.
 
 Those bugfixes are:
