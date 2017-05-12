@@ -208,12 +208,12 @@ method onDraw(app: App) =
   strokeEll.width(app.mWidth.value() / 2)
   app.rasc.styles(3, -1)
   app.rasc.addPath(strokeEll)
-  #
-  #app.rasc.styles(2, -1)
-  #app.rasc.addPath(ell)
-  #
-  #app.rasc.styles(1, -1)
-  #app.rasc.addPath(stroke)
+  
+  app.rasc.styles(2, -1)
+  app.rasc.addPath(ell)
+  
+  app.rasc.styles(1, -1)
+  app.rasc.addPath(stroke)
  
   app.rasc.styles(0, -1)
   app.rasc.addPath(curve)

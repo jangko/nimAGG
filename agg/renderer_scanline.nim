@@ -435,7 +435,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
 
         if slLen != 0:
           zeroMem(mixBuffer + slStart - minX, slLen * sizeof(getColorT(BaseRenderer)))
-          zeroMem(coverBuffer + slStart - minX, slLen * sizeof(getColorT(BaseRenderer)))
+          zeroMem(coverBuffer + slStart - minX, slLen * sizeof(CoverType))
           var slY = 0x7FFFFFFF
 
           for i in 0.. <numStyles:
