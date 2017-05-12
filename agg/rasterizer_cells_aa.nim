@@ -1,4 +1,4 @@
-import basics, algorithm, strutils
+import basics, algorithm, strutils, vector
 
 const
   cellBlockShift = 12
@@ -8,21 +8,18 @@ const
   cellBlockLimit = 1024
 
 type
-  SortedY[CellType] = object
+  SortedY = object
     start, num: int
-    cells: seq[ptr CellType]
 
-  RasterizerCellsAA*[CellType] = ref object
+  RasterizerCellsAA*[CellType] = object
     numBlocks: int
     maxBlocks: int
     currBlock: int
     numCells: int
-
-    cells: seq[ptr CellType]
+    cells: seq[seq[CellType]]
     currCellPtr: ptr CellType
-    #sortedCells: seq[ptr CellType]
-    sortedY: seq[SortedY[CellType]]
-
+    sortedCells: PodVector[ptr CellType]
+    sortedY: PodVector[SortedY]
     currCell: CellType
     styleCell: CellType
     minX: int
@@ -31,7 +28,7 @@ type
     maxY: int
     sorted: bool
 
-proc reset*[T](self: RasterizerCellsAA[T]) =
+proc reset*[T](self: var RasterizerCellsAA[T]) =
   self.numCells = 0
   self.currBlock = 0
   self.currCell.initial()
@@ -42,7 +39,7 @@ proc reset*[T](self: RasterizerCellsAA[T]) =
   self.maxX = -0x7FFFFFFF
   self.maxY = -0x7FFFFFFF
 
-proc style*[T](self: RasterizerCellsAA[T], styleCell: T) =
+proc style*[T](self: var RasterizerCellsAA[T], styleCell: T) =
   mixin style
   self.styleCell.style(styleCell)
 
@@ -51,23 +48,15 @@ proc getMinY*[T](self: RasterizerCellsAA[T]): int = self.minY
 proc getMaxX*[T](self: RasterizerCellsAA[T]): int = self.maxX
 proc getMaxY*[T](self: RasterizerCellsAA[T]): int = self.maxY
 
-proc finalizer[T](self: RasterizerCellsAA[T]) =
-  if self.numBlocks != 0:
-    var numBlocks = self.numBlocks.int
-    for i in 0.. < numBlocks:
-      dealloc(self.cells[i])
-    self.cells = nil
-
-proc newRasterizerCellsAA*[T](): RasterizerCellsAA[T] =
-  new(result, finalizer[T])
+proc initRasterizerCellsAA*[T](): RasterizerCellsAA[T] =
   result.numBlocks = 0
   result.maxBlocks = 0
   result.currBlock = 0
   result.numCells  = 0
   result.cells = @[]
   result.currCellPtr = nil
-  #result.sortedCells = @[]
-  result.sortedY = @[]
+  result.sortedCells = initPodVector[ptr T]()
+  result.sortedY = initPodVector[SortedY]()
   result.minX = 0x7FFFFFFF
   result.minY = 0x7FFFFFFF
   result.maxX = -0x7FFFFFFF
@@ -76,19 +65,19 @@ proc newRasterizerCellsAA*[T](): RasterizerCellsAA[T] =
   result.styleCell.initial()
   result.currCell.initial()
 
-proc allocateBlock[T](self: RasterizerCellsAA[T]) =
+proc allocateBlock[T](self: var RasterizerCellsAA[T]) =
   if self.currBlock >= self.numBlocks:
     if self.numBlocks >= self.maxBlocks:
       self.cells.setLen(self.maxBlocks + cellBlockPool)
       inc(self.maxBlocks, cellBlockPool)
 
-    self.cells[self.numBlocks] = allocU(T, cellBlockSize)
+    self.cells[self.numBlocks] = newSeq[T](cellBlockSize)
     inc self.numBlocks
 
-  self.currCellPtr = self.cells[self.currBlock]
+  self.currCellPtr = addr(self.cells[self.currBlock][0])
   inc self.currBlock
 
-proc addCurrCell[T](self: RasterizerCellsAA[T]) =
+proc addCurrCell[T](self: var RasterizerCellsAA[T]) =
   if(self.currCell.area or self.currCell.cover) != 0:
     if(self.numCells and cellBlockMask) == 0:
       if self.numBlocks >= cellBlockLimit: return
@@ -97,7 +86,7 @@ proc addCurrCell[T](self: RasterizerCellsAA[T]) =
     inc self.currCellPtr
     inc self.numCells
 
-proc setCurrCell[T](self: RasterizerCellsAA[T], x, y: int) =
+proc setCurrCell[T](self: var RasterizerCellsAA[T], x, y: int) =
   mixin style
   if self.currCell.notEqual(x, y, self.styleCell):
     self.addCurrCell()
@@ -107,88 +96,9 @@ proc setCurrCell[T](self: RasterizerCellsAA[T], x, y: int) =
     self.currCell.cover = 0
     self.currCell.area  = 0
 
-    #[
-proc qsortCells[Cell](start: ptr ptr Cell, num: int) =
-  const
-    qsortThreshold = 9
+proc cmpX[T](a, b: T): bool = a.x < b.x
 
-  var
-    stack: array[80, ptr ptr Cell]
-    top: ptr ptr ptr Cell
-    limit: ptr ptr Cell
-    base: ptr ptr Cell
-
-  limit = start + num
-  base  = start
-  top   = stack[0].addr
-
-  while true:
-    var
-      len = cast[int](limit) - cast[int](base)
-      i: ptr ptr Cell
-      j: ptr ptr Cell
-      pivot: ptr ptr Cell
-
-    if len > qsortThreshold:
-      # we use base + len/2 as the pivot
-      pivot = base + len div 2
-      swap(base[], pivot[])
-
-      i = base + 1
-      j = limit - 1
-
-      # now ensure that *i <= *base <= *j
-      if j[].x < i[].x:
-        swap(i[], j[])
-
-      if base[].x < i[].x:
-        swap(base[], i[])
-
-      if j[].x < base[].x:
-        swap(base[], j[])
-
-      while true:
-        let x = base[].x
-        #doWhile i[].x < x: inc i
-        #doWhile x < j[].x: dec j
-
-        if i > j: break
-        swap(i[], j[])
-      swap(base[], j[])
-
-      # now, push the largest sub-array
-      if(j - base) > (limit - i):
-        top[0] = base
-        top[1] = j
-        base   = i
-      else:
-        top[0] = i
-        top[1] = limit
-        limit  = j
-      inc(top, 2)
-    else:
-      # the sub-array is small, perform insertion sort
-      j = base
-      i = j + 1
-
-      while i < limit:
-        while j[1].x < j[].x:
-          swap((j + 1)[], j[])
-          if j == base: break
-          dec j
-
-        if top > stack:
-          dec(top, 2)
-          base  = top[0]
-          limit = top[1]
-        else:
-          break
-
-        j = i
-        i.inc
-]#
-
-proc sortCells*[T](self: RasterizerCellsAA[T]) =
+proc sortCells*[T](self: var RasterizerCellsAA[T]) =
   #Perform sort only the first time.
   if self.sorted: return
 
@@ -201,102 +111,89 @@ proc sortCells*[T](self: RasterizerCellsAA[T]) =
   if self.numCells == 0: return
 
   # Allocate the array of cell pointers
-  #self.sortedCells = newSeq[ptr T](self.numCells)
+  self.sortedCells.allocate(self.numCells, 16)
 
   # Allocate and zero the Y array
-  self.sortedY = newSeq[SortedY[T]](self.maxY - self.minY + 1)
-  #zeroMem(self.sortedY[0].addr, self.sortedY.len * sizeof(SortedY))
+  self.sortedY.allocate(self.maxY - self.minY + 1, 16)
+  self.sortedY.zero()
 
   # Create the Y-histogram (count the numbers of cells for each Y)
   var
-    blockPtr = self.cells[0].addr
+    blockPtr = 0
     nb = self.numCells shr cellBlockShift
     cellPtr: ptr T
     i: int
 
   while nb != 0:
-    cellPtr = blockPtr[]
+    cellPtr = self.cells[blockPtr][0].addr
     inc blockPtr
     i = cellBlockSize
     while i != 0:
       inc self.sortedY[cellPtr.y - self.minY].start
       inc cellPtr
-      i.dec
-    nb.dec
+      dec i
+    dec nb
 
-  cellPtr = blockPtr[]
+  cellPtr = self.cells[blockPtr][0].addr
+  inc blockPtr
   i = self.numCells and cellBlockMask
   while i != 0:
     inc self.sortedY[cellPtr.y - self.minY].start
     inc cellPtr
-    i.dec
+    dec i
 
   # Convert the Y-histogram into the array of starting indexes
   var start = 0
-
   for x in mitems(self.sortedY):
     let v = x.start
-    x.num = v
-    x.cells = newSeqOfCap[ptr T](v)
     x.start = start
     inc(start, v)
 
   # Fill the cell pointer array sorted by Y
-  blockPtr = self.cells[0].addr
+  blockPtr = 0
   nb = self.numCells shr cellBlockShift
   while nb != 0:
-    cellPtr = blockPtr[]
+    cellPtr = self.cells[blockPtr][0].addr
     inc blockPtr
     i = cellBlockSize
     while i != 0:
-      #var currY = self.sortedY[cellPtr.y - self.minY]
-      #self.sortedCells[currY.start + currY.num] = cellPtr
-      #inc currY.num
-      self.sortedY[cellPtr.y - self.minY].cells.add cellPtr
+      var currY = addr(self.sortedY[cellPtr.y - self.minY])
+      self.sortedCells[currY.start + currY.num] = cellPtr
+      inc currY.num
       inc cellPtr
-      i.dec
-    nb.dec
+      dec i
+    dec nb
 
-  cellPtr = blockPtr[]
+  cellPtr = self.cells[blockPtr][0].addr
+  inc blockPtr
   i = self.numCells and cellBlockMask
   while i != 0:
-    #var currY = self.sortedY[cellPtr.y - self.minY]
-    #self.sortedCells[currY.start + currY.num] = cellPtr
-    #inc currY.num
-    self.sortedY[cellPtr.y - self.minY].cells.add cellPtr
+    var currY = addr(self.sortedY[cellPtr.y - self.minY])
+    self.sortedCells[currY.start + currY.num] = cellPtr
+    inc currY.num
     inc cellPtr
-    i.dec
+    dec i
 
   # Finally arrange the X-arrays
-  for x in mitems(self.sortedY):
-    #let currY = self.sortedY[i]
+  for x in items(self.sortedY):
     if x.num != 0:
-      x.cells.sort(proc(a, b: ptr T): int = cmp(a.x, b.x))
-    else:
-      x.cells.add nil
-     # qsortCells(self.sortedCells[0].addr + currY.start, currY.num)
+      self.sortedCells.sort(cmpX[ptr T], x.start, x.start + x.num)
 
-  #self.sortedY[self.maxY - self.minY].cells.add nil
   self.sorted = true
 
 proc totalCells*[T](self: RasterizerCellsAA[T]): int =
   result = self.numCells
 
-proc scanlineNumCells*[T](self: RasterizerCellsAA[T], y: int): int =
+proc scanlineNumCells*[T](self: var RasterizerCellsAA[T], y: int): int =
   result = self.sortedY[y - self.minY].num
 
-proc scanlineCells*[T](self: RasterizerCellsAA[T], y: int): ptr ptr T =
-  #echo y - self.minY, " ", self.sortedY.len, " ", self.sortedY[y - self.minY].num, " ", self.sortedY[y - self.minY].cells.len
-
-  if self.sortedY[y - self.minY].cells.len != 0:
-    result = self.sortedY[y - self.minY].cells[0].addr
-  else:
-    result = nil
+proc scanlineCells*[T](self: var RasterizerCellsAA[T], y: int): ptr ptr T =
+  result = self.sortedCells.data() + self.sortedY[y - self.minY].start
 
 proc sorted*[T](self: RasterizerCellsAA[T]): bool =
   result = self.sorted
 
-proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
+proc renderHline[T](self: var RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
   var
     ex1 = sar(x1, polySubpixelShift)
     ex2 = sar(x2, polySubpixelShift)
@@ -376,7 +273,7 @@ proc renderHline[T](self: RasterizerCellsAA[T], ey, x1, y1, x2, y2: int) =
   inc(self.currCell.cover, delta)
   inc(self.currCell.area, (fx2 + polySubpixelScale - first) * delta)
 
-proc line*[T](self: RasterizerCellsAA[T], x1, y1, x2, y2: int) =
+proc line*[T](self: var RasterizerCellsAA[T], x1, y1, x2, y2: int) =
   const
     dxLimit = 16384 shl polySubpixelShift
 

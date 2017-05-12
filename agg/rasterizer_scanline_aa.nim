@@ -55,7 +55,7 @@ template getAAScale2*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int =
 template getAAMask2*[CL, CO](x: typedesc[RasterizerScanlineAA1[CL, CO]]): int = aaMask2
 
 proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[ClipType, CoordType] =
-  result.outline = newRasterizerCellsAA[CellAA]()
+  result.outline = initRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
   result.mFillingRule = fillNonZero
   result.autoClose = true
@@ -69,7 +69,7 @@ proc gamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipTyp
     self.mGamma[i] = uround(gamma.getGammaValue(i.float64 / aaMask) * aaMask)
 
 proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =
-  result.outline = newRasterizerCellsAA[CellAA]()
+  result.outline = initRasterizerCellsAA[CellAA]()
   result.clipper = construct(ClipType)
   result.mFillingRule = fillNonZero
   result.autoClose = true

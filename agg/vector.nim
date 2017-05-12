@@ -481,9 +481,14 @@ proc cutAt*[T](self: var PodVector[T], num: int) =
   if num < self.mSize:
     self.mSize = num
 
-proc sort*[T](self: var PodVector[T], ascending: bool, lo = 0, hi = -1) =
+proc sort*[T](self: var PodVector[T], cmp: proc(a, b: T): bool, lo = 0, hi = -1) =
   let limit = if hi < 0: self.mSize else: hi
-  if ascending:
-    self.mArray.quickSort(lessThan, lo, limit)
-  else:
-    self.mArray.quickSort(greaterThan, lo, limit)
+  self.mArray.quickSort(cmp, lo, limit)
+
+iterator items*[T](self: PodVector[T]): T =
+  for i in 0.. <self.mSize:
+    yield self.mArray[i]
+
+iterator mitems*[T](self: var PodVector[T]): var T =
+  for i in 0.. <self.mSize:
+    yield self.mArray[i]

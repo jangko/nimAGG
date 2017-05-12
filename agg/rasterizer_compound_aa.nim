@@ -62,7 +62,7 @@ type
   RasterizerCompoundAA* = RasterizerCompoundAA1[RasterizerSlClipInt, getCoordT(RasterizerSlClipInt)]
 
 proc initRasterizerCompoundAA1*[ClipT, CoordT](): RasterizerCompoundAA1[ClipT, CoordT] =
-  result.mOutline = newRasterizerCellsAA[CellStyleAA]()
+  result.mOutline = initRasterizerCellsAA[CellStyleAA]()
   result.mClipper = construct(ClipT)
   result.mFillingRule = fillNonZero
   result.mLayerOrder = layerDirect
@@ -392,8 +392,8 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
   inc self.mScanY
 
   if self.mLayerOrder != layerUnsorted:
-    if self.mLayerOrder == layerDirect: self.mAst.sort(true, 1)
-    else: self.mAst.sort(false, 1)
+    if self.mLayerOrder == layerDirect: self.mAst.sort(lessThan, 1)
+    else: self.mAst.sort(greaterThan, 1)
 
   result = self.mAst.size() - 1
 

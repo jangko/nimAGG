@@ -80,7 +80,7 @@ template rasterizerSlClip(Conv, name: untyped, CoordType: typed) =
     self.y1 = y1
     if self.clipping: self.f1 = clippingFlags(x1, y1, self.clipBox)
 
-  proc lineClipY*[Rasterizer](self: var name, ras: Rasterizer,
+  proc lineClipY*[Rasterizer](self: var name, ras: var Rasterizer,
     x1, y1, x2, y2: CoordType, cf1, cf2: uint) {.inline.} =
 
     let
@@ -119,7 +119,7 @@ template rasterizerSlClip(Conv, name: untyped, CoordType: typed) =
 
       ras.line(Conv.xi(tx1), Conv.yi(ty1), Conv.xi(tx2), Conv.yi(ty2))
 
-  proc lineTo*[Rasterizer](self: var name, ras: Rasterizer, x2, y2: CoordType) =
+  proc lineTo*[Rasterizer](self: var name, ras: var Rasterizer, x2, y2: CoordType) =
     if self.clipping:
       let f2 = clippingFlags(x2, y2, self.clipBox)
       if ((self.f1 and 10) == (f2 and 10)) and ((self.f1 and 10) != 0):
