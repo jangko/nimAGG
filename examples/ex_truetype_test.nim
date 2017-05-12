@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, scanline_u, scanline_bin, renderer_scanline,
   renderer_primitives, rasterizer_scanline_aa, conv_curve, conv_contour,
   pixfmt_rgb, gamma_lut, font_win32_tt, font_types, font_cache_manager,
-  color_rgba, renderer_base, trans_affine, gamma_functions, 
+  color_rgba, renderer_base, trans_affine, gamma_functions,
   scanline_storage_bin, scanline_storage_aa, path_storage_integer]
 import ctrl/[slider, cbox, rbox], os, strutils, platform.winapi, platform.support
 

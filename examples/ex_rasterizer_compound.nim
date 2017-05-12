@@ -1,4 +1,4 @@
-import agg/[basics, ellipse, gamma_lut, rendering_buffer, rasterizer_scanline_aa, 
+import agg/[basics, ellipse, gamma_lut, rendering_buffer, rasterizer_scanline_aa,
   rasterizer_compound_aa, conv_curve, conv_stroke, scanline_u, renderer_scanline,
   span_allocator, pixfmt_rgba, pixfmt_rgba, renderer_base, color_rgba,
   path_storage, pixfmt_rgb, gamma_lut, rasterizer_sl_clip,

@@ -1,5 +1,5 @@
 import agg/[basics, path_storage, renderer_base, rendering_buffer,
-  pixfmt_rgb, scanline_p, rasterizer_scanline_aa, 
+  pixfmt_rgb, scanline_p, rasterizer_scanline_aa,
   renderer_scanline, conv_curve, color_rgba, conv_stroke]
 import streams, os, platform.support
 

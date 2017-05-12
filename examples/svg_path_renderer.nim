@@ -1,5 +1,5 @@
 import agg/[path_storage, conv_transform, conv_stroke, basics, conv_contour,
-  conv_curve, color_rgba, renderer_scanline, rasterizer_scanline_aa, 
+  conv_curve, color_rgba, renderer_scanline, rasterizer_scanline_aa,
   trans_affine, bounding_rect, basics, vector]
 import svg_path_tokenizer
 export vector
