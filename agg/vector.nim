@@ -301,6 +301,82 @@ proc removeDuplicates*[T, Equal](arr: var openArray[T], equal: Equal): int =
 
   result = j
 
+const
+  quick_sort_threshold = 9
+
+proc lessThan*[T](a, b: T): bool = a < b
+proc greaterThan*[T](a, b: T): bool = a > b
+
+proc quickSort*[T](arr: var openArray[T], less: proc(a, b: T): bool, lo = 0, hi = -1) =
+  if arr.len < 2: return
+
+  var
+    stack: array[80, int]
+    limit = if hi < 0: arr.len else: hi
+    base  = lo
+    top   = 0
+
+  limit = min(limit, arr.len)
+  base  = min(lo, hi)
+  base  = max(0, lo)
+
+  while true:
+    let len = limit - base
+
+    if len > quick_sort_threshold:
+      # we use base + len/2 as the pivot
+      var
+        pivot = base + (len div 2)
+        i = base  + 1
+        j = limit - 1
+
+      swap(arr[base], arr[pivot])
+
+      # now ensure that *i <= *base <= *j
+      if less(arr[j], arr[i]):    swap(arr[j]   , arr[i])
+      if less(arr[base], arr[i]): swap(arr[base], arr[i])
+      if less(arr[j], arr[base]): swap(arr[j]   , arr[base])
+
+      while true:
+        doWhile less(arr[i], arr[base]): inc i
+        doWhile less(arr[base], arr[j]): dec j
+
+        if i > j: break
+        swap(arr[i], arr[j])
+
+      swap(arr[base], arr[j])
+
+      # now, push the largest sub-array
+      if j - base > limit - i:
+        stack[top]     = base
+        stack[top + 1] = j
+        base           = i
+      else:
+        stack[top]     = i
+        stack[top + 1] = limit
+        limit          = j
+      inc(top, 2)
+    else:
+      # the sub-array is small, perform insertion sort
+      var
+        j = base
+        i = j + 1
+
+      while i < limit:
+        while less(arr[j + 1], arr[j]):
+          swap(arr[j + 1], arr[j])
+          if j == base: break
+          dec j
+        j = i
+        inc i
+
+      if top > 0:
+        dec(top, 2)
+        base  = stack[top]
+        limit = stack[top + 1]
+      else:
+        break
+
 type
   PodVector*[T] = object
     mSize: int
@@ -404,3 +480,10 @@ proc clear*[T](self: var PodVector[T]) =
 proc cutAt*[T](self: var PodVector[T], num: int) =
   if num < self.mSize:
     self.mSize = num
+
+proc sort*[T](self: var PodVector[T], ascending: bool, lo = 0, hi = -1) =
+  let limit = if hi < 0: self.mSize else: hi
+  if ascending:
+    self.mArray.quickSort(lessThan, lo, limit)
+  else:
+    self.mArray.quickSort(greaterThan, lo, limit)

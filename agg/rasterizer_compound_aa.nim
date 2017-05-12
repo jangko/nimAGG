@@ -1,5 +1,4 @@
-import basics, rasterizer_cells_aa, rasterizer_sl_clip, algorithm
-import vector
+import basics, rasterizer_cells_aa, rasterizer_sl_clip, vector
 
 type
   CellStyleAA = object
@@ -392,14 +391,9 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
 
   inc self.mScanY
 
-  #if self.mLayerOrder != layerUnsorted:
-  #  var tmp = newSeq[uint](self.mAst.len - 1)
-  #  copyMem(tmp[0].addr, self.mAst[1].addr, sizeof(uint) * tmp.len)
-  #  if self.mLayerOrder == layerDirect:
-  #    tmp.sort(cmp, Ascending)
-  #  else:
-  #    tmp.sort(cmp, Descending)
-  #  copyMem(self.mAst[1].addr, tmp[0].addr, sizeof(uint) * tmp.len)
+  if self.mLayerOrder != layerUnsorted:
+    if self.mLayerOrder == layerDirect: self.mAst.sort(true, 1)
+    else: self.mAst.sort(false, 1)
 
   result = self.mAst.size() - 1
 
