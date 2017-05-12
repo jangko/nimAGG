@@ -1,7 +1,7 @@
 import agg/[rendering_buffer, renderer_base, rasterizer_scanline_aa, scanline_u,
   renderer_scanline, rounded_rect, pixfmt_rgba, span_allocator, span_gradient,
   gsv_text, span_interpolator_linear, color_rgba, trans_affine, calc, ellipse,
-  comp_op, pixfmt_rgb, basics]
+  comp_op, pixfmt_rgb, basics, conv_transform]
 import strutils, os, math
 import ctrl.rbox, ctrl.slider, platform.support
 
@@ -25,32 +25,6 @@ proc generateColorRamp[CA,CB](c: var openArray[CA], c1, c2, c3, c4: CB) =
     for i in 170.. <256:
       c[i] = c3.gradient(c4, (i.float64 - 170.0)/85.0)
 
-proc radialShape[RenBase, ColorT](rbase: var RenBase, colors: var array[256, ColorT],
-  x1, y1, x2, y2: float64, ras: var RasterizerScanlineAA, sl: var ScanlineU8) =
-
-  var
-    gradientF        : GradientRadial
-    gradientMtx      = initTransAffine()
-    spanInterpolator = initSpanInterpolatorLinear(gradientMtx)
-    spanAllocator    = initSpanAllocator[Rgba8]()
-    spanGradient     = initSpanGradient(spanInterpolator, gradientF, colors, 0, 100)
-    cx = (x1 + x2) / 2.0
-    cy = (y1 + y2) / 2.0
-    r  = 0.5 * (if((x2 - x1) < (y2 - y1)): (x2 - x1) else: (y2 - y1))
-
-  gradientMtx *= transAffineScaling(r / 100.0)
-  gradientMtx *= transAffineTranslation(cx, cy)
-  #gradientMtx *= trans_affine_resizing();
-  gradientMtx.invert()
-
-  var
-    ell   = initEllipse(cx, cy, r, r, 100)
-    #trans = initConvTransform(ell, trans_affine_resizing())
-
-  #ras.addPath(trans)
-  ras.addPath(ell)
-  renderScanlinesAA(ras, sl, rbase, spanAllocator, spanGradient)
-
 const
   frameWidth = 600
   frameHeight = 400
@@ -67,7 +41,32 @@ type
     ras: RasterizerScanlineAA
     sl: ScanlineU8
     ramp1, ramp2: array[256, Rgba8]
+    
+proc radialShape[RenBase, ColorT](app: App, rbase: var RenBase, colors: var array[256, ColorT],
+  x1, y1, x2, y2: float64, ras: var RasterizerScanlineAA, sl: var ScanlineU8) =
 
+  var
+    gradientF        : GradientRadial
+    gradientMtx      = initTransAffine()
+    spanInterpolator = initSpanInterpolatorLinear(gradientMtx)
+    spanAllocator    = initSpanAllocator[Rgba8]()
+    spanGradient     = initSpanGradient(spanInterpolator, gradientF, colors, 0, 100)
+    cx = (x1 + x2) / 2.0
+    cy = (y1 + y2) / 2.0
+    r  = 0.5 * (if((x2 - x1) < (y2 - y1)): (x2 - x1) else: (y2 - y1))
+
+  gradientMtx *= transAffineScaling(r / 100.0)
+  gradientMtx *= transAffineTranslation(cx, cy)
+  gradientMtx *= transAffineResizing(app)
+  gradientMtx.invert()
+
+  var
+    ell   = initEllipse(cx, cy, r, r, 100)
+    trans = initConvTransform(ell, transAffineResizing(app))
+
+  ras.addPath(trans)
+  renderScanlinesAA(ras, sl, rbase, spanAllocator, spanGradient)
+  
 proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
   PlatformSupport(result).init(format, flipY)
@@ -103,17 +102,17 @@ proc renderScene[RenBase](app: App, rb: var RenBase, compOp: int) =
     ren  = initRendererBase(pixf)
 
   pixf.compOp(CompOpDifference)
-  radialShape(ren, app.ramp1, 50.0, 50.0, 50.0+320.0, 50.0+320.0, app.ras, app.sl)
+  app.radialShape(ren, app.ramp1, 50.0, 50.0, 50.0+320.0, 50.0+320.0, app.ras, app.sl)
 
   pixf.compOp(compOp)
   let
     cx = 50.0
     cy = 50.0
 
-  radialShape(ren, app.ramp2, cx+120.0-70.0, cy+120.0-70.0, cx+120.0+70.0, cy+120.0+70.0, app.ras, app.sl)
-  radialShape(ren, app.ramp2, cx+200.0-70.0, cy+120.0-70.0, cx+200.0+70.0, cy+120.0+70.0, app.ras, app.sl)
-  radialShape(ren, app.ramp2, cx+120.0-70.0, cy+200.0-70.0, cx+120.0+70.0, cy+200.0+70.0, app.ras, app.sl)
-  radialShape(ren, app.ramp2, cx+200.0-70.0, cy+200.0-70.0, cx+200.0+70.0, cy+200.0+70.0, app.ras, app.sl)
+  app.radialShape(ren, app.ramp2, cx+120.0-70.0, cy+120.0-70.0, cx+120.0+70.0, cy+120.0+70.0, app.ras, app.sl)
+  app.radialShape(ren, app.ramp2, cx+200.0-70.0, cy+120.0-70.0, cx+200.0+70.0, cy+120.0+70.0, app.ras, app.sl)
+  app.radialShape(ren, app.ramp2, cx+120.0-70.0, cy+200.0-70.0, cx+120.0+70.0, cy+200.0+70.0, app.ras, app.sl)
+  app.radialShape(ren, app.ramp2, cx+200.0-70.0, cy+200.0-70.0, cx+200.0+70.0, cy+200.0+70.0, app.ras, app.sl)
 
 method onDraw(app: App) =
   var

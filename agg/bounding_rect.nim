@@ -1,6 +1,6 @@
 import basics
 
-proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: var T;
+proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; pathIndex: var T;
   start, num: int; x1, y1, x2, y2: var CoordT): bool =
 
   x1 = CoordT(1)
@@ -13,7 +13,7 @@ proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; gi: var T;
     x, y: float64
 
   for i in 0.. <num:
-    vs.rewind(gi[start + i])
+    vs.rewind(pathIndex[start + i])
     var cmd = vs.vertex(x, y)
     while not isStop(cmd):
       if isVertex(cmd):

@@ -77,7 +77,8 @@ var subjects = @[
   "ex_poly_bool",
   "ex_gradients",
   "ex_svg_test",
-  "ex_poly"]
+  "ex_poly",
+  "ex_curves"]
 
 when defined(windows):
   subjects.add "ex_trans_curve1"
