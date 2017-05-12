@@ -44,6 +44,7 @@ type
     mAlpha4: SliderCtrl[Rgba8]
     invertOrder: CboxCtrl[Rgba8]
     path: PathStorage
+    rasc: RasterizerCompoundAA1[RasterizerSlClipDbl, getCoordT(RasterizerSlClipDbl)]
 
 proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
@@ -65,7 +66,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
   result.invertOrder.status(false)
   result.mWidth.setRange(-20.0, 50.0)
-  result.mWidth.value(29.0)
+  result.mWidth.value(20.0)
   result.mWidth.label("Width=$1")
   result.mAlpha1.setRange(0, 1)
   result.mAlpha1.value(1)
@@ -79,7 +80,8 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.mAlpha4.setRange(0, 1)
   result.mAlpha4.value(1)
   result.mAlpha4.label("Alpha4=$1")
-  result.path = initPathStorage()
+  result.path  = initPathStorage()
+  result.rasc  = initRasterizerCompoundAA(RasterizerSlClipDbl)
 
 proc composePath(app: App) =
   app.path.removeAll()
@@ -138,8 +140,7 @@ method onDraw(app: App) =
     gr     = newSeq[Rgba8](pfpre.width())
     ras    = initRasterizerScanlineAA()
     sl     = initScanlineU8()
-    sa     = initSpanAllocator[Rgba8]()
-    rasc   = initRasterizerCompoundAA(RasterizerSlClipDbl)
+    sa     = initSpanAllocator[Rgba8]()    
     width  = app.width()
     height = app.height()
 
@@ -178,9 +179,9 @@ method onDraw(app: App) =
   app.composePath()
 
   if app.invertOrder.status():
-    rasc.layerOrder(layerInverse)
+    app.rasc.layerOrder(layerInverse)
   else:
-    rasc.layerOrder(layerDirect)
+    app.rasc.layerOrder(layerDirect)
 
   styles[3] = initRgba8(lut.dir(255), lut.dir(0), lut.dir(108), 200)
   styles[2] = initRgba8(lut.dir(51), lut.dir(0), lut.dir(151), 180)
@@ -194,30 +195,30 @@ method onDraw(app: App) =
 
   stroke.width(app.mWidth.value())
 
-  rasc.reset()
-  rasc.masterAlpha(3, app.mAlpha1.value())
-  rasc.masterAlpha(2, app.mAlpha2.value())
-  rasc.masterAlpha(1, app.mAlpha3.value())
-  rasc.masterAlpha(0, app.mAlpha4.value())
+  app.rasc.reset()
+  app.rasc.masterAlpha(3, app.mAlpha1.value())
+  app.rasc.masterAlpha(2, app.mAlpha2.value())
+  app.rasc.masterAlpha(1, app.mAlpha3.value())
+  app.rasc.masterAlpha(0, app.mAlpha4.value())
 
   var
     ell = initEllipse(220.0, 180.0, 120.0, 10.0, 128, false)
     strokeEll = initConvStroke(ell)
 
   strokeEll.width(app.mWidth.value() / 2)
-  rasc.styles(3, -1)
-  rasc.addPath(strokeEll)
+  app.rasc.styles(3, -1)
+  app.rasc.addPath(strokeEll)
+  #
+  #app.rasc.styles(2, -1)
+  #app.rasc.addPath(ell)
+  #
+  #app.rasc.styles(1, -1)
+  #app.rasc.addPath(stroke)
+ 
+  app.rasc.styles(0, -1)
+  app.rasc.addPath(curve)
 
-  rasc.styles(2, -1)
-  rasc.addPath(ell)
-
-  rasc.styles(1, -1)
-  rasc.addPath(stroke)
-
-  rasc.styles(0, -1)
-  rasc.addPath(curve)
-
-  renderScanlinesCompoundLayered(rasc, sl, rbpre, sa, sh)
+  renderScanlinesCompoundLayered(app.rasc, sl, rbpre, sa, sh)
   renderCtrl(ras, sl, renb, app.mWidth)
   renderCtrl(ras, sl, renb, app.mAlpha1)
   renderCtrl(ras, sl, renb, app.mAlpha2)

@@ -68,10 +68,10 @@ template podBVector(name: untyped, SS: int = 6) =
   proc dataPtr[T](self: var name[T]): ptr T {.inline.} =
     let nb = self.mSize shr blockShift(name[T])
     if nb >= self.mNumBlocks: self.allocateBlock(nb)
-    self.mBlocks[nb][self.mSize and blockMask(name[T])].addr
+    addr(self.mBlocks[nb][self.mSize and blockMask(name[T])])
 
   proc dataPtr[T](self: var name[T], idx: int): ptr T {.inline.} =
-    self.mBlocks[idx shr blockShift(name[T])][idx and blockMask(name[T])] .addr
+    addr(self.mBlocks[idx shr blockShift(name[T])][idx and blockMask(name[T])])
 
   proc add*[T](self: var name[T], val: T) =
     self.dataPtr()[] = val
@@ -242,7 +242,7 @@ template podBVector(name: untyped, SS: int = 6) =
 
   proc getBlock*[T](self: var name[T], nb: int): ptr T =
     if self.mBlocks[nb] == nil: return nil
-    self.mBlocks[nb][0].addr
+    addr(self.mBlocks[nb][0])
 
 podBVector(PodBVector)
 
@@ -344,7 +344,7 @@ proc resize*[T](self: var PodVector[T], newSize: int) =
     self.mSize = newSize
 
 proc zero*[T](self: var PodVector[T]) =
-  zeroMem(self.mArray[0].addr, sizeof(T) * self.mSize)
+  zeroMem(addr(self.mArray[0]), sizeof(T) * self.mSize)
 
 proc add*[T](self: var PodVector[T], v: T) =
   self.mArray[self.mSize] = v
@@ -358,7 +358,7 @@ proc insertAt*[T](self: var PodVector[T], pos: int, val: T) =
   if pos >= self.mSize:
     self.mArray[self.mSize] = val
   else:
-    moveMem(self.mArray[pos + 1].addr, self.mArray[pos].addr, (self.mSize - pos) * sizeof(T))
+    moveMem(addr(self.mArray[pos + 1]), addr(self.mArray[pos]), (self.mSize - pos) * sizeof(T))
     self.mArray[pos] = val
   inc self.mSize
 
@@ -379,7 +379,7 @@ proc deserialize*[T](self: var PodVector[T], data: ptr uint8, byteSize: int) =
   let byteSize = byteSize div sizeof(T)
   self.allocate(byteSize)
   if byteSize != 0:
-    copyMem(self.mArray[0].addr, data, byteSize * sizeof(T))
+    copyMem(addr(self.mArray[0]), data, byteSize * sizeof(T))
 
 proc `[]=`*[T](self: var PodVector[T], i: int, v: T) =
   self.mArray[i] = v
@@ -393,7 +393,7 @@ proc at*[T](self: var PodVector[T], i: int): var T =
 proc valueAt*[T](self: var PodVector[T], i: int): var T =
   self.mArray[i]
 
-proc data*[T](self: var PodVector[T]): ptr T = self.mArray[0].addr
+proc data*[T](self: var PodVector[T]): ptr T = addr(self.mArray[0])
 
 proc removeAll*[T](self: var PodVector[T]) =
   self.mSize = 0
