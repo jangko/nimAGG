@@ -31,6 +31,12 @@ cd examples
 nim e build.nims
 ```
 
+## Dependencies
+  * ![nimBMP](https://github.com/jangko/nimBMP)
+  * ![polyBool](https://github.com/jangko/polyBool)
+  * ![freeType](https://github.com/jangko/freetype)
+  * ![sdl2](https://github.com/Vladar4/sdl2_nim)
+
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG
 [nimagg-appveyor]: https://ci.appveyor.com/project/jangko/nimagg
 [badge-nimagg-travisci]: https://travis-ci.org/jangko/nimAGG.svg?branch=master
