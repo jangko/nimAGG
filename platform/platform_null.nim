@@ -1,4 +1,6 @@
-import strutils, times, nimBMP
+import strutils, nimBMP
+
+include system/timers
 
 type
   PixelMap[T] = object
@@ -55,7 +57,7 @@ type
     mSysPixElem: int
     mWinPmap: PixelMap[T]
     mImgPmap: array[maxImages, PixelMap[T]]
-    mStartTime: float64
+    mStartTime: Ticks
     mFileName: string
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
@@ -269,10 +271,10 @@ proc message[T,R](self: GenericPlatform[T,R], msg: string) =
   echo msg
 
 proc startTimer[T,R](self: GenericPlatform[T,R]) =
-  self.mSpecific.mStartTime = cpuTime()
+  self.mSpecific.mStartTime = getTicks()
 
 proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
-  result = cpuTime() - self.mSpecific.mStartTime
+  result = float64(getTicks() - self.mSpecific.mStartTime) / 1000_000.0
 
 proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName
