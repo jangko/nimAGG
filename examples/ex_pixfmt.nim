@@ -137,7 +137,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.copyColorHspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when ColorT is not Rgba8:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorHspan(x, y, len, c)
@@ -147,7 +147,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.copyColorVspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when ColorT is not Rgba8:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorVspan(x, y, len, c)
@@ -157,7 +157,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.blendColorHspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba8:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorHspan(x, y, len, c, covers, cover)
@@ -167,7 +167,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.blendColorVspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba8:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorVspan(x, y, len, c, covers, cover)
