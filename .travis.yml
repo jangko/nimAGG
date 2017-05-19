@@ -33,7 +33,11 @@ before_script:
   - export PATH=$(pwd)/bin:$PATH
   - nim c -d:release koch
   - ./koch boot -d:release
+  - ./koch nimble
   - cd ..
+  - nimble install nimBMP
+  - nimble install polyBool
+  - nimble install freetype
   
 script:
   - mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/

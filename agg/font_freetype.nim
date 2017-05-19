@@ -175,6 +175,7 @@ proc decompose_ft_outline[PathStorageT](outline: var FT_Outline, flipY: bool,
   if error != 0:
     echo "decompose error"
     return false
+  if not decomp.firstTime: path.closePolygon()
 
   result = true
 
@@ -571,7 +572,7 @@ proc prepareOutline(self: FontEngineFreetypeBase): bool =
       self.mFlipY, self.mAffine, self.mPath16):
      var bnd  = self.mPath16.boundingRect()
      self.mDataSize = self.mPath16.byteSize()
-     self.mDataType = glyph_data_outline;
+     self.mDataType = glyph_data_outline
      self.mBounds.x1 = int(floor(bnd.x1))
      self.mBounds.y1 = int(floor(bnd.y1))
      self.mBounds.x2 = int(ceil(bnd.x2))

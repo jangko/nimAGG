@@ -30,7 +30,11 @@ build_script:
   - cd Nim
   - nim c -d:release koch
   - koch boot -d:release
+  - koch nimble  
   - cd ..
+  - nimble install nimBMP
+  - nimble install polyBool
+  - nimble install freetype
 
 test_script:
   - cd examples
