@@ -32,6 +32,7 @@ build_script:
   - koch boot -d:release
   - koch nimble  
   - cd ..
+  - nimble refresh
   - nimble install nimBMP
   - nimble install polyBool
   - nimble install freetype
