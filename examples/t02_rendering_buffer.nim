@@ -1,5 +1,5 @@
 import agg/[rendering_buffer, basics]
-import platform.nimBMP
+import nimBMP
 
 const
   frame_width = 320
