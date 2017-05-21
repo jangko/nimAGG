@@ -1,4 +1,4 @@
-import agg.rendering_buffer, platform.nimBMP, agg.basics
+import agg.rendering_buffer, nimBMP, agg.basics
 
 const
   frame_width = 320

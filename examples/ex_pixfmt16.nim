@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline
   pixfmt_rgba, color_rgba, color_conv_rgb16, color_conv, renderer_base, pixfmt_gray,
   color_gray, gamma_lut]
 
-import platform.nimBMP, blend_type
+import nimBMP, blend_type
 
 type
   ValueT = getValueT(Rgba16)
@@ -137,7 +137,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.copyColorHspan = proc(x, y, len: int, colors: ptr Rgba16) =
     when ColorT is not Rgba16:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorHspan(x, y, len, c)
@@ -147,7 +147,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.copyColorVspan = proc(x, y, len: int, colors: ptr Rgba16) =
     when ColorT is not Rgba16:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorVspan(x, y, len, c)
@@ -157,7 +157,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.blendColorHspan = proc(x, y, len: int, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba16:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorHspan(x, y, len, c, covers, cover)
@@ -167,7 +167,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
 
   ren.blendColorVspan = proc(x, y, len: int, colors: ptr Rgba16, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba16:
-      var c = allocU(ColorT, len)
+      var c = createU(ColorT, len)
       for i in 0.. <len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorVspan(x, y, len, c, covers, cover)

@@ -24,13 +24,26 @@ install:
   - cd ..
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
   - copy %CD%\csources\bin\nim.exe %CD%\Nim\bin\nim.exe
-  
+  - IF "%PLATFORM%" == "x64" ( copy C:\OpenSSL-Win64\libeay32.dll %CD%\Nim\bin\libeay64.dll & copy C:\OpenSSL-Win64\libeay32.dll %CD%\Nim\bin\libeay32.dll & copy C:\OpenSSL-Win64\libssl32.dll %CD%\Nim\bin\libssl64.dll & copy C:\OpenSSL-Win64\libssl32.dll %CD%\Nim\bin\libssl32.dll )
+    ELSE ( copy C:\OpenSSL-Win32\libeay32.dll %CD%\Nim\bin\libeay32.dll & copy C:\OpenSSL-Win32\libssl32.dll %CD%\Nim\bin\libssl32.dll )
+
 build_script:
   - SET PATH=%CD%\Nim\bin;%PATH%
   - cd Nim
   - nim c -d:release koch
   - koch boot -d:release
+  - git clone https://github.com/nim-lang/nimble.git dist/nimble
+  - cd dist\nimble
+  - git checkout -f stable
+  - git pull
+  - cd ..\.. 
+  - nim c dist\nimble\src\nimble.nim
+  - copy dist\nimble\src\nimble.exe bin\nimble.exe
   - cd ..
+  - nimble refresh
+  - nimble install nimBMP
+  - nimble install polyBool
+  - nimble install freetype
 
 test_script:
   - cd examples

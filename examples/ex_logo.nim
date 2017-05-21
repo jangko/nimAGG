@@ -6,7 +6,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   path_storage, trans_affine, conv_transform, conv_stroke,
   bounding_rect, conv_unclose_polygon, conv_close_polygon,
   conv_shorten_path, conv_clip_polyline, conv_smooth_poly1]
-import make_arrows, math, platform.nimBMP
+import make_arrows, math, nimBMP
 
 const
   frameWidth = 400

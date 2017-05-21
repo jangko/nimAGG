@@ -134,13 +134,13 @@ proc sortCells*[T](self: var RasterizerCellsAA[T]) =
       dec i
     dec nb
 
-  cellPtr = self.cells[blockPtr][0].addr
-  inc blockPtr
-  i = self.numCells and cellBlockMask
-  while i != 0:
-    inc self.sortedY[cellPtr.y - self.minY].start
-    inc cellPtr
-    dec i
+  if blockPtr < self.cells.len:
+    cellPtr = self.cells[blockPtr][0].addr
+    i = self.numCells and cellBlockMask
+    while i != 0:
+      inc self.sortedY[cellPtr.y - self.minY].start
+      inc cellPtr
+      dec i
 
   # Convert the Y-histogram into the array of starting indexes
   var start = 0
@@ -164,15 +164,15 @@ proc sortCells*[T](self: var RasterizerCellsAA[T]) =
       dec i
     dec nb
 
-  cellPtr = self.cells[blockPtr][0].addr
-  inc blockPtr
-  i = self.numCells and cellBlockMask
-  while i != 0:
-    var currY = addr(self.sortedY[cellPtr.y - self.minY])
-    self.sortedCells[currY.start + currY.num] = cellPtr
-    inc currY.num
-    inc cellPtr
-    dec i
+  if blockPtr < self.cells.len:
+    cellPtr = self.cells[blockPtr][0].addr
+    i = self.numCells and cellBlockMask
+    while i != 0:
+      var currY = addr(self.sortedY[cellPtr.y - self.minY])
+      self.sortedCells[currY.start + currY.num] = cellPtr
+      inc currY.num
+      inc cellPtr
+      dec i
 
   # Finally arrange the X-arrays
   for x in items(self.sortedY):
