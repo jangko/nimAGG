@@ -1,8 +1,16 @@
 # nimAGG
- * [![Build Status][badge-nimagg-travisci]][nimagg-travisci]
- * [![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
+nimAGG is a Nim port of Anti Grain Geometry(AGG)
 
-This project relying on recent bugfixes of Nim compiler, so you must use devel
+High Fidelity 2D Graphics. A High Quality Rendering Engine for Nim
+
+---
+
+[![Build Status][badge-nimagg-travisci]][nimagg-travisci]
+[![Build status][badge-nimagg-appveyor]][nimagg-appveyor]
+
+![Screenshot](screenshot.png)
+
+This project relying on recent bugfixes of Nim compiler, so you should use devel
 branch on Github to compile this project.
 
 Those bugfixes are:
@@ -19,8 +27,15 @@ Those bugfixes are:
 ## How to build demos?
 
 ```text
+cd examples
 nim e build.nims
 ```
+
+## Dependencies
+  * ![nimBMP](https://github.com/jangko/nimBMP)
+  * ![polyBool](https://github.com/jangko/polyBool)
+  * ![freetype](https://github.com/jangko/freetype)
+  * ![sdl2_nim](https://github.com/Vladar4/sdl2_nim)
 
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG
 [nimagg-appveyor]: https://ci.appveyor.com/project/jangko/nimagg

@@ -11,7 +11,7 @@ matrix:
 
 install:
   - wget http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz
-  - tar -xvzf freetype-2.7.1.tar.gz
+  - tar -xzf freetype-2.7.1.tar.gz
   - cd freetype-2.7.1
   - ./configure CFLAGS="-fPIC"
   - make
@@ -33,15 +33,21 @@ before_script:
   - export PATH=$(pwd)/bin:$PATH
   - nim c -d:release koch
   - ./koch boot -d:release
+  - ./koch nimble
   - cd ..
+  - nimble refresh
+  - nimble install nimBMP
+  - nimble install polyBool
+  - nimble install freetype
   
 script:
-  - mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 .
+  - mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/
+  - cd examples
   - nim e build.nims
   - nim e -d:release build.nims
   - nim c -d:release --verbosity:0 --hints:off gen_color_conv
   - ./gen_color_conv > gen_color_conv.cpp
-  - g++ -o gen_color_conv_cpp -I./agg-2.5/include gen_color_conv.cpp
+  - g++ -o gen_color_conv_cpp -I../agg-2.5/include gen_color_conv.cpp
   - ./gen_color_conv_cpp > test_color_conv_inc.nim
   - nim c -d:release --verbosity:0 --hints:off test_color_conv_test
   - ./test_color_conv_test
