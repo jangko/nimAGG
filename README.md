@@ -11,7 +11,7 @@ High Fidelity 2D Graphics. A High Quality Rendering Engine for Nim
 ![Screenshot](screenshot.png)
 
 This project relying on recent bugfixes of Nim compiler, so you should use devel
-branch on Github to compile this project.
+branch on Github, or at least Nim ver 0.17.0 to compile this project.
 
 Those bugfixes are:
   - proc parameter shadowing inside template
@@ -21,7 +21,7 @@ Those bugfixes are:
   - type alias via template
   - call proc of partial/specialized/some generic object by subtype object
   - generic proc forward declaration
-  - generic object with generic field(s) type obtained via template*
+  - generic object with generic field(s) type obtained via template(WIP)
 
   
 ## How to build demos?
@@ -36,6 +36,12 @@ nim e build.nims
   * ![polyBool](https://github.com/jangko/polyBool)
   * ![freetype](https://github.com/jangko/freetype)
   * ![sdl2_nim](https://github.com/Vladar4/sdl2_nim)
+
+## Installation
+You can install this package via nimble
+```text
+nimble install nimAGG
+```
 
 [nimagg-travisci]: https://travis-ci.org/jangko/nimAGG
 [nimagg-appveyor]: https://ci.appveyor.com/project/jangko/nimagg
