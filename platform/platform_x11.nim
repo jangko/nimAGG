@@ -254,110 +254,112 @@ const
     KeyPressMask or
     StructureNotifyMask
 
-proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   self.mWindowFlags = flags
-  self.mSpecific.mDisplay = XOpenDisplay(nil)
+  
+  if window_hidden notin flags:
+    self.mSpecific.mDisplay = XOpenDisplay(nil)
 
-  if self.mSpecific.mDisplay == nil:
-    echo "Unable to open DISPLAY!"
-    return false
+    if self.mSpecific.mDisplay == nil:
+      echo "Unable to open DISPLAY!"
+      return false
 
-  self.mSpecific.mScreen = XDefaultScreen(self.mSpecific.mDisplay)
-  self.mSpecific.mDepth  = XDefaultDepth(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
-  self.mSpecific.mVisual = XDefaultVisual(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
+    self.mSpecific.mScreen = XDefaultScreen(self.mSpecific.mDisplay)
+    self.mSpecific.mDepth  = XDefaultDepth(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
+    self.mSpecific.mVisual = XDefaultVisual(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
 
-  let
-    r_mask = self.mSpecific.mVisual.red_mask
-    g_mask = self.mSpecific.mVisual.green_mask
-    b_mask = self.mSpecific.mVisual.blue_mask
+    let
+      r_mask = self.mSpecific.mVisual.red_mask
+      g_mask = self.mSpecific.mVisual.green_mask
+      b_mask = self.mSpecific.mVisual.blue_mask
 
-  if self.mSpecific.mDepth < 15 or r_mask == 0 or g_mask == 0 or b_mask == 0:
-    echo "There's no Visual compatible with minimal AGG requirements:"
-    echo "At least 15-bit color depth and True- or DirectColor class."
-    discard XCloseDisplay(self.mSpecific.mDisplay)
-    return false
+    if self.mSpecific.mDepth < 15 or r_mask == 0 or g_mask == 0 or b_mask == 0:
+      echo "There's no Visual compatible with minimal AGG requirements:"
+      echo "At least 15-bit color depth and True- or DirectColor class."
+      discard XCloseDisplay(self.mSpecific.mDisplay)
+      return false
 
-  when system.cpuEndian == bigEndian:
-    const hw_byte_order = MSBFirst
-  else:
-    const hw_byte_order = LSBFirst
+    when system.cpuEndian == bigEndian:
+      const hw_byte_order = MSBFirst
+    else:
+      const hw_byte_order = LSBFirst
 
-  # Perceive SYS-format by mask
-  case self.mSpecific.mDepth
-  of 15:
-    self.mSpecific.mSysBpp = 16
-    if r_mask == 0x7C00 and g_mask == 0x3E0 and b_mask == 0x1F:
-      self.mSpecific.mSysFormat = pix_format_rgb555
-      self.mSpecific.mByteOrder = hw_byte_order
-  of 16:
-    self.mSpecific.mSysBpp = 16
-    if r_mask == 0xF800 and g_mask == 0x7E0 and b_mask == 0x1F:
-      self.mSpecific.mSysFormat = pix_format_rgb565;
-      self.mSpecific.mByteOrder = hw_byte_order;
-  of 24, 32:
-    self.mSpecific.mSysBpp = 32
-    if g_mask == 0xFF00:
-      if r_mask == 0xFF and b_mask == 0xFF0000:
-        case self.mSpecific.mFormat
-        of pix_format_rgba32:
-          self.mSpecific.mSysFormat = pix_format_rgba32
-          self.mSpecific.mByteOrder = LSBFirst
-        of pix_format_abgr32:
-          self.mSpecific.mSysFormat = pix_format_abgr32
-          self.mSpecific.mByteOrder = MSBFirst
-        else:
-          self.mSpecific.mByteOrder = hw_byte_order
-          self.mSpecific.mSysFormat = if hw_byte_order == LSBFirst:
-            pix_format_rgba32 else: pix_format_abgr32
+    # Perceive SYS-format by mask
+    case self.mSpecific.mDepth
+    of 15:
+      self.mSpecific.mSysBpp = 16
+      if r_mask == 0x7C00 and g_mask == 0x3E0 and b_mask == 0x1F:
+        self.mSpecific.mSysFormat = pix_format_rgb555
+        self.mSpecific.mByteOrder = hw_byte_order
+    of 16:
+      self.mSpecific.mSysBpp = 16
+      if r_mask == 0xF800 and g_mask == 0x7E0 and b_mask == 0x1F:
+        self.mSpecific.mSysFormat = pix_format_rgb565;
+        self.mSpecific.mByteOrder = hw_byte_order;
+    of 24, 32:
+      self.mSpecific.mSysBpp = 32
+      if g_mask == 0xFF00:
+        if r_mask == 0xFF and b_mask == 0xFF0000:
+          case self.mSpecific.mFormat
+          of pix_format_rgba32:
+            self.mSpecific.mSysFormat = pix_format_rgba32
+            self.mSpecific.mByteOrder = LSBFirst
+          of pix_format_abgr32:
+            self.mSpecific.mSysFormat = pix_format_abgr32
+            self.mSpecific.mByteOrder = MSBFirst
+          else:
+            self.mSpecific.mByteOrder = hw_byte_order
+            self.mSpecific.mSysFormat = if hw_byte_order == LSBFirst:
+              pix_format_rgba32 else: pix_format_abgr32
 
-      if r_mask == 0xFF0000 and b_mask == 0xFF:
-        case self.mSpecific.mFormat
-        of pix_format_argb32:
-          self.mSpecific.mSysFormat = pix_format_argb32
-          self.mSpecific.mByteOrder = MSBFirst
-        of pix_format_bgra32:
-          self.mSpecific.mSysFormat = pix_format_bgra32
-          self.mSpecific.mByteOrder = LSBFirst
-        else:
-          self.mSpecific.mByteOrder = hw_byte_order;
-          self.mSpecific.mSysFormat = if hw_byte_order == MSBFirst:
-            pix_format_argb32 else: pix_format_bgra32
-  else: discard
+        if r_mask == 0xFF0000 and b_mask == 0xFF:
+          case self.mSpecific.mFormat
+          of pix_format_argb32:
+            self.mSpecific.mSysFormat = pix_format_argb32
+            self.mSpecific.mByteOrder = MSBFirst
+          of pix_format_bgra32:
+            self.mSpecific.mSysFormat = pix_format_bgra32
+            self.mSpecific.mByteOrder = LSBFirst
+          else:
+            self.mSpecific.mByteOrder = hw_byte_order;
+            self.mSpecific.mSysFormat = if hw_byte_order == MSBFirst:
+              pix_format_argb32 else: pix_format_bgra32
+    else: discard
 
-  if self.mSpecific.mSysFormat == pix_format_undefined:
-    echo "RGB masks are not compatible with AGG pixel formats:"
-    echo "R=$1, R=$2, B=$3" % [$r_mask, $g_mask, $b_mask]
-    discard XCloseDisplay(self.mSpecific.mDisplay)
-    return false
+    if self.mSpecific.mSysFormat == pix_format_undefined:
+      echo "RGB masks are not compatible with AGG pixel formats:"
+      echo "R=$1, R=$2, B=$3" % [$r_mask, $g_mask, $b_mask]
+      discard XCloseDisplay(self.mSpecific.mDisplay)
+      return false
 
-  zeroMem(self.mSpecific.mWindowAttributes.addr,
-    sizeof(self.mSpecific.mWindowAttributes))
+    zeroMem(self.mSpecific.mWindowAttributes.addr,
+      sizeof(self.mSpecific.mWindowAttributes))
 
-  self.mSpecific.mWindowAttributes.border_pixel =
-    XBlackPixel(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
+    self.mSpecific.mWindowAttributes.border_pixel =
+      XBlackPixel(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
 
-  self.mSpecific.mWindowAttributes.background_pixel =
-    XWhitePixel(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
+    self.mSpecific.mWindowAttributes.background_pixel =
+      XWhitePixel(self.mSpecific.mDisplay, self.mSpecific.mScreen.cint)
 
-  self.mSpecific.mWindowAttributes.override_redirect = 0
+    self.mSpecific.mWindowAttributes.override_redirect = 0
 
-  let window_mask = CWBackPixel or CWBorderPixel
+    let window_mask = CWBackPixel or CWBorderPixel
 
-  self.mSpecific.mWindow =
-    XCreateWindow(self.mSpecific.mDisplay,
-      XDefaultRootWindow(self.mSpecific.mDisplay),
-      0.cint, 0.cint,
-      width.cuint,
-      height.cuint,
-      0.cuint,
-      self.mSpecific.mDepth.cint,
-      InputOutput.cuint,
-      cast[PVisual](CopyFromParent),
-      window_mask.culong,
-      self.mSpecific.mWindowAttributes.addr)
+    self.mSpecific.mWindow =
+      XCreateWindow(self.mSpecific.mDisplay,
+        XDefaultRootWindow(self.mSpecific.mDisplay),
+        0.cint, 0.cint,
+        width.cuint,
+        height.cuint,
+        0.cuint,
+        self.mSpecific.mDepth.cint,
+        InputOutput.cuint,
+        cast[PVisual](CopyFromParent),
+        window_mask.culong,
+        self.mSpecific.mWindowAttributes.addr)
 
-  self.mSpecific.mGC = XCreateGC(self.mSpecific.mDisplay,
-                              self.mSpecific.mWindow, 0.culong, nil)
+    self.mSpecific.mGC = XCreateGC(self.mSpecific.mDisplay,
+      self.mSpecific.mWindow, 0.culong, nil)
 
   self.mSpecific.mBufWindow.setLen(width * height * (self.mBpp div 8))
   setMem(self.mSpecific.mBufWindow[0].addr, 255, width * height * (self.mBpp div 8))
@@ -365,20 +367,22 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
   self.mRBufWindow.attach(self.mSpecific.mBufWindow[0].addr,
     width, height, if self.mFlipY: -width * (self.mBpp div 8) else: width * (self.mBpp div 8))
 
-  self.mSpecific.mXimgWindow = XCreateImage(self.mSpecific.mDisplay,
-    self.mSpecific.mVisual, #CopyFromParent,
-    self.mSpecific.mDepth.cuint,
-    ZPixmap.cint,
-    0.cint,
-    cast[cstring](self.mSpecific.mBufWindow[0].addr),
-    width.cuint,
-    height.cuint,
-    self.mSpecific.mSysBpp.cint,
-    cint(width * (self.mSpecific.mSysBpp div 8)))
+  if window_hidden notin flags:
+    self.mSpecific.mXimgWindow = XCreateImage(self.mSpecific.mDisplay,
+      self.mSpecific.mVisual, #CopyFromParent,
+      self.mSpecific.mDepth.cuint,
+      ZPixmap.cint,
+      0.cint,
+      cast[cstring](self.mSpecific.mBufWindow[0].addr),
+      width.cuint,
+      height.cuint,
+      self.mSpecific.mSysBpp.cint,
+      cint(width * (self.mSpecific.mSysBpp div 8)))
 
-  self.mSpecific.mXimgWindow.byte_order = cint(self.mSpecific.mByteOrder)
+    self.mSpecific.mXimgWindow.byte_order = cint(self.mSpecific.mByteOrder)
 
-  self.mSpecific.caption(self.mCaption)
+    self.mSpecific.caption(self.mCaption)
+    
   self.mInitialWidth  = width
   self.mInitialHeight = height
 
@@ -386,40 +390,51 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
     self.onInit()
     self.mSpecific.mInitialized = true
 
-
   self.transAffineResizing(width, height)
   self.onResize(width, height)
   self.mSpecific.mUpdateFlag = true
 
-  let hints = XAllocSizeHints()
-  if hints != nil:
-    if window_resize in flags:
-      hints.min_width  = 32
-      hints.min_height = 32
-      hints.max_width  = 4096
-      hints.max_height = 4096
-    else:
-      hints.min_width  = width.cint
-      hints.min_height = height.cint
-      hints.max_width  = width.cint
-      hints.max_height = height.cint
-    hints.flags = PMaxSize or PMinSize
+  if window_hidden notin flags:
+    let hints = XAllocSizeHints()
+    if hints != nil:
+      if window_resize in flags:
+        hints.min_width  = 32
+        hints.min_height = 32
+        hints.max_width  = 4096
+        hints.max_height = 4096
+      else:
+        hints.min_width  = width.cint
+        hints.min_height = height.cint
+        hints.max_width  = width.cint
+        hints.max_height = height.cint
+      hints.flags = PMaxSize or PMinSize
 
-    XSetWMNormalHints(self.mSpecific.mDisplay,
-      self.mSpecific.mWindow, hints)
-    discard XFree(hints)
+      XSetWMNormalHints(self.mSpecific.mDisplay,
+        self.mSpecific.mWindow, hints)
+      discard XFree(hints)
 
-  discard XMapWindow(self.mSpecific.mDisplay, self.mSpecific.mWindow)
-  discard XSelectInput(self.mSpecific.mDisplay, self.mSpecific.mWindow, xevent_mask)
+    discard XMapWindow(self.mSpecific.mDisplay, self.mSpecific.mWindow)
+    discard XSelectInput(self.mSpecific.mDisplay, self.mSpecific.mWindow, xevent_mask)
 
-  self.mSpecific.mCloseAtom = XInternAtom(self.mSpecific.mDisplay,
-    "WM_DELETE_WINDOW".cstring, TBool(false))
+    self.mSpecific.mCloseAtom = XInternAtom(self.mSpecific.mDisplay,
+      "WM_DELETE_WINDOW".cstring, TBool(false))
 
-  discard XSetWMProtocols(self.mSpecific.mDisplay, self.mSpecific.mWindow,
-    self.mSpecific.mCloseAtom.addr, 1)
+    discard XSetWMProtocols(self.mSpecific.mDisplay, self.mSpecific.mWindow,
+      self.mSpecific.mCloseAtom.addr, 1)
 
   result = true
-
+  
+proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
+  if paramCount() > 0:
+    if paramStr(1) == "-v":
+      if self.init(width, height, {window_hidden}):
+        self.mResizeMtx = initTransAffine()
+        self.onDraw()
+        self.copyWindowToImg(maxImages - 1)
+        discard self.saveImg(maxImages - 1, fileName)
+        return false
+  result = self.init(width, height, flags)
+  
 proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   self.mSpecific.putImage(self.mRbufWindow)
 
@@ -431,6 +446,9 @@ proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   discard XSync(self.mSpecific.mDisplay, TBool(self.mWaitMode))
 
 proc run[T,R](self: GenericPlatform[T,R]): int =
+  if window_hidden in self.mWindowFlags:
+    return 0
+    
   discard XFlush(self.mSpecific.mDisplay)
 
   var
