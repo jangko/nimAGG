@@ -13,10 +13,11 @@ install:
   - wget http://download.savannah.gnu.org/releases/freetype/freetype-2.7.1.tar.gz
   - tar -xzf freetype-2.7.1.tar.gz
   - cd freetype-2.7.1
-  - ./configure CFLAGS="-fPIC"
+  - ./configure CFLAGS="-fPIC" --without-zlib --without-png --without-bzip2
   - make
   - cd objs
-  - gcc -shared -fPIC -o libfreetype.so.6 *.o
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then clang -shared -fPIC -o libfreetype-6.dylib *.o; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc -shared -fPIC -o libfreetype.so.6 *.o; fi 
   - cd ..
   - cd ..
   
@@ -41,7 +42,8 @@ before_script:
   - nimble install freetype
   
 script:
-  - mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype-6.dylib ./examples/; fi 
   - cd examples
   - nim e build.nims
   - nim e -d:release build.nims
