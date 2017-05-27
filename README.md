@@ -26,16 +26,56 @@ Those bugfixes are:
   
 ## How to build demos?
 
-```text
+build all demos:
+
+```bash
 cd examples
 nim e build.nims
 ```
 
+or if you want to build single demo:
+
+```bash
+cd example
+nim c ex_aa_demo
+```
+
+## How to build command line only demos without GUI?
+
+build all demos:
+
+```bash
+cd examples
+nim e -d:platform_null build.nims
+```
+
+build single demo:
+
+```bash
+cd example
+nim c -d:platform_null ex_compositing
+```
+
+the above command will produce executables without gui, and you can call it with:
+
+```bash
+ex_compositing -v
+or
+./ex_compositing -v
+```
+
+it will produce screenshot with image format BMP
+
 ## Dependencies
-  * ![nimBMP](https://github.com/jangko/nimBMP)
-  * ![polyBool](https://github.com/jangko/polyBool)
-  * ![freetype](https://github.com/jangko/freetype)
-  * ![sdl2_nim](https://github.com/Vladar4/sdl2_nim)
+  * These are nimble packages needed to build nimAGG
+    * ![nimBMP](https://github.com/jangko/nimBMP)
+    * ![polyBool](https://github.com/jangko/polyBool)(optional)
+    * ![freetype](https://github.com/jangko/freetype)(optional)
+    * ![sdl2_nim](https://github.com/Vladar4/sdl2_nim)(optional)
+    * ![x11](https://github.com/nim-lang/x11)(if your platform is Linux with GUI)
+  * And here are wrapped library locations:
+    * ![libfreetype](https://www.freetype.org)(optional)
+    * ![libsdl](https://www.libsdl.org)(optional)
 
 ## Installation
 You can install this package via nimble
