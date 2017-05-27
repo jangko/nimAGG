@@ -68,14 +68,14 @@ it will produce screenshot with image format BMP
 
 ## Dependencies
   * These are nimble packages needed to build nimAGG
-    * ![nimBMP](https://github.com/jangko/nimBMP)
-    * ![polyBool](https://github.com/jangko/polyBool)(optional)
-    * ![freetype](https://github.com/jangko/freetype)(optional)
-    * ![sdl2_nim](https://github.com/Vladar4/sdl2_nim)(optional)
-    * ![x11](https://github.com/nim-lang/x11)(if your platform is Linux with GUI)
+    * [nimBMP](https://github.com/jangko/nimBMP)
+    * [polyBool](https://github.com/jangko/polyBool)(optional)
+    * [freetype](https://github.com/jangko/freetype)(optional)
+    * [sdl2_nim](https://github.com/Vladar4/sdl2_nim)(optional)
+    * [x11](https://github.com/nim-lang/x11)(if your platform is Linux with GUI)
   * And here are wrapped library locations:
-    * ![libfreetype](https://www.freetype.org)(optional)
-    * ![libsdl](https://www.libsdl.org)(optional)
+    * [libfreetype](https://www.freetype.org)(optional)
+    * [libsdl](https://www.libsdl.org)(optional)
 
 ## Installation
 You can install this package via nimble

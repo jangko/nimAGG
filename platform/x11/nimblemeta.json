@@ -1,1 +1,0 @@
-{"url":"https://github.com/nim-lang/x11","files":["\\x11.nimble","\\xutil.nim","\\cursorfont.nim","\\xkb.nim","\\xrandr.nim","\\xrender.nim","\\xv.nim","\\xi.nim","\\xatom.nim","\\xshm.nim","\\xkblib.nim","\\xresource.nim","\\xlib.nim","\\xf86dga.nim","\\xf86vmode.nim","\\x.nim","\\xinerama.nim","\\x11pragma.nim","\\xvlib.nim","\\xcms.nim","\\keysym.nim"],"binaries":[]}
