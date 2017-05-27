@@ -756,13 +756,6 @@ type
     xkeymap*: TXKeymapEvent
     pad: array[0..23, clong]
 
-proc xclient*(e: PXEvent): PXClientMessageEvent =
-    ## Treats XEvent as XClientMessageEvent
-    return cast[PXClientMessageEvent](e)
-
-proc xclient*(e: var TXEvent): PXClientMessageEvent =
-    return xclient(PXEvent(e.addr))
-
 type
   PXCharStruct* = ptr TXCharStruct
   TXCharStruct*{.final.} = object
