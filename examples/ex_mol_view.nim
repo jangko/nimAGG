@@ -7,7 +7,7 @@ const
   frameWidth = 800
   frameHeight = 600
   flipY = true
-  default_num_points = 20000
+  #default_num_points = 20000
 
 type
   ValueT = uint8
@@ -159,12 +159,12 @@ proc initLine(): Line =
   result.y2 = 0.0
   result.thickness = 0.1
 
-proc initLine(x1, y1, x2, y2, thickness: float64): Line =
-  result.x1 = x1
-  result.y1 = y1
-  result.x2 = x2
-  result.y2 = y2
-  result.thickness = thickness
+#proc initLine(x1, y1, x2, y2, thickness: float64): Line =
+#  result.x1 = x1
+#  result.y1 = y1
+#  result.x2 = x2
+#  result.y2 = y2
+#  result.thickness = thickness
 
 proc init(self: var Line, x1, y1, x2, y2: float64) =
   self.x1 = x1
@@ -216,12 +216,12 @@ proc initSolidWedge(): SolidWedge =
   result.y2 = 0.0
   result.thickness = 0.1
 
-proc initSolidWedge(x1, y1, x2, y2, thickness: float64): SolidWedge =
-  result.x1 = x1
-  result.y1 = y1
-  result.x2 = x2
-  result.y2 = y2
-  result.thickness = thickness
+#proc initSolidWedge(x1, y1, x2, y2, thickness: float64): SolidWedge =
+#  result.x1 = x1
+#  result.y1 = y1
+#  result.x2 = x2
+#  result.y2 = y2
+#  result.thickness = thickness
 
 proc init(self: var SolidWedge, x1, y1, x2, y2: float64) =
   self.x1 = x1
@@ -272,13 +272,13 @@ proc initDashedWedge(): DashedWedge =
   result.thickness = 0.1
   result.numDashes = 8
 
-proc initDashedWedge(x1, y1, x2, y2, thickness: float64, numDashes = 8): DashedWedge =
-  result.x1 = x2
-  result.y1 = y2
-  result.x2 = x1
-  result.y2 = y1
-  result.thickness = thickness
-  result.numDashes = numDashes
+#proc initDashedWedge(x1, y1, x2, y2, thickness: float64, numDashes = 8): DashedWedge =
+#  result.x1 = x2
+#  result.y1 = y2
+#  result.x2 = x1
+#  result.y2 = y1
+#  result.thickness = thickness
+#  result.numDashes = numDashes
 
 proc init(self: var DashedWedge, x1, y1, x2, y2: float64) =
   self.x1 = x2
@@ -286,8 +286,8 @@ proc init(self: var DashedWedge, x1, y1, x2, y2: float64) =
   self.x2 = x1
   self.y2 = y1
 
-proc numDash(self: var DashedWedge, nd: int) =
-  self.numDashes = nd
+#proc numDash(self: var DashedWedge, nd: int) =
+#  self.numDashes = nd
 
 proc thick(self: var DashedWedge, th: float64) =
   self.thickness = th

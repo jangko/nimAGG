@@ -186,6 +186,7 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
   if not self.mSpecific.mInitialized:
     self.mInitialWidth = width
     self.mInitialHeight = height
+    self.transAffineResizing(width, height)
     self.onInit()
     self.mSpecific.mInitialized = true
 
@@ -256,11 +257,26 @@ proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   # Clean
   SDL.destroyTexture(texture)
 
+proc eventFilter[T,R](self: GenericPlatform[T,R]; event: ptr Event): cint {.cdecl.} =
+  if event.kind == WINDOWEVENT and event.window.event == WINDOWEVENT_RESIZED:
+    var win = SDL.getWindowFromID(event.window.windowID)
+    if win != self.mSpecific.mWindow: return -1
+    var w, h: cint
+    getWindowSize(win, w.addr, h.addr)
+    if not self.resizeSurface(w, h): return -1
+
+    self.onResize(self.mRBufwindow.width(), self.mRBufwindow.height())
+    self.transAffineResizing(w, h)
+    self.onDraw()
+    self.updateWindow()
+    self.mSpecific.mRenderer.renderPresent()
+
 proc run[T,R](self: GenericPlatform[T,R]): int =
   var
     event: SDL.Event
     evFlag = false
 
+  addEventWatch(cast[EventFilter](eventFilter[T,R]), cast[pointer](self))
   while true:
     if self.mSpecific.mUpdateFlag:
       self.onDraw()
@@ -285,11 +301,15 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       case event.kind
       of WINDOWEVENT:
         if event.window.event == WINDOWEVENT_RESIZED:
-          if not self.resizeSurface(event.window.data1, event.window.data2):
+          var
+            w, h: cint
+            win = SDL.getWindowFromID(event.window.windowID)
+          getWindowSize(win, w.addr, h.addr)
+          if not self.resizeSurface(w, h):
             return -1
 
           self.onResize(self.mRBufwindow.width(), self.mRBufwindow.height())
-          self.transAffineResizing(event.window.data1, event.window.data2)
+          self.transAffineResizing(w, h)
           self.mSpecific.mUpdateFlag = true
 
       of KEYDOWN:

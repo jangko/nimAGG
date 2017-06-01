@@ -66,6 +66,12 @@ or
 
 it will produce screenshot with image format BMP
 
+if you want to use SDL instead of native API, compile like this:
+
+```bash
+nim c -d:platform_sdl ex_lion
+```
+
 ## Dependencies
   * These are nimble packages needed to build nimAGG
     * [nimBMP](https://github.com/jangko/nimBMP)
