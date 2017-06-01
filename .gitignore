@@ -6,3 +6,7 @@ result
 *.dll
 /*.bmp
 *.o
+.DS_Store
+*.so
+*.dylib
+examples/*.bmp
