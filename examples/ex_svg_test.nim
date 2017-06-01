@@ -75,7 +75,9 @@ proc parseSvg(app: App, fname: string) =
   p.parse("resources" & DirSep & fname & ".svg")
   app.mPath.arrangeOrientations()
   app.mPath.boundingRect(app.mMinX, app.mMinY, app.mMaxX, app.mMaxY)
-  app.caption(p.title())
+  var title = p.title()
+  if title.len == 0: title = fname
+  app.caption(title)
 
 method onInit(app: App) =
   app.parseSvg(svg[app.mCurSvg])
@@ -137,8 +139,8 @@ method onDraw(app: App) =
   t.size(10.0)
   t.flip(false)
   pt.width(1.5)
-  t.startPoint(10.0, 40.0)
-  t.text(buf)
+  t.startPoint(10.0, height - 20.0)
+  t.text(buf & "\nRight Click: Next SVG")
 
   ras.addPath(pt)
   ren.color(initRgba(0,0,0))
@@ -169,7 +171,7 @@ proc main(): int =
   var app = newApp(pix_format_bgr24, flipY)
   app.caption("AGG Example. SVG Viewer")
 
-  if app.init(frameWidth, frameHeight, {}, "svg_test"):
+  if app.init(frameWidth, frameHeight, {window_resize}, "svg_test"):
     return app.run()
 
   result = 1

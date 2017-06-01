@@ -22,6 +22,8 @@ type
     mCurY: int
     mSwFreq: uint64
     mSwStart: uint64
+    mKeyMap: array[256, KeyCode]
+    mLastTranslatedKey: KeyCode
 
 proc finalizer[T](self: PlatformSpecific[T]) =
   for x in self.mSurfImg:
@@ -36,6 +38,10 @@ proc finalizer[T](self: PlatformSpecific[T]) =
 
   if self.mWindow != nil:
     SDL.destroyWindow(self.mWindow)
+
+proc mapKey[T](self: var PlatformSpecific[T], keyA: int, keyB: KeyCode) =
+  if (keyA and K_SCANCODE_MASK) != 0:
+    self.mKeyMap[keyA and 0xFF] = keyB
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   new(result, finalizer[T])
@@ -144,6 +150,58 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
 
   result.mSwFreq = SDL.getPerformanceFrequency()
   result.mSwStart = SDL.getPerformanceCounter()
+  result.mLastTranslatedKey = key_none
+
+  result.mapKey(K_PAUSE.ord, key_pause)
+  result.mapKey(K_CLEAR.ord, key_clear)
+  result.mapKey(K_KP_0.ord, key_kp0)
+  result.mapKey(K_KP_1.ord, key_kp1)
+  result.mapKey(K_KP_2.ord, key_kp2)
+  result.mapKey(K_KP_3.ord, key_kp3)
+  result.mapKey(K_KP_4.ord, key_kp4)
+  result.mapKey(K_KP_5.ord, key_kp5)
+  result.mapKey(K_KP_6.ord, key_kp6)
+  result.mapKey(K_KP_7.ord, key_kp7)
+  result.mapKey(K_KP_8.ord, key_kp8)
+  result.mapKey(K_KP_9.ord, key_kp9)
+  result.mapKey(K_KP_DECIMAL.ord, key_kp_period)
+  result.mapKey(K_KP_DIVIDE.ord, key_kp_divide)
+  result.mapKey(K_KP_MULTIPLY.ord, key_kp_multiply)
+  result.mapKey(K_KP_MINUS.ord, key_kp_minus)
+  result.mapKey(K_KP_PLUS.ord, key_kp_plus)
+  result.mapKey(K_UP.ord, key_up)
+  result.mapKey(K_DOWN.ord, key_down)
+  result.mapKey(K_RIGHT.ord, key_right)
+  result.mapKey(K_LEFT.ord, key_left)
+  result.mapKey(K_INSERT.ord, key_insert)
+  result.mapKey(K_DELETE.ord, key_delete)
+  result.mapKey(K_HOME.ord, key_home)
+  result.mapKey(K_END.ord, key_end)
+  result.mapKey(K_PAGEUP.ord, key_page_up)
+  result.mapKey(K_PAGEDOWN.ord, key_page_down)
+  result.mapKey(K_F1.ord, key_f1)
+  result.mapKey(K_F2.ord, key_f2)
+  result.mapKey(K_F3.ord, key_f3)
+  result.mapKey(K_F4.ord, key_f4)
+  result.mapKey(K_F5.ord, key_f5)
+  result.mapKey(K_F6.ord, key_f6)
+  result.mapKey(K_F7.ord, key_f7)
+  result.mapKey(K_F8.ord, key_f8)
+  result.mapKey(K_F9.ord, key_f9)
+  result.mapKey(K_F10.ord, key_f10)
+  result.mapKey(K_F11.ord, key_f11)
+  result.mapKey(K_F12.ord, key_f12)
+  result.mapKey(K_F13.ord, key_f13)
+  result.mapKey(K_F14.ord, key_f14)
+  result.mapKey(K_F15.ord, key_f15)
+  result.mapKey(K_NUMLOCKCLEAR.ord, key_numlock)
+  result.mapKey(K_CAPSLOCK.ord, key_capslock)
+  result.mapKey(K_SCROLLLOCK.ord, key_scrollock)
+
+proc translate[T](self: var PlatformSpecific[T], keyCode: int): KeyCode =
+  if (keyCode and K_SCANCODE_MASK) != 0:
+    self.mLastTranslatedKey = self.mKeyMap[keyCode and 0xFF]
+  result = self.mLastTranslatedKey
 
 proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   type ValueT = getValueT(R)
@@ -323,12 +381,18 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
           right = false
           down  = false
 
+        self.mSpecific.mLastTranslatedKey = key_none
+
         case event.key.keysym.sym
-        of SDL.K_LEFT: left = true
-        of SDL.K_UP: up = true
+        of SDL.K_LEFT:   left = true
+        of SDL.K_UP:       up = true
         of SDL.K_RIGHT: right = true
-        of SDL.K_DOWN: down = true
+        of SDL.K_DOWN:   down = true
         else: discard
+
+        var keySym = event.key.keysym.sym.int
+        if (keySym and K_SCANCODE_MASK) != 0:
+          keySym = self.mSpecific.translate(keySym).ord
 
         if self.mCtrls.onArrowKeys(left, right, down, up):
           self.onCtrlChange()
@@ -336,7 +400,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         else:
           self.onKey(self.mSpecific.mCurX,
                      self.mSpecific.mCurY,
-                     event.key.keysym.sym.int,
+                     keySym,
                      flags)
       of SDL.MOUSEMOTION:
         var y = int(event.motion.y)

@@ -586,7 +586,7 @@ method onDraw(app: App) =
   var name = initConvTransform(ls, transAffineResizing(app))
 
   ls.width(1.5)
-  label.text(mol[].name)
+  label.text(mol[].name & "\nPageUp/Up: Prev Mol\nPageDn/Dn: Next Mol" )
   label.size(10.0)
   label.startPoint(10.0, frameHeight - 20.0)
   ras.reset()
