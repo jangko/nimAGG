@@ -186,6 +186,7 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
   if not self.mSpecific.mInitialized:
     self.mInitialWidth = width
     self.mInitialHeight = height
+    self.transAffineResizing(width, height)
     self.onInit()
     self.mSpecific.mInitialized = true
 
@@ -265,7 +266,7 @@ proc eventFilter[T,R](self: GenericPlatform[T,R]; event: ptr Event): cint {.cdec
     if not self.resizeSurface(w, h): return -1
 
     self.onResize(self.mRBufwindow.width(), self.mRBufwindow.height())
-    self.transAffineResizing(event.window.data1, event.window.data2)
+    self.transAffineResizing(w, h)
     self.onDraw()
     self.updateWindow()
     self.mSpecific.mRenderer.renderPresent()
@@ -308,7 +309,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
             return -1
 
           self.onResize(self.mRBufwindow.width(), self.mRBufwindow.height())
-          self.transAffineResizing(event.window.data1, event.window.data2)
+          self.transAffineResizing(w, h)
           self.mSpecific.mUpdateFlag = true
 
       of KEYDOWN:
