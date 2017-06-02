@@ -21,6 +21,7 @@ type
     mCurrentDC: HDC
     mSwFreq: LARGE_INTEGER
     mSwStart: LARGE_INTEGER
+    mScreenShotName: string
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   if windowsInstance == NULL:
@@ -133,6 +134,7 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
 
   discard queryPerformanceFrequency(result.mSwFreq)
   discard queryPerformanceCounter(result.mSwStart)
+  result.mScreenShotName = "screenshot"
 
 proc createPmap[T,RenBuf](self: var PlatformSpecific[T], w, h: int, wnd: var RenBuf) =
   self.mWinPmap.create(w, h, self.mBpp)
@@ -512,7 +514,7 @@ proc windowProc[T,R](hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM):
       of key_down: down = true
       of key_f2:
         app.copyWindowToImg(maxImages - 1)
-        discard app.saveImg(maxImages - 1, "screenshot")
+        discard app.saveImg(maxImages - 1, app.mSpecific.mScreenShotName)
       of key_f3:
         echo "occupied: $1, free: $2, total: $3" % [
           $getOccupiedMem(),
@@ -637,6 +639,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
         self.copyWindowToImg(maxImages - 1)
         discard self.saveImg(maxImages - 1, fileName)
         return false
+  self.mSpecific.mScreenShotName = fileName
   result = self.init(width, height, flags)
 
 proc run[T,R](self: GenericPlatform[T,R]): int =

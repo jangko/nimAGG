@@ -24,7 +24,8 @@ type
     mSwStart: uint64
     mKeyMap: array[256, KeyCode]
     mLastTranslatedKey: KeyCode
-
+    mScreenShotName: string
+    
 proc finalizer[T](self: PlatformSpecific[T]) =
   for x in self.mSurfImg:
     if x != nil:
@@ -197,7 +198,8 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
   result.mapKey(K_NUMLOCKCLEAR.ord, key_numlock)
   result.mapKey(K_CAPSLOCK.ord, key_capslock)
   result.mapKey(K_SCROLLLOCK.ord, key_scrollock)
-
+  result.mScreenShotName = "screenshot"
+  
 proc translate[T](self: var PlatformSpecific[T], keyCode: int): KeyCode =
   if (keyCode and K_SCANCODE_MASK) != 0:
     self.mLastTranslatedKey = self.mKeyMap[keyCode and 0xFF]
@@ -296,6 +298,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
         self.copyWindowToImg(maxImages - 1)
         discard self.saveImg(maxImages - 1, fileName)
         return false
+  self.mSpecific.mScreenShotName = fileName
   result = self.init(width, height, flags)
 
 proc updateWindow[T,R](self: GenericPlatform[T,R]) =
@@ -388,6 +391,9 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         of SDL.K_UP:       up = true
         of SDL.K_RIGHT: right = true
         of SDL.K_DOWN:   down = true
+        of SDL.K_F2:
+          self.copyWindowToImg(maxImages - 1)
+          discard self.saveImg(maxImages - 1, self.mSpecific.mScreenShotName)
         else: discard
 
         var keySym = event.key.keysym.sym.int

@@ -285,10 +285,6 @@ method onIdle(app: App) =
   let n = app.mParticles.value().int
 
   var
-    x1 = -100.0
-    y1 = -100.0
-    x2 = app.width() + 100.0
-    y2 = app.height() + 100.0
     dx = cos(app.mAngle) * mCenter
     dy = sin(app.mAngle) * mCenter
     cx = dx + app.width() / 2

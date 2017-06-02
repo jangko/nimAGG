@@ -27,6 +27,7 @@ type
     mWindowAttributes: TXSetWindowAttributes
     mCloseAtom: TAtom
     mKeyMap: array[256, KeyCode]
+    mScreenShotName: string
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   result.mFormat = format
@@ -126,6 +127,7 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
   else: discard
 
   result.mSwStart = getTicks()
+  result.mScreenShotName = "screenshot"
 
 proc caption[T](self: PlatformSpecific[T], cap: string) =
   discard XStoreName(self.mDisplay, self.mWindow, cap)
@@ -256,7 +258,7 @@ const
 
 proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   self.mWindowFlags = flags
-  
+
   if window_hidden notin flags:
     self.mSpecific.mDisplay = XOpenDisplay(nil)
 
@@ -382,7 +384,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
     self.mSpecific.mXimgWindow.byte_order = cint(self.mSpecific.mByteOrder)
 
     self.mSpecific.caption(self.mCaption)
-    
+
   self.mInitialWidth  = width
   self.mInitialHeight = height
 
@@ -423,7 +425,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
       self.mSpecific.mCloseAtom.addr, 1)
 
   result = true
-  
+
 proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
   if paramCount() > 0:
     if paramStr(1) == "-v":
@@ -433,8 +435,9 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
         self.copyWindowToImg(maxImages - 1)
         discard self.saveImg(maxImages - 1, fileName)
         return false
+  self.mSpecific.mScreenShotName = fileName
   result = self.init(width, height, flags)
-  
+
 proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   self.mSpecific.putImage(self.mRbufWindow)
 
@@ -448,7 +451,7 @@ proc updateWindow[T,R](self: GenericPlatform[T,R]) =
 proc run[T,R](self: GenericPlatform[T,R]): int =
   if window_hidden in self.mWindowFlags:
     return 0
-    
+
   discard XFlush(self.mSpecific.mDisplay)
 
   var
@@ -535,7 +538,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       of key_down:  down = true
       of key_f2:
         self.copyWindowToImg(maxImages - 1)
-        discard self.saveImg(maxImages - 1, "screenshot")
+        discard self.saveImg(maxImages - 1, self.mSpecific.mScreenShotName)
       else: discard
 
       if self.mCtrls.onArrowKeys(left, right, down, up):
