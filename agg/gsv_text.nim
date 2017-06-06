@@ -598,9 +598,7 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
       inc self.mBglyph
 
       yc = yc shl 1
-      yc = yc shr 1
-
-      dy = int(yc)
+      dy = sar(yc.int, 1)
       self.mX += float64(dx) * self.mW
       self.mY += float64(dy) * self.mH
       x = self.mX

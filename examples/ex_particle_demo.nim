@@ -266,7 +266,7 @@ method onDraw(app: App) =
     let endTime = app.elapsedTime()
 
     let text = "$1 fps" % [(1000.0 / endTime).formatFloat(ffDecimal, 3)]
-    app.mTxt.startPoint(10, 35)
+    app.mTxt.startPoint(10, app.height() - 35)
     app.mTxt.text(text)
     app.mRas.addPath(app.mPt)
     ren.color(initRgba(1,1,1))
