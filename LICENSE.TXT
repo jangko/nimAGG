@@ -1,4 +1,4 @@
-nimAGG is a Nim port of Anti Grain Geometry(AGG)
+MIT License
 
 Copyright (c) 2017 Andri Lim
 
