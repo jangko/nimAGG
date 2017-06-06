@@ -79,6 +79,8 @@ nim c -d:platform_sdl ex_lion
     * [freetype](https://github.com/jangko/freetype)(optional)
     * [sdl2_nim](https://github.com/Vladar4/sdl2_nim)(optional)
     * [x11](https://github.com/nim-lang/x11)(if your platform is Linux with GUI)
+    * [opengl](https://github.com/nim-lang/opengl)(Mac OS with GUI)
+    * [objc](https://github.com/jangko/objc)(Mac OS with GUI)
   * And here are wrapped library locations:
     * [libfreetype](https://www.freetype.org)(optional)
     * [libsdl](https://www.libsdl.org)(optional)
