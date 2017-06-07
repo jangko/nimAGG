@@ -25,7 +25,7 @@ type
     mKeyMap: array[256, KeyCode]
     mLastTranslatedKey: KeyCode
     mScreenShotName: string
-    
+
 proc finalizer[T](self: PlatformSpecific[T]) =
   for x in self.mSurfImg:
     if x != nil:
@@ -199,7 +199,7 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
   result.mapKey(K_CAPSLOCK.ord, key_capslock)
   result.mapKey(K_SCROLLLOCK.ord, key_scrollock)
   result.mScreenShotName = "screenshot"
-  
+
 proc translate[T](self: var PlatformSpecific[T], keyCode: int): KeyCode =
   if (keyCode and K_SCANCODE_MASK) != 0:
     self.mLastTranslatedKey = self.mKeyMap[keyCode and 0xFF]
@@ -593,3 +593,6 @@ proc message[T,R](self: GenericPlatform[T,R], msg: string) =
 
 proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
   self.mSpecific.mUpdateFlag = true
+
+proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool) =
+  self.mWaitMode = waitMode

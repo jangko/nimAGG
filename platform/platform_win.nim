@@ -688,3 +688,6 @@ proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
 
 proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName
+
+proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool) =
+  self.mWaitMode = waitMode

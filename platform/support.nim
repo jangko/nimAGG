@@ -341,8 +341,7 @@ proc bpp*[T,R](self: GenericPlatform[T,R]): int =
 proc waitMode*[T,R](self: GenericPlatform[T,R]): bool =
   self.mWaitMode
 
-proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool) =
-  self.mWaitMode = waitMode
+proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool)
 
 # These two functions control updating of the window.
 # force_redraw() is an analog of the Win32 InvalidateRect() function.
@@ -516,6 +515,8 @@ when defined(windows) and not defined(platform_null) and not defined(platform_sd
   include platform_win
 elif defined(linux) and not defined(platform_null) and not defined(platform_sdl):
   include platform_x11
+elif defined(macosx) and not defined(platform_null) and not defined(platform_sdl):
+  include platform_mac
 elif defined(platform_sdl) and not defined(platform_null):
   include platform_sdl
 else:
