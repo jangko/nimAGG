@@ -539,6 +539,12 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       of key_f2:
         self.copyWindowToImg(maxImages - 1)
         discard self.saveImg(maxImages - 1, self.mSpecific.mScreenShotName)
+      of key_f3:
+        echo "occupied: $1, free: $2, total: $3" % [
+          $getOccupiedMem(),
+          $getFreeMem(),
+          $getTotalMem()]
+        echo GC_getStatistics()
       else: discard
 
       if self.mCtrls.onArrowKeys(left, right, down, up):

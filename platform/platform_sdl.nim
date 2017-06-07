@@ -394,6 +394,12 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
         of SDL.K_F2:
           self.copyWindowToImg(maxImages - 1)
           discard self.saveImg(maxImages - 1, self.mSpecific.mScreenShotName)
+        of SDL.K_F3:
+          echo "occupied: $1, free: $2, total: $3" % [
+            $getOccupiedMem(),
+            $getFreeMem(),
+            $getTotalMem()]
+          echo GC_getStatistics()
         else: discard
 
         var keySym = event.key.keysym.sym.int
