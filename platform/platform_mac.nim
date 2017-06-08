@@ -1,8 +1,30 @@
 import agg/[basics, color_conv_rgb8], times, nimBMP, strutils
-import objc/[objc, foundation, util], opengl, glu, math
+#import objc/[objc, foundation, util], opengl, glu, math
+import opengl, glu, math
+
 include system/timers
+{.compile: "platform_cocoa.m".}
+{.passL: "-framework Cocoa".}
+{.passL: "-framework OpenGL".}
 
 type
+  NSWindow = distinct pointer
+  NSOpenGLView = distinct pointer
+  NSAutoReleasePool = distinct pointer
+  NSApplication = distinct pointer
+
+  DrawRectT = proc(app: pointer) {.cdecl.}
+  ReshapeT = proc(app: pointer, width, height: cint) {.cdecl.}
+
+  CocoaFFI = object
+    mWindow: NSWindow
+    mView: NSOpenGLView
+    mPool: NSAutoReleasePool
+    mApp: NSApplication
+    mPlatform: pointer
+    mDrawRect: DrawRectT
+    mReshape: ReshapeT
+
   PlatformSpecific[T] = object
     mBufWindow: seq[T]
     mBufTmp: seq[T]
@@ -15,14 +37,9 @@ type
     mFormat: PixFormat
     mSysFormat: PixFormat
     mGLFormat: GLenum
-    mWindow: NSWindow
-    mView: NSView
-    mPool: NSAutoReleasePool
-    mApp: NSApplication
-    mAppDelegate: Class
-    mGLView: Class
     mInitialized: bool
     mFlipY: bool
+    mFFI: CocoaFFI
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   result.mFormat = format
@@ -83,9 +100,6 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
     result.mGLFormat = GL_BGRA
   else: discard
 
-proc glSwapAPPLE() {.importc, cdecl.}
-{.passL: "-framework OpenGL".}
-
 proc convertTex[RenBuf](dst, src: var RenBuf, format: PixFormat) =
   case format
   of pix_format_gray8: discard
@@ -112,7 +126,15 @@ proc createPmap[T,RenBuf](self: var PlatformSpecific[T], w, h: int, wnd: var Ren
   self.mBufWindow.setLen(w * h * (self.mBpp div 8))
   setMem(self.mBufWindow[0].addr, 255, w * h * (self.mBpp div 8))
   wnd.attach(self.mBufWindow[0].addr,
-    w, h, if self.mFlipY: -w * (self.mBpp div 8) else: w * (self.mBpp div 8))
+    w, h, if self.mFlipY: w * (self.mBpp div 8) else: -w * (self.mBpp div 8))
+
+proc cocoaInit(self: var CocoaFFI, showWindow: cint, title: cstring, w, h: cint) {.importc.}
+proc run(self: var CocoaFFI) {.importc.}
+proc cocoaInitGL(self: var CocoaFFI, data: cstring, w, h: cint, format: GLenum): GLuint {.importc.}
+proc cocoaDeinit(self: var CocoaFFI, texID: GLuint) {.importc.}
+proc forceRedraw(self: var CocoaFFI) {.importc.}
+proc setTitle(self: var CocoaFFI, title: cstring) {.importc.}
+proc blitImage(id: GLuint, data: cstring, x1, y1, x2, y2: GLint, format: GLenum) {.importc.}
 
 proc blitImage[T,RenBuf](self: var PlatformSpecific[T], src: var RenBuf) =
   var
@@ -121,12 +143,9 @@ proc blitImage[T,RenBuf](self: var PlatformSpecific[T], src: var RenBuf) =
     x2 = GLint(src.width())
     y2 = GLint(src.height())
 
-  glEnable(GL_TEXTURE_2D)
-  glBindTexture(GL_TEXTURE_2D, self.mWindowTexID)
-
   if self.mFormat == self.mSysFormat:
-    glTexSubImage2D(GL_TEXTURE_2D, GLint(0), x1, y1,
-      x2, y2, self.mGLFormat, GL_UNSIGNED_BYTE, self.mBufWindow[0].addr)
+    blitImage(self.mWindowTexID, cast[cstring](self.mBufWindow[0].addr),
+      x1, y1, x2, y2, self.mGLFormat)
   else:
     let rowLen = src.width() * self.mSysBpp div 8
     if self.mBufTmp.len < rowLen * src.height():
@@ -134,23 +153,11 @@ proc blitImage[T,RenBuf](self: var PlatformSpecific[T], src: var RenBuf) =
 
     var dst = construct(RenBuf)
     dst.attach(self.mBufTmp[0].addr,
-      src.width(), src.height(), if self.mFlipY: -rowLen else: rowLen)
+      src.width(), src.height(), if self.mFlipY: rowLen else: -rowLen)
 
     convertTex(dst, src, self.mFormat)
-
-    glTexSubImage2D(GL_TEXTURE_2D, GLint(0), x1, y1,
-      x2, y2, self.mGLFormat, GL_UNSIGNED_BYTE, self.mBufTmp[0].addr)
-
-  glColor3f(1.0f, 1.0f, 1.0f)
-  glBegin(GL_POLYGON)
-  glTexCoord2i(0,   0); glVertex2i(x1, y1)
-  glTexCoord2i(x2,  0); glVertex2i(x2, y1)
-  glTexCoord2i(x2, y2); glVertex2i(x2, y2)
-  glTexCoord2i(0,  y2); glVertex2i(x1, y2)
-  glEnd()
-
-  glFlush()
-  glSwapAPPLE()
+    blitImage(self.mWindowTexID, cast[cstring](self.mBufTmp[0].addr),
+      x1, y1, x2, y2, self.mGLFormat)
 
 proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   type ValueT = getValueT(R)
@@ -165,152 +172,37 @@ proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   self.mCaption = "Anti-Grain Geometry Application"
   self.mResizeMtx = initTransAffine()
 
-proc shouldTerminate(self: ID, cmd: SEL, notification: ID): BOOL {.cdecl.} =
-  result = YES
-
-const kPlatform = "platform"
-
-proc makeAppDelegate(): Class =
-  result = allocateClassPair(getClass("NSObject"), "AppDelegate", 0)
-  discard result.addMethod($$"applicationShouldTerminateAfterLastWindowClosed:", cast[IMP](shouldTerminate), "c@:@")
-  discard result.addIvar(kPlatform, sizeof(int), log2(sizeof(int).float64).int, "q")
-  result.registerClassPair()
-
-type
-  # buggy Nim param passing
-  NSRect* {.bycopy.} = object
-    x*, y*, w*, h*: float64
-
-proc acceptFirstResponder(self: ID, cmd: SEL): BOOL {.cdecl.} =
-  result = YES
-
-proc drawRect[T,R](self: ID, cmd: SEL, rect: NSRect) {.cdecl.} =
-  var cls  = getClass(self)
-  var ivar = cls.getIvar(kPlatform)
-  var app  = cast[GenericPlatform[T,R]](self.getIvar(ivar))
+proc drawRect[T,R](app: GenericPlatform[T,R]) {.cdecl.} =
   app.onDraw()
   app.updateWindow()
 
-proc reshape[T,R](self: ID, cmd: SEL) {.cdecl.} =
-  var cls  = getClass(self)
-  var ivar = cls.getIvar(kPlatform)
-  var app  = cast[GenericPlatform[T,R]](self.getIvar(ivar))
-  var width  = GLsizei(app.width())
-  var height = GLsizei(app.height())
-
-  # Compute aspect ratio of the new window
-  if width == 0 or height == 0:
-    return                # To prevent divide by 0
-
-  # Set the viewport to cover the new window
-  glViewport(0, 0, width, height)
-
-  # Set the aspect ratio of the clipping volume to match the viewport
-  glMatrixMode(GL_PROJECTION)  # To operate on the Projection matrix
-  glLoadIdentity()             # Reset
-  gluOrtho2D(0.0, GLDouble(width), 0.0, GLDouble(height))
-
-  glMatrixMode(GL_TEXTURE)
-  glLoadIdentity()
-  glScalef(1.0/GLfloat(width), 1.0/GLfloat(height), 1.0)
-  
+proc reshape[T,R](app: GenericPlatform[T,R], width, height: cint) {.cdecl.} =
   app.mSpecific.createPmap(width, height, app.rbufWindow())
   app.transAffineResizing(width, height)
   app.onResize(width, height)
   app.forceRedraw()
 
-proc makeGLView[T,R](): Class =
-  var cls = getClass("NSOpenGLView")
-  result = allocateClassPair(cls, "GLView", 0)
-
-  var sel = $$"acceptFirstResponder"
-  var im  = getInstanceMethod(cls, sel)
-  var types = getTypeEncoding(im)
-  discard result.addMethod(sel, cast[IMP](acceptFirstResponder), types)
-
-  sel = $$"drawRect:"
-  im  = getInstanceMethod(cls, sel)
-  types = getTypeEncoding(im)
-  discard result.addMethod(sel, cast[IMP](drawRect[T,R]), types)
-
-  sel = $$"reshape"
-  im  = getInstanceMethod(cls, sel)
-  types = getTypeEncoding(im)
-  discard result.addMethod(sel, cast[IMP](reshape[T,R]), types)
-
-  discard result.addIvar(kPlatform, sizeof(int), log2(sizeof(int).float64).int, "q")
-  result.registerClassPair()
-
 proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   self.mWindowFlags = flags
+  self.mSpecific.mFFI.mPlatform = cast[pointer](self)
+  self.mSpecific.mFFI.mDrawRect = cast[DrawRectT](drawRect[T,R])
+  self.mSpecific.mFFI.mReshape  = cast[ReshapeT](reshape[T,R])
 
-  self.mSpecific.mPool = newAutoReleasePool()
-  self.mSpecific.mApp = newApplication()
-  self.mSpecific.mApp.setActivationPolicy(NSApplicationActivationPolicyRegular)
-
-  var windowStyle = NSTitledWindowMask or NSClosableWindowMask or
-    NSMiniaturizableWindowMask or NSResizableWindowMask
-
-  var windowRect = NSMakeRect(100,100,400,400)
-  self.mSpecific.mWindow = NSWindow.init(windowRect, windowStyle, NSBackingStoreBuffered, NO)
-  self.mSpecific.mWindow.autoRelease()
-  self.mSpecific.mWindow.setTitle(self.mCaption)
-
-  if window_hidden notin flags:
-    self.mSpecific.mWindow.display()
-    self.mSpecific.mWindow.orderFrontRegardless()
-
-  var pf = createPixelFormat()
-
-  self.mSpecific.mGLView = makeGLView[T,R]()
-  var glView = newGLView()
-  glView.initWithFrame(windowRect, pf)
-  glView.setWantsBestResolutionOpenGLSurface(YES)
-
-  self.mSpecific.mWindow.setContentView(glView)
-  self.mSpecific.mWindow.makeFirstResponder(glView)
-  self.mSpecific.mWindow.makeKeyWindow()
-
-  glView.setIvar(kPlatform, self)
-
-  self.mSpecific.mAppDelegate = makeAppDelegate()
-  var appDelegate = newAppDelegate()
-  appDelegate.autoRelease()
-  self.mSpecific.mApp.setDelegate(appDelegate)
+  cocoaInit(self.mSpecific.mFFI, (window_hidden notin flags).cint,
+    self.mCaption.cstring, width.cint, height.cint)
 
   self.mSpecific.createPmap(width, height, self.rbufWindow())
 
-  self.mSpecific.mWindowTexID = 0
-  glEnable(GL_TEXTURE_2D)
-  glGenTextures(1, addr(self.mSpecific.mWindowTexID))
-  glBindTexture(GL_TEXTURE_2D, self.mSpecific.mWindowTexID)
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(width))
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,  GL_LINEAR)
-  glTexImage2D(GL_TEXTURE_2D,
-    GLint(0), GLint(GL_RGBA8),
-    GLSizei(width), GLsizei(height),
-    GLint(0), self.mSpecific.mGLFormat,
-    GL_UNSIGNED_BYTE, self.mSpecific.mBufWindow[0].addr)
+  self.mSpecific.mWindowTexID =
+    cocoaInitGL(self.mSpecific.mFFI, cast[cstring](self.mSpecific.mBufWindow[0].addr),
+    width.cint, height.cint, self.mSpecific.mGLFormat)
 
-  glMatrixMode(GL_TEXTURE)
-  glLoadIdentity()
-  glScalef(1.0/GLfloat(width), 1.0/GLfloat(height), 1.0)
-
-  glClearColor(0.0, 0.0, 0.0, 1.0)                  # Set background color to black and opaque
-  glClearDepth(1.0)                                 # Set background depth to farthest
-  glEnable(GL_DEPTH_TEST)                           # Enable depth testing for z-culling
-  glDepthFunc(GL_LEQUAL)                            # Set the type of depth-test
-  glShadeModel(GL_SMOOTH)                           # Enable smooth shading
-  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Nice perspective corrections
-
-  glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT) # Clear color and depth buffers
-  glMatrixMode(GL_MODELVIEW)                          # To operate on model-view matrix
-  glLoadIdentity()                                    # Reset the model-view matrix
-
+  self.mSpecific.mInitialized = true
   # trigger onInit event
   self.onInit()
+  result = true
 
-proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
+proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags, fileName: string): bool =
   if paramCount() > 0:
     if paramStr(1) == "-v":
       if self.init(width, height, {window_hidden}):
@@ -324,25 +216,20 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
 
 proc run[T,R](self: GenericPlatform[T,R]): int =
   if window_hidden notin self.mWindowFlags:
-    self.mSpecific.mApp.run()
+    self.mSpecific.mFFI.run()
 
-  glDeleteTextures(1, addr(self.mSpecific.mWindowTexID))
-  self.mSpecific.mPool.drain()
-  self.mSpecific.mAppDelegate.disposeClassPair()
-  self.mSpecific.mGLView.disposeClassPair()
+  cocoaDeinit(self.mSpecific.mFFI, self.mSpecific.mWindowTexID)
 
 proc updateWindow[T,R](self: GenericPlatform[T,R]) =
   if self.mSpecific.mInitialized:
     self.mSpecific.blitImage(self.mRBufWindow)
 
 proc forceRedraw[T,R](self: GenericPlatform[T,R]) =
-  if not self.mSpecific.mView.isNil():
-    self.mSpecific.mView.setNeedsDisplay(YES)
+  self.mSpecific.mFFI.forceRedraw()
 
 proc caption[T,R](self: GenericPlatform[T,R], cap: string) =
   self.mCaption = cap
-  if not self.mSpecific.mWindow.isNil():
-    self.mSpecific.mWindow.setTitle(cap)
+  self.mSpecific.mFFI.setTitle(self.mCaption.cstring)
 
 proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
   type ValueT = getValueT(R)
@@ -426,7 +313,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
 
     let stride = width * (self.mBpp div 8)
     self.mRBufImage[idx].attach(self.mSpecific.mBufImg[idx][0].addr,
-      width, height, if self.mFlipY: -stride else: stride)
+      width, height, if self.mFlipY: stride else: -stride)
 
     return true
 

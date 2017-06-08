@@ -2,7 +2,7 @@ import objc, foundation, strutils, macros, typetraits
 
 type
   NSObject* = object of RootObj
-    id: ID
+    id*: ID
 
   NSWindow* = object of NSObject
 
@@ -18,7 +18,10 @@ type
 
   NSAppDelegate* = object of NSObject
 
-  GLView* = object of NSView
+  NSOpenGLView* = object of NSView
+
+proc print*(obj: NSObject) =
+  echo $cast[int](obj.id)
 
 proc isNil*(obj: NSObject): bool =
   result = obj.id.isNil()
@@ -142,12 +145,17 @@ proc createPixelFormat*(): NSOpenGLPixelFormat =
     echo "error: cannot create required pixel format for the OpenGL view."
     quit(1)
 
-proc newGLView*(): GLView =
-  result.id = objc_alloc("GLView")
+proc newOpenGLView*(): NSOpenGLView =
+  result.id = objc_alloc("NSOpenGLView")
 
-proc initWithFrame*(view: GLView, rect: CMRect, pixelFormat: NSOpenGLPixelFormat) =
+proc initWithFrame*(view: NSOpenGLView, rect: CMRect, pixelFormat: NSOpenGLPixelFormat) =
   var cmd = $$"initWithFrame:pixelFormat:"
-  view[cmd, rect, pixelFormat.id]
+  #view[cmd, rect, pixelFormat.id]
+  var id = objc_msgSend(view.id, cmd, rect, pixelFormat.id)
 
-proc setWantsBestResolutionOpenGLSurface*(view: GLView, wantBest: BOOL) =
+proc setWantsBestResolutionOpenGLSurface*(view: NSOpenGLView, wantBest: BOOL) =
   view[$$"setWantsBestResolutionOpenGLSurface:", wantBest]
+
+proc makeCurrentContext*(view: NSOpenGLView) =
+  var id = objc_msgSend(view.id, $$"openGLContext")
+  discard objc_msgSend(id, $$"makeCurrentContext")
