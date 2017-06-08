@@ -15,6 +15,7 @@ type
 
   DrawRectT = proc(app: pointer) {.cdecl.}
   ReshapeT = proc(app: pointer, width, height: cint) {.cdecl.}
+  EventHandlerT = proc(app: pointer, event, lparam, wparam: cint) {.cdecl.}
 
   CocoaFFI = object
     mWindow: NSWindow
@@ -24,6 +25,7 @@ type
     mPlatform: pointer
     mDrawRect: DrawRectT
     mReshape: ReshapeT
+    mEventHandler: EventHandlerT
 
   PlatformSpecific[T] = object
     mBufWindow: seq[T]
@@ -39,6 +41,9 @@ type
     mGLFormat: GLenum
     mInitialized: bool
     mFlipY: bool
+    mCurX: int
+    mCurY: int
+    mInputFlags: InputFlags
     mFFI: CocoaFFI
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
@@ -51,6 +56,9 @@ proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T
   zeroMem(result.mBufImg[0].addr, sizeof(result.mBufImg))
   result.mBpp = 0
   result.mSysBpp = 0
+  result.mCurX = 0
+  result.mCurY = 0
+  result.mInputFlags = {}
   result.mScreenShotName = "screenshot"
   result.mSwStart = getTicks()
 
@@ -182,11 +190,113 @@ proc reshape[T,R](app: GenericPlatform[T,R], width, height: cint) {.cdecl.} =
   app.onResize(width, height)
   app.forceRedraw()
 
+const
+  MOUSE_LBUTTON_DOWN = 11
+  MOUSE_LBUTTON_UP   = 12
+  MOUSE_RBUTTON_DOWN = 13
+  MOUSE_RBUTTON_UP   = 14
+  MOUSE_MOVE         = 15
+  KEY_DOWN           = 16
+  KEY_UP             = 17
+
+proc eventHandler[T,R](app: GenericPlatform[T,R], event, lparam, wparam: cint): cint {.cdecl.} =
+  case event
+  of MOUSE_LBUTTON_DOWN:
+
+    app.mSpecific.mCurX = lParam
+    if not app.flipY():
+      app.mSpecific.mCurY = app.rbufWindow().height() - wParam
+    else:
+      app.mSpecific.mCurY = wParam
+
+    app.mSpecific.mInputFlags.incl mouseLeft
+    discard app.mCtrls.setCur(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64)
+    if app.mCtrls.onMouseButtonDown(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+      app.onCtrlChange()
+      app.forceRedraw()
+    else:
+      if app.mCtrls.inRect(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+        if app.mCtrls.setCur(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+          app.onCtrlChange()
+          app.forceRedraw()
+      else:
+        app.onMouseButtonDown(app.mSpecific.mCurX,
+                              app.mSpecific.mCurY,
+                              app.mSpecific.mInputFlags)
+    return 1
+  of MOUSE_LBUTTON_UP:
+    app.mSpecific.mCurX = lParam
+    if not app.flipY():
+      app.mSpecific.mCurY = app.rbufWindow().height() - wParam
+    else:
+      app.mSpecific.mCurY = wParam
+
+    app.mSpecific.mInputFlags.incl mouseLeft
+
+    if app.mCtrls.onMouseButtonUp(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+      app.onCtrlChange()
+      app.forceRedraw()
+    app.onMouseButtonUp(app.mSpecific.mCurX,
+                        app.mSpecific.mCurY,
+                        app.mSpecific.mInputFlags)
+    return 1
+  of MOUSE_RBUTTON_DOWN:
+    app.mSpecific.mCurX = lParam
+    if not app.flipY():
+      app.mSpecific.mCurY = app.rbufWindow().height() - wParam
+    else:
+      app.mSpecific.mCurY = wParam
+
+    app.mSpecific.mInputFlags.incl mouseRight
+    app.onMouseButtonDown(app.mSpecific.mCurX,
+                          app.mSpecific.mCurY,
+                          app.mSpecific.mInputFlags)
+    return 1
+  of MOUSE_RBUTTON_UP:
+    app.mSpecific.mCurX = lParam
+    if not app.flipY():
+      app.mSpecific.mCurY = app.rbufWindow().height() - wParam
+    else:
+      app.mSpecific.mCurY = wParam
+
+    app.mSpecific.mInputFlags.incl mouseRight
+    app.onMouseButtonUp(app.mSpecific.mCurX,
+                        app.mSpecific.mCurY,
+                        app.mSpecific.mInputFlags)
+    return 1
+  of MOUSE_MOVE:
+    app.mSpecific.mCurX = lParam
+    if not app.flipY():
+      app.mSpecific.mCurY = app.rbufWindow().height() - wParam
+    else:
+      app.mSpecific.mCurY = wParam
+
+    app.mSpecific.mInputFlags.incl mouseLeft
+
+    let flag = mouseLeft in app.mSpecific.mInputFlags
+    if app.mCtrls.onMouseMove(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64, flag):
+      app.onCtrlChange()
+      app.forceRedraw()
+    else:
+      if not app.mCtrls.inRect(app.mSpecific.mCurX.float64, app.mSpecific.mCurY.float64):
+        app.onMouseMove(app.mSpecific.mCurX, app.mSpecific.mCurY, app.mSpecific.mInputFlags)
+    return 1
+  of KEY_DOWN:
+    return 1
+  of KEY_UP:
+    return 1
+  else:
+    return 0
+
 proc init[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFlags): bool =
   self.mWindowFlags = flags
   self.mSpecific.mFFI.mPlatform = cast[pointer](self)
   self.mSpecific.mFFI.mDrawRect = cast[DrawRectT](drawRect[T,R])
   self.mSpecific.mFFI.mReshape  = cast[ReshapeT](reshape[T,R])
+  self.mSpecific.mFFI.mEventHandler  = cast[EventHandlerT](eventHandler[T,R])
+
+  self.mInitialWidth = width
+  self.mInitialHeight = height
 
   cocoaInit(self.mSpecific.mFFI, (window_hidden notin flags).cint,
     self.mCaption.cstring, width.cint, height.cint)
@@ -244,9 +354,12 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
         bmp.width, bmp.height,
         if self.mFlipY: -bmp.width * 3 else: bmp.width * 3)
 
+    discard self.createImg(idx, bmp.width, bmp.height)
+
     case self.mFormat
     of pix_format_rgb555: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgb555)
     of pix_format_rgb565: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgb565)
+    of pix_format_rgb24:  color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgb24)
     of pix_format_bgr24:  color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_bgr24)
     of pix_format_rgba32: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgba32)
     of pix_format_argb32: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_argb32)

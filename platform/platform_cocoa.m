@@ -2,8 +2,19 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 
+enum EventKind {
+  MOUSE_LBUTTON_DOWN = 11,
+  MOUSE_LBUTTON_UP   = 12,
+  MOUSE_RBUTTON_DOWN = 13,
+  MOUSE_RBUTTON_UP   = 14,
+  MOUSE_MOVE         = 15,
+  KEY_DOWN           = 16,
+  KEY_UP             = 17
+};
+
 typedef void(*DrawRectT)(void*);
 typedef void(*ReshapeT)(void*, int, int);
+typedef int(*EventHandlerT)(void*, int, int, int);
 
 typedef struct CocoaFFI {
   NSWindow* mWindow;
@@ -13,6 +24,7 @@ typedef struct CocoaFFI {
   void* mPlatform;
   DrawRectT mDrawRect;
   ReshapeT mReshape;
+  EventHandlerT mEventHandler;
 } CocoaFFI;
 
 @interface MyWindow: NSWindow
@@ -49,7 +61,7 @@ typedef struct CocoaFFI {
 @end
 
 @implementation MyView
--(BOOL) acceptFirstResponder
+-(BOOL) acceptsFirstResponder
 {
   return YES;
 }
@@ -86,25 +98,66 @@ typedef struct CocoaFFI {
   mFFI->mReshape(mFFI->mPlatform, width, height);
 }
 
-- (void)mouseDown:(NSEvent *)theEvent
+- (void)mouseDown:(NSEvent *)event
 {
-      [[self nextResponder] mouseDown:theEvent];
+  NSPoint mousePos = event.locationInWindow;
+  int     pos_x    = (int)round(mousePos.x),
+          pos_y    = (int)round(mousePos.y);
+
+  if(!mFFI->mEventHandler(mFFI->mPlatform, MOUSE_LBUTTON_DOWN, pos_x, pos_y))
+    [[self nextResponder] mouseDown:event];
 }
 
-- (void)mouseUp:(NSEvent *)theEvent
+- (void)mouseUp:(NSEvent *)event
 {
-      [[self nextResponder] mouseUp:theEvent];
+  NSPoint mousePos = event.locationInWindow;
+  int     pos_x    = (int)round(mousePos.x),
+          pos_y    = (int)round(mousePos.y);
+
+  if(!mFFI->mEventHandler(mFFI->mPlatform, MOUSE_LBUTTON_UP, pos_x, pos_y))
+    [[self nextResponder] mouseUp:event];
 }
 
-- (void)mouseDragged:(NSEvent *)theEvent
+- (void)rightMouseDown:(NSEvent *)event
 {
-      [[self nextResponder] mouseDragged:theEvent];
+  NSPoint mousePos = event.locationInWindow;
+  int     pos_x    = (int)round(mousePos.x),
+          pos_y    = (int)round(mousePos.y);
+
+  if(!mFFI->mEventHandler(mFFI->mPlatform, MOUSE_RBUTTON_DOWN, pos_x, pos_y))
+    [[self nextResponder] rightMouseDown:event];
+}
+
+- (void)rightMouseUp:(NSEvent *)event
+{
+  NSPoint mousePos = event.locationInWindow;
+  int     pos_x    = (int)round(mousePos.x),
+          pos_y    = (int)round(mousePos.y);
+
+  if(!mFFI->mEventHandler(mFFI->mPlatform, MOUSE_RBUTTON_UP, pos_x, pos_y))
+    [[self nextResponder] rightMouseUp:event];
+}
+
+- (void)mouseDragged:(NSEvent *)event
+{
+  NSPoint mousePos = event.locationInWindow;
+  int     pos_x    = (int)round(mousePos.x) ,
+          pos_y    = (int)round(mousePos.y);
+
+  if(!mFFI->mEventHandler(mFFI->mPlatform, MOUSE_MOVE, pos_x, pos_y))
+    [[self nextResponder] mouseDragged:event];
 }
 
 - (void) keyDown:(NSEvent *)event
 {
-  NSLog(@"%d", event.keyCode);
-  [[self nextResponder] keyDown:event];
+  if(!mFFI->mEventHandler(mFFI->mPlatform, KEY_DOWN, 0, 0))
+    [[self nextResponder] keyDown:event];
+}
+
+- (void) keyUp:(NSEvent *)event
+{
+  if(!mFFI->mEventHandler(mFFI->mPlatform, KEY_UP, 0, 0))
+    [[self nextResponder] keyUp:event];
 }
 @end
 
@@ -233,7 +286,7 @@ void blitImage(GLuint id, char* data, GLint x1, GLint y1, GLint x2, GLint y2, GL
   glTexImage2D(GL_TEXTURE_2D,
     0, GL_RGBA8,
     (GLsizei)w, (GLsizei)h,
-    0, GL_BGR,
+    0, format,
     GL_UNSIGNED_BYTE, data);
 
   glMatrixMode(GL_TEXTURE);
