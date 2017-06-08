@@ -210,6 +210,10 @@ proc reshape[T,R](self: ID, cmd: SEL) {.cdecl.} =
   glLoadIdentity()             # Reset
   gluOrtho2D(0.0, GLDouble(width), 0.0, GLDouble(height))
 
+  glMatrixMode(GL_TEXTURE)
+  glLoadIdentity()
+  glScalef(1.0/GLfloat(width), 1.0/GLfloat(height), 1.0)
+  
   app.mSpecific.createPmap(width, height, app.rbufWindow())
   app.transAffineResizing(width, height)
   app.onResize(width, height)
