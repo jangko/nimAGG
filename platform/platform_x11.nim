@@ -649,6 +649,8 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
         bmp.width, bmp.height,
         if self.mFlipY: -bmp.width * 3 else: bmp.width * 3)
 
+    discard self.createImg(idx, bmp.width, bmp.height)
+
     case self.mFormat
     of pix_format_rgb555: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgb555)
     of pix_format_rgb565: color_conv(self.mRbufImage[idx], src, color_conv_rgb24_to_rgb565)
