@@ -9,7 +9,8 @@ enum EventKind {
   MOUSE_RBUTTON_UP   = 14,
   MOUSE_MOVE         = 15,
   KEY_DOWN           = 16,
-  KEY_UP             = 17
+  KEY_UP             = 17,
+  IDLE_STATE         = 18
 };
 
 typedef void(*DrawRectT)(void*);
@@ -25,6 +26,8 @@ typedef struct CocoaFFI {
   DrawRectT mDrawRect;
   ReshapeT mReshape;
   EventHandlerT mEventHandler;
+  int appTerminate;
+  int waitMode;
 } CocoaFFI;
 
 @interface MyWindow: NSWindow
@@ -44,6 +47,19 @@ typedef struct CocoaFFI {
 }
 @end
 
+@interface WinDelegate : NSObject <NSWindowDelegate>{
+  @public CocoaFFI* mFFI;
+}
+@end
+
+@implementation WinDelegate
+- (void)windowWillClose:(NSNotification *)notification {
+    NSWindow *window = notification.object;
+    if (window.isMainWindow) {
+      mFFI->appTerminate = 1;
+    }
+}
+@end
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>{
 }
@@ -183,7 +199,10 @@ NSOpenGLPixelFormat * createPixelFormat() {
 void cocoaInit(CocoaFFI* self, int showWindow, char* title, int w, int h) {
   self->mPool = [[NSAutoreleasePool alloc] init];
   self->mApp  = [NSApplication sharedApplication];
-  [self->mApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
+  [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+  [NSApp setPresentationOptions:NSApplicationPresentationDefault];
+  [NSApp activateIgnoringOtherApps:YES];
 
   NSUInteger windowStyle = NSTitledWindowMask | NSClosableWindowMask |
       NSMiniaturizableWindowMask | NSResizableWindowMask;
@@ -209,16 +228,53 @@ void cocoaInit(CocoaFFI* self, int showWindow, char* title, int w, int h) {
   [window makeFirstResponder: newView];
   [window makeKeyWindow];
 
-  AppDelegate* appDel = [[AppDelegate alloc] init];
-  [NSApp setDelegate: appDel];
+  WinDelegate* winDelegate = [WinDelegate alloc];
+  [window setDelegate: winDelegate];
 
+  AppDelegate* appDelegate = [[AppDelegate alloc] init];
+  [NSApp setDelegate: appDelegate];
+
+  winDelegate->mFFI = self;
   newView->mFFI = self;
   self->mWindow = window;
   self->mView   = newView;
+  [NSApp finishLaunching];
 }
 
 void run(CocoaFFI* self) {
-  [self->mApp run];
+  //[self->mApp run];
+
+  while(!self->appTerminate) {
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+
+    if(self->waitMode) {
+      NSEvent *event = [NSApp
+        nextEventMatchingMask:NSAnyEventMask
+        untilDate:[NSDate distantFuture]
+        inMode:NSDefaultRunLoopMode
+        dequeue:YES];
+
+      if(event) {
+        [NSApp sendEvent:event];
+        [NSApp updateWindows];
+      }
+    } else {
+      NSEvent *event = [NSApp
+        nextEventMatchingMask:NSAnyEventMask
+        untilDate:nil
+        inMode:NSDefaultRunLoopMode
+        dequeue:YES];
+
+      if(event) {
+        [NSApp sendEvent:event];
+        [NSApp updateWindows];
+      }
+
+      self->mEventHandler(self->mPlatform, IDLE_STATE, 0, 0);
+    }
+
+    [pool release];
+  }
 }
 
 GLuint cocoaInitGL(CocoaFFI* self, unsigned char* data, int w, int h, GLenum format) {

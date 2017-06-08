@@ -26,6 +26,8 @@ type
     mDrawRect: DrawRectT
     mReshape: ReshapeT
     mEventHandler: EventHandlerT
+    appTerminate: cint
+    waitMode: cint
 
   PlatformSpecific[T] = object
     mBufWindow: seq[T]
@@ -170,6 +172,8 @@ proc blitImage[T,RenBuf](self: var PlatformSpecific[T], src: var RenBuf) =
 proc init[T,R](self: GenericPlatform[T,R], format: PixFormat, flipY: bool) =
   type ValueT = getValueT(R)
   self.mSpecific = initPlatformSpecific[ValueT](format, flipY)
+  self.mSpecific.mFFI.waitMode = 1;
+  self.mSpecific.mFFI.appTerminate = 0;
   self.mFormat = format
   self.mBpp = self.mSpecific.mBpp
   self.mWindowFlags = {}
@@ -198,11 +202,14 @@ const
   MOUSE_MOVE         = 15
   KEY_DOWN           = 16
   KEY_UP             = 17
+  IDLE_STATE         = 18
 
 proc eventHandler[T,R](app: GenericPlatform[T,R], event, lparam, wparam: cint): cint {.cdecl.} =
   case event
+  of IDLE_STATE:
+    app.onIdle()
+    return 1
   of MOUSE_LBUTTON_DOWN:
-
     app.mSpecific.mCurX = lParam
     if not app.flipY():
       app.mSpecific.mCurY = app.rbufWindow().height() - wParam
@@ -451,3 +458,4 @@ proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
 
 proc waitMode*[T,R](self: GenericPlatform[T,R], waitMode: bool) =
   self.mWaitMode = waitMode
+  self.mSpecific.mFFI.waitMode = cint(waitMode)
