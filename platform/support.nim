@@ -209,7 +209,7 @@ proc onMouseMove*(self: CtrlContainer, x, y: float64, buttonFlag: bool): bool =
   result = false
 
 proc onArrowKeys*(self: CtrlContainer, left, right, down, up: bool): bool =
-  if self.mCurCtrl >= 0:
+  if self.mCurCtrl >= 0 and self.mNumCtrl > 0:
     return self.mCtrl[self.mCurCtrl].onArrowKeys(left, right, down, up)
   result = false
 
