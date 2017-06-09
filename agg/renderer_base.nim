@@ -74,10 +74,10 @@ proc clipBox*[PixFmt](self: var RendererBase[PixFmt], x1, y1, x2, y2: int): bool
   self.mClipBox.y2 = 0
   result = false
 
-proc xmin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x1
-proc ymin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y1
-proc xmax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x2
-proc ymax*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.y2
+proc xmin*[PixFmt](self: RendererBase[PixFmt]): int {.inline.} = self.mClipBox.x1
+proc ymin*[PixFmt](self: RendererBase[PixFmt]): int {.inline.} = self.mClipBox.y1
+proc xmax*[PixFmt](self: RendererBase[PixFmt]): int {.inline.} = self.mClipBox.x2
+proc ymax*[PixFmt](self: RendererBase[PixFmt]): int {.inline.} = self.mClipBox.y2
 
 proc boundingClipBox*[PixFmt](self: RendererBase[PixFmt]): RectI = self.mClipBox
 proc boundingXmin*[PixFmt](self: RendererBase[PixFmt]): int = self.mClipBox.x1
@@ -90,8 +90,9 @@ proc clear*[PixFmt, ColorT](self: var RendererBase[PixFmt], c: ColorT) =
   when getColorT(PixFmt) isnot ColorT:
     let c = construct(getColorT(PixFmt), c)
   if self.width() != 0:
-    for y in 0.. <self.height():
-      self.mRen[].copyHline(0, y, self.width(), c)
+    let w = self.mClipBox.x2 - self.mClipBox.x1
+    for y in self.mClipBox.y1..self.mClipBox.y2:
+      self.mRen[].copyHline(self.mClipBox.x1, y, w + 1, c)
 
 proc copyPixel*[PixFmt, ColorT](self: var RendererBase[PixFmt], x, y: int, c: ColorT) =
   mixin copyPixel, construct
