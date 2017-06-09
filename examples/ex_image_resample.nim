@@ -118,7 +118,7 @@ method onDraw(app: App) =
 
   # Render the "quad" tool and controls
   app.ras.addPath(app.quad)
-  ren.color(initRgba(0, 0.3, 0.5, 0.1))
+  ren.color(initRgba(0.3, 0.5, 0.1))
   renderScanlines(app.ras, app.sl, ren)
 
   # Prepare the polygon to rasterize. Here we need to fill
