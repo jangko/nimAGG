@@ -2,21 +2,28 @@ import strutils, streams
 import agg / [basics, rendering_buffer, scanline_u, renderer_scanline,
   pixfmt_rgb, color_rgba, gamma_functions, renderer_base, calc, trans_affine,
   path_storage, conv_stroke, math_stroke, rasterizer_scanline_aa, conv_transform,
-  gsv_text, ellipse]
-import platform.support, ctrl.slider, math
+  gsv_text, ellipse, scanline_bin, pixfmt_gray, color_gray]
+import platform.support, ctrl.slider, math, nimBMP
 
 let human = """
 # 0.0000 0.0000 0.0000 0.0000 4 0 Root
-## 0.0000 0.0000 1.5708 30.0000 0 0 Head
-## 0.0000 0.0000 -1.5708 50.0000 2 0 Back
-### 0.0000 0.0000 -0.7854 50.0000 1 0 LLeg
-#### 0.0000 0.0000 0.7854 50.0000 0 0 LLeg2
-### 0.0000 0.0000 0.7854 50.0000 1 0 RLeg
-#### 0.0000 0.0000 -0.7854 50.0000 0 0 RLeg2
-## 0.0000 0.0000 -0.1000 40.0000 1 0 LArm
-### 0.0000 0.0000 0.1000 40.0000 0 0 LArm2
-## 0.0000 0.0000 3.2416 40.0000 1 0 RArm
-### 0.0000 0.0000 -0.1000 40.0000 0 0 RArm2
+## 0.0000 0.0000 1.5708 30.0000 0 0 Neck
+### 0.0000 0.0000 0.0 20.0000 0 0 Head
+## 0.0000 0.0000 -1.5708 70.0000 2 0 Back
+### 0.0000 0.0000 -0.7854 60.0000 1 0 LHips
+#### 0.0000 0.0000 0.7854 50.0000 0 0 LLeg
+##### 0.0000 0.0000 -0.7854 30.0000 0 0 LFoot
+### 0.0000 0.0000 0.7854 60.0000 1 0 RHips
+#### 0.0000 0.0000 -0.7854 50.0000 0 0 RLeg
+##### 0.0000 0.0000 0.7854 30.0000 0 0 RFoot
+## 0.0000 0.0000 -0.1000 30.0000 1 0 LShoulder
+### 0.0000 0.0000 -0.5000 40.0000 0 0 LArm
+#### 0.0000 0.0000 -0.7000 40.0000 0 0 LArm2
+##### 0.0000 0.0000 -0.7000 15.0000 0 0 LPalm
+## 0.0000 0.0000 3.2416 30.0000 1 0 RShoulder
+### 0.0000 0.0000 0.5000 40.0000 0 0 RArm
+#### 0.0000 0.0000 0.7000 40.0000 0 0 RArm2
+##### 0.0000 0.0000 0.7000 15.0000 0 0 RPalm
 """
 
 let snake = """
@@ -52,6 +59,9 @@ type
     flags: BoneFlags
     children: seq[Bone]
     parent: Bone
+    mtx: TransAffine
+    selected: bool
+    level: int
 
 const
   BONE_ABSOLUTE = {BONE_ABSOLUTE_ANGLE, BONE_ABSOLUTE_POSITION}
@@ -74,6 +84,7 @@ proc addChild(root: Bone, x, y, angle, length: float64, flags: BoneFlags, name: 
   result.flags  = flags
   result.name   = name
   result.children = @[]
+  result.selected = false
 
 proc dumpTree(root: Bone, level: int): string =
   if root == nil: return ""
@@ -122,11 +133,11 @@ proc loadBone(s: Stream): Bone =
       temp = root
     else:
       temp = addChild(temp, x, y, angle, length, flags, name)
-  
+
     # Since the boneAddChild returns child's address, we go up a level in the hierarchy
     inc actualLevel
-  
-  result = root  
+
+  result = root
 
 const
   frameWidth = 600
@@ -142,67 +153,236 @@ type
     rb: RendererBase[PixFmt]
     ras: RasterizerScanlineAA
     sl: ScanlineU8
+    slbin: ScanlineBin
     ps: PathStorage
     worldMtx: TransAffine
-    
+    bones: seq[Bone]
+    boundRect: RectD
+    jointRadius: float
+    pickBuffer: seq[getValueT(Gray8)]
+
+proc calcMtx(app: App, root: Bone, mtx: TransAffine) =
+  var loc = mtx
+
+  loc = transAffineTranslation(root.x, root.y) * loc
+  loc = transAffineRotation(root.angle) * loc
+  root.mtx = loc
+
+  loc = transAffineTranslation(root.length, 0) * loc
+  for child in root.children:
+    app.calcMtx(child, loc)
+
+proc linearizeBone(app: App, bone: Bone, level: int) =
+  bone.level = level
+  app.bones.add bone
+  for child in bone.children:
+    app.linearizeBone(child, level + 1)
+
+proc calcBoundRect(bones: seq[Bone], r: float): RectD =
+  var
+    minx = 0.0
+    miny = 0.0
+    maxx = 0.0
+    maxy = 0.0
+    x = 0.0
+    y = 0.0
+
+  for bone in bones:
+    x = 0.0
+    y = 0.0
+    bone.mtx.transform(x, y)
+    if x > maxx: maxx = x
+    if y > maxy: maxy = y
+    if x < minx: minx = x
+    if y < miny: miny = y
+    x = bone.length
+    y = 0
+    bone.mtx.transform(x, y)
+    if x > maxx: maxx = x
+    if y > maxy: maxy = y
+    if x < minx: minx = x
+    if y < miny: miny = y
+
+  result = initRectD(minx - r, miny - r, maxx + r, maxy + r)
+
 proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
   PlatformSupport(result).init(format, flipY)
 
   var s = newStringStream(human)
   result.root = s.loadBone()
-  
+
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
+  result.slbin = initScanlineBin()
   result.ps  = initPathStorage()
   result.worldMtx = initTransAffine()
-  
-proc drawDot(app: App, mtx: TransAffine) =
+  result.bones = @[]
+  result.jointRadius = 4.0
+  var mtx = initTransAffine()
+  result.calcMtx(result.root, mtx)
+  result.linearizeBone(result.root, 0)
+  result.boundRect = calcBoundRect(result.bones, result.jointRadius)
+
+proc drawBone(app: App, bone: Bone, mtx: TransAffine) =
+  let radius = app.jointRadius
   var localMtx = mtx
   localMtx *= app.worldMtx
-  var ell = initEllipse(0, 0, 4, 4, 10)
+
+  app.ps.removeAll()
+  app.ps.moveTo(0, 0)
+  app.ps.lineTo(0, radius)
+  app.ps.lineTo(bone.length, 0)
+  app.ps.lineTo(0, -radius)
+  app.ps.closePolygon()
+  var trans = initConvTransform(app.ps, localMtx)
+  app.ras.addPath(trans)
+  var color = if bone.selected: initRgba8(255,0,255) else: initRgba8(0,0,255)
+  renderScanlinesAASolid(app.ras, app.sl, app.rb, color)
+
+  var ell = initEllipse(0, 0, radius, radius, 10)
   var cell = initConvTransform(ell, localMtx)
   app.ras.addPath(cell)
   renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(0,255,0))
 
-proc drawLine(app: App, len: float64, mtx: TransAffine) =
-  var localMtx = mtx
-  localMtx *= app.worldMtx
-  app.ps.removeAll()
-  app.ps.moveTo(0, 0)
-  app.ps.lineTo(len, 0)
-  var stroke = initConvStroke(app.ps)
-  var trans = initConvTransform(stroke, localMtx)
-  app.ras.addPath(trans)
-  renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,0,255))
-
-proc draw(app: App, root: Bone, mtx: TransAffine) =
+proc draw(app: App, bone: Bone, mtx: TransAffine) =
   var loc = mtx # push Matrix
 
-  loc = transAffineTranslation(root.x, root.y) * loc
-  loc = transAffineRotation(root.angle) * loc
-  app.drawDot(loc)
-  app.drawLine(root.length, loc)
-  
+  loc = transAffineTranslation(bone.x, bone.y) * loc
+  loc = transAffineRotation(bone.angle) * loc
+  app.drawBone(bone, loc)
+
   # Translate to reach the new starting position
-  loc = transAffineTranslation(root.length, 0) * loc
-  
+  loc = transAffineTranslation(bone.length, 0) * loc
+
   # Call function on my children
-  for child in root.children:
+  for child in bone.children:
     app.draw(child, loc)
 
-  # pop Matrix
-  
+proc drawBoneName(app: App) =
+  var
+    text = initGsvText()
+    pt = initConvStroke(text)
+
+  text.size(8.0)
+  pt.width(1.5)
+  let colorBlack = initRgba8(0,0,0)
+  let colorPink = initRgba8(255,0,255)
+  var y = 0.0
+
+  for bone in app.bones:
+    text.startPoint(bone.level.float * 10.0, app.height() - 20.0 + y)
+    text.text("- " & bone.name)
+    app.ras.addPath(pt)
+    if bone.selected: 
+      renderScanlinesAASolid(app.ras, app.sl, app.rb, colorPink)
+    else:
+      renderScanlinesAASolid(app.ras, app.sl, app.rb, colorBlack)
+    y -= 20.0
+
+method onInit(app: App) =
+  let
+    w = app.width().int
+    h = app.height().int
+  app.pickBuffer = newSeq[getValueT(Gray8)](w * h)
+
+method onResize(app: App, sx, sy: int) =
+  if app.pickBuffer == nil:
+    app.pickBuffer = newSeq[getValueT(Gray8)](sx * sy)
+
+  if app.pickBuffer.len < sx * sy:
+    app.pickBuffer.setLen(sx * sy)
+
 method onDraw(app: App) =
   app.pf  = construct(PixFmt, app.rbufWindow())
   app.rb  = initRendererBase(app.pf)
-  app.worldMtx = transAffineTranslation(250, 250)
+
+  var
+    bb = app.boundRect
+    w = bb.x2 - bb.x1
+    h = bb.y2 - bb.y1
+
+  var cx = (app.width() - w) / 2.0 + abs(bb.x1)
+  var cy = (app.height() - h) / 2.0 + abs(bb.y1)
+  app.worldMtx = transAffineTranslation(cx, cy)
+
   app.rb.clear(initRgba(1,1,1))
   var loc = initTransAffine()
-  app.draw(app.root, loc)    
-  
+  app.draw(app.root, loc)
+
+  # draw bounding box
+  app.ps.removeAll()
+  app.ps.moveTo(bb.x1, bb.y1)
+  app.ps.lineTo(bb.x2, bb.y1)
+  app.ps.lineTo(bb.x2, bb.y2)
+  app.ps.lineTo(bb.x1, bb.y2)
+  app.ps.closePolygon()
+  var stroke = initConvStroke(app.ps)
+  var trans = initConvTransform(stroke, app.worldMtx)
+  app.ras.addPath(trans)
+  renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,255,0))
+
+  app.drawBoneName()
+
+# bone hittest using b/w pick buffer
+proc pickBone(app: App, x, y: int) =
+  var
+    w = app.width().int
+    h = app.height().int
+    rbuf   = initRenderingBuffer(app.pickBuffer[0].addr, w, h, w)
+    pf     = initPixFmtGray8(rbuf)
+    rb     = initRendererBase(pf)
+    ren    = initRendererScanlineBinSolid(rb)
+
+  # set rendering clipbox five pixels around mouse x,y
+  var
+    x1 = x - 5
+    y1 = y - 5
+    x2 = x + 5
+    y2 = y + 5
+
+  if x1 < 0: x1 = 0
+  if y1 < 0: y1 = 0
+  if x2 > w - 1: x2 = w - 1
+  if y2 > h - 1: y2 = h - 1
+
+  discard rb.clipBox(x1, y1, x2, y2)
+  rb.clear(initGray8(255))
+
+  # clear bone selection
+  for bone in app.bones:
+    bone.selected = false
+
+  let radius = app.jointRadius
+  for bone in app.bones:
+    var
+      mtx = bone.mtx * app.worldMtx
+      ell = initEllipse(0, 0, radius, radius, 10)
+      cell = initConvTransform(ell, mtx)
+
+    app.ps.removeAll()
+    app.ps.moveTo(0, 0)
+    app.ps.lineTo(0, radius)
+    app.ps.lineTo(bone.length, 0)
+    app.ps.lineTo(0, -radius)
+    app.ps.closePolygon()
+    var trans = initConvTransform(app.ps, mtx)
+    app.ras.addPath(trans)
+    ren.color(initGray8(0))
+    renderScanlines(app.ras, app.slbin, ren)
+
+    app.ras.addPath(cell)
+    ren.color(initGray8(0))
+    renderScanlines(app.ras, app.slbin, ren)
+    let p = rb.pixel(x, y)
+    if p.v != 0xFF:
+      bone.selected = true
+      break
+
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
-  discard
+  if mouseLeft in flags:
+    app.pickBone(x, y)
+    app.forceRedraw()
 
 method onMouseMove(app: App, x, y: int, flags: InputFlags) =
   discard
