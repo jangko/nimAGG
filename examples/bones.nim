@@ -162,7 +162,8 @@ type
     jointRadius: float
     pickBuffer: seq[getValueT(Gray8)]
     boneAngle: SliderCtrl[Rgba8]
-    
+    viewPort: RectD
+
 proc calcMtx(app: App, bone: Bone, mtx: TransAffine) =
   var loc = mtx
 
@@ -216,10 +217,11 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.boneAngle.value(0.0)
   result.boneAngle.label("Angle=$1")
   result.boneAngle.isEnabled(false)
-    
+  result.addCtrl(result.boneAngle)
+
   var s = newStringStream(human)
   result.root = s.loadBone()
-
+  
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
   result.slbin = initScanlineBin()
@@ -282,7 +284,7 @@ proc drawBoneName(app: App) =
     text.startPoint(bone.level.float * 10.0, app.height() - 20.0 + y)
     text.text("- " & bone.name)
     app.ras.addPath(pt)
-    if bone.selected: 
+    if bone.selected:
       renderScanlinesAASolid(app.ras, app.sl, app.rb, colorPink)
     else:
       renderScanlinesAASolid(app.ras, app.sl, app.rb, colorBlack)
@@ -299,7 +301,7 @@ proc drawBoundingBox(app: App, bb: RectD) =
   var trans = initConvTransform(stroke, app.worldMtx)
   app.ras.addPath(trans)
   renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,255,0))
-  
+
 method onInit(app: App) =
   let
     w = app.width().int
@@ -312,10 +314,27 @@ method onResize(app: App, sx, sy: int) =
 
   if app.pickBuffer.len < sx * sy:
     app.pickBuffer.setLen(sx * sy)
-
+  
+  app.viewPort = initRectD(120, 30, app.width(), app.height())
+  
 method onDraw(app: App) =
   app.pf  = construct(PixFmt, app.rbufWindow())
   app.rb  = initRendererBase(app.pf)
+
+  if app.selectedBone != nil:
+    var bone = app.selectedBone
+    bone.angle = deg2rad(app.boneAngle.value())
+    var mtx: TransAffine
+
+    if bone.parent != nil:
+      mtx = bone.parent.mtx
+      mtx = transAffineTranslation(bone.parent.length, 0) * mtx
+    else:
+      mtx = initTransAffine()
+    app.calcMtx(bone, mtx)
+    app.boundRect = calcBoundRect(app.bones, app.jointRadius)
+    
+  app.rb.clear(initRgba(1,1,1))  
 
   var
     bb = app.boundRect
@@ -326,15 +345,25 @@ method onDraw(app: App) =
   var cy = (app.height() - h) / 2.0 + abs(bb.y1)
   app.worldMtx = transAffineTranslation(cx, cy)
 
-  app.rb.clear(initRgba(1,1,1))
   var loc = initTransAffine()
   app.draw(app.root, loc)
-
+  
   # draw bounding box
   app.drawBoundingBox(bb)
-
-  app.drawBoneName()
   
+  var vp = app.viewPort  
+  app.ps.removeAll()
+  app.ps.moveTo(vp.x1, vp.y1)
+  app.ps.lineTo(vp.x2, vp.y1)
+  app.ps.lineTo(vp.x2, vp.y2)
+  app.ps.lineTo(vp.x1, vp.y2)
+  app.ps.lineTo(vp.x1, vp.y1)
+  var stroke = initConvStroke(app.ps)
+  app.ras.addPath(stroke)
+  renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(0,255,255))  
+  
+  app.drawBoneName()
+
   if app.selectedBone != nil:
     renderCtrl(app.ras, app.sl, app.rb, app.boneAngle)
 
@@ -400,8 +429,9 @@ proc pickBone(app: App, x, y: int) =
 
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
   if mouseLeft in flags:
-    app.pickBone(x, y)
-    app.forceRedraw()
+    if app.viewPort.hitTest(x.float64, y.float64):
+      app.pickBone(x, y)
+      app.forceRedraw()
 
 method onMouseMove(app: App, x, y: int, flags: InputFlags) =
   discard
