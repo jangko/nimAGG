@@ -5,11 +5,18 @@ type
     m*: RectD
     mFlipY*: bool
     mMtx*: ptr TransAffine
+    mEnabled*: bool
 
 proc init*(self: CtrlBase, x1, y1, x2, y2: float64, flipY: bool) =
   self.m = initRectD(x1,y1,x2,y2)
   self.mFlipY = flipY
   self.mMtx = nil
+  self.mEnabled = true
+
+proc isEnabled*(self: CtrlBase): bool = self.mEnabled
+
+proc isEnabled*(self: CtrlBase, enabled: bool) =
+  self.mEnabled = enabled
 
 proc transform*(self: CtrlBase, mtx: var TransAffine) =
   self.mMtx = mtx.addr

@@ -140,8 +140,8 @@ proc loadBone(s: Stream): Bone =
   result = root
 
 const
-  frameWidth = 600
-  frameHeight = 400
+  frameWidth = 800
+  frameHeight = 600
   flipY = true
 
 type
@@ -149,6 +149,7 @@ type
 
   App = ref object of PlatformSupport
     root: Bone
+    selectedBone: Bone
     pf: PixFmt
     rb: RendererBase[PixFmt]
     ras: RasterizerScanlineAA
@@ -160,16 +161,17 @@ type
     boundRect: RectD
     jointRadius: float
     pickBuffer: seq[getValueT(Gray8)]
-
-proc calcMtx(app: App, root: Bone, mtx: TransAffine) =
+    boneAngle: SliderCtrl[Rgba8]
+    
+proc calcMtx(app: App, bone: Bone, mtx: TransAffine) =
   var loc = mtx
 
-  loc = transAffineTranslation(root.x, root.y) * loc
-  loc = transAffineRotation(root.angle) * loc
-  root.mtx = loc
+  loc = transAffineTranslation(bone.x, bone.y) * loc
+  loc = transAffineRotation(bone.angle) * loc
+  bone.mtx = loc
 
-  loc = transAffineTranslation(root.length, 0) * loc
-  for child in root.children:
+  loc = transAffineTranslation(bone.length, 0) * loc
+  for child in bone.children:
     app.calcMtx(child, loc)
 
 proc linearizeBone(app: App, bone: Bone, level: int) =
@@ -209,6 +211,12 @@ proc newApp(format: PixFormat, flipY: bool): App =
   new(result)
   PlatformSupport(result).init(format, flipY)
 
+  result.boneAngle = newSliderCtrl[Rgba8](10, 10, frameWidth-10, 19, not flipY)
+  result.boneAngle.setRange(-360.0, 360.0)
+  result.boneAngle.value(0.0)
+  result.boneAngle.label("Angle=$1")
+  result.boneAngle.isEnabled(false)
+    
   var s = newStringStream(human)
   result.root = s.loadBone()
 
@@ -280,6 +288,18 @@ proc drawBoneName(app: App) =
       renderScanlinesAASolid(app.ras, app.sl, app.rb, colorBlack)
     y -= 20.0
 
+proc drawBoundingBox(app: App, bb: RectD) =
+  app.ps.removeAll()
+  app.ps.moveTo(bb.x1, bb.y1)
+  app.ps.lineTo(bb.x2, bb.y1)
+  app.ps.lineTo(bb.x2, bb.y2)
+  app.ps.lineTo(bb.x1, bb.y2)
+  app.ps.closePolygon()
+  var stroke = initConvStroke(app.ps)
+  var trans = initConvTransform(stroke, app.worldMtx)
+  app.ras.addPath(trans)
+  renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,255,0))
+  
 method onInit(app: App) =
   let
     w = app.width().int
@@ -311,18 +331,12 @@ method onDraw(app: App) =
   app.draw(app.root, loc)
 
   # draw bounding box
-  app.ps.removeAll()
-  app.ps.moveTo(bb.x1, bb.y1)
-  app.ps.lineTo(bb.x2, bb.y1)
-  app.ps.lineTo(bb.x2, bb.y2)
-  app.ps.lineTo(bb.x1, bb.y2)
-  app.ps.closePolygon()
-  var stroke = initConvStroke(app.ps)
-  var trans = initConvTransform(stroke, app.worldMtx)
-  app.ras.addPath(trans)
-  renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,255,0))
+  app.drawBoundingBox(bb)
 
   app.drawBoneName()
+  
+  if app.selectedBone != nil:
+    renderCtrl(app.ras, app.sl, app.rb, app.boneAngle)
 
 # bone hittest using b/w pick buffer
 proc pickBone(app: App, x, y: int) =
@@ -350,6 +364,8 @@ proc pickBone(app: App, x, y: int) =
   rb.clear(initGray8(255))
 
   # clear bone selection
+  app.selectedBone = nil
+  app.boneAngle.isEnabled(false)
   for bone in app.bones:
     bone.selected = false
 
@@ -377,6 +393,9 @@ proc pickBone(app: App, x, y: int) =
     let p = rb.pixel(x, y)
     if p.v != 0xFF:
       bone.selected = true
+      app.selectedBone = bone
+      app.boneAngle.isEnabled(true)
+      app.boneAngle.value(rad2deg(bone.angle))
       break
 
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
