@@ -76,7 +76,6 @@ type
   VertexF* = VertexBase[float32]
   VertexD* = VertexBase[float64]
 
-#template getValueT*(x: typedesc[seq[PointD]]): typedesc = PointD
 template getValueT*[T](x: typedesc[VertexBase[T]]): typedesc = T
 
 proc iround*(v: float64): int {.inline.} =

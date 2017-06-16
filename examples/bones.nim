@@ -154,13 +154,11 @@ type
     rb: RendererBase[PixFmt]
     ras: RasterizerScanlineAA
     sl: ScanlineU8
-    slbin: ScanlineBin
     ps: PathStorage
     worldMtx: TransAffine
     bones: seq[Bone]
     boundRect: RectD
     jointRadius: float
-    pickBuffer: seq[getValueT(Gray8)]
     boneAngle: SliderCtrl[Rgba8]
     viewPort: RectD
 
@@ -224,7 +222,6 @@ proc newApp(format: PixFormat, flipY: bool): App =
   
   result.ras = initRasterizerScanlineAA()
   result.sl  = initScanlineU8()
-  result.slbin = initScanlineBin()
   result.ps  = initPathStorage()
   result.worldMtx = initTransAffine()
   result.bones = @[]
@@ -302,19 +299,7 @@ proc drawBoundingBox(app: App, bb: RectD) =
   app.ras.addPath(trans)
   renderScanlinesAASolid(app.ras, app.sl, app.rb, initRgba8(255,255,0))
 
-method onInit(app: App) =
-  let
-    w = app.width().int
-    h = app.height().int
-  app.pickBuffer = newSeq[getValueT(Gray8)](w * h)
-
 method onResize(app: App, sx, sy: int) =
-  if app.pickBuffer == nil:
-    app.pickBuffer = newSeq[getValueT(Gray8)](sx * sy)
-
-  if app.pickBuffer.len < sx * sy:
-    app.pickBuffer.setLen(sx * sy)
-  
   app.viewPort = initRectD(120, 30, app.width(), app.height())
   
 method onDraw(app: App) =
@@ -369,29 +354,6 @@ method onDraw(app: App) =
 
 # bone hittest using b/w pick buffer
 proc pickBone(app: App, x, y: int) =
-  var
-    w = app.width().int
-    h = app.height().int
-    rbuf   = initRenderingBuffer(app.pickBuffer[0].addr, w, h, w)
-    pf     = initPixFmtGray8(rbuf)
-    rb     = initRendererBase(pf)
-    ren    = initRendererScanlineBinSolid(rb)
-
-  # set rendering clipbox five pixels around mouse x,y
-  var
-    x1 = x - 5
-    y1 = y - 5
-    x2 = x + 5
-    y2 = y + 5
-
-  if x1 < 0: x1 = 0
-  if y1 < 0: y1 = 0
-  if x2 > w - 1: x2 = w - 1
-  if y2 > h - 1: y2 = h - 1
-
-  discard rb.clipBox(x1, y1, x2, y2)
-  rb.clear(initGray8(255))
-
   # clear bone selection
   app.selectedBone = nil
   app.boneAngle.isEnabled(false)
@@ -413,14 +375,11 @@ proc pickBone(app: App, x, y: int) =
     app.ps.closePolygon()
     var trans = initConvTransform(app.ps, mtx)
     app.ras.addPath(trans)
-    ren.color(initGray8(0))
-    renderScanlines(app.ras, app.slbin, ren)
+    var hitTest = app.ras.hitTest(x, y)
 
     app.ras.addPath(cell)
-    ren.color(initGray8(0))
-    renderScanlines(app.ras, app.slbin, ren)
-    let p = rb.pixel(x, y)
-    if p.v != 0xFF:
+    hitTest = hitTest or app.ras.hitTest(x, y)
+    if hitTest:
       bone.selected = true
       app.selectedBone = bone
       app.boneAngle.isEnabled(true)

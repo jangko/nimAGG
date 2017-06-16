@@ -94,6 +94,9 @@ proc reset*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   self.outline.reset()
   self.status = statusInitial
 
+proc isClean*[ClipT, CoordT](self: RasterizerScanlineAA1[ClipT, CoordT]): bool =
+  result = self.status == statusInitial
+
 proc resetClipping*[ClipT, CoordT](self: var RasterizerScanlineAA1[ClipT, CoordT]) =
   self.reset()
   self.clipper.resetClipping()
