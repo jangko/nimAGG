@@ -5,9 +5,6 @@ import agg / [basics, rendering_buffer, scanline_u, renderer_scanline,
   span_allocator, color_util, arc, ellipse, conv_transform, conv_curve]
 import platform.support, ctrl.slider, math, strutils
 
-{.compile: "bone_color.c".}
-proc test_color(x,y,w,h: float32) {.importc.}
-
 const
   frameWidth = 800
   frameHeight = 600
@@ -396,13 +393,13 @@ proc drawGraph(app: App, x, y, w, h, t: float64) =
     sy[i] = y+h*samples[i]*0.8
   
   # Graph background
-  app.beginPath()
-  app.moveTo(sx[0], sy[0])
-  for i in 1.. <6:
-    app.bezierTo(sx[i-1]+dx*0.5f,sy[i-1], sx[i]-dx*0.5f,sy[i], sx[i],sy[i])
-  app.lineTo(x+w, 0)
-  app.lineTo(x, 0)
-  app.linearGradient(x,0,x,h, initRgba8(0,160,192,0), initRgba8(0,160,192,64))
+  #app.beginPath()
+  #app.moveTo(sx[0], sy[0])
+  #for i in 1.. <6:
+  #  app.bezierTo(sx[i-1]+dx*0.5f,sy[i-1], sx[i]-dx*0.5f,sy[i], sx[i],sy[i])
+  #app.lineTo(x+w, 0)
+  #app.lineTo(x, 0)
+  #app.linearGradient(x,0,x,h, initRgba8(0,160,192,0), initRgba8(0,160,192,64))
 
   # Graph line
   app.beginPath()
@@ -422,30 +419,66 @@ proc drawGraph(app: App, x, y, w, h, t: float64) =
   app.stroke()
 
   # Graph sample pos
-  for i in 0.. <6:    
-    app.beginPath()
-    app.rect(sx[i]-10, sy[i]-10+2, 20,20)
-    app.radialGradient(sx[i],sy[i]+2, 3.0f,8.0f, initRgba8(0,0,0,32), initRgba8(0,0,0,0))
-#[
-  nvgBeginPath(vg)
-  for (i = 0; i < 6; i++)
-    nvgCircle(sx[i], sy[i], 4.0f)
-  nvgFillColor(initRgba8(0,160,192,255))
-  nvgFill(vg)
-  nvgBeginPath(vg)
-  for (i = 0; i < 6; i++)
-    nvgCircle(sx[i], sy[i], 2.0f)
-  nvgFillColor(initRgba8(220,220,220,255))
-  nvgFill(vg)
+  #for i in 0.. <6:    
+  #  app.beginPath()
+  #  app.rect(sx[i]-10, sy[i]-10+2, 20,20)
+  #  app.radialGradient(sx[i],sy[i]+2, 3.0f,8.0f, initRgba8(0,0,0,32), initRgba8(0,0,0,0))
 
-  nvgStrokeWidth(1.0f)
-]#
+  app.beginPath()
+  for i in 0.. <6:    
+    app.circle(sx[i], sy[i], 4.0f)
+  app.fillColor(initRgba8(0,160,192,255))
+  app.fill()
+  app.beginPath()
+  for i in 0.. <6:    
+    app.circle(sx[i], sy[i], 2.0f)
+  app.fillColor(initRgba8(220,220,220,255))
+  app.fill()
+
+
+proc drawSlider(app: App, pos, x, y, w, h: float64) =
+  var
+    cy = y+h*0.5f
+    kr = h*0.25f
+
+  app.save()
+
+  # Slot  
+  app.beginPath()
+  app.roundRect(x, cy-2, x+w, cy+2, 2)
+  app.fillColor(initRgba8(0,0,0,128))
+  app.fill()
+  app.linearGradient(x,cy-2, x, cy+2, initRgba8(255,255,255,90), initRgba8(0,0,0,16))
+
+  var 
+    cx = x+(pos*w)
+  # Knob Shadow 
+  app.beginPath()
+  app.rect(cx-kr-5,cy-kr-5,cx+kr+5,cy+kr+5)
+  app.circle(cx,cy, kr)
+  app.fillHole(false)
+  #app.fill()
+  app.radialGradient(x+(pos*w),cy+1, 0, kr+3, initRgba8(0,0,0,90), initRgba8(0,0,0,0))
+
+  # Knob
+  app.beginPath()
+  app.circle(cx,cy, kr-1)
+  app.fillColor(initRgba8(40,43,48,255))
+  app.fill()
+  app.linearGradient(x,cy+kr,x,cy-kr, initRgba8(255,255,255,100), initRgba8(0,0,0,16))
+  
+  app.beginPath()
+  app.circle(cx,cy, kr-0.5f)
+  app.strokeColor(initRgba8(0,0,0,92))
+  app.stroke()
+
+  app.restore()
  
 method onDraw(app: App) =
   var
     pf  = construct(PixFmt, app.rbufWindow())
-    x1 = 10.0
-    y1 = app.height() - 10.0
+    x = 10.0
+    y = app.height() - 10.0
     x2 = 110.0
     y2 = app.height() - 30.0
     c  = initRgba8(230,16,8)
@@ -454,9 +487,13 @@ method onDraw(app: App) =
   app.rb  = initRendererBase(pf)
   app.ren = initRendererScanlineAASolid(app.rb)  
   app.rb.clear(initRgba(0.3,0.3,0.3))  
-  app.drawButton(x1, y1, x2, y2, c)  
+  app.drawButton(x, y, x2, y2, c)
+  
+  y -= 50
+  
+  app.drawSlider(0.4f, x, y, 170,28)
   app.drawColorWheel(app.width() - 300.0, app.height() - 300.0, 250.0f, 250.0f, t)
-  #app.drawGraph(0.0, app.height()/4.0, app.width(), app.height()/2.0, t)
+  app.drawGraph(0.0, app.height()/4.0, app.width(), app.height()/2.0, t)
   
 method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
   discard

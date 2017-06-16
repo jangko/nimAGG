@@ -94,7 +94,7 @@ proc len*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
 
 proc `[]`*[ColorT](self: var GradientLinearColor[ColorT], v: int): ColorT =
   self.mC1.gradient(self.mC2, v.float64 / float64(self.mSize - 1))
-
+  
 proc colors*[ColorA, ColorB](self: var GradientLinearColor[ColorA], c1, c2: ColorB, size = 256) =
   when ColorA is not ColorB:
     self.mC1 = construct(ColorA, c1)

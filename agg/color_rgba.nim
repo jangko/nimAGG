@@ -291,16 +291,16 @@ proc demultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
 proc gradient*(self, c: Rgba8, k: float64): Rgba8 =
   type
     ValueT = getValueT(Rgba8)
-    CalcT  = getCalcT(Rgba8)
+    CalcT  = int
   const
     baseScale = getBaseScale(Rgba8)
     baseShift = getBaseShift(Rgba8)
 
   let ik = uround(k * baseScale).CalcT
-  result.r = ValueT(CalcT(self.r) + (((CalcT(c.r) - self.r) * ik) shr baseShift))
-  result.g = ValueT(CalcT(self.g) + (((CalcT(c.g) - self.g) * ik) shr baseShift))
-  result.b = ValueT(CalcT(self.b) + (((CalcT(c.b) - self.b) * ik) shr baseShift))
-  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
+  result.r = ValueT(CalcT(self.r) + (((CalcT(c.r) - CalcT(self.r)) * ik) shr baseShift))
+  result.g = ValueT(CalcT(self.g) + (((CalcT(c.g) - CalcT(self.g)) * ik) shr baseShift))
+  result.b = ValueT(CalcT(self.b) + (((CalcT(c.b) - CalcT(self.b)) * ik) shr baseShift))
+  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - CalcT(self.a)) * ik) shr baseShift))
 
 proc add*(self: var Rgba8, c: Rgba8, cover: uint) =
   type
