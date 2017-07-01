@@ -9,19 +9,19 @@ const
   clippingFlagsYClipped = clippingFlagsY1Clipped or clippingFlagsY2Clipped
 
 
-proc clippingFlags*[T](x, y: T, clipBox: var RectBase[T]): uint {.inline.} =
+proc clippingFlags*[T](x, y: T, clipBox: RectBase[T]): uint {.inline.} =
   result = (x > clipBox.x2).uint or
            ((y > clipBox.y2).uint shl 1) or
            ((x < clipBox.x1).uint shl 2) or
            ((y < clipBox.y1).uint shl 3)
 
-proc clippingFlagsX*[T](x: T, clipBox: var RectBase[T]): uint {.inline.} =
+proc clippingFlagsX*[T](x: T, clipBox: RectBase[T]): uint {.inline.} =
   result = (x > clipBox.x2).uint or ((x < clipBox.x1).uint shl 2)
 
-proc clippingFlagsY*[T](y: T, clipBox: var RectBase[T]): uint {.inline.} =
+proc clippingFlagsY*[T](y: T, clipBox: RectBase[T]): uint {.inline.} =
   result = ((y > clipBox.y2).uint shl 1) or ((y < clipBox.y1).uint shl 3)
 
-proc clipMovePoint*[T](x1, y1, x2, y2: T, clipBox: var RectBase[T], x, y: var T, flags: uint): bool =
+proc clipMovePoint*[T](x1, y1, x2, y2: T, clipBox: RectBase[T], x, y: var T, flags: uint): bool =
    var bound: T
 
    if (flags and clippingFlagsXClipped) != 0:
@@ -43,7 +43,7 @@ proc clipMovePoint*[T](x1, y1, x2, y2: T, clipBox: var RectBase[T], x, y: var T,
 # Returns: ret >= 4        - Fully clipped
 #          (ret & 1) != 0  - First point has been moved
 #          (ret & 2) != 0  - Second point has been moved
-proc clipLineSegment*[T](x1, y1, x2, y2: var T, clipBox: var RectBase[T]): uint =
+proc clipLineSegment*[T](x1, y1, x2, y2: var T, clipBox: RectBase[T]): uint =
   var
     f1 = clippingFlags(x1, y1, clipBox)
     f2 = clippingFlags(x2, y2, clipBox)
@@ -84,7 +84,7 @@ proc clipLineSegment*[T](x1, y1, x2, y2: var T, clipBox: var RectBase[T]): uint 
       return 4
     result = result or 2
 
-proc clipLiangBarsky*[T](x1, y1, x2, y2: float64, clipBox: var RectBase[T], x, y: ptr T): int =
+proc clipLiangBarsky*[T](x1, y1, x2, y2: float64, clipBox: RectBase[T], x, y: ptr T): int =
   const
     nearzero = 1e-30
 

@@ -217,7 +217,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.boneAngle.isEnabled(false)
   result.addCtrl(result.boneAngle)
 
-  var s = newStringStream(human)
+  var s = newStringStream(snake)
   result.root = s.loadBone()
   
   result.ras = initRasterizerScanlineAA()
