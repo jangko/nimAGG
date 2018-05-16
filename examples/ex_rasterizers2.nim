@@ -280,28 +280,28 @@ method onCtrlChange(app: App) =
       renImg.scaleX(src.height().float64 / app.mWidth.value())
 
     app.startTimer()
-    for i in 0.. <200:
+    for i in 0..<200:
       app.draw_aliased_subpix_accuracy(rasAl, renPrim)
       app.mStartAngle += deg2rad(app.mStep.value())
 
     let t2 = app.elapsedTime()
 
     app.startTimer()
-    for i in 0.. <200:
+    for i in 0..<200:
       app.draw_anti_aliased_outline(rasOaa, renOaa)
       app.mStartAngle += deg2rad(app.mStep.value())
 
     let t3 = app.elapsedTime()
 
     app.startTimer()
-    for i in 0.. <200:
+    for i in 0..<200:
       app.draw_anti_aliased_scanline(ras_aa, sl, ren_aa)
       app.mStartAngle += deg2rad(app.mStep.value())
 
     let t4 = app.elapsedTime()
 
     app.startTimer()
-    for i in 0.. <200:
+    for i in 0..<200:
       app.draw_anti_aliased_outline_img(ras_img, ren_img)
       app.mStartAngle += deg2rad(app.mStep.value())
 

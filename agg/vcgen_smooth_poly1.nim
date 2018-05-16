@@ -78,7 +78,7 @@ proc vertex*(self: var VcgenSmoothPoly1, x, y: var float64): uint =
       self.rewind(0)
       self.mStatus = ready
     of ready:
-      if self.mSrcVertices.len() <  2:
+      if self.mSrcVertices.len() < 2:
         cmd = pathCmdStop
         continue
 

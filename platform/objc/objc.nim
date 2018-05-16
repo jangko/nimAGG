@@ -439,7 +439,7 @@ proc argumentTypes*(m: Method): seq[string] =
   if count == 0:
     result = @[]
     return result
-  for i in 0.. <count:
+  for i in 0..<count:
     result[i] = getArgumentType(m, i)
 
 proc method_getDescription(m: Method): ptr objc_method_description {.objcimport.}
@@ -465,7 +465,7 @@ proc imageNames*(): seq[string] =
     result = @[]
     return result
   result = newSeq[string](count.int)
-  for i in 0.. <result.len:
+  for i in 0..<result.len:
     result[i] = $images[i]
 
 proc class_getImageName(cls: Class): cstring {.objcimport.}
@@ -481,7 +481,7 @@ proc classNamesForImage*(image: string): seq[string] =
     result = @[]
     return result
   result = newSeq[string](count.int)
-  for i in 0.. <result.len:
+  for i in 0..<result.len:
     result[i] = $classes[i]
 
 proc objc_getProtocol(name: cstring): Protocol {.objcimport.}
@@ -554,7 +554,7 @@ proc methodDescriptionList*(p: Protocol; isRequiredMethod, isInstanceMethod: BOO
     result = @[]
     return result
   result = newSeq[MethodDescription](count.int)
-  for i in 0.. <count.int:
+  for i in 0..<count.int:
     result[i] = MethodDescription(name: descs[i].name, types: $descs[i].types)
   c_free(raw)
 
@@ -618,7 +618,7 @@ proc attributeList*(property: Property): seq[PropertyAttribute] =
     result = @[]
     return result
   result = newSeq[PropertyAttribute](count.int)
-  for i in 0.. <count.int:
+  for i in 0..<count.int:
     result[i] = PropertyAttribute(name: $attrs[i].name, value: $attrs[i].value)
   c_free(raw)
 

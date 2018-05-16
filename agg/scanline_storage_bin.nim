@@ -127,7 +127,7 @@ proc sweepScanline*(self: var ScanlineStorageBin, sl: var EmbeddedScanlineBin): 
 
 proc byteSize*(self: var ScanlineStorageBin): int =
   var size = sizeof(int32) * 4 # minX, minY, maxX, maxY
-  for i in 0.. <self.mScanlines.len:
+  for i in 0..<self.mScanlines.len:
     size += sizeof(int32) * 2 + # Y, numSpans
             self.mScanlines[i].numSpans * sizeof(int32) * 2 # X, span_len
 
@@ -152,7 +152,7 @@ proc serialize*(self: var ScanlineStorageBin, data: ptr uint8) =
   writeInt32(data, self.maxY().int32) # maxY
   data += sizeof(int32)
 
-  for i in 0.. <self.mScanlines.len:
+  for i in 0..<self.mScanlines.len:
     var slThis = self.mScanlines[i].addr
 
     writeInt32(data, slThis.y.int32)      # Y

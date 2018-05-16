@@ -57,7 +57,7 @@ proc renderAllPaths*[Rasterizer, Scanline, Renderer, VertexSource, ColorT](ras: 
 
   mixin reset, addPath, color
 
-  for i in 0.. <numPaths:
+  for i in 0..<numPaths:
     ras.reset()
     ras.addPath(vs, pathId[i])
     ren.color(col[i])
@@ -326,7 +326,7 @@ proc renderScanlinesCompound*[Rasterizer, ScanlineAA, ScanlineBin,
             if numSpans == 0: break
             inc spanBin
 
-          for i in 0.. <numStyles:
+          for i in 0..<numStyles:
             style = ras.style(i)
             solid = sh.isSolid(style)
 
@@ -438,7 +438,7 @@ proc renderScanlinesCompoundLayered*[Rasterizer, ScanlineAA, BaseRenderer,
           zeroMem(coverBuffer + slStart - minX, slLen * sizeof(CoverType))
           var slY = 0x7FFFFFFF
 
-          for i in 0.. <numStyles:
+          for i in 0..<numStyles:
             style = ras.style(i)
             solid = sh.isSolid(style)
 

@@ -19,7 +19,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 proc polygonToPath(path: var PathStorage, poly: Polygon) =
   path.removeAll()
   for r in poly.regions:
-    for i in 0.. <r.len:
+    for i in 0..<r.len:
       if i == 0:
         path.moveTo(r[i].x, r[i].y)
       else:

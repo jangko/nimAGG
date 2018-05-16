@@ -185,7 +185,7 @@ method onDraw(app: App) =
 
   setBackground()
 
-  for i in 0.. <app.filters.len:
+  for i in 0..<app.filters.len:
     if not app.mFilters[i].status(): continue
 
     var filter = app.filters[i]
@@ -200,7 +200,7 @@ method onDraw(app: App) =
 
     path.removeAll()
     path.moveTo(xs+0.5, ys + dy * filter.calcWeight(-radius))
-    for j in 1.. <n:
+    for j in 1..<n:
       path.lineTo(xs + dx * j.float64 / n.float64 + 0.5, ys + dy * filter.calcWeight(j.float64 / 256.0 - radius))
 
     ras.addPath(tr)
@@ -212,7 +212,7 @@ method onDraw(app: App) =
 
     for xint in 0..255:
       var sum = 0.0
-      for xfract in -ir.. <ir:
+      for xfract in -ir..<ir:
         var xf = xint.float64/256.0 + xfract.float64
         if xf >= -radius or xf <= radius:
           sum += filter.calcWeight(xf)
@@ -237,7 +237,7 @@ method onDraw(app: App) =
     path.removeAll()
     path.moveTo(xs+0.5, ys + dy * weights[0].float64 / imageFilterScale)
 
-    for j in 1.. <nn:
+    for j in 1..<nn:
       path.lineTo(xs + dx * j.float64 / n.float64 + 0.5, ys + dy * weights[j].float64 / imageFilterScale)
 
     ras.addPath(tr)

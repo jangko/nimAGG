@@ -117,5 +117,5 @@ proc removeLast*[T](self: var VertexSequence[T]) = self.vert.removeLast()
 proc removeAll*[T](self: var VertexSequence[T]) = self.vert.setLen(0)
 
 iterator mitems*[T](self: var VertexSequence[T]): var T =
-  for i in 0.. <self.vert.len:
+  for i in 0..<self.vert.len:
     yield self.vert[i]]#

@@ -43,7 +43,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 method onInit(app: App) =
   var
     dx = app.width() / 2.0 - (app.quad.xn(1) - app.quad.xn(0)) / 2.0
-    dy = app.height()/ 2.0 - (app.quad.yn(2) - app.quad.yn(0)) / 2.0
+    dy = app.height() / 2.0 - (app.quad.yn(2) - app.quad.yn(0)) / 2.0
 
   app.quad.xn(0) += dx
   app.quad.yn(0) += dy

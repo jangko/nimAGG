@@ -70,14 +70,14 @@ template stackBlurCalcRgba(name: untyped, T: typed = uint) =
     self.a -= v.a
 
   proc calcPix*[ArgT](self: var name, v: var ArgT, dv: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     v.r = ValueT(self.r / dv)
     v.g = ValueT(self.g / dv)
     v.b = ValueT(self.b / dv)
     v.a = ValueT(self.a / dv)
 
   proc calcPix*[ArgT](self: var name, v: var ArgT, mul: uint, sh: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     v.r = ValueT((self.r * mul) shr sh)
     v.g = ValueT((self.g * mul) shr sh)
     v.b = ValueT((self.b * mul) shr sh)
@@ -113,13 +113,13 @@ template stackBlurCalcRgb(name: untyped, T: typed = uint) =
     self.b -= v.b
 
   proc calcPix*[ArgT](self: var name, v: var ArgT, dv: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     v.r = ValueT(self.r / dv)
     v.g = ValueT(self.g / dv)
     v.b = ValueT(self.b / dv)
 
   proc calcPix*[ArgT](self: var name, v: var ArgT, mul: uint, sh: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     v.r = ValueT((self.r * mul) shr sh)
     v.g = ValueT((self.g * mul) shr sh)
     v.b = ValueT((self.b * mul) shr sh)
@@ -146,11 +146,11 @@ template stackBlurCalcGray(name: untyped, T: typed = uint) =
     self.v -= a.v
 
   proc calcPix*[ArgT](self: var name, a: var ArgT, dv: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     a.v = ValueT(self.v / dv)
 
   proc calcPix*[ArgT](self: var name, a: var ArgT, mul: uint, sh: uint) {.inline.} =
-    type ValueT  = getValueT(ArgT)
+    type ValueT = getValueT(ArgT)
     a.v = ValueT((self.v * mul) shr sh)
 
 stackBlurCalcGray(StackBlurCalcGray)
@@ -174,7 +174,7 @@ proc blurX*[ColorT,CalculatorT,Img](self: var StackBlur[ColorT,CalculatorT], img
     sum, sumIn, sumOut: CalculatorT
     w = img.width()
     h = img.height()
-    wm  = w - 1
+    wm = w - 1
     dv = radius * 2 + 1
     divSum = (radius + 1) * (radius + 1)
     mulSum = 0
@@ -188,7 +188,7 @@ proc blurX*[ColorT,CalculatorT,Img](self: var StackBlur[ColorT,CalculatorT], img
   self.mBuf = newSeq[ColorT](w)
   self.mStack = newSeq[ColorT](dv)
 
-  for y in 0.. <h:
+  for y in 0..<h:
     sum.clear()
     sumIn.clear()
     sumOut.clear()
@@ -206,7 +206,7 @@ proc blurX*[ColorT,CalculatorT,Img](self: var StackBlur[ColorT,CalculatorT], img
       sumIn.add(pix)
 
     stackPtr = radius
-    for x in 0.. <w:
+    for x in 0..<w:
       if mulSum != 0: sum.calcPix(self.mBuf[x], mulSum, shrSum)
       else:           sum.calcPix(self.mBuf[x], divSum)
 
@@ -251,10 +251,10 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
     stackPtr, stackStart: int
     srcPixPtr, dstPixPtr: ptr uint8
     pix, stackPix, sum, sumIn, sumOut: int
-    w   = img.width()
-    h   = img.height()
-    wm  = w - 1
-    hm  = h - 1
+    w = img.width()
+    h = img.height()
+    wm = w - 1
+    hm = h - 1
     dv, mulSum, shrSum: int
     stack: seq[uint8]
     rx = rx
@@ -267,7 +267,7 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
     shrSum = stack_blur8_shr[rx].int
     stack = newSeq[uint8](dv)
 
-    for y in 0.. <h:
+    for y in 0..<h:
       sum = 0
       sumIn = 0
       sumOut = 0
@@ -276,14 +276,14 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
       pix = srcPixPtr[].int
       for i in 0..rx:
         stack[i] = pix.uint8
-        sum     += pix * (i + 1)
+        sum += pix * (i + 1)
         sumOut += pix
 
       for i in 1..rx:
         if i <= wm: srcPixPtr += getPixStep(Img)
         pix = srcPixPtr[].int
         stack[i + rx] = pix.uint8
-        sum   += pix * (rx + 1 - i)
+        sum += pix * (rx + 1 - i)
         sumIn += pix
 
       stackPtr = rx
@@ -291,9 +291,9 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
       if xp > wm: xp = wm
       srcPixPtr = img.pixPtr(xp, y)
       dstPixPtr = img.pixPtr(0, y)
-      for x in 0.. <w:
+      for x in 0..<w:
         dstPixPtr[] = ((sum * mulSum) shr shrSum).uint8
-        dstPixPtr  += getPixStep(Img)
+        dstPixPtr += getPixStep(Img)
 
         sum -= sumOut
 
@@ -309,14 +309,14 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
         stack[stackStart] = pix.uint8
 
         sumIn += pix
-        sum   += sumIn
+        sum += sumIn
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
         stackPix = stack[stackPtr].int
 
         sumOut += stackPix
-        sumIn  -= stackPix
+        sumIn -= stackPix
 
   if ry > 0:
     if ry > 254: ry = 254
@@ -326,7 +326,7 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
     stack = newSeq[uint8](dv)
 
     let stride = img.stride()
-    for x in 0.. <w:
+    for x in 0..<w:
       sum = 0
       sumIn = 0
       sumOut = 0
@@ -335,22 +335,22 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
       pix = srcPixPtr[].int
       for i in 0..ry:
         stack[i] = pix.uint8
-        sum     += pix * (i + 1)
-        sumOut  += pix
+        sum += pix * (i + 1)
+        sumOut += pix
 
       for i in 1..ry:
         if i <= hm: srcPixPtr += stride
         pix = srcPixPtr[].int
         stack[i + ry] = pix.uint8
-        sum    += pix * (ry + 1 - i)
-        sumIn  += pix
+        sum += pix * (ry + 1 - i)
+        sumIn += pix
 
       stackPtr = ry
       yp = ry
       if yp > hm: yp = hm
       srcPixPtr = img.pixPtr(x, yp)
       dstPixPtr = img.pixPtr(x, 0)
-      for y in 0.. <h:
+      for y in 0..<h:
         dstPixPtr[] = ((sum * mulSum) shr shrSum).uint8
         dstPixPtr += stride
         sum -= sumOut
@@ -366,14 +366,14 @@ proc stackBlurGray8*[Img](img: var Img, rx, ry: int) =
 
         stack[stackStart] = pix.uint8
         sumIn += pix
-        sum   += sumIn
+        sum += sumIn
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
         stackPix = stack[stackPtr].int
 
         sumOut += stackPix
-        sumIn  -= stackPix
+        sumIn -= stackPix
 
 proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
   type
@@ -393,10 +393,10 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
     srcPixPtr, dstPixPtr: ptr uint8
     stackPixPtr: ptr ColorT
     sum, sumIn, sumOut: rgb
-    w   = img.width()
-    h   = img.height()
-    wm  = w - 1
-    hm  = h - 1
+    w = img.width()
+    h = img.height()
+    wm = w - 1
+    hm = h - 1
     dv: int
     mulSum, shrSum: uint
     stack: seq[ColorT]
@@ -410,7 +410,7 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
     shrSum = stack_blur8_shr[rx].uint
     stack = newSeq[ColorT](dv)
 
-    for y in 0.. <h:
+    for y in 0..<h:
       sum.r = 0
       sum.g = 0
       sum.b = 0
@@ -423,41 +423,41 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
 
       srcPixPtr = img.pixPtr(0, y)
       for i in 0..rx:
-        stackPixPtr   = stack[i].addr
+        stackPixPtr = stack[i].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
-        sum.r        += srcPixPtr[R].uint * (i + 1).uint
-        sum.g        += srcPixPtr[G].uint * (i + 1).uint
-        sum.b        += srcPixPtr[B].uint * (i + 1).uint
-        sumOut.r     += srcPixPtr[R]
-        sumOut.g     += srcPixPtr[G]
-        sumOut.b     += srcPixPtr[B]
+        sum.r += srcPixPtr[R].uint * (i + 1).uint
+        sum.g += srcPixPtr[G].uint * (i + 1).uint
+        sum.b += srcPixPtr[B].uint * (i + 1).uint
+        sumOut.r += srcPixPtr[R]
+        sumOut.g += srcPixPtr[G]
+        sumOut.b += srcPixPtr[B]
 
       for i in 1..rx:
 
         if i <= wm: srcPixPtr += getPixWidth(Img)
-        stackPixPtr   = stack[i + rx].addr
+        stackPixPtr = stack[i + rx].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
-        sum.r        += srcPixPtr[R].uint * (rx + 1 - i).uint
-        sum.g        += srcPixPtr[G].uint * (rx + 1 - i).uint
-        sum.b        += srcPixPtr[B].uint * (rx + 1 - i).uint
-        sumIn.r      += srcPixPtr[R]
-        sumIn.g      += srcPixPtr[G]
-        sumIn.b      += srcPixPtr[B]
+        sum.r += srcPixPtr[R].uint * (rx + 1 - i).uint
+        sum.g += srcPixPtr[G].uint * (rx + 1 - i).uint
+        sum.b += srcPixPtr[B].uint * (rx + 1 - i).uint
+        sumIn.r += srcPixPtr[R]
+        sumIn.g += srcPixPtr[G]
+        sumIn.b += srcPixPtr[B]
 
       stackPtr = rx
       xp = rx
       if xp > wm: xp = wm
       srcPixPtr = img.pixPtr(xp, y)
       dstPixPtr = img.pixPtr(0, y)
-      for x in 0.. <w:
+      for x in 0..<w:
         dstPixPtr[R] = ((sum.r * mulSum) shr shrSum).uint8
         dstPixPtr[G] = ((sum.g * mulSum) shr shrSum).uint8
         dstPixPtr[B] = ((sum.b * mulSum) shr shrSum).uint8
-        dstPixPtr   += getPixWidth(Img)
+        dstPixPtr += getPixWidth(Img)
 
         sum.r -= sumOut.r
         sum.g -= sumOut.g
@@ -482,9 +482,9 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
         sumIn.r += srcPixPtr[R]
         sumIn.g += srcPixPtr[G]
         sumIn.b += srcPixPtr[B]
-        sum.r   += sumIn.r
-        sum.g   += sumIn.g
-        sum.b   += sumIn.b
+        sum.r += sumIn.r
+        sum.g += sumIn.g
+        sum.b += sumIn.b
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
@@ -493,9 +493,9 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
         sumOut.r += stackPixPtr.r
         sumOut.g += stackPixPtr.g
         sumOut.b += stackPixPtr.b
-        sumIn.r  -= stackPixPtr.r
-        sumIn.g  -= stackPixPtr.g
-        sumIn.b  -= stackPixPtr.b
+        sumIn.r -= stackPixPtr.r
+        sumIn.g -= stackPixPtr.g
+        sumIn.b -= stackPixPtr.b
 
   if ry > 0:
     if ry > 254: ry = 254
@@ -505,7 +505,7 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
     stack = newSeq[ColorT](dv)
 
     let stride = img.stride()
-    for x in 0.. <w:
+    for x in 0..<w:
       sum.r = 0
       sum.g = 0
       sum.b = 0
@@ -518,16 +518,16 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
 
       srcPixPtr = img.pixPtr(x, 0)
       for i in 0..ry:
-        stackPixPtr   = stack[i].addr
+        stackPixPtr = stack[i].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
-        sum.r        += srcPixPtr[R].uint * (i + 1).uint
-        sum.g        += srcPixPtr[G].uint * (i + 1).uint
-        sum.b        += srcPixPtr[B].uint * (i + 1).uint
-        sumOut.r     += srcPixPtr[R]
-        sumOut.g     += srcPixPtr[G]
-        sumOut.b     += srcPixPtr[B]
+        sum.r += srcPixPtr[R].uint * (i + 1).uint
+        sum.g += srcPixPtr[G].uint * (i + 1).uint
+        sum.b += srcPixPtr[B].uint * (i + 1).uint
+        sumOut.r += srcPixPtr[R]
+        sumOut.g += srcPixPtr[G]
+        sumOut.b += srcPixPtr[B]
 
       for i in 1..ry:
 
@@ -536,19 +536,19 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
-        sum.r        += srcPixPtr[R].uint * (ry + 1 - i).uint
-        sum.g        += srcPixPtr[G].uint * (ry + 1 - i).uint
-        sum.b        += srcPixPtr[B].uint * (ry + 1 - i).uint
-        sumIn.r      += srcPixPtr[R]
-        sumIn.g      += srcPixPtr[G]
-        sumIn.b      += srcPixPtr[B]
+        sum.r += srcPixPtr[R].uint * (ry + 1 - i).uint
+        sum.g += srcPixPtr[G].uint * (ry + 1 - i).uint
+        sum.b += srcPixPtr[B].uint * (ry + 1 - i).uint
+        sumIn.r += srcPixPtr[R]
+        sumIn.g += srcPixPtr[G]
+        sumIn.b += srcPixPtr[B]
 
       stackPtr = ry
       yp = ry
       if yp > hm: yp = hm
       srcPixPtr = img.pixPtr(x, yp)
       dstPixPtr = img.pixPtr(x, 0)
-      for y in 0.. <h:
+      for y in 0..<h:
         dstPixPtr[R] = uint8((sum.r * mulSum) shr shrSum)
         dstPixPtr[G] = uint8((sum.g * mulSum) shr shrSum)
         dstPixPtr[B] = uint8((sum.b * mulSum) shr shrSum)
@@ -577,9 +577,9 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
         sumIn.r += srcPixPtr[R]
         sumIn.g += srcPixPtr[G]
         sumIn.b += srcPixPtr[B]
-        sum.r   += sumIn.r
-        sum.g   += sumIn.g
-        sum.b   += sumIn.b
+        sum.r += sumIn.r
+        sum.g += sumIn.g
+        sum.b += sumIn.b
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
@@ -588,9 +588,9 @@ proc stackBlurRgb24*[Img](img: var Img, rx, ry: int) =
         sumOut.r += stackPixPtr.r
         sumOut.g += stackPixPtr.g
         sumOut.b += stackPixPtr.b
-        sumIn.r  -= stackPixPtr.r
-        sumIn.g  -= stackPixPtr.g
-        sumIn.b  -= stackPixPtr.b
+        sumIn.r -= stackPixPtr.r
+        sumIn.g -= stackPixPtr.g
+        sumIn.b -= stackPixPtr.b
 
 proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
   type
@@ -611,10 +611,10 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
     srcPixPtr, dstPixPtr: ptr uint8
     stackPixPtr: ptr ColorT
     sum, sumIn, sumOut: rgba
-    w   = img.width()
-    h   = img.height()
-    wm  = w - 1
-    hm  = h - 1
+    w = img.width()
+    h = img.height()
+    wm = w - 1
+    hm = h - 1
     dv: int
     mulSum, shrSum: uint
     stack: seq[ColorT]
@@ -629,7 +629,7 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
     shrSum = stack_blur8_shr[rx].uint
     stack = newSeq[ColorT](dv)
 
-    for y in 0.. <h:
+    for y in 0..<h:
       sum.r = 0
       sum.g = 0
       sum.b = 0
@@ -645,35 +645,35 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
 
       srcPixPtr = img.pixPtr(0, y)
       for i in 0..rx:
-        stackPixPtr   = stack[i].addr
+        stackPixPtr = stack[i].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
         stackPixPtr.a = srcPixPtr[A]
-        sum.r        += srcPixPtr[R].uint * (i + 1).uint
-        sum.g        += srcPixPtr[G].uint * (i + 1).uint
-        sum.b        += srcPixPtr[B].uint * (i + 1).uint
-        sum.a        += srcPixPtr[A].uint * (i + 1).uint
-        sumOut.r     += srcPixPtr[R]
-        sumOut.g     += srcPixPtr[G]
-        sumOut.b     += srcPixPtr[B]
-        sumOut.a     += srcPixPtr[A]
+        sum.r += srcPixPtr[R].uint * (i + 1).uint
+        sum.g += srcPixPtr[G].uint * (i + 1).uint
+        sum.b += srcPixPtr[B].uint * (i + 1).uint
+        sum.a += srcPixPtr[A].uint * (i + 1).uint
+        sumOut.r += srcPixPtr[R]
+        sumOut.g += srcPixPtr[G]
+        sumOut.b += srcPixPtr[B]
+        sumOut.a += srcPixPtr[A]
 
       for i in 1..rx:
         if i <= wm: srcPixPtr += getPixWidth(Img)
-        stackPixPtr   = stack[i + rx].addr
+        stackPixPtr = stack[i + rx].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
         stackPixPtr.a = srcPixPtr[A]
-        sum.r        += srcPixPtr[R].uint * (rx + 1 - i).uint
-        sum.g        += srcPixPtr[G].uint * (rx + 1 - i).uint
-        sum.b        += srcPixPtr[B].uint * (rx + 1 - i).uint
-        sum.a        += srcPixPtr[A].uint * (rx + 1 - i).uint
-        sumIn.r      += srcPixPtr[R]
-        sumIn.g      += srcPixPtr[G]
-        sumIn.b      += srcPixPtr[B]
-        sumIn.a      += srcPixPtr[A]
+        sum.r += srcPixPtr[R].uint * (rx + 1 - i).uint
+        sum.g += srcPixPtr[G].uint * (rx + 1 - i).uint
+        sum.b += srcPixPtr[B].uint * (rx + 1 - i).uint
+        sum.a += srcPixPtr[A].uint * (rx + 1 - i).uint
+        sumIn.r += srcPixPtr[R]
+        sumIn.g += srcPixPtr[G]
+        sumIn.b += srcPixPtr[B]
+        sumIn.a += srcPixPtr[A]
 
 
       stackPtr = rx
@@ -681,7 +681,7 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
       if xp > wm: xp = wm
       srcPixPtr = img.pixPtr(xp, y)
       dstPixPtr = img.pixPtr(0, y)
-      for x in 0.. <w:
+      for x in 0..<w:
         dstPixPtr[R] = uint8((sum.r * mulSum) shr shrSum)
         dstPixPtr[G] = uint8((sum.g * mulSum) shr shrSum)
         dstPixPtr[B] = uint8((sum.b * mulSum) shr shrSum)
@@ -715,10 +715,10 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
         sumIn.g += srcPixPtr[G]
         sumIn.b += srcPixPtr[B]
         sumIn.a += srcPixPtr[A]
-        sum.r   += sumIn.r
-        sum.g   += sumIn.g
-        sum.b   += sumIn.b
-        sum.a   += sumIn.a
+        sum.r += sumIn.r
+        sum.g += sumIn.g
+        sum.b += sumIn.b
+        sum.a += sumIn.a
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
@@ -728,10 +728,10 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
         sumOut.g += stackPixPtr.g
         sumOut.b += stackPixPtr.b
         sumOut.a += stackPixPtr.a
-        sumIn.r  -= stackPixPtr.r
-        sumIn.g  -= stackPixPtr.g
-        sumIn.b  -= stackPixPtr.b
-        sumIn.a  -= stackPixPtr.a
+        sumIn.r -= stackPixPtr.r
+        sumIn.g -= stackPixPtr.g
+        sumIn.b -= stackPixPtr.b
+        sumIn.a -= stackPixPtr.a
 
   if ry > 0:
 
@@ -742,7 +742,7 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
     stack = newSeq[ColorT](dv)
 
     let stride = img.stride()
-    for x in 0.. <w:
+    for x in 0..<w:
       sum.r = 0
       sum.g = 0
       sum.b = 0
@@ -758,42 +758,42 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
 
       srcPixPtr = img.pixPtr(x, 0)
       for i in 0..ry:
-        stackPixPtr   = stack[i].addr
+        stackPixPtr = stack[i].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
         stackPixPtr.a = srcPixPtr[A]
-        sum.r        += srcPixPtr[R].uint * (i + 1).uint
-        sum.g        += srcPixPtr[G].uint * (i + 1).uint
-        sum.b        += srcPixPtr[B].uint * (i + 1).uint
-        sum.a        += srcPixPtr[A].uint * (i + 1).uint
-        sumOut.r     += srcPixPtr[R]
-        sumOut.g     += srcPixPtr[G]
-        sumOut.b     += srcPixPtr[B]
-        sumOut.a     += srcPixPtr[A]
+        sum.r += srcPixPtr[R].uint * (i + 1).uint
+        sum.g += srcPixPtr[G].uint * (i + 1).uint
+        sum.b += srcPixPtr[B].uint * (i + 1).uint
+        sum.a += srcPixPtr[A].uint * (i + 1).uint
+        sumOut.r += srcPixPtr[R]
+        sumOut.g += srcPixPtr[G]
+        sumOut.b += srcPixPtr[B]
+        sumOut.a += srcPixPtr[A]
 
       for i in 1..ry:
         if i <= hm: srcPixPtr += stride
-        stackPixPtr   = stack[i + ry].addr
+        stackPixPtr = stack[i + ry].addr
         stackPixPtr.r = srcPixPtr[R]
         stackPixPtr.g = srcPixPtr[G]
         stackPixPtr.b = srcPixPtr[B]
         stackPixPtr.a = srcPixPtr[A]
-        sum.r        += srcPixPtr[R].uint * (ry + 1 - i).uint
-        sum.g        += srcPixPtr[G].uint * (ry + 1 - i).uint
-        sum.b        += srcPixPtr[B].uint * (ry + 1 - i).uint
-        sum.a        += srcPixPtr[A].uint * (ry + 1 - i).uint
-        sumIn.r      += srcPixPtr[R]
-        sumIn.g      += srcPixPtr[G]
-        sumIn.b      += srcPixPtr[B]
-        sumIn.a      += srcPixPtr[A]
+        sum.r += srcPixPtr[R].uint * (ry + 1 - i).uint
+        sum.g += srcPixPtr[G].uint * (ry + 1 - i).uint
+        sum.b += srcPixPtr[B].uint * (ry + 1 - i).uint
+        sum.a += srcPixPtr[A].uint * (ry + 1 - i).uint
+        sumIn.r += srcPixPtr[R]
+        sumIn.g += srcPixPtr[G]
+        sumIn.b += srcPixPtr[B]
+        sumIn.a += srcPixPtr[A]
 
       stackPtr = ry
       yp = ry
       if yp > hm: yp = hm
       srcPixPtr = img.pixPtr(x, yp)
       dstPixPtr = img.pixPtr(x, 0)
-      for y in 0.. <h:
+      for y in 0..<h:
         dstPixPtr[R] = uint8((sum.r * mulSum) shr shrSum)
         dstPixPtr[G] = uint8((sum.g * mulSum) shr shrSum)
         dstPixPtr[B] = uint8((sum.b * mulSum) shr shrSum)
@@ -827,10 +827,10 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
         sumIn.g += srcPixPtr[G]
         sumIn.b += srcPixPtr[B]
         sumIn.a += srcPixPtr[A]
-        sum.r   += sumIn.r
-        sum.g   += sumIn.g
-        sum.b   += sumIn.b
-        sum.a   += sumIn.a
+        sum.r += sumIn.r
+        sum.g += sumIn.g
+        sum.b += sumIn.b
+        sum.a += sumIn.a
 
         inc stackPtr
         if stackPtr >= dv: stackPtr = 0
@@ -840,10 +840,10 @@ proc stackBlurRgba32*[Img](img: var Img, rx, ry: int) =
         sumOut.g += stackPixPtr.g
         sumOut.b += stackPixPtr.b
         sumOut.a += stackPixPtr.a
-        sumIn.r  -= stackPixPtr.r
-        sumIn.g  -= stackPixPtr.g
-        sumIn.b  -= stackPixPtr.b
-        sumIn.a  -= stackPixPtr.a
+        sumIn.r -= stackPixPtr.r
+        sumIn.g -= stackPixPtr.g
+        sumIn.b -= stackPixPtr.b
+        sumIn.a -= stackPixPtr.a
 
 template recursiveBlurCalcRgba(name: untyped, T: typed = float64) =
   type
@@ -933,11 +933,11 @@ proc blurX*[ColorT,CalculatorT,Img](self: var RecursiveBlur[ColorT,CalculatorT],
     q = CalcT(if s < 2.5: 3.97156 - 4.14554 * sqrt(1 - 0.26891 * s) else: 0.98711 * s - 0.96330)
     q2 = CalcT(q * q)
     q3 = CalcT(q2 * q)
-    b0 = CalcT(1.0 / (1.578250 +  2.444130 * q + 1.428100 * q2 + 0.422205 * q3))
+    b0 = CalcT(1.0 / (1.578250 + 2.444130 * q + 1.428100 * q2 + 0.422205 * q3))
     b1 = CalcT( 2.44413 * q + 2.85619 * q2 + 1.26661 * q3)
     b2 = CalcT(-1.42810 * q2 + -1.26661 * q3)
     b3 = CalcT(0.422205 * q3)
-    b  = CalcT(1 - (b1 + b2 + b3) * b0)
+    b = CalcT(1 - (b1 + b2 + b3) * b0)
 
   b1 *= b0
   b2 *= b0
@@ -950,9 +950,9 @@ proc blurX*[ColorT,CalculatorT,Img](self: var RecursiveBlur[ColorT,CalculatorT],
 
   self.mSum1 = newSeq[CalculatorT](w)
   self.mSum2 = newSeq[CalculatorT](w)
-  self.mBuf  = newSeq[ColorT](w)
+  self.mBuf = newSeq[ColorT](w)
 
-  for y in 0.. <h:
+  for y in 0..<h:
     var c: CalculatorT
     c.fromPix(img.pixel(0, y))
     self.mSum1[0].calc(b, b1, b2, b3, c, c, c, c)
@@ -961,7 +961,7 @@ proc blurX*[ColorT,CalculatorT,Img](self: var RecursiveBlur[ColorT,CalculatorT],
     c.fromPix(img.pixel(2, y))
     self.mSum1[2].calc(b, b1, b2, b3, c, self.mSum1[1], self.mSum1[0], self.mSum1[0])
 
-    for x in 3.. <w:
+    for x in 3..<w:
       c.fromPix(img.pixel(x, y))
       self.mSum1[x].calc(b, b1, b2, b3, c, self.mSum1[x-1], self.mSum1[x-2], self.mSum1[x-3])
 

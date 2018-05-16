@@ -268,7 +268,7 @@ method onCtrlChange(app: App) =
 
     var numGlyphs = 0
     app.startTimer()
-    for i in 0.. <50:
+    for i in 0..<50:
       numGlyphs += app.drawText(ras, sl, renSolid, renBin)
 
     let t = app.elapsedTime()

@@ -121,7 +121,7 @@ proc fillColorArray[CA,CB](arr: var openArray[CA], start, stop: CB) =
     start = construct(ColorT, start)
     stop = construct(ColorT, stop)
 
-  for i in 0.. <256:
+  for i in 0..<256:
     arr[i] = start.gradient(stop, i.float64 / 255.0)
 
 proc newApp(format: PixFormat, flipY: bool): App =
@@ -203,7 +203,7 @@ method onDraw(app: App) =
     fillColorArray(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
     #gradientColors.print_color()
 
-    x1 = 20 + i* (i + 1)
+    x1 = 20 + i * (i + 1)
     y1 = 40.5
     x2 = 20 + i * (i + 1) + (i - 1) * 4
     y2 = 100.5
@@ -281,9 +281,9 @@ method onDraw(app: App) =
   for ii in 1..13:
     let i = ii.float64
     fillColorArray(gradientColors, initRgba(1,1,1), initRgba(i mod 2, (i mod 3) * 0.5, (i mod 5) * 0.25))
-    calc_linear_gradient_transform(width  - 150,
+    calc_linear_gradient_transform(width - 150,
                                    height - 20 - i * (i + 1.5),
-                                   width  - 20,
+                                   width - 20,
                                    height - 20 - i * (i + 1),
                                    gradientMtx)
 
@@ -312,12 +312,12 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
 
   app.startTimer()
   for i in 0..20000:
-    let r = random(20.0) + 1.0
-    var ell = initEllipse(random(w), random(h), r/2, r/2, int(r) + 10)
+    let r = rand(20.0) + 1.0
+    var ell = initEllipse(rand(w), rand(h), r/2, r/2, int(r) + 10)
     app.ras.reset()
     app.ras.addPath(ell)
     renderScanlines(app.ras, app.sl, ren)
-    ren.color(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)))
+    ren.color(initRgba(rand(1.0), rand(1.0), rand(1.0), 0.5+rand(0.5)))
 
   let t1 = app.elapsedTime()
   var
@@ -335,14 +335,14 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
 
   app.startTimer()
   for i in 0..2000:
-    x1 = random(w)
-    y1 = random(h)
-    x2 = x1 + random(w * 0.5) - w * 0.25
-    y2 = y1 + random(h * 0.5) - h * 0.25
+    x1 = rand(w)
+    y1 = rand(h)
+    x2 = x1 + rand(w * 0.5) - w * 0.25
+    y2 = y1 + rand(h * 0.5) - h * 0.25
 
     fillColorArray(gradientColors,
-                     initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)),
-                     initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
+                     initRgba(rand(1.0), rand(1.0), rand(1.0), 0.5+rand(0.5)),
+                     initRgba(rand(1.0), rand(1.0), rand(1.0), rand(1.0)))
 
     calc_linear_gradient_transform(x1, y1, x2, y2, gradientMtx)
     dashGradient.draw(x1, y1, x2, y2, 10.0, 0)
@@ -355,16 +355,16 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
 
   app.startTimer()
   for i in 0..2000:
-    x1 = random(w)
-    y1 = random(h)
-    x2 = x1 + random(w * 0.4) - w * 0.2
-    y2 = y1 + random(h * 0.4) - h * 0.2
-    x3 = x1 + random(w * 0.4) - w * 0.2
-    y3 = y1 + random(h * 0.4) - h * 0.2
+    x1 = rand(w)
+    y1 = rand(h)
+    x2 = x1 + rand(w * 0.4) - w * 0.2
+    y2 = y1 + rand(h * 0.4) - h * 0.2
+    x3 = x1 + rand(w * 0.4) - w * 0.2
+    y3 = y1 + rand(h * 0.4) - h * 0.2
 
-    spanGouraud.colors(initRgba(random(1.0), random(1.0), random(1.0), 0.5+random(0.5)),
-                        initRgba(random(1.0), random(1.0), random(1.0), random(1.0)),
-                        initRgba(random(1.0), random(1.0), random(1.0), random(1.0)))
+    spanGouraud.colors(initRgba(rand(1.0), rand(1.0), rand(1.0), 0.5+rand(0.5)),
+                        initRgba(rand(1.0), rand(1.0), rand(1.0), rand(1.0)),
+                        initRgba(rand(1.0), rand(1.0), rand(1.0), rand(1.0)))
     spanGouraud.triangle(x1, y1, x2, y2, x3, y3, 0.0)
     app.ras.addPath(spanGouraud)
     renderScanlines(app.ras, app.sl, renGouraud)

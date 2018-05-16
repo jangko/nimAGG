@@ -45,7 +45,7 @@ proc init*(self: var BezierArc, x, y, rx, ry, startAngle, sweepAngle: float64) =
     startAngle = startAngle mod (2.0 * pi)
     sweepAngle = sweepAngle
 
-  if sweepAngle >=  2.0 * pi: sweepAngle =  2.0 * pi
+  if sweepAngle >= 2.0 * pi: sweepAngle = 2.0 * pi
   if sweepAngle <= -2.0 * pi: sweepAngle = -2.0 * pi
 
   if abs(sweepAngle) < 1e-10:
@@ -145,10 +145,10 @@ proc init*(self: var BezierArcSvg, x0, y0, rx, ry, angle: float64, largeArcFlag,
   # Calculate (cx1, cy1)
   var
     sign = if largeArcFlag == sweepFlag: -1.0 else: 1.0
-    sq   = (prx*pry - prx*py1 - pry*px1) / (prx*py1 + pry*px1)
+    sq = (prx*pry - prx*py1 - pry*px1) / (prx*py1 + pry*px1)
     coef = sign * sqrt(if sq < 0.0: 0.0 else: sq)
-    cx1  = coef *  ((rx * y1) / ry)
-    cy1  = coef * -((ry * x1) / rx)
+    cx1 = coef * ((rx * y1) / ry)
+    cy1 = coef * -((ry * x1) / rx)
 
     # Calculate (cx, cy) from (cx1, cy1)
     sx2 = (x0 + x2) / 2.0
@@ -170,7 +170,7 @@ proc init*(self: var BezierArcSvg, x0, y0, rx, ry, angle: float64, largeArcFlag,
   sign = if uy < 0: -1.0 else: 1.0
   var v = p / n
   if v < -1.0: v = -1.0
-  if v >  1.0: v =  1.0
+  if v > 1.0: v = 1.0
   var startAngle = sign * arccos(v)
 
   # Calculate the sweep angle
@@ -179,7 +179,7 @@ proc init*(self: var BezierArcSvg, x0, y0, rx, ry, angle: float64, largeArcFlag,
   sign = if ux * vy - uy * vx < 0: -1.0 else: 1.0
   v = p / n
   if v < -1.0: v = -1.0
-  if v >  1.0: v =  1.0
+  if v > 1.0: v = 1.0
   var sweepAngle = sign * arccos(v)
   if not sweepFlag and sweepAngle > 0:
     sweepAngle -= pi * 2.0

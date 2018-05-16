@@ -67,12 +67,12 @@ proc generateAlphaMask(app: App, cx, cy: int) =
 
   rb.clear(initGray8(0))
   randomize()
-  for i in 0.. <int(app.mNumCb.value()):
-    ell.init(random(cx.float64), random(cy.float64),
-      random(100.0) + 20.0, random(100.0) + 20.0, 100)
+  for i in 0..<int(app.mNumCb.value()):
+    ell.init(rand(cx.float64), rand(cy.float64),
+      rand(100.0) + 20.0, rand(100.0) + 20.0, 100)
 
     app.ras.addPath(ell)
-    ren.color(initGray8(random(127).uint + 128'u, random(127).uint + 128'u))
+    ren.color(initGray8(rand(127).uint + 128'u, rand(127).uint + 128'u))
     renderScanlines(app.ras, sl, ren)
 
 method onResize*(app: App, sx, sy: int) =
@@ -108,15 +108,15 @@ method onDraw(app: App) =
 
   # Render random Bresenham lines and markers
   var markers = initRendererMarkers(rba)
-  for i in 0.. <50:
-    markers.lineColor(initRgba8(random(0x7F).uint, random(0x7F).uint, random(0x7F).uint, random(0x7F).uint + 0x7F'u))
-    markers.fillColor(initRgba8(random(0x7F).uint, random(0x7F).uint, random(0x7F).uint, random(0x7F).uint + 0x7F'u))
-    markers.line(markers.coord(random(width)),
-                 markers.coord(random(height)),
-                 markers.coord(random(width)),
-                 markers.coord(random(height)))
-    markers.marker(random(width).int, random(height).int, random(10) + 5,
-      Marker(random(high(Marker).ord)))
+  for i in 0..<50:
+    markers.lineColor(initRgba8(rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint + 0x7F'u))
+    markers.fillColor(initRgba8(rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint + 0x7F'u))
+    markers.line(markers.coord(rand(width)),
+                 markers.coord(rand(height)),
+                 markers.coord(rand(width)),
+                 markers.coord(rand(height)))
+    markers.marker(rand(width).int, rand(height).int, rand(10) + 5,
+      Marker(rand(high(Marker).ord)))
 
   # Render random anti-aliased lines
   var
@@ -129,10 +129,10 @@ method onDraw(app: App) =
     ras = initRasterizerOutlineAA(ren)
 
   ras.roundCap(true)
-  for i in 0.. <50:
-    ren.color(initRgba8(random(0x7F).uint, random(0x7F).uint, random(0x7F).uint, random(0x7F).uint + 0x7F'u))
-    ras.moveToD(random(width), random(height))
-    ras.lineToD(random(width), random(height))
+  for i in 0..<50:
+    ren.color(initRgba8(rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint, rand(0x7F).uint + 0x7F'u))
+    ras.moveToD(rand(width), rand(height))
+    ras.lineToD(rand(width), rand(height))
     ras.render(false)
 
   # Render random circles with gradient
@@ -146,11 +146,11 @@ method onDraw(app: App) =
     sg  = initSpanGradient(inter, grf, grc, 0, 10)
     rg  = initRendererScanlineAA(rba, sa, sg)
 
-  for i in 0.. <50:
+  for i in 0..<50:
     var
-      x = random(width)
-      y = random(height)
-      r = random(10.0) + 5.0
+      x = rand(width)
+      y = rand(height)
+      r = rand(10.0) + 5.0
 
     grm.reset()
     grm *= transAffineScaling(r / 10.0)
@@ -158,9 +158,9 @@ method onDraw(app: App) =
     grm.invert()
 
     grc.colors(initRgba8(255, 255, 255, 0),
-               initRgba8(random(0x7F).uint,
-                         random(0x7F).uint,
-                         random(0x7F).uint,
+               initRgba8(rand(0x7F).uint,
+                         rand(0x7F).uint,
+                         rand(0x7F).uint,
                          255))
     sg.colorFunction(grc)
     ell.init(x, y, r, r, 32)
@@ -171,7 +171,7 @@ method onDraw(app: App) =
 
 proc transform(app: App, width, height, x, y: float64) =
   var
-    x = x  - (width / 2)
+    x = x - (width / 2)
     y = y - (height / 2)
 
   app.angle = arctan2(y, x)

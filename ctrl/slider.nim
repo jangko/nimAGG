@@ -230,7 +230,7 @@ proc rewind*(self: SliderCtrlImpl, idx: int) =
     if self.mNumSteps != 0:
       var d = (self.mXs2 - self.mXs1) / self.mNumSteps.float64
       if d > 0.004: d = 0.004
-      for i in 0.. <self.mNumSteps + 1:
+      for i in 0..<self.mNumSteps + 1:
         var x = self.mXs1 + (self.mXs2 - self.mXs1) * i.float64 / self.mNumSteps.float64
         self.mStorage.moveTo(x, self.m.y1)
         self.mStorage.lineTo(x - d * (self.m.x2 - self.m.x1), self.m.y1 - self.mBorderExtra)

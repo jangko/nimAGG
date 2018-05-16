@@ -157,7 +157,7 @@ method onCtrlChange(app: App) =
   if app.mAnimate.status() != app.mPrevAnimate:
     if app.mAnimate.status():
       app.onInit()
-      for i in 0.. <6:
+      for i in 0..<6:
         app.mdx[i] = (random(1000.0) - 500.0) * 0.01
         app.mdy[i] = (random(1000.0) - 500.0) * 0.01
       app.waitMode(false)
@@ -187,7 +187,7 @@ proc movePoint(app: App, x, y, dx, dy: var float64) =
   y += dy
 
 method onIdle(app: App) =
-  for i in 0.. <6:
+  for i in 0..<6:
     app.movePoint(app.mPoly.xn(i), app.mPoly.yn(i), app.mdx[i], app.mdy[i])
   app.forceRedraw()
 

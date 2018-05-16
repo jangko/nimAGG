@@ -49,14 +49,14 @@ method onArrowKeys*(self: CtrlBase, left, right, down, up: bool): bool {.base.} 
 
 proc renderCtrl*[Rasterizer, Scanline, Renderer, Ctrl](ras: var Rasterizer,
   sl: var Scanline, ren: var Renderer, c: var Ctrl) =
-  for i in 0.. <c.numPaths():
+  for i in 0..<c.numPaths():
     ras.reset()
     ras.addPath(c, i)
     renderScanlinesAASolid(ras, sl, ren, c.color(i))
 
 proc renderCtrlRs*[Rasterizer, Scanline, Renderer, Ctrl](ras: var Rasterizer,
   sl: var Scanline, ren: var Renderer, c: var Ctrl) =
-  for i in 0.. <c.numPaths():
+  for i in 0..<c.numPaths():
     ras.reset()
     ras.addPath(c, i)
     ren.color(c.color(i))

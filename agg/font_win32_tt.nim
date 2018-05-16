@@ -120,10 +120,10 @@ proc decompose_win32_glyph_bitmap_mono[Scanline, ScanlineStorage](gbuf: string,
     y += h
     pitch = -pitch
 
-  for i in 0.. <h:
+  for i in 0..<h:
    sl.resetSpans()
    var bits = initBitsetIterator(buf, 0)
-   for j in 0.. <w:
+   for j in 0..<w:
      if bits.bit() != 0:
       sl.addCell(x + j, coverFull)
      inc bits
@@ -147,10 +147,10 @@ proc decompose_win32_glyph_bitmap_gray8[Rasterizer, Scanline, ScanlineStorage](g
     y += h
     pitch = -pitch
 
-  for i in 0.. <h:
+  for i in 0..<h:
     sl.resetSpans()
     var p = buf
-    for j in 0.. <w:
+    for j in 0..<w:
       var v = p[]
       if v != 0:
         if v == 64: v = 255
@@ -189,7 +189,7 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
       var pc = cast[ptr TTPOLYCURVE](curPoly)
 
       if pc.wType == TT_PRIM_LINE:
-        for i in 0.. <pc.cpfx:
+        for i in 0..<pc.cpfx:
           x = fx_to_dbl(pc.apfx[i].x)
           y = fx_to_dbl(pc.apfx[i].y)
           if flipY: y = -y
@@ -197,7 +197,7 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
           path.lineTo(ValueT(dbl_to_int26p6(x)), ValueT(dbl_to_int26p6(y)))
 
       if pc.wType == TT_PRIM_QSPLINE:
-        for u in 0.. <pc.cpfx - 1:    # Walk through points in spline
+        for u in 0..<pc.cpfx - 1:    # Walk through points in spline
           var
             pnt_b = pc.apfx[u]        # B is always the current point
             pnt_c = pc.apfx[u+1]
@@ -265,7 +265,7 @@ proc updateSignature*(self: FontEngineWin32TTBase) =
     var gammaHash = 0
     if self.mGlyphRendering in {glyph_ren_native_gray8, glyph_ren_mono, glyph_ren_gray8}:
       var gammaTable = newSeq[uint8](getAAScale(self.mRasterizer.type))
-      for i in 0.. <gammaTable.len:
+      for i in 0..<gammaTable.len:
         gammaTable[i] = self.mRasterizer.applyGamma(i).uint8
       gammaHash = int(crc32(0, gammaTable))
 
@@ -285,7 +285,7 @@ proc updateSignature*(self: FontEngineWin32TTBase) =
     inc self.mChangeStamp
 
 proc findFont*(self: FontEngineWin32TTBase, name: string): int =
-  for i in 0.. <self.mFontNames.len:
+  for i in 0..<self.mFontNames.len:
     if name == self.mFontNames[i]: return i
   result = -1
 
@@ -328,7 +328,7 @@ proc createFont*(self: FontEngineWin32TTBase, typeFace: string, renType: GlyphRe
         if self.mNumFonts >= self.mMaxFonts:
           if self.mOldFont != NULL: selectObject(self.mDC, self.mOldFont)
           deleteObject(self.mFonts[0])
-          for i in 0.. <self.mNumFonts-1:
+          for i in 0..<self.mNumFonts-1:
             shallowCopy(self.mFontNames[i], self.mFontNames[i+1])
             shallowCopy(self.mFonts[i], self.mFonts[i+1])
           self.mNumFonts = self.mMaxFonts - 1
@@ -582,7 +582,7 @@ proc loadKerningPairs*(self: FontEngineWin32TTBase) =
     if self.mNumKerningPairs != 0:
       # Check to see if the kerning pairs are sorted and
       # sort them if they are not.
-      for i in 1.. <self.mNumKerningPairs:
+      for i in 1..<self.mNumKerningPairs:
         if cmp(self.mKerningPairs[i - 1], self.mKerningPairs[i]) >= 0:
           self.sortKerningPairs()
           break
@@ -622,7 +622,7 @@ proc deinit*(self: FontEngineWin32TTBase) =
   if self.mDC != NULL and self.mOldFont != NULL:
     selectObject(self.mDC, self.mOldFont)
 
-  for i in 0.. <self.mNumFonts:
+  for i in 0..<self.mNumFonts:
     deleteObject(self.mFonts[i])
 
 proc init*(self: FontEngineWin32TTBase, flag32: bool, dc: HDC, maxFonts = 32) =

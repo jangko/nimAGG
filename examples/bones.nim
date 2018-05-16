@@ -90,7 +90,7 @@ proc dumpTree(root: Bone, level: int): string =
   if root == nil: return ""
 
   result = ""
-  for i in 0.. <level:
+  for i in 0..<level:
     result.add '#' # We print `#` to signal the level of this bone.
 
   result.add(" $1 $2 $3 $4 $5 $6 $7\n" % [$root.x, $root.y,

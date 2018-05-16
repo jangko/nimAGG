@@ -97,7 +97,7 @@ proc createGrayScalePalette(bmp: ptr BITMAPINFO) =
     rgb = bmp.bmiColors[0].addr
     brightness: int
 
-  for i in 0.. <rgbSize:
+  for i in 0..<rgbSize:
     brightness   = (255 * i) div (rgbSize - 1)
     rgb.rgbBlue  = cast[int8](brightness)
     rgb.rgbGreen = cast[int8](brightness)
@@ -133,7 +133,7 @@ proc create*[T](self: var PixelMap[T], width, height: int, org: int, clearVal: i
     height = height
 
   self.destroy()
-  if width  == 0:  width = 1
+  if width == 0: width = 1
   if height == 0: height = 1
   self.mBpp = org
 
@@ -213,28 +213,28 @@ proc draw*(self: var PixelMap, hdc: HDC, deviceRect: ptr RECT = nil, bmpRect: pt
   var
     bmpX = 0
     bmpY = 0
-    bmpWidth  = self.mBmp.bmiHeader.biWidth
+    bmpWidth = self.mBmp.bmiHeader.biWidth
     bmpHeight = self.mBmp.bmiHeader.biHeight
     deviceX = 0
     deviceY = 0
-    deviceWidth  = self.mBmp.bmiHeader.biWidth
+    deviceWidth = self.mBmp.bmiHeader.biWidth
     deviceHeight = self.mBmp.bmiHeader.biHeight
 
   if bmpRect != nil:
-    bmpX      = bmpRect.left
-    bmpY      = bmpRect.top
-    bmpWidth  = bmpRect.right  - bmpRect.left
+    bmpX = bmpRect.left
+    bmpY = bmpRect.top
+    bmpWidth  = bmpRect.right - bmpRect.left
     bmpHeight = bmpRect.bottom - bmpRect.top
 
-  deviceX      = bmpX
-  deviceY      = bmpY
+  deviceX = bmpX
+  deviceY = bmpY
   deviceWidth  = bmpWidth
   deviceHeight = bmpHeight
 
   if deviceRect != nil:
-    deviceX      = deviceRect.left
-    deviceY      = deviceRect.top
-    deviceWidth  = deviceRect.right  - deviceRect.left
+    deviceX = deviceRect.left
+    deviceY = deviceRect.top
+    deviceWidth = deviceRect.right - deviceRect.left
     deviceHeight = deviceRect.bottom - deviceRect.top
 
   if deviceWidth != bmpWidth or deviceHeight != bmpHeight:
@@ -296,28 +296,28 @@ proc blend[T](self: var PixelMap[T], hdc: HDC, deviceRect: ptr RECT, bmpRect: pt
     var
       bmpX = 0
       bmpY = 0
-      bmpWidth  = self.mBmp.bmiHeader.biWidth
+      bmpWidth = self.mBmp.bmiHeader.biWidth
       bmpHeight = self.mBmp.bmiHeader.biHeight
       deviceX = 0
       deviceY = 0
-      deviceWidth  = self.mBmp.bmiHeader.biWidth
+      deviceWidth = self.mBmp.bmiHeader.biWidth
       deviceHeight = self.mBmp.bmiHeader.biHeight
 
     if bmpRect != nil:
-      bmpX      = bmpRect.left
-      bmpY      = bmpRect.top
-      bmpWidth  = bmpRect.right  - bmpRect.left
+      bmpX = bmpRect.left
+      bmpY = bmpRect.top
+      bmpWidth  = bmpRect.right - bmpRect.left
       bmpHeight = bmpRect.bottom - bmpRect.top
 
-    deviceX      = bmpX;
-    deviceY      = bmpY;
-    deviceWidth  = bmpWidth;
-    deviceHeight = bmpHeight;
+    deviceX = bmpX
+    deviceY = bmpY
+    deviceWidth = bmpWidth
+    deviceHeight = bmpHeight
 
     if deviceRect != nil:
-      deviceX      = deviceRect.left
-      deviceY      = deviceRect.top
-      deviceWidth  = deviceRect.right  - deviceRect.left
+      deviceX = deviceRect.left
+      deviceY = deviceRect.top
+      deviceWidth = deviceRect.right - deviceRect.left
       deviceHeight = deviceRect.bottom - deviceRect.top
 
     var

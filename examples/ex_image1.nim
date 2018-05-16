@@ -81,7 +81,7 @@ method onDraw(app: App) =
     r = height - 60
 
   var
-    ell = initEllipse(width  / 2.0 + 10,
+    ell = initEllipse(width / 2.0 + 10,
                        height / 2.0 + 20 + 10,
                        r / 2.0 + 16.0,
                        r / 2.0 + 16.0, 200)

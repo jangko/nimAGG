@@ -100,7 +100,7 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
     y = float64(y)
 
   if mouseLeft in flags:
-    for i in 0.. <2:
+    for i in 0..<2:
       if sqrt((x-app.mX[i]) * (x-app.mX[i]) + (y-app.mY[i]) * (y-app.mY[i])) < 10.0:
         app.mDx = x - app.mX[i]
         app.mDy = y - app.mY[i]

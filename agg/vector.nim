@@ -110,7 +110,7 @@ template podBVector(name: untyped, SS: int = 6) =
     result = -1 # Impossible to allocate
 
   proc addArray*[T](self: var name[T], p: ptr T, numElem: int) =
-    for i in 0.. <numElem:
+    for i in 0..<numElem:
       self.add(p[i])
 
   proc addArray*[T](self: var name[T], p: openArray[T]) =
@@ -151,12 +151,12 @@ template podBVector(name: untyped, SS: int = 6) =
 
   iterator items*[T](self: var name[T]): T =
     let len = self.len
-    for i in 0.. <len:
+    for i in 0..<len:
       yield self.at(i)
 
   iterator mitems*[T](self: var name[T]): var T =
     let len = self.len
-    for i in 0.. <len:
+    for i in 0..<len:
       yield self.mitem(i)
 
   proc curr*[T](self: var name[T], idx: int): var T =
@@ -179,7 +179,7 @@ template podBVector(name: untyped, SS: int = 6) =
 
   proc serialize*[T](self: var name[T], p: ptr uint8) =
     var p = p
-    for i in 0.. <self.mSize:
+    for i in 0..<self.mSize:
       copyMem(p, self.dataPtr(i), sizeof(T))
       inc(p, sizeof(T))
 
@@ -188,7 +188,7 @@ template podBVector(name: untyped, SS: int = 6) =
     var
       byteSize = byteSize div sizeof(T)
       data = data
-    for i in 0.. <byteSize:
+    for i in 0..<byteSize:
       var p = self.dataPtr()
       copyMem(p, data, sizeof(T))
       inc self.mSize
@@ -202,7 +202,7 @@ template podBVector(name: untyped, SS: int = 6) =
       byteSize = byteSize div sizeof(T)
       data = data
 
-    for i in 0.. <byteSize:
+    for i in 0..<byteSize:
       if start + i < self.mSize:
         copyMem(self.dataPtr(start + i), data, sizeof(T))
       else:
@@ -215,9 +215,9 @@ template podBVector(name: untyped, SS: int = 6) =
     self.removeAll()
     let elemSize = data.size() div sizeof(T)
 
-    for i in 0.. <elemSize:
+    for i in 0..<elemSize:
       var p = cast[ptr uint8](self.dataPtr())
-      for j in 0.. <sizeof(T):
+      for j in 0..<sizeof(T):
         p[] = data.get()
         inc data
         inc p
@@ -228,14 +228,14 @@ template podBVector(name: untyped, SS: int = 6) =
       self.add(emptyVal)
 
     let elemSize = data.size() div sizeof(T)
-    for i in 0.. <elemSize:
+    for i in 0..<elemSize:
       var p: ptr uint8
       if start + i < self.mSize:
         p = cast[ptr uint8](self.dataPtr(start + i))
       else:
         p = cast[ptr uint8](self.dataPtr())
         inc self.mSize
-      for j in 0.. <sizeof(T):
+      for j in 0..<sizeof(T):
         p[] = data.get()
         inc data
         inc p
@@ -327,7 +327,7 @@ proc quickSort*[T](arr: var openArray[T], less: proc(a, b: T): bool, lo = 0, hi 
       # we use base + len/2 as the pivot
       var
         pivot = base + (len div 2)
-        i = base  + 1
+        i = base + 1
         j = limit - 1
 
       swap(arr[base], arr[pivot])
@@ -348,13 +348,13 @@ proc quickSort*[T](arr: var openArray[T], less: proc(a, b: T): bool, lo = 0, hi 
 
       # now, push the largest sub-array
       if j - base > limit - i:
-        stack[top]     = base
+        stack[top] = base
         stack[top + 1] = j
-        base           = i
+        base = i
       else:
-        stack[top]     = i
+        stack[top] = i
         stack[top + 1] = limit
-        limit          = j
+        limit = j
       inc(top, 2)
     else:
       # the sub-array is small, perform insertion sort
@@ -372,7 +372,7 @@ proc quickSort*[T](arr: var openArray[T], less: proc(a, b: T): bool, lo = 0, hi 
 
       if top > 0:
         dec(top, 2)
-        base  = stack[top]
+        base = stack[top]
         limit = stack[top + 1]
       else:
         break
@@ -486,9 +486,9 @@ proc sort*[T](self: var PodVector[T], cmp: proc(a, b: T): bool, lo = 0, hi = -1)
   self.mArray.quickSort(cmp, lo, limit)
 
 iterator items*[T](self: PodVector[T]): T =
-  for i in 0.. <self.mSize:
+  for i in 0..<self.mSize:
     yield self.mArray[i]
 
 iterator mitems*[T](self: var PodVector[T]): var T =
-  for i in 0.. <self.mSize:
+  for i in 0..<self.mSize:
     yield self.mArray[i]

@@ -91,8 +91,8 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
   var image = newSeq[float32](width*height)
 
   var k = 0
-  for y in 0.. <height:
-    for x in 0.. <width:
+  for y in 0..<height:
+    for x in 0..<width:
       if self.mBuffer[k] == 0: image[k] = 0.0
       else: image[k] = Infinity
       inc k
@@ -108,25 +108,25 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
     spann = newSeq[int](len)
 
   # Transform along columns
-  for x in 0.. <width:
-    for y in 0.. <height:
+  for x in 0..<width:
+    for y in 0..<height:
       spanf[y] = image[y * width + x]
 
     # DT of 1d
     dt(spanf, spang, spanr, spann, height)
 
-    for y in 0.. <height:
+    for y in 0..<height:
       image[y * width + x] = spanr[y]
 
   # Transform along rows
-  for y in 0.. <height:
-    for x in 0.. <width:
+  for y in 0..<height:
+    for x in 0..<width:
       spanf[x] = image[y * width + x]
 
     # DT of 1d
     dt(spanf, spang, spanr, spann, width)
 
-    for x in 0.. <width:
+    for x in 0..<width:
       image[y * width + x] = spanr[x]
 
   # Take Square Roots, Min & Max
@@ -135,8 +135,8 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
     max = min
 
   k = 0
-  for y in 0.. <height:
-    for x in 0.. <width:
+  for y in 0..<height:
+    for x in 0..<width:
       image[k] = sqrt(image[k])
       if min > image[k]: min = image[k]
       if max < image[k]: max = image[k]
@@ -149,8 +149,8 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
     var scale = 255.0 / (max - min)
 
     k = 0
-    for y in 0.. <height:
-      for x in 0.. <width:
+    for y in 0..<height:
+      for x in 0..<width:
         self.mBuffer[k] = uint8(iround((image[k] - min) * scale))
         inc k
 

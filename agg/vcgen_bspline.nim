@@ -72,7 +72,7 @@ proc rewind*(self: var VcgenBspline, pathId: int) =
       self.mSplineY.init(self.mSrcVertices.len)
 
 
-    for i in 0.. <self.mSrcVertices.len:
+    for i in 0..<self.mSrcVertices.len:
       let x = if self.mClosed != 0: i + 4 else: i
       self.mSplineX.addPoint(x.float64, self.mSrcVertices[i].x)
       self.mSplineY.addPoint(x.float64, self.mSrcVertices[i].y)

@@ -138,7 +138,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
   ren.copyColorHspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when ColorT is not Rgba8:
       var c = createU(ColorT, len)
-      for i in 0.. <len:
+      for i in 0..<len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorHspan(x, y, len, c)
       dealloc(c)
@@ -148,7 +148,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
   ren.copyColorVspan = proc(x, y, len: int, colors: ptr Rgba8) =
     when ColorT is not Rgba8:
       var c = createU(ColorT, len)
-      for i in 0.. <len:
+      for i in 0..<len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.copyColorVspan(x, y, len, c)
       dealloc(c)
@@ -158,7 +158,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
   ren.blendColorHspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba8:
       var c = createU(ColorT, len)
-      for i in 0.. <len:
+      for i in 0..<len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorHspan(x, y, len, c, covers, cover)
       dealloc(c)
@@ -168,7 +168,7 @@ proc init[PixFmt](ren: PolymorphicAdaptor[PixFmt]) =
   ren.blendColorVspan = proc(x, y, len: int, colors: ptr Rgba8, covers: ptr uint8, cover: uint8) =
     when ColorT is not Rgba8:
       var c = createU(ColorT, len)
-      for i in 0.. <len:
+      for i in 0..<len:
         c[i] = construct(ColorT, colors[i])
       ren.pixf.blendColorVspan(x, y, len, c, covers, cover)
       dealloc(c)
@@ -285,7 +285,7 @@ proc onDraw(pixFormat: PixFormat) =
       let a = ren.pixel(x, y)
       ren.copyPixel(x, y + 50, a)
 
-  for x in 0.. <ren.width():
+  for x in 0..<ren.width():
     for y in 100..150:
       ren.blendPixel(x, y, c, y.uint8)
 
@@ -305,7 +305,7 @@ proc onDraw(pixFormat: PixFormat) =
     spanCover: array[frameWidth - 20, uint8]
     spanColor: array[frameWidth - 20, Rgba8]
 
-  for i in 0.. <spanCover.len:
+  for i in 0..<spanCover.len:
     let x = i.float64 / spanCover.len.float64
     let c = uround(x * 255.0).uint
     spanCover[i] = uint8(c)
@@ -323,14 +323,14 @@ proc onDraw(pixFormat: PixFormat) =
   for x in 300..350:
     ren.copyColorVSpan(x, 30, ren.height() - 30, spanColor[0].addr)
 
-  for y in 350.. <400:
+  for y in 350..<400:
     ren.blendColorHSpan(40, y, ren.width() - 40, spanColor[0].addr, spanCover[0].addr, uint8(y - 350))
 
-  for x in 350.. <400:
+  for x in 350..<400:
     ren.blendColorVSpan(x, 40, ren.height() - 40, spanColor[0].addr, spanCover[0].addr, uint8(x - 350))
 
   let h = ren.height() div 2
-  for i in 0.. <h:
+  for i in 0..<h:
     var p = ren.pixPtr(i, i)
     zeroMem(p, pixElem * sizeof(ValueT))
     inc(p, pixElem)

@@ -145,11 +145,11 @@ method onDraw(app: App) =
     height = app.height()
 
   # Clear the window with a gradient
-  for i in 0.. <pixf.width():
+  for i in 0..<pixf.width():
     var c = initRgba8(255, 255, 0)
     gr[i] = c.gradient(initRgba8(0, 255, 255), float64(i) / float64(pixf.width()))
 
-  for i in 0.. <pixf.height():
+  for i in 0..<pixf.height():
     renb.copyColorHspan(0, i, pixf.width(), gr[0].addr)
 
   pixf.applyGammaDir(lut)

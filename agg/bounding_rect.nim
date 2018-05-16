@@ -12,7 +12,7 @@ proc boundingRect*[VertexSource, CoordT, T](vs: var VertexSource; pathIndex: var
     first = true
     x, y: float64
 
-  for i in 0.. <num:
+  for i in 0..<num:
     vs.rewind(pathIndex[start + i])
     var cmd = vs.vertex(x, y)
     while not isStop(cmd):

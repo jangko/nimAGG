@@ -195,11 +195,11 @@ proc decompose_ft_bitmap_mono[Scanline, ScanlineStorage](bitmap: FT_Bitmap,
     inc(y, int(bitmap.rows))
     pitch = -pitch
 
-  for i in 0.. <int(bitmap.rows):
+  for i in 0..<int(bitmap.rows):
     sl.resetSpans()
     var bits = initBitsetIterator(buf, 0)
 
-    for j in 0.. <int(bitmap.width):
+    for j in 0..<int(bitmap.width):
       if bits.bit() != 0:
         sl.addCell(x + j, coverFull)
       inc bits
@@ -225,10 +225,10 @@ proc decompose_ft_bitmap_gray8[Rasterizer, Scanline, ScanlineStorage](bitmap: va
     inc(y, int(bitmap.rows))
     pitch = -pitch
 
-  for i in 0.. <int(bitmap.rows):
+  for i in 0..<int(bitmap.rows):
     sl.resetSpans()
     var p = buf
-    for j in 0.. <int(bitmap.width):
+    for j in 0..<int(bitmap.width):
       let k = int(p[])
       if k != 0: sl.addCell(x + j, uint(ras.applyGamma(k)))
       inc p
@@ -251,7 +251,7 @@ template geScanlinesBinT*(x: typedesc[FontEngineFreetypeBase]): typedesc =
   ScanlineStorageBin
 
 proc deinit(self: FontEngineFreetypeBase) =
-  for i in 0.. <self.mNumFaces:
+  for i in 0..<self.mNumFaces:
     discard FT_Done_Face(self.mFaces[i])
 
   if self.mLibraryInitialized:
@@ -313,7 +313,7 @@ proc updateSignature(self: FontEngineFreetypeBase) =
     var gammaHash = 0
     if self.mGlyphRendering in {glyph_ren_native_gray8, glyph_ren_mono, glyph_ren_gray8}:
       var gammaTable = newSeq[uint8](getAAScale(self.mRasterizer.type))
-      for i in 0.. <gammaTable.len:
+      for i in 0..<gammaTable.len:
         gammaTable[i] = self.mRasterizer.applyGamma(i).uint8
       gammaHash = int(crc32(0, gammaTable))
 
@@ -352,7 +352,7 @@ proc resolution*(self: FontEngineFreetypeBase, dpi: int) =
   self.updateCharSize()
 
 proc findFace*(self: FontEngineFreetypeBase, faceName: string): int =
-  for i in 0.. <self.mNumFaces:
+  for i in 0..<self.mNumFaces:
     if faceName == self.mFaceNames[i]:
       return i
   result = -1
@@ -371,7 +371,7 @@ proc loadFont*(self: FontEngineFreetypeBase, fontName: string, faceIndex: int,
     else:
       if self.mNumFaces >= self.mMaxFaces:
         discard FT_Done_Face(self.mFaces[0])
-        for i in 0.. <self.mNumFaces-1:
+        for i in 0..<self.mNumFaces-1:
           shallowCopy(self.mFaceNames[i], self.mFaceNames[i+1])
           shallowCopy(self.mFaces[i], self.mFaces[i+1])
         self.mNumFaces = self.mMaxFaces - 1

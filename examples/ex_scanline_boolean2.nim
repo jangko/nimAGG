@@ -105,7 +105,7 @@ proc scanlineP[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras2, sl, storage2)
 
   app.startTimer()
-  for i in 0.. <10:
+  for i in 0..<10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
   t1 = app.elapsedTime() / 10.0
@@ -132,7 +132,7 @@ proc scanlineU[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras2, sl, storage2)
 
   app.startTimer()
-  for i in 0.. <10:
+  for i in 0..<10:
     sboolCombineShapesAA(op, storage1, storage2, sl1, sl2, sl, storage)
 
   t1 = app.elapsedTime() / 10.0
@@ -158,7 +158,7 @@ proc scanlineBin[RendererBase, Rasterizer](app: App, rb: var RendererBase,
   renderScanlines(ras2, sl, storage2)
 
   app.startTimer()
-  for i in 0.. <10:
+  for i in 0..<10:
     sboolCombineShapesBin(op, storage1, storage2, sl1, sl2, sl, storage)
 
   t1 = app.elapsedTime() / 10.0

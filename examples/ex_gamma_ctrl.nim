@@ -138,7 +138,7 @@ method onDraw(app: App) =
 
   var trans = initConvTransform(path, mtx)
 
-  for i in 0.. <35:
+  for i in 0..<35:
     mtx.reset()
     mtx *= transAffineRotation(float64(i) / 35.0 * pi * 2.0)
     mtx *= transAffineTranslation(400, 130)

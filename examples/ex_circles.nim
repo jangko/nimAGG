@@ -39,7 +39,7 @@ var
   spline_b_y = [ 0.385480, 0.128493, 0.021416, 0.271507, 0.713974, 1.000000 ]
 
 proc randomDbl(start, stop: float64): float64 =
-  let r = random(0x7FFF)
+  let r = rand(0x7FFF)
   result = float64(r) * (stop - start) / 32768.0 + start
 
 proc newApp(format: PixFormat, flipY: bool): App =
@@ -70,7 +70,7 @@ proc generate(app: App) =
     rx = app.width()/3.5
     ry = app.height()/3.5
 
-  for i in 0.. <numPoints:
+  for i in 0..<numPoints:
     let
       z = randomDbl(0.0, 1.0)
       x = cos(z * 2.0 * pi) * rx
@@ -80,7 +80,7 @@ proc generate(app: App) =
       angle = randomDbl(0.0, pi * 2.0)
 
     app.points[i].z = z
-    app.points[i].x = app.width()/2.0  + x + cos(angle) * dist
+    app.points[i].x = app.width()/2.0 + x + cos(angle) * dist
     app.points[i].y = app.height()/2.0 + y + sin(angle) * dist
     app.points[i].color = initRgba(app.spline_r.get(z)*0.8, app.spline_g.get(z)*0.8, app.spline_b.get(z)*0.8, 1.0)
 
@@ -103,13 +103,13 @@ method onDraw(app: App) =
     sel = app.mSel.value()
     size = app.mSize.value()
 
-  for i in 0.. <numPoints:
+  for i in 0..<numPoints:
     var
       z = app.points[i].z
       alpha = 1.0
 
     if z < scale1:
-      alpha = 1.0 - (scale1 - z) *  sel * 100.0
+      alpha = 1.0 - (scale1 - z) * sel * 100.0
 
     if z > scale2:
       alpha = 1.0 - (z - scale2) * sel * 100.0
@@ -146,7 +146,7 @@ method onDraw(app: App) =
   renderScanlinesAASolid(app.ras, app.sl, rb, initRgba(0,0,0))
 
 method onIdle(app: App) =
-  for i in 0.. <numPoints:
+  for i in 0..<numPoints:
     app.points[i].x += randomDbl(0, app.mSel.value()) - app.mSel.value()*0.5
     app.points[i].y += randomDbl(0, app.mSel.value()) - app.mSel.value()*0.5
     app.points[i].z += randomDbl(0, app.mSel.value()*0.01) - app.mSel.value()*0.005

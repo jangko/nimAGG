@@ -357,7 +357,7 @@ proc transform*[VC, Trans](self: var PathBase[VC], trans: Trans, pathId = 0) =
 
 proc transformAllPaths*[VC, Trans](self: var PathBase[VC], trans: Trans) =
   let numVer = self.mVert.totalVertices()
-  for idx in 0.. <numVer:
+  for idx in 0..<numVer:
     var x, y: float64
     if isVertex(self.mVert.vertex(idx, x, y)):
       trans.transform(x, y)
@@ -490,7 +490,7 @@ proc perceivePolygonOrientation*[VC](self: var PathBase[VC], start, stop: int): 
     area = 0.0'f64
     x1, y1, x2, y2: float64
 
-  for i in 0.. <np:
+  for i in 0..<np:
     discard self.mVert.vertex(start + i,              x1, y1)
     discard self.mVert.vertex(start + (i + 1) mod np, x2, y2)
     area += x1 * y2 - y1 * x2
@@ -506,7 +506,7 @@ proc invertPolygon*[VC](self: var PathBase[VC], start, stop: int) =
   dec stop # Make "end" inclusive
 
   # Shift all commands to one position
-  for i in start.. <stop:
+  for i in start..<stop:
     self.mVert.modifyCommand(i, self.mVert.command(i + 1))
 
   # Assign starting command to the ending command
@@ -597,7 +597,7 @@ proc arrangeOrientationsAllPaths*[VC](self: var PathBase[VC], orientation: uint)
 proc flipX*[VC](self: var PathBase[VC], x1, x2: float64) =
   var x, y: float64
   let len = self.mVert.totalVertices()
-  for i in 0.. <len:
+  for i in 0..<len:
     let cmd = self.mVert.vertex(i, x, y)
     if isVertex(cmd):
       self.mVert.modifyVertex(i, x2 - x + x1, y)
@@ -605,7 +605,7 @@ proc flipX*[VC](self: var PathBase[VC], x1, x2: float64) =
 proc flipY*[VC](self: var PathBase[VC], y1, y2: float64) =
   var x, y: float64
   let len = self.mVert.totalVertices()
-  for i in 0.. <len:
+  for i in 0..<len:
     let cmd = self.mVert.vertex(i, x, y)
     if isVertex(cmd):
       self.mVert.modifyVertex(i, x, y2 - y + y1)
@@ -626,7 +626,7 @@ proc translate*[VC](self: var PathBase[VC], dx, dy: float64, pathId: int) =
 
 proc translateAllPaths*[VC](self: var PathBase[VC], dx, dy: float64) =
   let numVer = self.mVert.totalVertices()
-  for idx in 0.. <numVer:
+  for idx in 0..<numVer:
     var x, y: float64
     if isVertex(self.mVert.vertex(idx, x, y)):
       inc(x, dx)

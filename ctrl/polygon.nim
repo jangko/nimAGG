@@ -241,7 +241,7 @@ method onMouseButtonDown*(self: PolygonCtrlImpl, x, y: float64): bool =
   self.mNode = -1
   self.mEdge = -1
   self.inverseTransformXY(x, y)
-  for i in 0.. <self.mNumPoints:
+  for i in 0..<self.mNumPoints:
     if sqrt( (x-self.xn(i)) * (x-self.xn(i)) + (y-self.yn(i)) * (y-self.yn(i)) ) < self.mPointRadius:
       self.mDx = x - self.xn(i)
       self.mDy = y - self.yn(i)
@@ -250,7 +250,7 @@ method onMouseButtonDown*(self: PolygonCtrlImpl, x, y: float64): bool =
       break
 
   if not result:
-    for i in 0.. <self.mNumPoints:
+    for i in 0..<self.mNumPoints:
       if self.checkEdge(i, x, y):
         self.mDx = x
         self.mDy = y
@@ -276,7 +276,7 @@ method onMouseMove*(self: PolygonCtrlImpl, x, y: float64, buttonFlag: bool): boo
   if self.mNode == self.mNumPoints:
     dx = x - self.mDx
     dy = y - self.mDy
-    for i in 0.. <self.mNumPoints:
+    for i in 0..<self.mNumPoints:
       self.xn(i) += dx
       self.yn(i) += dy
     self.mDx = x

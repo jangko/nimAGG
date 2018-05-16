@@ -7,22 +7,22 @@ import ctrl.rbox, ctrl.slider, platform.support
 
 proc generateColorRamp[CA,CB](c: var openArray[CA], c1, c2, c3, c4: CB) =
   when CA is not CB:
-    for i in 0.. <85:
+    for i in 0..<85:
       c[i] = construct(CA, c1.gradient(c2, i.float64/85.0))
 
-    for i in 85.. <170:
+    for i in 85..<170:
       c[i] = construct(CA, c2.gradient(c3, (i.float64 - 85.0)/85.0))
 
-    for i in 170.. <256:
+    for i in 170..<256:
       c[i] = construct(CA, c3.gradient(c4, (i.float64 - 170.0)/85.0))
   else:
-    for i in 0.. <85:
+    for i in 0..<85:
       c[i] = c1.gradient(c2, i.float64/85.0)
 
-    for i in 85.. <170:
+    for i in 85..<170:
       c[i] = c2.gradient(c3, (i.float64 - 85.0)/85.0)
 
-    for i in 170.. <256:
+    for i in 170..<256:
       c[i] = c3.gradient(c4, (i.float64 - 170.0)/85.0)
 
 const

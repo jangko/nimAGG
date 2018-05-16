@@ -523,7 +523,7 @@ method onDraw(app: App) =
   mtx *= transAffineTranslation(-(max_x + min_x) * 0.5, -(max_y + min_y) * 0.5)
 
   var
-    scale = width  / (max_x - min_x)
+    scale = width / (max_x - min_x)
     t = height / (max_y - min_y)
 
   if scale > t: scale = t

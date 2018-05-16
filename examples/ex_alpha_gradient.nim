@@ -66,8 +66,8 @@ method onDraw(app: App) =
   #randomize()
   for i in 0..99:
     var
-      ell = initEllipse(random(w), random(h), random(60.0) + 5.0, random(60.0) + 5.0, 50)
-      clr = initRgba(random(1.0), random(1.0), random(1.0), random(1.0) / 2.0)
+      ell = initEllipse(rand(w), rand(h), rand(60.0) + 5.0, rand(60.0) + 5.0, 50)
+      clr = initRgba(rand(1.0), rand(1.0), rand(1.0), rand(1.0) / 2.0)
 
     ras.addPath(ell)
     renderScanlinesAAsolid(ras, sl, rb, clr)

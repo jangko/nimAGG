@@ -113,8 +113,8 @@ proc vertex*(self: var Curve3Inc, x, y: var float64): uint =
     dec self.mStep
     return pathCmdLineTo
 
-  self.mFx  += self.mDfx
-  self.mFy  += self.mDfy
+  self.mFx += self.mDfx
+  self.mFy += self.mDfy
   self.mDfx += self.mDdfx
   self.mDfy += self.mDdfy;
   x = self.mFx
@@ -396,10 +396,10 @@ proc vertex*(self: var Curve4Inc, x, y: var float64): uint =
     dec self.mStep
     return pathCmdLineTo
 
-  self.mFx   += self.mDfx
-  self.mFy   += self.mDfy
-  self.mDfx  += self.mDdfx
-  self.mDfy  += self.mDdfy
+  self.mFx += self.mDfx
+  self.mFy += self.mDfy
+  self.mDfx += self.mDdfx
+  self.mDfy += self.mDdfy
   self.mDdfx += self.mDddfx
   self.mDdfy += self.mDddfy
 

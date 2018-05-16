@@ -174,12 +174,12 @@ method onCtrlChange(app: App) =
     app.mTest.status(false)
 
     app.startTimer()
-    for i in 0.. <1000:
+    for i in 0..<1000:
       app.drawAliased()
     let t1 = app.elapsedTime()
 
     app.startTimer()
-    for i in 0.. <1000:
+    for i in 0..<1000:
       app.drawAntiAliased()
     let t2 = app.elapsedTime()
 

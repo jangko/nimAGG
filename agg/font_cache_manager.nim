@@ -72,7 +72,7 @@ proc newFontCachePool*(maxFonts = 32): FontCachePool =
   result.mCurFont = nil
 
 proc findFont(self: FontCachePool, fontSignature: string): int =
-  for i in 0.. <self.mNumFonts:
+  for i in 0..<self.mNumFonts:
     if self.mFonts[i].fontIs(fontSignature):
       return i
   result = -1
@@ -86,7 +86,7 @@ proc font*(self: FontCachePool, fontSignature: string, resetCache = false) =
     self.mCurFont = self.mFonts[idx]
   else:
     if self.mNumFonts >= self.mMaxFonts:
-      for i in 0.. <self.mFonts.len-1:
+      for i in 0..<self.mFonts.len-1:
         shallowCopy(self.mFonts[i], self.mFonts[i+1])
       self.mNumFonts = self.mMaxFonts - 1
 

@@ -356,7 +356,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
     h = h
 
   if idx < maxImages:
-    if w  == 0: w = self.mSpecific.mWinPmap.width()
+    if w == 0: w = self.mSpecific.mWinPmap.width()
     if h == 0: h = self.mSpecific.mWinPmap.height()
 
     self.mSpecific.mImgPmap[idx].create(w, h, self.mSpecific.mBpp)

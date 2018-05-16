@@ -121,8 +121,8 @@ proc copyHLine*[PixFmt, ColorT](self: var RendererBase[PixFmt], x1, y, x2: int, 
     x2 = x2
 
   if x1 > x2: swap(x1, x2)
-  if y  > self.ymax(): return
-  if y  < self.ymin(): return
+  if y > self.ymax(): return
+  if y < self.ymin(): return
   if x1 > self.xmax(): return
   if x2 < self.xmin(): return
 
@@ -161,8 +161,8 @@ proc blendHline*[PixFmt, ColorT](self: RendererBase[PixFmt], x1, y, x2: int, c: 
     x2 = x2
 
   if x1 > x2: swap(x1, x2)
-  if y  > self.ymax(): return
-  if y  < self.ymin(): return
+  if y > self.ymax(): return
+  if y < self.ymin(): return
   if x1 > self.xmax(): return
   if x2 < self.xmin(): return
 
@@ -459,11 +459,11 @@ proc blendFrom*[PixFmt, SrcPixelFormatRenderer](self: var RendererBase[PixFmt], 
         var
           x1src = rsrc.x1
           x1dst = rdst.x1
-          len   = rc.x2
+          len = rc.x2
         if rw.x1 > x1src:
           x1dst += rw.x1 - x1src
-          len   -= rw.x1 - x1src
-          x1src  = rw.x1
+          len -= rw.x1 - x1src
+          x1src = rw.x1
         if len > 0:
           if x1src + len-1 > rw.x2:
             len -= x1src + len - rw.x2 - 1
@@ -508,7 +508,7 @@ proc blendFromColor*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererB
           len   = rc.x2
         if rw.x1 > x1src:
           x1dst += rw.x1 - x1src
-          len   -= rw.x1 - x1src
+          len -= rw.x1 - x1src
           x1src  = rw.x1
         if len > 0:
           if x1src + len-1 > rw.x2:
@@ -549,10 +549,10 @@ proc blendFromLut*[PixFmt, SrcPixelFormatRenderer, ColorT](self: var RendererBas
         var
           x1src = rsrc.x1
           x1dst = rdst.x1
-          len   = rc.x2
+          len = rc.x2
         if rw.x1 > x1src:
           x1dst += rw.x1 - x1src
-          len   -= rw.x1 - x1src
+          len -= rw.x1 - x1src
           x1src  = rw.x1
         if len > 0:
           if x1src + len-1 > rw.x2:

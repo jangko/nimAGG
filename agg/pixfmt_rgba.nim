@@ -540,7 +540,7 @@ proc forEachPixel[PixFmt, Func](self: PixFmt, f: Func) =
   type
     ValueT = getValueT(PixFmt)
   let h = self.height()
-  for y in 0.. <h:
+  for y in 0..<h:
     let r = self.mRbuf[].row(y)
     if r.data != nil:
       var

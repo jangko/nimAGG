@@ -116,7 +116,7 @@ proc transformImage(app: App, angle: float64) =
   r *= 0.5
   r -= 4.0
   var
-    ell   = initEllipse(width  / 2.0, height / 2.0, r, r, 200)
+    ell   = initEllipse(width / 2.0, height / 2.0, r, r, 200)
     tr    = initConvTransform(ell, srcMtx)
     inter = initSpanInterpolatorLinear(imgMtx)
     filter  = initImageFilterLut()

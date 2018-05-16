@@ -2,7 +2,7 @@ import agg/[basics, color_conv_rgb8, color_conv_rgb16, color_conv, rendering_buf
 
 proc compare(title: string, a, b: ptr uint8, width: int) =
   echo title
-  for i in 0.. <width:
+  for i in 0..<width:
     if a[i] != b[i]:
       echo title, " failed at ", i, ", ", int(a[i]), " : ", int(b[i])
       quit(1)
@@ -18,7 +18,7 @@ template test_rendering_buffer(renbuf, tester: untyped) =
       frame_height = 100
 
     var src = newString(frame_width * frame_height * 4)
-    for i in 0.. <src.len: src[i] = (i mod 255).chr
+    for i in 0..<src.len: src[i] = (i mod 255).chr
     var srcbuf = renbuf(cast[ptr uint8](src[0].addr), frame_width, frame_height, frame_width * 4)
 
     var dst = newString(frame_width * frame_height * 4)

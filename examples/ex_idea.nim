@@ -192,7 +192,7 @@ method onDraw(app: App) =
 
   app.pFlag = if app.evenOdd.status(): fillEvenOdd else: fillNonZero
 
-  for i in 0.. <app.nPaths:
+  for i in 0..<app.nPaths:
     app.ras.fillingRule(app.pFlag)
     if app.roundoff.status(): app.ras.addPath(fillRoundOff, app.attr[i].index)
     else: app.ras.addPath(fill, app.attr[i].index)

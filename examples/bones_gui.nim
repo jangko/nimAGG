@@ -291,7 +291,7 @@ proc drawColorWheel(app: App, x, y, w, h, t: float64) =
 
   app.save()
   
-  for i in 0.. <6:
+  for i in 0..<6:
     let a0 = i.float64 / 6.0f * pi * 2.0f - aeps
     let a1 = (i.float64+1.0f) / 6.0f * pi * 2.0f + aeps
     app.beginPath()
@@ -388,14 +388,14 @@ proc drawGraph(app: App, x, y, w, h, t: float64) =
   samples[4] = (1+math.sin(t*1.6245f  + math.cos(t*0.254f)*0.3f))*0.5f
   samples[5] = (1+math.sin(t*0.345f   + math.cos(t*0.03f)*0.6f))*0.5f
 
-  for i in 0.. <6:
+  for i in 0..<6:
     sx[i] = x+i.float64*dx
     sy[i] = y+h*samples[i]*0.8
   
   # Graph background
   #app.beginPath()
   #app.moveTo(sx[0], sy[0])
-  #for i in 1.. <6:
+  #for i in 1..<6:
   #  app.bezierTo(sx[i-1]+dx*0.5f,sy[i-1], sx[i]-dx*0.5f,sy[i], sx[i],sy[i])
   #app.lineTo(x+w, 0)
   #app.lineTo(x, 0)
@@ -404,7 +404,7 @@ proc drawGraph(app: App, x, y, w, h, t: float64) =
   # Graph line
   app.beginPath()
   app.moveTo(sx[0], sy[0]+2)
-  for i in 1.. <6:
+  for i in 1..<6:
     app.bezierTo(sx[i-1]+dx*0.5f,sy[i-1]+2, sx[i]-dx*0.5f,sy[i]+2, sx[i],sy[i]+2)
   app.strokeColor(initRgba8(0,0,0,32))
   app.strokeWidth(3.0f)
@@ -412,25 +412,25 @@ proc drawGraph(app: App, x, y, w, h, t: float64) =
   
   app.beginPath()
   app.moveTo(sx[0], sy[0])
-  for i in 1.. <6:
+  for i in 1..<6:
     app.bezierTo(sx[i-1]+dx*0.5f,sy[i-1], sx[i]-dx*0.5f,sy[i], sx[i],sy[i])
   app.strokeColor(initRgba8(0,160,192,255))
   app.strokeWidth(3.0f)
   app.stroke()
 
   # Graph sample pos
-  #for i in 0.. <6:    
+  #for i in 0..<6:    
   #  app.beginPath()
   #  app.rect(sx[i]-10, sy[i]-10+2, 20,20)
   #  app.radialGradient(sx[i],sy[i]+2, 3.0f,8.0f, initRgba8(0,0,0,32), initRgba8(0,0,0,0))
 
   app.beginPath()
-  for i in 0.. <6:    
+  for i in 0..<6:    
     app.circle(sx[i], sy[i], 4.0f)
   app.fillColor(initRgba8(0,160,192,255))
   app.fill()
   app.beginPath()
-  for i in 0.. <6:    
+  for i in 0..<6:    
     app.circle(sx[i], sy[i], 2.0f)
   app.fillColor(initRgba8(220,220,220,255))
   app.fill()

@@ -104,8 +104,8 @@ proc rewind(self: var CompoundShape, pathId: int) =
 proc vertex(self: var CompoundShape, x, y: var float64): uint =
   self.trans.vertex(x, y)
 
-proc scale(self: CompoundShape): float64 =
-  self.affine.scale()
+#proc scale(self: CompoundShape): float64 =
+#  self.affine.scale()
 
 proc scale(self: var CompoundShape, w, h: float64) =
   self.affine.reset()
@@ -129,7 +129,7 @@ proc hitTest(self: var CompoundShape, x, y, r: float64): int =
   self.affine.inverseTransform(x, y)
   var r = r / self.affine.scale()
 
-  for i in 0.. <self.path.totalVertices():
+  for i in 0..<self.path.totalVertices():
     var
       vx, vy: float64
       cmd = self.path.vertex(i, vx, vy)
@@ -188,8 +188,8 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.gradient = @[]
 
   randomize()
-  for i in 0.. <100:
-    result.colors[i] = initRgba8(random(0xFF), random(0xFF), random(0xFF), 230)
+  for i in 0..<100:
+    result.colors[i] = initRgba8(rand(0xFF), rand(0xFF), rand(0xFF), 230)
     result.colors[i].applyGammaDir(result.gamma)
     result.colors[i].premultiply()
 
@@ -223,7 +223,7 @@ method onDraw(app: App) =
     c1 = initRgba(255, 0, 0, 180)
     c2 = initRgba(0, 0, 255, 180)
 
-  for i in 0.. <width.int:
+  for i in 0..<width.int:
     app.gradient[i] = initRgba8(c1.gradient(c2, i.float64 / width))
     app.gradient[i].premultiply()
 
@@ -236,7 +236,7 @@ method onDraw(app: App) =
   #rasc.fillingRule(fillEvenOdd)
 
   app.startTimer()
-  for i in 0.. <app.shape.paths():
+  for i in 0..<app.shape.paths():
     if app.shape.style(i).leftFill >= 0 or app.shape.style(i).rightFill >= 0:
       rasc.styles(app.shape.style(i).leftFill, app.shape.style(i).rightFill)
       rasc.addPath(shape, app.shape.style(i).pathId)
@@ -256,7 +256,7 @@ method onDraw(app: App) =
     stroke.width(sqrt(app.scale.scale()))
     stroke.lineJoin(roundJoin)
     stroke.lineCap(roundCap)
-    for i in 0.. <app.shape.paths():
+    for i in 0..<app.shape.paths():
       ras.reset()
       if app.shape.style(i).line >= 0:
         ras.addPath(stroke, app.shape.style(i).pathId)

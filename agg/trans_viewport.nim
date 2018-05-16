@@ -158,8 +158,8 @@ proc deserialize*(self: var TransViewport, p: ptr uint8) =
 
 proc update*(self: var TransViewport) =
   const epsilon = 1e-30
-  if abs(self.mWorld.x1  - self.mWorld.x2)  < epsilon or
-     abs(self.mWorld.y1  - self.mWorld.y2)  < epsilon or
+  if abs(self.mWorld.x1 - self.mWorld.x2) < epsilon or
+     abs(self.mWorld.y1 - self.mWorld.y2) < epsilon or
      abs(self.mDevice.x1 - self.mDevice.x2) < epsilon or
      abs(self.mDevice.y1 - self.mDevice.y2) < epsilon:
      self.mW.x1 = self.mWorld.x1
@@ -168,8 +168,8 @@ proc update*(self: var TransViewport) =
      self.mW.y2 = self.mWorld.y2 + 1.0
      self.mDx1 = self.mDevice.x1
      self.mDy1 = self.mDevice.y1
-     self.mKx  = 1.0
-     self.mKy  = 1.0
+     self.mKx = 1.0
+     self.mKy = 1.0
      self.mIsValid = false
      return
 

@@ -225,7 +225,7 @@ method onDraw(app: App) =
   mtxG1.invert()
 
   var colorProfile: array[256, Rgba8] # color_type is defined in pixel_formats.h
-  for i in 0.. <256:
+  for i in 0..<256:
     colorProfile[i] = initRgba8(initRgba(app.mSplineR.spline()[i],
       app.mSplineG.spline()[i],
       app.mSplineB.spline()[i],

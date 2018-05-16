@@ -94,7 +94,7 @@ proc len*[ColorT](self: GradientLinearColor[ColorT]): int = self.mSize
 
 proc `[]`*[ColorT](self: var GradientLinearColor[ColorT], v: int): ColorT =
   self.mC1.gradient(self.mC2, v.float64 / float64(self.mSize - 1))
-  
+
 proc colors*[ColorA, ColorB](self: var GradientLinearColor[ColorA], c1, c2: ColorB, size = 256) =
   when ColorA is not ColorB:
     self.mC1 = construct(ColorA, c1)
@@ -140,7 +140,7 @@ proc updateValues(self: var GradientRadialFocus) =
   # into zero. In this of we just move the focal center by
   # one subpixel unit possibly in the direction to the origin (0,0)
   # and calculate the values again.
-  self.mR2  = float64(self.mR)  * float64(self.mR)
+  self.mR2 = float64(self.mR) * float64(self.mR)
   self.mFx2 = float64(self.mFx) * float64(self.mFx)
   self.mFy2 = float64(self.mFy) * float64(self.mFy)
   var d = self.mR2 - (self.mFx2 + self.mFy2)
@@ -162,7 +162,7 @@ proc initGradientRadialFocus*(): GradientRadialFocus =
   result.updateValues()
 
 proc initGradientRadialFocus*(r, fx, fy: float64): GradientRadialFocus =
-  result.mR  = iround(r  * gradientSubpixelScale)
+  result.mR = iround(r * gradientSubpixelScale)
   result.mFx = iround(fx * gradientSubpixelScale)
   result.mFy = iround(fy * gradientSubpixelScale)
   result.updateValues()
@@ -174,12 +174,12 @@ template construct*(x: typedesc[GradientRadialFocus]): untyped =
   initGradientRadialFocus(r, fx, fy)
 
 proc init*(self: var GradientRadialFocus, r, fx, fy: float64) =
-  self.mR  = iround(r  * gradientSubpixelScale)
+  self.mR = iround(r * gradientSubpixelScale)
   self.mFx = iround(fx * gradientSubpixelScale)
   self.mFy = iround(fy * gradientSubpixelScale)
   self.updateValues()
 
-proc radius*(self: GradientRadialFocus): float64 = float64(self.mR)  / gradientSubpixelScale
+proc radius*(self: GradientRadialFocus): float64 = float64(self.mR) / gradientSubpixelScale
 proc focusX*(self: GradientRadialFocus): float64 = float64(self.mFx) / gradientSubpixelScale
 proc focusY*(self: GradientRadialFocus): float64 = float64(self.mFy) / gradientSubpixelScale
 
@@ -261,5 +261,5 @@ template construct*[T](x: typedesc[GradientReflectAdaptor[T]], val: untyped): un
 proc calculate*[GradientF](self: var GradientReflectAdaptor[GradientF], x, y, d: int): int {.inline.} =
   let d2 = d shl 1
   result = self.mGradient[].calculate(x, y, d) mod d2
-  if result <  0: result += d2
+  if result < 0: result += d2
   if result >= d: result  = d2 - result
