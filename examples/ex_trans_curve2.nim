@@ -193,10 +193,10 @@ method onCtrlChange(app: App) =
     if app.mAnimate.status():
       app.onInit()
       for i in 0..<6:
-        app.mdx1[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdy1[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdx2[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdy2[i] = (random(1000.0) - 500.0) * 0.01
+        app.mdx1[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdy1[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdx2[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdy2[i] = (rand(1000.0) - 500.0) * 0.01
       app.waitMode(false)
     else:
       app.waitMode(true)

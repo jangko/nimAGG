@@ -76,8 +76,10 @@ proc crc32[T](crc: uint32, buf: T): uint32 =
 
   var crcu32 = not crc
   for b in buf:
-    crcu32 = (crcu32 shr 4) xor kcrc32[(crcu32 and 0xF) xor (int(b) and 0xF)]
-    crcu32 = (crcu32 shr 4) xor kcrc32[(crcu32 and 0xF) xor (int(b) shr 4)]
+    #crcu32 = (crcu32 shr 4) xor kcrc32[int(crcu32 and 0xF'u32) xor (int(b) and 0xF)]
+    #crcu32 = (crcu32 shr 4) xor kcrc32[int(crcu32 and 0xF'u32) xor (int(b) shr 4)]
+    crcu32 = (crcu32 shr 4) xor kcrc32[int((crcu32 and 0xF) xor (uint32(b) and 0xF'u32))]
+    crcu32 = (crcu32 shr 4) xor kcrc32[int((crcu32 and 0xF) xor (uint32(b) shr 4'u32))]
 
   result = not crcu32
 

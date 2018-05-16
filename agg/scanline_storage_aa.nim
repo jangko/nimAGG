@@ -14,7 +14,7 @@ proc initScanlineCellStorage*[T](v: ScanlineCellStorage[T]): ScanlineCellStorage
 proc removeAll*[T](self: var ScanlineCellStorage[T]) =
   self.mCells.setLen(0)
 
-proc `=`*[T](self: var ScanlineCellStorage[T], v: ScanlineCellStorage[T]) =
+proc copy*[T](self: var ScanlineCellStorage[T], v: ScanlineCellStorage[T]) =
   self.mCells = v.mCells
 
 proc addCells*[T](self: var ScanlineCellStorage[T], cells: ptr T, numCells: int): int =
@@ -316,7 +316,7 @@ type
   ScanlineStorageAA32* = ScanlineStorageAA[uint32]
 
 proc initScanlineStorageAA8*(): ScanlineStorageAA8 =
-  initScanlineStorageAA[uint8]()
+  result = initScanlineStorageAA[uint8]()
 
 proc initScanlineStorageAA16*(): ScanlineStorageAA16 =
   initScanlineStorageAA[uint16]()
