@@ -30,13 +30,13 @@ proc `[]`(self: GradientLinearColor[Rgba8], v: int): Rgba8 =
   result.b = ValueT((((self.mC2.b.int - self.mC1.b.int) * v) + (self.mC1.b.int shl baseShift)) shr baseShift)
   result.a = ValueT((((self.mC2.a.int - self.mC1.a.int) * v) + (self.mC1.a.int shl baseShift)) shr baseShift)
 
-proc `[]`(self: GradientLinearColor[Gray8], v: int): Gray8 =
-  type
-    ValueT = getValueT(Gray8)
-  const baseShift = getBaseShift(Gray8)
-
-  result.v = ValueT((((self.mC2.v.int - self.mC1.v.int) * v) + (self.mC1.v.int shl baseShift)) shr baseShift)
-  result.a = ValueT((((self.mC2.a.int - self.mC1.a.int) * v) + (self.mC1.a.int shl baseShift)) shr baseShift)
+#proc `[]`(self: GradientLinearColor[Gray8], v: int): Gray8 =
+#  type
+#    ValueT = getValueT(Gray8)
+#  const baseShift = getBaseShift(Gray8)
+#
+#  result.v = ValueT((((self.mC2.v.int - self.mC1.v.int) * v) + (self.mC1.v.int shl baseShift)) shr baseShift)
+#  result.a = ValueT((((self.mC2.a.int - self.mC1.a.int) * v) + (self.mC1.a.int shl baseShift)) shr baseShift)
 
 const
   frameWidth = 512
@@ -81,9 +81,9 @@ method onDraw(app: App) =
         xx  = x.float64
         yy  = y.float64
         nn  = n.float64
-        x1 = int(width  * xx / nn)
+        x1 = int(width * xx / nn)
         y1 = int(height * yy / nn)
-        x2 = int(width  * (xx + 1) / nn)
+        x2 = int(width * (xx + 1) / nn)
         y2 = int(height * (yy + 1) / nn)
       rb.addClipBox(x1 + 5, y1 + 5, x2 - 5, y2 - 5)
 
@@ -124,10 +124,10 @@ method onDraw(app: App) =
   #randomize()
   var m = initRendererMarkers(rb)
   for i in 0..<50:
-    m.lineColor(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
-    m.fillColor(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
-    m.line(m.coord(random(width)), m.coord(random(height)), m.coord(random(width)), m.coord(random(height)))
-    m.marker(random(width).int, random(height).int, random(10) + 5, Marker(random(high(Marker).ord)))
+    m.lineColor(initRgba8(rand(0x7F), rand(0x7F), rand(0x7F), rand(0x7F) + 0x7F))
+    m.fillColor(initRgba8(rand(0x7F), rand(0x7F), rand(0x7F), rand(0x7F) + 0x7F))
+    m.line(m.coord(rand(width)), m.coord(rand(height)), m.coord(rand(width)), m.coord(rand(height)))
+    m.marker(rand(width).int, rand(height).int, rand(10) + 5, Marker(rand(high(Marker).ord)))
 
   # Render random anti-aliased lines
   var
@@ -139,9 +139,9 @@ method onDraw(app: App) =
   profile.width(w)
   rasAA.roundCap(true)
   for i in 0..<50:
-    renAA.color(initRgba8(random(0x7F), random(0x7F), random(0x7F), random(0x7F) + 0x7F))
-    rasAA.moveToD(random(width), random(height))
-    rasAA.lineToD(random(width), random(height))
+    renAA.color(initRgba8(rand(0x7F), rand(0x7F), rand(0x7F), rand(0x7F) + 0x7F))
+    rasAA.moveToD(rand(width), rand(height))
+    rasAA.lineToD(rand(width), rand(height))
     rasAA.render(false)
 
   # Render random circles with gradient
@@ -156,15 +156,15 @@ method onDraw(app: App) =
 
   for i in 0..<50:
     let
-      x = random(width)
-      y = random(height)
-      radius = random(10.0) + 5.0
+      x = rand(width)
+      y = rand(height)
+      radius = rand(10.0) + 5.0
     grm.reset()
     grm *= transAffineScaling(radius / 10.0)
     grm *= transAffineTranslation(x, y)
     grm.invert()
     grc.colors(initRgba8(255, 255, 255, 0),
-               initRgba8(random(0x7F), random(0x7F), random(0x7F), 255))
+               initRgba8(rand(0x7F), rand(0x7F), rand(0x7F), 255))
 
     sg.colorFunction(grc)
     ell.init(x, y, radius, radius, 32)

@@ -137,11 +137,20 @@ template podBVector(name: untyped, SS: int = 6) =
   proc `[]=`*[T](self: var name[T], i: int, val: T) =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])] = val
 
+  proc `[]=`*[T](self: var name[T], i: BackwardsIndex, val: T) =
+    self.mBlocks[(self.mSize - i.int) shr blockShift(name[T])][(self.mSize - i.int) and blockMask(name[T])] = val
+
   proc `[]`*[T](self: var name[T], i: int): var T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
 
   proc `[]`*[T](self: name[T], i: int): T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
+
+  proc `[]`*[T](self: name[T], i: BackwardsIndex): T =
+    `[]`(self, self.mSize - i.int)
+
+  proc `[]`*[T](self: var name[T], i: BackwardsIndex): var T =
+    `[]`(self, self.mSize - i.int)
 
   proc at*[T](self: var name[T], i: int): T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
