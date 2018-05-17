@@ -143,7 +143,7 @@ proc read(self: var Molecule, fd: File): bool =
 
   while fd.readLine(buf):
     buf = trimCRLF(buf)
-    if buf[0] == '$': return true
+    if buf.len > 0 and buf[0] == '$': return true
 
   result = false
 
