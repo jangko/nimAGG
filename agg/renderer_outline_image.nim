@@ -11,7 +11,7 @@ type
 proc initLineImageScale*[Source](src: var Source, height: float64): LineImageScale[Source] =
   result.mSource = src.addr
   result.mHeight = height
-  result.mScale  = src.height().float64 / height
+  result.mScale = src.height().float64 / height
 
 proc width*[Source](self: LineImageScale[Source]): float64 =
   float64(self.mSource[].width())
@@ -23,7 +23,7 @@ proc pixel*[Source](self: LineImageScale[Source], x, y: int): auto =
   mixin pixel
   let
     srcY = (y.float64 + 0.5) * self.mScale - 0.5
-    h  = self.mSource[].height() - 1
+    h = self.mSource[].height() - 1
     y1 = ufloor(srcY).int
     y2 = y1 + 1
     pix1 = if y1 < 0: noColor(getColorT(Source)) else: self.mSource[].pixel(x, y1)
@@ -82,36 +82,36 @@ proc initLineImagePattern*[Filter, Source](filter: var Filter, src: var Source):
   result = initLineImagePatternAux[Filter, Source, getColorT(Filter)](filter, src)
 
 proc create[Filter, Source, ColorT](self: var LineImagePattern[Filter, ColorT], src: Source) =
-  self.mHeight  = int(uceil(src.height().float64))
-  self.mWidth   = int(uceil(src.width().float64))
+  self.mHeight = int(uceil(src.height().float64))
+  self.mWidth = int(uceil(src.width().float64))
 
   self.mWidthHr = uround(src.width().float64 * lineSubpixelScale)
-  self.mHalfHeightHr  = uround(src.height().float64 * lineSubpixelScale / 2)
-  self.mOffsetYHr     = self.mDilationHr + self.mHalfHeightHr - lineSubpixelScale div 2
+  self.mHalfHeightHr = uround(src.height().float64 * lineSubpixelScale / 2)
+  self.mOffsetYHr = self.mDilationHr + self.mHalfHeightHr - lineSubpixelScale div 2
   self.mHalfHeightHr += lineSubpixelScale div 2
   self.mData.setLen((self.mWidth + self.mDilation * 2) * (self.mHeight + self.mDilation * 2))
   self.mBuf.attach(self.mData[0].addr,
-    self.mWidth  + self.mDilation * 2,
+    self.mWidth + self.mDilation * 2,
     self.mHeight + self.mDilation * 2,
-    self.mWidth  + self.mDilation * 2)
+    self.mWidth + self.mDilation * 2)
 
   var d1, d2: ptr ColorT
 
-  for y in 0.. <self.mHeight:
+  for y in 0..<self.mHeight:
     d1 = self.mBuf.rowPtr(y + self.mDilation) + self.mDilation
-    for x in 0.. <self.mWidth:
+    for x in 0..<self.mWidth:
       d1[] = src.pixel(x, y)
       inc d1
 
   var
     s1, s2: ptr ColorT
 
-  for y in 0.. <self.mDilation:
+  for y in 0..<self.mDilation:
     #s1 = self.mBuf.rowPtr(self.mHeight + self.mDilation - 1) + self.mDilation;
     #s2 = self.mBuf.rowPtr(self.mDilation) + self.mDilation;
     d1 = self.mBuf.rowPtr(self.mDilation + self.mHeight + y) + self.mDilation
     d2 = self.mBuf.rowPtr(self.mDilation - y - 1) + self.mDilation
-    for x in 0.. <self.mWidth:
+    for x in 0..<self.mWidth:
       #*d1++ = ColorT(*s1++, 0)
       #*d2++ = ColorT(*s2++, 0)
       d1[] = noColor(ColorT)
@@ -120,7 +120,7 @@ proc create[Filter, Source, ColorT](self: var LineImagePattern[Filter, ColorT], 
       inc d2
 
   let h = self.mHeight + self.mDilation * 2
-  for y in 0.. <h:
+  for y in 0..<h:
     s1 = self.mBuf.rowPtr(y) + self.mDilation
     s2 = self.mBuf.rowPtr(y) + self.mDilation + self.mWidth
     d1 = self.mBuf.rowPtr(y) + self.mDilation + self.mWidth
@@ -231,105 +231,105 @@ proc initDistanceInterpolator4*(x1, y1, x2, y2, sx, sy, ex, ey, len: int,
     dx = iround(float64((x2 - x1) shl lineSubpixelShift) / d)
     dy = iround(float64((y2 - y1) shl lineSubpixelShift) / d)
 
-  result.mDxPict   = -dy
-  result.mDyPict   =  dx
+  result.mDxPict = -dy
+  result.mDyPict = dx
   result.mDistPict = sar(((x + lineSubpixelScale div 2 - (x1 - dy)) * result.mDyPict -
                       (y + lineSubpixelScale div 2 - (y1 + dx)) * result.mDxPict), lineSubpixelShift)
 
-  result.mDx      = result.mDx      shl lineSubpixelShift
-  result.mDy      = result.mDy      shl lineSubpixelShift
+  result.mDx = result.mDx shl lineSubpixelShift
+  result.mDy = result.mDy shl lineSubpixelShift
   result.mDxStart = result.mDxStart shl lineMr_subPixelShift
   result.mDyStart = result.mDyStart shl lineMr_subPixelShift
-  result.mDxEnd   = result.mDxEnd   shl lineMr_subPixelShift
-  result.mDyEnd   = result.mDyEnd   shl lineMr_subPixelShift
+  result.mDxEnd = result.mDxEnd shl lineMr_subPixelShift
+  result.mDyEnd = result.mDyEnd shl lineMr_subPixelShift
 
 proc incX*(self: var DistanceInterpolator4) =
-  self.mDist      += self.mDy
+  self.mDist += self.mDy
   self.mDistStart += self.mDyStart
-  self.mDistPict  += self.mDyPict
-  self.mDistEnd   += self.mDyEnd
+  self.mDistPict += self.mDyPict
+  self.mDistEnd += self.mDyEnd
 
 proc decX*(self: var DistanceInterpolator4) =
-  self.mDist      -= self.mDy
+  self.mDist -= self.mDy
   self.mDistStart -= self.mDyStart
-  self.mDistPict  -= self.mDyPict
-  self.mDistEnd   -= self.mDyEnd
+  self.mDistPict -= self.mDyPict
+  self.mDistEnd -= self.mDyEnd
 
 proc incY*(self: var DistanceInterpolator4) =
-  self.mDist      -= self.mDx
+  self.mDist -= self.mDx
   self.mDistStart -= self.mDxStart
-  self.mDistPict  -= self.mDxPict
-  self.mDistEnd   -= self.mDxEnd
+  self.mDistPict -= self.mDxPict
+  self.mDistEnd -= self.mDxEnd
 
 proc decY*(self: var DistanceInterpolator4) =
-  self.mDist      += self.mDx
+  self.mDist += self.mDx
   self.mDistStart += self.mDxStart
-  self.mDistPict  += self.mDxPict
-  self.mDistEnd   += self.mDxEnd
+  self.mDistPict += self.mDxPict
+  self.mDistEnd += self.mDxEnd
 
 proc incX*(self: var DistanceInterpolator4, dy: int) =
-  self.mDist      += self.mDy
+  self.mDist += self.mDy
   self.mDistStart += self.mDyStart
-  self.mDistPict  += self.mDyPict
-  self.mDistEnd   += self.mDyEnd
+  self.mDistPict += self.mDyPict
+  self.mDistEnd += self.mDyEnd
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
-    self.mDistPict  -= self.mDxPict
-    self.mDistEnd   -= self.mDxEnd
+    self.mDistPict -= self.mDxPict
+    self.mDistEnd -= self.mDxEnd
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
-    self.mDistPict  += self.mDxPict
-    self.mDistEnd   += self.mDxEnd
+    self.mDistPict += self.mDxPict
+    self.mDistEnd += self.mDxEnd
 
 proc decX*(self: var DistanceInterpolator4, dy: int) =
-  self.mDist      -= self.mDy
+  self.mDist -= self.mDy
   self.mDistStart -= self.mDyStart
-  self.mDistPict  -= self.mDyPict
-  self.mDistEnd   -= self.mDyEnd
+  self.mDistPict -= self.mDyPict
+  self.mDistEnd -= self.mDyEnd
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
-    self.mDistPict  -= self.mDxPict
-    self.mDistEnd   -= self.mDxEnd
+    self.mDistPict -= self.mDxPict
+    self.mDistEnd -= self.mDxEnd
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
-    self.mDistPict  += self.mDxPict
-    self.mDistEnd   += self.mDxEnd
+    self.mDistPict += self.mDxPict
+    self.mDistEnd += self.mDxEnd
 
 proc incY*(self: var DistanceInterpolator4, dx: int) =
-  self.mDist      -= self.mDx
+  self.mDist -= self.mDx
   self.mDistStart -= self.mDxStart
-  self.mDistPict  -= self.mDxPict
-  self.mDistEnd   -= self.mDxEnd
+  self.mDistPict -= self.mDxPict
+  self.mDistEnd -= self.mDxEnd
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
-    self.mDistPict  += self.mDyPict
-    self.mDistEnd   += self.mDyEnd
+    self.mDistPict += self.mDyPict
+    self.mDistEnd += self.mDyEnd
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
-    self.mDistPict  -= self.mDyPict
-    self.mDistEnd   -= self.mDyEnd
+    self.mDistPict -= self.mDyPict
+    self.mDistEnd -= self.mDyEnd
 
 proc decY*(self: var DistanceInterpolator4, dx: int) =
-  self.mDist      += self.mDx
+  self.mDist += self.mDx
   self.mDistStart += self.mDxStart
-  self.mDistPict  += self.mDxPict
-  self.mDistEnd   += self.mDxEnd
+  self.mDistPict += self.mDxPict
+  self.mDistEnd += self.mDxEnd
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
-    self.mDistPict  += self.mDyPict
-    self.mDistEnd   += self.mDyEnd
+    self.mDistPict += self.mDyPict
+    self.mDistEnd += self.mDyEnd
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
-    self.mDistPict  -= self.mDyPict
-    self.mDistEnd   -= self.mDyEnd
+    self.mDistPict -= self.mDyPict
+    self.mDistEnd -= self.mDyEnd
 
 proc dist*(self: DistanceInterpolator4): int = self.mDist
 proc distStart*(self: DistanceInterpolator4): int = self.mDistStart
@@ -399,7 +399,7 @@ proc initLineInterpolatorImageAux*[R,C](ren: var R, lp: var LineParameters,
     li = initDda2LineInterpolator(0, if lp.vertical: dy else: dx, lp.len)
     stop = result.mWidth + lineSubpixelScale * 2
 
-  for i in 0.. <MaxHalfWidth:
+  for i in 0..<MaxHalfWidth:
     result.mDistPos[i] = li.y()
     if result.mDistPos[i] >= stop: break
     inc li
@@ -488,8 +488,8 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   var
     dy, dist: int
     distStart = self.mDi.distStart()
-    distPict  = self.mDi.distPict() + self.mStart
-    distEnd   = self.mDi.distEnd()
+    distPict = self.mDi.distPict() + self.mStart
+    distEnd = self.mDi.distEnd()
     p0 = self.mColors[MaxHalfWidth + 2].addr
     p1 = p0
     npix = 0
@@ -505,8 +505,8 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   dist = self.mDistPos[dy]
   while dist - s1 <= self.mWidth:
     distStart -= self.mDi.dxStart()
-    distPict  -= self.mDi.dxPict()
-    distEnd   -= self.mDi.dxEnd()
+    distPict -= self.mDi.dxPict()
+    distEnd -= self.mDi.dxEnd()
     p1[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
@@ -518,13 +518,13 @@ proc stepHor*[R,C](self: var LineInterpolatorImage[R, C]): bool =
 
   dy = 1
   distStart = self.mDi.distStart()
-  distPict  = self.mDi.distPict() + self.mStart
-  distEnd   = self.mDi.distEnd()
+  distPict = self.mDi.distPict() + self.mStart
+  distEnd = self.mDi.distEnd()
   dist = self.mDistPos[dy]
   while dist + s1 <= self.mWidth:
     distStart += self.mDi.dxStart()
-    distPict  += self.mDi.dxPict()
-    distEnd   += self.mDi.dxEnd()
+    distPict += self.mDi.dxPict()
+    distEnd += self.mDi.dxEnd()
     dec p0
     p0[].clear()
     if distEnd > 0 and distStart <= 0:
@@ -560,8 +560,8 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   var
     dist, dx: int
     distStart = self.mDi.distStart()
-    distPict  = self.mDi.distPict() + self.mStart
-    distEnd   = self.mDi.distEnd()
+    distPict = self.mDi.distPict() + self.mStart
+    distEnd = self.mDi.distEnd()
     p0 = self.mColors[0].addr + MaxHalfWidth + 2
     p1 = p0
     npix = 0
@@ -577,8 +577,8 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
   dist = self.mDistPos[dx]
   while dist - s1 <= self.mWidth:
     distStart += self.mDi.dyStart()
-    distPict  += self.mDi.dyPict()
-    distEnd   += self.mDi.dyEnd()
+    distPict += self.mDi.dyPict()
+    distEnd += self.mDi.dyEnd()
     p1[].clear()
     if distEnd > 0 and distStart <= 0:
       if self.mLp.inc > 0: dist = -dist
@@ -590,13 +590,13 @@ proc stepVer*[R,C](self: var LineInterpolatorImage[R, C]): bool =
 
   dx = 1
   distStart = self.mDi.distStart()
-  distPict  = self.mDi.distPict() + self.mStart
-  distEnd   = self.mDi.distEnd()
+  distPict = self.mDi.distPict() + self.mStart
+  distEnd = self.mDi.distEnd()
   dist = self.mDistPos[dx]
   while dist + s1 <= self.mWidth:
     distStart -= self.mDi.dyStart()
-    distPict  -= self.mDi.dyPict()
-    distEnd   -= self.mDi.dyEnd()
+    distPict -= self.mDi.dyPict()
+    distEnd -= self.mDi.dyEnd()
     dec p0
     p0[].clear()
     if distEnd > 0 and distStart <= 0:

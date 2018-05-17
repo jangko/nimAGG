@@ -350,7 +350,7 @@ template pixfmtAlphaBlendGray*(Blender, RenBuf: typed, Step, Offset: int, name: 
   proc forEachPixel[Func](self: name, f: Func) =
     type ValueT = getValueT(Blender)
     let h = self.height()
-    for y in 0.. <h:
+    for y in 0..<h:
       let r = self.mRbuf[].row(y)
       if r.data != nil:
         var

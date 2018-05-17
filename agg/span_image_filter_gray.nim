@@ -79,16 +79,16 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinear[S,I], span: ptr
     yHr = yHr and imageSubpixelMask
 
     fgPtr = cast[ptr ValueT](base(self).source().span(xLr, yLr, 2))
-    fg   += fgPtr[].CalcT * CalcT((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
+    fg += fgPtr[].CalcT * CalcT((imageSubpixelScale - xHr) * (imageSubpixelScale - yHr))
 
     fgPtr = cast[ptr ValueT](base(self).source().nextX())
-    fg   += fgPtr[].CalcT * CalcT(xHr * (imageSubpixelScale - yHr))
+    fg += fgPtr[].CalcT * CalcT(xHr * (imageSubpixelScale - yHr))
 
     fgPtr = cast[ptr ValueT](base(self).source().nextY())
-    fg   += fgPtr[].CalcT * CalcT((imageSubpixelScale - xHr) * yHr)
+    fg += fgPtr[].CalcT * CalcT((imageSubpixelScale - xHr) * yHr)
 
     fgPtr = cast[ptr ValueT](base(self).source().nextX())
-    fg   += fgPtr[].CalcT * CalcT(xHr * yHr)
+    fg += fgPtr[].CalcT * CalcT(xHr * yHr)
 
     span.v = ValueT(fg shr (imageSubpixelShift * 2))
     span.a = baseMask
@@ -158,7 +158,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
       xLr = sar(xHr, imageSubpixelShift)
       yLr = sar(yHr, imageSubpixelShift)
 
-    if xLr >= 0 and yLr >= 0 and xLr <  maxX and yLr <  maxY:
+    if xLr >= 0 and yLr >= 0 and xLr < maxX and yLr < maxY:
       fg = imageSubpixelScale * imageSubpixelScale div 2
 
       xHr = xHr and imageSubpixelMask
@@ -196,7 +196,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
           fg += weight * CalcT(cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
-          fg       += backV * weight
+          fg += backV * weight
           srcAlpha += backA * weight
 
         inc xLr
@@ -205,7 +205,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
           fg += weight * CalcT(cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
-          fg       += backV * weight
+          fg += backV * weight
           srcAlpha += backA * weight
 
         dec xLr
@@ -216,7 +216,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
           fg += weight * CalcT(cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
-          fg       += backV * weight
+          fg += backV * weight
           srcAlpha += backA * weight
 
         inc xLr
@@ -225,7 +225,7 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGrayBilinearClip[S, I, Color
           fg += weight * CalcT(cast[ptr ValueT](base(self).source().rowPtr(yLr) + xLr)[])
           srcAlpha += weight * baseMask
         else:
-          fg       += backV * weight
+          fg += backV * weight
           srcAlpha += backA * weight
 
         fg       = fg shr (imageSubpixelShift * 2)
@@ -373,12 +373,12 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterGray[S,I], span: ptr ColorT,
         fg += fgPtr[].int * sar((weightY * weightArray[xHr] + imageFilterScale div 2), imageFilterShift)
         dec xCount
         if xCount == 0: break
-        xHr  += imageSubpixelScale
+        xHr += imageSubpixelScale
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
       dec yCount
       if yCount == 0: break
-      yHr  += imageSubpixelScale
+      yHr += imageSubpixelScale
       fgPtr = cast[ptr ValueT](base(self).source().nextY())
 
     fg = sar(fg, imageFilterShift)
@@ -451,7 +451,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleGrayAffine[S,I], span: ptr
 
         fg += fgPtr[].LongT * weight
         totalWeight += weight
-        xHr  += base(self).mRxInv
+        xHr += base(self).mRxInv
         if xHr >= filterScale: break
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
@@ -540,7 +540,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleGray[S,I], span: ptr Color
         var weight = LongT(sar((weightY * weightArray[xHr] + imageFilterScale div 2), downScaleShift))
         fg += fgPtr[].LongT * weight
         totalWeight += weight
-        xHr  += rxInv
+        xHr += rxInv
         if xHr >= filterScale: break
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 

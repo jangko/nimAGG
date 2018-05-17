@@ -1649,7 +1649,7 @@ proc performRendering[VertexSource](app: App, vs: var VertexSource, contour: var
       bitmap = cast[ptr uint8](gradImag.imageCreate(64, 64))
 
     if bitmap != nil:
-      for i in 0.. <Puzzle.len:
+      for i in 0..<Puzzle.len:
         bitmap[i] = Puzzle[i]
 
       var stroke = initConvStroke(T2)

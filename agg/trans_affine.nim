@@ -24,30 +24,30 @@ proc determinantReciprocal(a: TransAffine): float64 =
 
 proc invert*(a: var TransAffine) =
   let
-    d  = a.determinantReciprocal()
-    t0 =  a.sy * d
+    d = a.determinantReciprocal()
+    t0 = a.sy * d
 
-  a.sy  =  a.sx  * d
+  a.sy = a.sx * d
   a.shy = -a.shy * d
   a.shx = -a.shx * d
 
-  let t4 = -a.tx * t0  - a.ty * a.shx
+  let t4 = -a.tx * t0 - a.ty * a.shx
   a.ty = -a.tx * a.shy - a.ty * a.sy
   a.sx = t0
   a.tx = t4
 
 proc multiply*(a: var TransAffine, m: TransAffine) =
   var
-    t0 = a.sx  * m.sx + a.shy * m.shx
-    t2 = a.shx * m.sx + a.sy  * m.shx
-    t4 = a.tx  * m.sx + a.ty  * m.shx + m.tx
+    t0 = a.sx * m.sx + a.shy * m.shx
+    t2 = a.shx * m.sx + a.sy * m.shx
+    t4 = a.tx * m.sx + a.ty * m.shx + m.tx
 
-  a.shy = a.sx  * m.shy + a.shy * m.sy
-  a.sy  = a.shx * m.shy + a.sy  * m.sy
-  a.ty  = a.tx  * m.shy + a.ty  * m.sy + m.ty
-  a.sx  = t0
+  a.shy = a.sx * m.shy + a.shy * m.sy
+  a.sy = a.shx * m.shy + a.sy * m.sy
+  a.ty = a.tx * m.shy + a.ty * m.sy + m.ty
+  a.sx = t0
   a.shx = t2
-  a.tx  = t4
+  a.tx = t4
 
 #---------------------------------- Parellelogram transformations
 # transform a parallelogram to another one. Src and dst are
@@ -61,12 +61,12 @@ proc multiply*(a: var TransAffine, m: TransAffine) =
 #     /(x1,y1)   (x2,y2)/
 #    *-----------------*
 proc parlToParl*(src, dst: openArray[float64]): TransAffine =
-  result.sx  = src[2] - src[0]
+  result.sx = src[2] - src[0]
   result.shy = src[3] - src[1]
   result.shx = src[4] - src[0]
-  result.sy  = src[5] - src[1]
-  result.tx  = src[0]
-  result.ty  = src[1]
+  result.sy = src[5] - src[1]
+  result.tx = src[0]
+  result.ty = src[1]
 
   let tmp = initTransAffine(dst[2] - dst[0],
     dst[3] - dst[1],
@@ -128,11 +128,11 @@ proc reset*(a: var TransAffine) =
 proc transform*(a: TransAffine, x, y: var float64) {.inline.} =
   let tmp = x
   x = tmp * a.sx + y * a.shx + a.tx
-  y = tmp * a.shy + y * a.sy  + a.ty
+  y = tmp * a.shy + y * a.sy + a.ty
 
 proc transform2x2*(a: TransAffine, x, y: var float64) {.inline.} =
   let tmp = x
-  x = tmp * a.sx  + y * a.shx
+  x = tmp * a.sx + y * a.shx
   y = tmp * a.shy + y * a.sy
 
 proc inverseTransform*(z: TransAffine, x, y: var float64) {.inline.} =
@@ -147,7 +147,7 @@ proc inverseTransform*(z: TransAffine, x, y: var float64) {.inline.} =
 # decomposinting curves into line segments.
 proc scale*(a: TransAffine): float64 {.inline.} =
   let
-    x = 0.707106781 * a.sx  + 0.707106781 * a.shx
+    x = 0.707106781 * a.sx + 0.707106781 * a.shx
     y = 0.707106781 * a.shy + 0.707106781 * a.sy
   result = sqrt(x*x + y*y)
 
@@ -159,34 +159,34 @@ proc rotate*(a: var TransAffine, v: float64) {.inline.} =
   let
     ca = cos(v)
     sa = sin(v)
-    t0 = a.sx  * ca - a.shy * sa
+    t0 = a.sx * ca - a.shy * sa
     t2 = a.shx * ca - a.sy * sa
-    t4 = a.tx  * ca - a.ty * sa
-  a.shy = a.sx  * sa + a.shy * ca
-  a.sy  = a.shx * sa + a.sy * ca
-  a.ty  = a.tx  * sa + a.ty * ca
-  a.sx  = t0
+    t4 = a.tx * ca - a.ty * sa
+  a.shy = a.sx * sa + a.shy * ca
+  a.sy = a.shx * sa + a.sy * ca
+  a.ty = a.tx * sa + a.ty * ca
+  a.sx = t0
   a.shx = t2
-  a.tx  = t4
+  a.tx = t4
 
 proc scale*(a: var TransAffine, s: float64) {.inline.} =
   let m = s # Possible hint for the optimizer
-  a.sx  *= m
+  a.sx *= m
   a.shx *= m
-  a.tx  *= m
+  a.tx *= m
   a.shy *= m
-  a.sy  *= m
-  a.ty  *= m
+  a.sy *= m
+  a.ty *= m
 
 proc scale*(a: var TransAffine, x, y: float64) {.inline.} =
   let mm0 = x # Possible hint for the optimizer
   let mm3 = y
-  a.sx  *= mm0
+  a.sx *= mm0
   a.shx *= mm0
-  a.tx  *= mm0
+  a.tx *= mm0
   a.shy *= mm3
-  a.sy  *= mm3
-  a.ty  *= mm3
+  a.sy *= mm3
+  a.ty *= mm3
 
 proc premultiply*(a: var TransAffine, m: TransAffine) {.inline.} =
   var t = m
@@ -206,15 +206,15 @@ proc premultiplyInv*(a: var TransAffine, m: TransAffine) {.inline.} =
 
 # Mirroring around X
 proc flipX*(a: var TransAffine) {.inline.} =
-  a.sx  = -a.sx
+  a.sx = -a.sx
   a.shy = -a.shy
-  a.tx  = -a.tx
+  a.tx = -a.tx
 
 # Mirroring around Y
 proc flipY*(a: var TransAffine) {.inline.} =
   a.shx = -a.shx
-  a.sy  = -a.sy
-  a.ty  = -a.ty
+  a.sy = -a.sy
+  a.ty = -a.ty
 
 # Store matrix to an array [6] of double
 proc storeTo*(a: TransAffine, m: var openArray[float64]) =
@@ -227,12 +227,12 @@ proc storeTo*(a: TransAffine, m: var openArray[float64]) =
 
 # Load matrix from an array [6] of double
 proc loadFrom*(a: var TransAffine, m: openArray[float64]) =
-  a.sx  = m[0]
+  a.sx = m[0]
   a.shy = m[1]
   a.shx = m[2]
-  a.sy  = m[3]
-  a.tx  = m[4]
-  a.ty  = m[5]
+  a.sy = m[3]
+  a.tx = m[4]
+  a.ty = m[5]
 
 # Multiply the matrix by another one
 proc `*=`*(a: var TransAffine, m: TransAffine) {.inline.} =
@@ -292,8 +292,8 @@ proc scalingAbs*(a: TransAffine, x, y: var float64) {.inline.} =
   # Used to calculate scaling coefficients in image resampling.
   # When there is considerable shear this method gives us much
   # better estimation than just sx, sy.
-  x = sqrt(a.sx  * a.sx  + a.shx * a.shx)
-  y = sqrt(a.shy * a.shy + a.sy  * a.sy)
+  x = sqrt(a.sx * a.sx + a.shx * a.shx)
+  y = sqrt(a.shy * a.shy + a.sy * a.sy)
 
 proc translation*(a: TransAffine, dx, dy: var float64) {.inline.} =
   dx = a.tx

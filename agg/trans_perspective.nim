@@ -6,27 +6,27 @@ type
 
 # Identity matrix
 proc initTransPerspective*(): TransPerspective =
-  result.sx  = 1; result.shy = 0; result.w0 = 0
-  result.shx = 0; result.sy  = 1; result.w1 = 0
-  result.tx  = 0; result.ty  = 0; result.w2 = 1
+  result.sx = 1; result.shy = 0; result.w0 = 0
+  result.shx = 0; result.sy = 1; result.w1 = 0
+  result.tx = 0; result.ty = 0; result.w2 = 1
 
 # Custom matrix
 proc initTransPerspective*(v0, v1, v2, v3, v4, v5, v6, v7, v8: float64): TransPerspective =
-  result.sx  = v0; result.shy = v1; result.w0 = v2
-  result.shx = v3; result.sy  = v4; result.w1 = v5
-  result.tx  = v6; result.ty  = v7; result.w2 = v8
+  result.sx = v0; result.shy = v1; result.w0 = v2
+  result.shx = v3; result.sy = v4; result.w1 = v5
+  result.tx = v6; result.ty = v7; result.w2 = v8
 
 # Custom matrix from m[9]
 proc initTransPerspective*(m: openArray[float64]): TransPerspective =
-  result.sx  = m[0]; result.shy = m[1]; result.w0 = m[2]
-  result.shx = m[3]; result.sy  = m[4]; result.w1 = m[5]
-  result.tx  = m[6]; result.ty  = m[7]; result.w2 = m[8]
+  result.sx = m[0]; result.shy = m[1]; result.w0 = m[2]
+  result.shx = m[3]; result.sy = m[4]; result.w1 = m[5]
+  result.tx = m[6]; result.ty = m[7]; result.w2 = m[8]
 
 # From affine
 proc initTransPerspective*(a: TransAffine): TransPerspective =
-  result.sx  = a.sx ; result.shy = a.shy; result.w0 = 0
-  result.shx = a.shx; result.sy  = a.sy ; result.w1 = 0
-  result.tx  = a.tx ; result.ty  = a.ty ; result.w2 = 1
+  result.sx = a.sx ; result.shy = a.shy; result.w0 = 0
+  result.shx = a.shx; result.sy = a.sy ; result.w1 = 0
+  result.tx = a.tx ; result.ty = a.ty ; result.w2 = 1
 
 # Rectangle to quadrilateral
 proc initTransPerspective*(x1, y1, x2, y2: float64, quad: openArray[float64]): TransPerspective
@@ -167,17 +167,17 @@ type
     x*, y*: float64
 
 proc initIteratorXPersp(px, py, step: float64, m: TransPerspective): IteratorXPersp =
-  result.den      = px * m.w0 + py * m.w1 + m.w2
-  result.denStep  = m.w0 * step
-  result.nomX     = px * m.sx + py * m.shx + m.tx
+  result.den = px * m.w0 + py * m.w1 + m.w2
+  result.denStep = m.w0 * step
+  result.nomX = px * m.sx + py * m.shx + m.tx
   result.nomXstep = step * m.sx
-  result.nomY     = px * m.shy + py * m.sy + m.ty
+  result.nomY = px * m.shy + py * m.sy + m.ty
   result.nomYstep = step * m.shy
-  result.x        = result.nomX / result.den
-  result.y        = result.nomY / result.den
+  result.x = result.nomX / result.den
+  result.y = result.nomY / result.den
 
 proc inc*(self: var IteratorXPersp) =
-  self.den  += self.denStep
+  self.den += self.denStep
   self.nomX += self.nomXstep
   self.nomY += self.nomYstep
 
@@ -196,15 +196,15 @@ proc squareToQuad(self: var TransPerspective, q: openArray[float64]): bool =
   if dx == 0.0 and dy == 0.0:
     # Affine of (parallelogram)
     #---------------
-    self.sx  = q[2] - q[0]
+    self.sx = q[2] - q[0]
     self.shy = q[3] - q[1]
-    self.w0  = 0.0
+    self.w0 = 0.0
     self.shx = q[4] - q[2]
-    self.sy  = q[5] - q[3]
-    self.w1  = 0.0
-    self.tx  = q[0]
-    self.ty  = q[1]
-    self.w2  = 1.0
+    self.sy = q[5] - q[3]
+    self.w1 = 0.0
+    self.tx = q[0]
+    self.ty = q[1]
+    self.w2 = 1.0
   else:
     var
       dx1 = q[2] - q[4]
@@ -230,23 +230,23 @@ proc squareToQuad(self: var TransPerspective, q: openArray[float64]): bool =
     var
       u = (dx * dy2 - dy * dx2) / den
       v = (dy * dx1 - dx * dy1) / den
-    self.sx  = q[2] - q[0] + u * q[2]
+    self.sx = q[2] - q[0] + u * q[2]
     self.shy = q[3] - q[1] + u * q[3]
-    self.w0  = u
+    self.w0 = u
     self.shx = q[6] - q[0] + v * q[6]
-    self.sy  = q[7] - q[1] + v * q[7]
-    self.w1  = v
-    self.tx  = q[0]
-    self.ty  = q[1]
-    self.w2  = 1.0
+    self.sy = q[7] - q[1] + v * q[7]
+    self.w1 = v
+    self.tx = q[0]
+    self.ty = q[1]
+    self.w2 = 1.0
   result = true
 
 proc invert*(self: var TransPerspective): bool =
   var
-    d0 = self.sy  * self.w2 - self.w1  * self.ty
-    d1 = self.w0  * self.ty - self.shy * self.w2
-    d2 = self.shy * self.w1 - self.w0  * self.sy
-    d  = self.sx  * d0 + self.shx * d1 + self.tx * d2
+    d0 = self.sy * self.w2 - self.w1 * self.ty
+    d1 = self.w0 * self.ty - self.shy * self.w2
+    d2 = self.shy * self.w1 - self.w0 * self.sy
+    d = self.sx * d0 + self.shx * d1 + self.tx * d2
   if d == 0.0:
     self.sx = 0.0
     self.shy = 0.0
@@ -261,15 +261,15 @@ proc invert*(self: var TransPerspective): bool =
 
   d = 1.0 / d
   var a = self
-  self.sx  = d * d0
+  self.sx = d * d0
   self.shy = d * d1
-  self.w0  = d * d2
-  self.shx = d * (a.w1  * a.tx  - a.shx * a.w2)
-  self.sy  = d * (a.sx  * a.w2  - a.w0  * a.tx)
-  self.w1  = d * (a.w0  * a.shx - a.sx  * a.w1)
-  self.tx  = d * (a.shx * a.ty  - a.sy  * a.tx)
-  self.ty  = d * (a.shy * a.tx  - a.sx  * a.ty)
-  self.w2  = d * (a.sx  * a.sy  - a.shy * a.shx)
+  self.w0 = d * d2
+  self.shx = d * (a.w1 * a.tx - a.shx * a.w2)
+  self.sy = d * (a.sx * a.w2 - a.w0 * a.tx)
+  self.w1 = d * (a.w0 * a.shx - a.sx * a.w1)
+  self.tx = d * (a.shx * a.ty - a.sy * a.tx)
+  self.ty = d * (a.shy * a.tx - a.sx * a.ty)
+  self.w2 = d * (a.sx * a.sy - a.shy * a.shx)
   result = true
 
 proc quadToSquare(self: var TransPerspective, q: openArray[float64]): bool =
@@ -310,54 +310,54 @@ proc initTransPerspective(src, dst: openArray[float64]): TransPerspective =
   discard result.quadToQuad(src, dst)
 
 proc reset*(self: var TransPerspective) =
-  self.sx  = 1; self.shy = 0; self.w0 = 0
-  self.shx = 0; self.sy  = 1; self.w1 = 0
-  self.tx  = 0; self.ty  = 0; self.w2 = 1
+  self.sx = 1; self.shy = 0; self.w0 = 0
+  self.shx = 0; self.sy = 1; self.w1 = 0
+  self.tx = 0; self.ty = 0; self.w2 = 1
 
 proc multiply(self: var TransPerspective, a: TransPerspective) =
   var b = self
-  self.sx  = a.sx  * b.sx  + a.shx * b.shy + a.tx * b.w0
-  self.shx = a.sx  * b.shx + a.shx * b.sy  + a.tx * b.w1
-  self.tx  = a.sx  * b.tx  + a.shx * b.ty  + a.tx * b.w2
-  self.shy = a.shy * b.sx  + a.sy  * b.shy + a.ty * b.w0
-  self.sy  = a.shy * b.shx + a.sy  * b.sy  + a.ty * b.w1
-  self.ty  = a.shy * b.tx  + a.sy  * b.ty  + a.ty * b.w2
-  self.w0  = a.w0  * b.sx  + a.w1  * b.shy + a.w2 * b.w0
-  self.w1  = a.w0  * b.shx + a.w1  * b.sy  + a.w2 * b.w1
-  self.w2  = a.w0  * b.tx  + a.w1  * b.ty  + a.w2 * b.w2
+  self.sx = a.sx * b.sx + a.shx * b.shy + a.tx * b.w0
+  self.shx = a.sx * b.shx + a.shx * b.sy + a.tx * b.w1
+  self.tx = a.sx * b.tx + a.shx * b.ty + a.tx * b.w2
+  self.shy = a.shy * b.sx + a.sy * b.shy + a.ty * b.w0
+  self.sy = a.shy * b.shx + a.sy * b.sy + a.ty * b.w1
+  self.ty = a.shy * b.tx + a.sy * b.ty + a.ty * b.w2
+  self.w0 = a.w0 * b.sx + a.w1 * b.shy + a.w2 * b.w0
+  self.w1 = a.w0 * b.shx + a.w1 * b.sy + a.w2 * b.w1
+  self.w2 = a.w0 * b.tx + a.w1 * b.ty + a.w2 * b.w2
 
 proc multiply(self: var TransPerspective, a: TransAffine) =
   var b = self
-  self.sx  = a.sx  * b.sx  + a.shx * b.shy + a.tx * b.w0
-  self.shx = a.sx  * b.shx + a.shx * b.sy  + a.tx * b.w1
-  self.tx  = a.sx  * b.tx  + a.shx * b.ty  + a.tx * b.w2
-  self.shy = a.shy * b.sx  + a.sy  * b.shy + a.ty * b.w0
-  self.sy  = a.shy * b.shx + a.sy  * b.sy  + a.ty * b.w1
-  self.ty  = a.shy * b.tx  + a.sy  * b.ty  + a.ty * b.w2
+  self.sx = a.sx * b.sx + a.shx * b.shy + a.tx * b.w0
+  self.shx = a.sx * b.shx + a.shx * b.sy + a.tx * b.w1
+  self.tx = a.sx * b.tx + a.shx * b.ty + a.tx * b.w2
+  self.shy = a.shy * b.sx + a.sy * b.shy + a.ty * b.w0
+  self.sy = a.shy * b.shx + a.sy * b.sy + a.ty * b.w1
+  self.ty = a.shy * b.tx + a.sy * b.ty + a.ty * b.w2
 
 proc premultiply*(self: var TransPerspective, b: TransPerspective) =
   var a = self
-  self.sx  = a.sx  * b.sx  + a.shx * b.shy + a.tx * b.w0
-  self.shx = a.sx  * b.shx + a.shx * b.sy  + a.tx * b.w1
-  self.tx  = a.sx  * b.tx  + a.shx * b.ty  + a.tx * b.w2
-  self.shy = a.shy * b.sx  + a.sy  * b.shy + a.ty * b.w0
-  self.sy  = a.shy * b.shx + a.sy  * b.sy  + a.ty * b.w1
-  self.ty  = a.shy * b.tx  + a.sy  * b.ty  + a.ty * b.w2
-  self.w0  = a.w0  * b.sx  + a.w1  * b.shy + a.w2 * b.w0
-  self.w1  = a.w0  * b.shx + a.w1  * b.sy  + a.w2 * b.w1
-  self.w2  = a.w0  * b.tx  + a.w1  * b.ty  + a.w2 * b.w2
+  self.sx = a.sx * b.sx + a.shx * b.shy + a.tx * b.w0
+  self.shx = a.sx * b.shx + a.shx * b.sy + a.tx * b.w1
+  self.tx = a.sx * b.tx + a.shx * b.ty + a.tx * b.w2
+  self.shy = a.shy * b.sx + a.sy * b.shy + a.ty * b.w0
+  self.sy = a.shy * b.shx + a.sy * b.sy + a.ty * b.w1
+  self.ty = a.shy * b.tx + a.sy * b.ty + a.ty * b.w2
+  self.w0 = a.w0 * b.sx + a.w1 * b.shy + a.w2 * b.w0
+  self.w1 = a.w0 * b.shx + a.w1 * b.sy + a.w2 * b.w1
+  self.w2 = a.w0 * b.tx + a.w1 * b.ty + a.w2 * b.w2
 
 proc premultiply*(self: var TransPerspective, b: TransAffine) =
   var a = self
-  self.sx  = a.sx  * b.sx  + a.shx * b.shy
-  self.shx = a.sx  * b.shx + a.shx * b.sy
-  self.tx  = a.sx  * b.tx  + a.shx * b.ty  + a.tx
-  self.shy = a.shy * b.sx  + a.sy  * b.shy
-  self.sy  = a.shy * b.shx + a.sy  * b.sy
-  self.ty  = a.shy * b.tx  + a.sy  * b.ty  + a.ty
-  self.w0  = a.w0  * b.sx  + a.w1  * b.shy
-  self.w1  = a.w0  * b.shx + a.w1  * b.sy
-  self.w2  = a.w0  * b.tx  + a.w1  * b.ty  + a.w2
+  self.sx = a.sx * b.sx + a.shx * b.shy
+  self.shx = a.sx * b.shx + a.shx * b.sy
+  self.tx = a.sx * b.tx + a.shx * b.ty + a.tx
+  self.shy = a.shy * b.sx + a.sy * b.shy
+  self.sy = a.shy * b.shx + a.sy * b.sy
+  self.ty = a.shy * b.tx + a.sy * b.ty + a.ty
+  self.w0 = a.w0 * b.sx + a.w1 * b.shy
+  self.w1 = a.w0 * b.shx + a.w1 * b.sy
+  self.w2 = a.w0 * b.tx + a.w1 * b.ty + a.w2
 
 proc multiplyInv(self: var TransPerspective, m: TransPerspective) =
   var t = m
@@ -397,17 +397,17 @@ proc transform(self: TransPerspective, px, py: var float64) =
     x = px
     y = py
     m = 1.0 / (x*self.w0 + y*self.w1 + self.w2)
-  px = m * (x*self.sx  + y*self.shx + self.tx)
-  py = m * (x*self.shy + y*self.sy  + self.ty)
+  px = m * (x*self.sx + y*self.shx + self.tx)
+  py = m * (x*self.shy + y*self.sy + self.ty)
 
 proc transformAffine(self: TransPerspective, x, y: var float64) =
   var tmp = x
-  x = tmp * self.sx  + y * self.shx + self.tx
-  y = tmp * self.shy + y * self.sy  + self.ty
+  x = tmp * self.sx + y * self.shx + self.tx
+  y = tmp * self.shy + y * self.sy + self.ty
 
 proc transform2x2(self: TransPerspective, x, y: var float64) =
   var tmp = x
-  x = tmp * self.sx  + y * self.shx
+  x = tmp * self.sx + y * self.shx
   y = tmp * self.shy + y * self.sy
 
 proc inverseTransform(self: TransPerspective, x, y: var float64): TransPerspective  =
@@ -422,19 +422,19 @@ proc storeTo(self: TransPerspective, m: var openArray[float64]) =
   m[6] = self.tx;  m[7] = self.ty;   m[8] = self.w2
 
 proc loadFrom(self: var TransPerspective, m: openArray[float64]) =
-  self.sx  = m[0]; self.shy = m[1];  self.w0 = m[2]
-  self.shx = m[3]; self.sy  = m[4];  self.w1 = m[5]
-  self.tx  = m[6]; self.ty  = m[7];  self.w2 = m[8]
+  self.sx = m[0]; self.shy = m[1];  self.w0 = m[2]
+  self.shx = m[3]; self.sy = m[4];  self.w1 = m[5]
+  self.tx = m[6]; self.ty = m[7];  self.w2 = m[8]
 
 proc fromAffine*(self: var TransPerspective, a: TransAffine) {.inline.} =
-  self.sx  = a.sx;  self.shy = a.shy; self.w0 = 0
-  self.shx = a.shx; self.sy  = a.sy;  self.w1 = 0
-  self.tx  = a.tx;  self.ty  = a.ty;  self.w2 = 1
+  self.sx = a.sx;  self.shy = a.shy; self.w0 = 0
+  self.shx = a.shx; self.sy = a.sy;  self.w1 = 0
+  self.tx = a.tx;  self.ty = a.ty;  self.w2 = 1
 
 proc determinant*(self: TransPerspective): float64 {.inline.} =
-  result = self.sx  * (self.sy  * self.w2 - self.ty  * self.w1) +
-           self.shx * (self.ty  * self.w0 - self.shy * self.w2) +
-           self.tx  * (self.shy * self.w1 - self.sy  * self.w0)
+  result = self.sx * (self.sy * self.w2 - self.ty * self.w1) +
+           self.shx * (self.ty * self.w0 - self.shy * self.w2) +
+           self.tx * (self.shy * self.w1 - self.sy * self.w0)
 
 proc determinantReciprocal*(self: TransPerspective): float64 {.inline.} =
   result = 1.0 / self.determinant()
@@ -466,7 +466,7 @@ proc isEqual(self: TransPerspective, m: TransPerspective, epsilon: float64): boo
 
 proc scale*(self: TransPerspective): float64 {.inline.} =
   var
-    x = 0.707106781 * self.sx  + 0.707106781 * self.shx
+    x = 0.707106781 * self.sx + 0.707106781 * self.shx
     y = 0.707106781 * self.shy + 0.707106781 * self.sy
   sqrt(x*x + y*y)
 
@@ -499,6 +499,6 @@ proc scaling*(self: TransPerspective, x, y: var float64) =
   y = y2 - y1
 
 proc scalingAbs*(self: TransPerspective, x, y: var float64) =
-  x = sqrt(self.sx  * self.sx  + self.shx * self.shx)
-  y = sqrt(self.shy * self.shy + self.sy  * self.sy)
+  x = sqrt(self.sx * self.sx + self.shx * self.shx)
+  y = sqrt(self.shy * self.shy + self.sy * self.sy)
 

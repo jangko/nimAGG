@@ -140,47 +140,47 @@ proc decY*(self: var DistanceInterpolator2) =
   self.mDistStart += self.mDxStart
 
 proc incX*(self: var DistanceInterpolator2, dy: int) =
-  self.mDist      += self.mDy
+  self.mDist += self.mDy
   self.mDistStart += self.mDyStart
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
 
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
 
 proc decX*(self: var DistanceInterpolator2, dy: int) =
-  self.mDist      -= self.mDy
+  self.mDist -= self.mDy
   self.mDistStart -= self.mDyStart
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
 
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
 
 proc incY*(self: var DistanceInterpolator2, dx: int) =
-  self.mDist      -= self.mDx
+  self.mDist -= self.mDx
   self.mDistStart -= self.mDxStart
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
 
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
 
 proc decY*(self: var DistanceInterpolator2, dx: int) =
-  self.mDist      += self.mDx
+  self.mDist += self.mDx
   self.mDistStart += self.mDxStart
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
 
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
 
 proc dist*(self: DistanceInterpolator2): int = self.mDist
@@ -241,57 +241,57 @@ proc decY*(self: var DistanceInterpolator3) =
   self.mDistEnd += self.mDxEnd
 
 proc incX*(self: var DistanceInterpolator3, dy: int) =
-  self.mDist      += self.mDy
+  self.mDist += self.mDy
   self.mDistStart += self.mDyStart
-  self.mDistEnd   += self.mDyEnd
+  self.mDistEnd += self.mDyEnd
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
-    self.mDistEnd   -= self.mDxEnd
+    self.mDistEnd -= self.mDxEnd
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
-    self.mDistEnd   += self.mDxEnd
+    self.mDistEnd += self.mDxEnd
 
 proc decX*(self: var DistanceInterpolator3, dy: int) =
-  self.mDist      -= self.mDy
+  self.mDist -= self.mDy
   self.mDistStart -= self.mDyStart
-  self.mDistEnd   -= self.mDyEnd
+  self.mDistEnd -= self.mDyEnd
   if dy > 0:
-    self.mDist      -= self.mDx
+    self.mDist -= self.mDx
     self.mDistStart -= self.mDxStart
-    self.mDistEnd   -= self.mDxEnd
+    self.mDistEnd -= self.mDxEnd
 
   if dy < 0:
-    self.mDist      += self.mDx
+    self.mDist += self.mDx
     self.mDistStart += self.mDxStart
-    self.mDistEnd   += self.mDxEnd
+    self.mDistEnd += self.mDxEnd
 
 proc incY*(self: var DistanceInterpolator3, dx: int) =
-  self.mDist      -= self.mDx
+  self.mDist -= self.mDx
   self.mDistStart -= self.mDxStart
-  self.mDistEnd   -= self.mDxEnd
+  self.mDistEnd -= self.mDxEnd
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
-    self.mDistEnd   += self.mDyEnd
+    self.mDistEnd += self.mDyEnd
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
-    self.mDistEnd   -= self.mDyEnd
+    self.mDistEnd -= self.mDyEnd
 
 proc decY*(self: var DistanceInterpolator3, dx: int) =
-  self.mDist      += self.mDx
+  self.mDist += self.mDx
   self.mDistStart += self.mDxStart
-  self.mDistEnd   += self.mDxEnd
+  self.mDistEnd += self.mDxEnd
   if dx > 0:
-    self.mDist      += self.mDy
+    self.mDist += self.mDy
     self.mDistStart += self.mDyStart
-    self.mDistEnd   += self.mDyEnd
+    self.mDistEnd += self.mDyEnd
   if dx < 0:
-    self.mDist      -= self.mDy
+    self.mDist -= self.mDy
     self.mDistStart -= self.mDyStart
-    self.mDistEnd   -= self.mDyEnd
+    self.mDistEnd -= self.mDyEnd
 
 proc dist*(self: DistanceInterpolator3): int = self.mDist
 proc distStart*(self: DistanceInterpolator3): int = self.mDistStart
@@ -343,7 +343,7 @@ proc init*[Renderer](self: var LineInterpolatorAABase[Renderer], ren: var Render
     (lp.dy shl lineSubpixelShift) else: (lp.dx shl lineSubpixelShift), lp.len)
 
   let stop = self.mWidth + lineSubpixelScale * 2
-  for i in 0.. <maxHalfWidth:
+  for i in 0..<maxHalfWidth:
     self.mDist[i] = li.y()
     if self.mDist[i] >= stop: break
     inc li
@@ -818,7 +818,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
     p0 = addr(base(self).mCovers[0]) + maxHalfWidth + 2
     p1 = p0
     distStart = self.mDi.distStart()
-    distEnd   = self.mDi.distEnd()
+    distEnd = self.mDi.distEnd()
     npix = 0
 
   p1[] = 0
@@ -832,7 +832,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
   dist = base(self).mDist[dy] - s1
   while dist <= base(self).mWidth:
     distStart -= self.mDi.dxStart()
-    distEnd   -= self.mDi.dxEnd()
+    distEnd -= self.mDi.dxEnd()
     p1[] = 0
     if distEnd > 0 and distStart <= 0:
       p1[] = CoverType((self).mRen[].cover(dist))
@@ -847,7 +847,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
   dist = base(self).mDist[dy] + s1
   while dist <= base(self).mWidth:
     distStart += self.mDi.dxStart()
-    distEnd   += self.mDi.dxEnd()
+    distEnd += self.mDi.dxEnd()
     dec p0
     p0[] = 0
     if distEnd > 0 and distStart <= 0:
@@ -861,7 +861,7 @@ proc stepHor*[R](self: var LineInterpolatorAA3[R]): bool =
                                     p1 - p0,
                                     p0)
   inc base(self).mStep
-  return npix != 0 and base(self).mStep  < base(self).mCount
+  return npix != 0 and base(self).mStep < base(self).mCount
 
 proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
   mixin blendSolidHspan
@@ -886,7 +886,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
   dist = base(self).mDist[dx] - s1
   while dist <= base(self).mWidth:
     distStart += self.mDi.dyStart()
-    distEnd   += self.mDi.dyEnd()
+    distEnd += self.mDi.dyEnd()
     p1[] = 0
     if distEnd > 0 and distStart <= 0:
       p1[] = CoverType((self).mRen[].cover(dist))
@@ -901,7 +901,7 @@ proc stepVer*[R](self: var LineInterpolatorAA3[R]): bool =
   dist = base(self).mDist[dx] + s1
   while dist <= base(self).mWidth:
     distStart -= self.mDi.dyStart()
-    distEnd   -= self.mDi.dyEnd()
+    distEnd -= self.mDi.dyEnd()
     dec p0
     p0[] = 0
     if distEnd > 0 and distStart <= 0:
@@ -937,7 +937,7 @@ type
 proc width*(self: var LineProfileAA, w: float64)
 
 proc gamma*[GammaF](self: var LineProfileAA, gammaF: var GammaF) =
-  for i in 0.. <aaScale:
+  for i in 0..<aaScale:
     self.mGamma[i] = uround(gammaF.getGammaValue(float64(i) / aaMask) * aaMask).uint8
 
 proc initLineProfileAA*(): LineProfileAA =
@@ -945,7 +945,7 @@ proc initLineProfileAA*(): LineProfileAA =
   result.mMinWidth = 1.0
   result.mSmootherWidth = 1.0
   result.mProfile = @[]
-  for i in 0.. <aaScale: result.mGamma[i] = i.uint8
+  for i in 0..<aaScale: result.mGamma[i] = i.uint8
 
 proc initLineProfileAA*[GammaF](w: float64, gammaF: var GammaF): LineProfileAA =
   result.msubPixelWidth = 0
@@ -1008,11 +1008,11 @@ proc set*(self: var LineProfileAA, centerWidth, smootherWidth: float64) =
     val = self.mGamma[(baseVal * aaMask).int]
 
   ch = chCenter
-  for i in 0.. <subPixelCenterWidth:
+  for i in 0..<subPixelCenterWidth:
     ch[] = val.uint8
     inc ch
 
-  for i in 0.. <subPixelSmootherWidth:
+  for i in 0..<subPixelSmootherWidth:
     let idx = int((baseVal - baseVal * (float64(i) / subPixelSmootherWidth.float64)) * aaMask)
     chSmoother[] = self.mGamma[idx]
     inc chSmoother
@@ -1023,12 +1023,12 @@ proc set*(self: var LineProfileAA, centerWidth, smootherWidth: float64) =
                    subPixelScale*2
 
   val = self.mGamma[0]
-  for i in 0.. < nSmoother:
+  for i in 0..<nSmoother:
     chSmoother[] = val.uint8
     inc chSmoother
 
   ch = chCenter
-  for i in 0.. <subPixelScale*2:
+  for i in 0..<subPixelScale*2:
     dec ch
     ch[] = chCenter[]
     inc chCenter

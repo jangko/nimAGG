@@ -150,7 +150,7 @@ proc testCompOpBlend() =
 
   const len = high(CompOp).ord
 
-  for c in 0.. <len:
+  for c in 0..<len:
     var p = table[c]
     for a in 0..255:
       for b in 0..255:
@@ -163,7 +163,7 @@ proc testCompOpBlend() =
           echo x, " ", y, " ", op
           quit(-1)
 
-  for c in 0.. <len:
+  for c in 0..<len:
     var p = table[c]
     for a in 0..255:
       for b in 0..255:
@@ -176,7 +176,7 @@ proc testCompOpBlend() =
           echo x, " ", y, " ", op
           quit(-1)
 
-  for c in 0.. <len:
+  for c in 0..<len:
     var p = table[c]
     for a in 0..255:
       for b in 0..255:
@@ -189,7 +189,7 @@ proc testCompOpBlend() =
           echo x, " ", y, " ", op
           quit(-1)
 
-  for c in 0.. <len:
+  for c in 0..<len:
     var p = table[c]
     for a in 0..255:
       for b in 0..255:
@@ -252,15 +252,15 @@ proc testCustomBlend() =
     cpixf = create_pixf(crbuf)
 
   echo "copy pixel"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       var c = construct(ColorT, (x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint)
       pixf.copyPixel(x, y, c)
       cpixf.copyPixel(x.cint, y.cint, c)
 
   echo "pixel"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       var
         a = pixf.pixel(x, y)
         b = cpixf.pixel(x.cint, y.cint)
@@ -281,7 +281,7 @@ proc testCustomBlend() =
     span: array[frameWidth, ColorT]
     covers: array[frameWidth, uint8]
 
-  for i in 0.. <frameWidth:
+  for i in 0..<frameWidth:
     span[i].r = ValueT(i.uint and baseMask.uint)
     span[i].g = ValueT(i.uint and baseMask.uint)
     span[i].b = ValueT(i.uint and baseMask.uint)
@@ -296,8 +296,8 @@ proc testCustomBlend() =
   doAssert(buffer == cbuf)
 
   echo "blend pixel"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       let
         xx = (x and baseMask).uint
         yy = (y and baseMask).uint
@@ -308,8 +308,8 @@ proc testCustomBlend() =
   doAssert(buffer == cbuf)
 
   echo "blend color hspan vspan"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       let
         xx = (x and baseMask).uint
       cpixf.blend_color_hspan(0, y.cint, frameWidth.cuint, span[0].addr, nil, xx.uint8)
@@ -320,8 +320,8 @@ proc testCustomBlend() =
   doAssert(buffer == cbuf)
 
   echo "blend hline vline"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       let
         xx = (x and baseMask).uint
         yy = (y and baseMask).uint
@@ -334,8 +334,8 @@ proc testCustomBlend() =
   doAssert(buffer == cbuf)
 
   echo "blend solid hspan vspan"
-  for x in 0.. <frameWidth:
-    for y in 0.. <frameHeight:
+  for x in 0..<frameWidth:
+    for y in 0..<frameHeight:
       let
         xx = (x and baseMask).uint
         yy = (y and baseMask).uint

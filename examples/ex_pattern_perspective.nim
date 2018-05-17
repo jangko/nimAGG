@@ -52,7 +52,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
     trans_y1 = -200.0
     trans_x2 =  200.0
     trans_y2 =  200.0
-    dx = frameWidth.float64  / 2.0 - (trans_x2 + trans_x1) / 2.0
+    dx = frameWidth.float64 / 2.0 - (trans_x2 + trans_x1) / 2.0
     dy = frameHeight.float64 / 2.0 - (trans_y2 + trans_y1) / 2.0
 
   result.quad.xn(0) = floor(trans_x1 + dx)

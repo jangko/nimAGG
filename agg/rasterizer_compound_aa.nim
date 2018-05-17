@@ -265,8 +265,8 @@ proc styles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT], left
   cell.right = int16(right)
   self.mOutline.style(cell)
 
-  if left  >= 0 and left  < self.mMinStyle: self.mMinStyle = left
-  if left  >= 0 and left  > self.mMaxStyle: self.mMaxStyle = left
+  if left >= 0 and left < self.mMinStyle: self.mMinStyle = left
+  if left >= 0 and left > self.mMaxStyle: self.mMaxStyle = left
   if right >= 0 and right < self.mMinStyle: self.mMinStyle = right
   if right >= 0 and right > self.mMaxStyle: self.mMaxStyle = right
 
@@ -342,7 +342,7 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
 
       # Convert the Y-histogram into the array of starting indexes
       var startCell = 0
-      for i in 0.. <self.mAst.size:
+      for i in 0..<self.mAst.size:
         var
           st = self.mStyles[self.mAst[i].int].addr
           v = st.startCell
@@ -360,14 +360,14 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
 
         if currCell.x == style.lastX:
           cell = self.mCells[style.startCell + style.numCells - 1].addr
-          cell.area  += currCell.area
+          cell.area += currCell.area
           cell.cover += currCell.cover
         else:
           cell = self.mCells[style.startCell + style.numCells].addr
-          cell.x       = currCell.x
-          cell.area    = currCell.area
-          cell.cover   = currCell.cover
-          style.lastX  = currCell.x
+          cell.x = currCell.x
+          cell.area = currCell.area
+          cell.cover = currCell.cover
+          style.lastX = currCell.x
           inc style.numCells
 
         styleId = if currCell.right < 0: 0 else: currCell.right - self.mMinStyle + 1
@@ -375,14 +375,14 @@ proc sweepStyles*[ClipT, CoordT](self: var RasterizerCompoundAA1[ClipT, CoordT])
 
         if currCell.x == style.lastX:
           cell = self.mCells[style.startCell + style.numCells - 1].addr
-          cell.area  -= currCell.area
+          cell.area -= currCell.area
           cell.cover -= currCell.cover
         else:
           cell = self.mCells[style.startCell + style.numCells].addr
-          cell.x       =  currCell.x
-          cell.area    = -currCell.area
-          cell.cover   = -currCell.cover
-          style.lastX  =  currCell.x
+          cell.x =  currCell.x
+          cell.area = -currCell.area
+          cell.cover = -currCell.cover
+          style.lastX = currCell.x
           inc style.numCells
         dec numCells
 

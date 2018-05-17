@@ -114,10 +114,10 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
   # This operation will also clip the beginning of the span
   # if necessary.
   var start = pc1.mX - (x shl subPixelShift)
-  r    -= start
-  g    -= start
-  b    -= start
-  a    -= start
+  r -= start
+  g -= start
+  b -= start
+  a -= start
   nlen += start
 
   var vr, vg, vb, va: int
@@ -147,11 +147,11 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
     span.g = ValueT(vg)
     span.b = ValueT(vb)
     span.a = ValueT(va)
-    r     += subPixelScale
-    g     += subPixelScale
-    b     += subPixelScale
-    a     += subPixelScale
-    nlen  -= subPixelScale
+    r += subPixelScale
+    g += subPixelScale
+    b += subPixelScale
+    a += subPixelScale
+    nlen -= subPixelScale
     start -= subPixelScale
     inc span
     dec len
@@ -166,10 +166,10 @@ proc generate*[ColorT](self: var SpanGouraudRgba[ColorT], span: ptr ColorT, x, y
     span.g = ValueT(g.y())
     span.b = ValueT(b.y())
     span.a = ValueT(a.y())
-    r    += subPixelScale
-    g    += subPixelScale
-    b    += subPixelScale
-    a    += subPixelScale
+    r += subPixelScale
+    g += subPixelScale
+    b += subPixelScale
+    a += subPixelScale
     nlen -= subPixelScale
     inc span
     dec len

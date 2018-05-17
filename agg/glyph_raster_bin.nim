@@ -80,7 +80,7 @@ proc span*(self: var GlyphRasterBin, i: int): ptr CoverType =
     val = bits[]
     nb = 0
 
-  for j in 0.. <self.mGlyphWidth:
+  for j in 0..<self.mGlyphWidth:
     self.mSpan[j] = CoverType(if (val and 0x80) != 0: coverFull else: coverNone)
     val = val shl 1
     inc nb

@@ -54,7 +54,7 @@ proc values(self: var GammaSpline, kx1, ky1, kx2, ky2: float64) =
   self.mY[3] = 1.0
 
   self.mSpline.init(4, self.mX[0].addr, self.mY[0].addr)
-  for i in 0.. <256:
+  for i in 0..<256:
     self.mGamma[i] = uint8(self.y(float64(i) / 255.0) * 255.0)
 
 proc getValues*(self: var GammaSpline, kx1, ky1, kx2, ky2: var float64) =

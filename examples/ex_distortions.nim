@@ -408,7 +408,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.distortion.addItem("Swirl-Wave")
   result.distortion.curItem(0)
 
-  for i in 0.. <256:
+  for i in 0..<256:
     result.gradientColors[i] = initRgba8(
       gradientColors[i * 4 + 0],
       gradientColors[i * 4 + 1],
@@ -471,7 +471,9 @@ method onDraw(app: App) =
   dist.center(cx, cy)
 
   var
-    inter = initSpanInterpolatorAdaptor[SpanInterpolatorLinear[TransAffine]](imgMtx, dist)
+    # bug #7829
+    # inter = initSpanInterpolatorAdaptor[SpanInterpolatorLinear[TransAffine]](imgMtx, dist)
+    inter = initSpanInterpolatorAdaptor(SpanInterpolatorLinear[TransAffine], imgMtx, dist)
     imgSrc = initImageAccessorClip(imgPixf, initRgba(1,1,1))
 
     # Version without filtering (nearest neighbor)
@@ -493,7 +495,7 @@ method onDraw(app: App) =
 
   if imgHeight < r: r = imgHeight
   var
-    ell = initEllipse(imgWidth  / 2.0, imgHeight / 2.0, r / 2.0 - 20.0, r / 2.0 - 20.0, 200)
+    ell = initEllipse(imgWidth / 2.0, imgHeight / 2.0, r / 2.0 - 20.0, r / 2.0 - 20.0, 200)
     tr  = initConvTransform(ell, srcMtx)
 
   ras.addPath(tr)

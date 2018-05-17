@@ -98,10 +98,10 @@ method onDraw(app: App) =
   app.path.removeAll()
   app.path.cubicBezier(geom, geom.CycleStart, geom.CycleEnd, segments)
 
-  var
-    bb = boundingRectD(app.path)
-    baseDx = (bb.x2 - bb.x1) / 2.0
-    baseDy = (bb.y2 - bb.y1) / 2.0
+  #var
+    #bb = boundingRectD(app.path)
+    #baseDx = (bb.x2 - bb.x1) / 2.0
+    #baseDy = (bb.y2 - bb.y1) / 2.0
 
   #mtx *= transAffineTranslation(-baseDx, -baseDy)
   mtx *= transAffineScaling(scale, scale)

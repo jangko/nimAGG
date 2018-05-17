@@ -122,10 +122,10 @@ template gradientLutAux*(name: untyped, colorInterpolator, ColorT: typed, colorL
         stop: int
         c = self.mColorProfile[0].color
 
-      for i in 0.. <start:
+      for i in 0..<start:
         self.mColorLut[i] = c
 
-      for i in 1.. <self.mColorProfile.len:
+      for i in 1..<self.mColorProfile.len:
         stop  = uround(self.mColorProfile[i].offset * self.mColorLut.len.float64)
         var ci = initColorInterpolator[ColorT](self.mColorProfile[i-1].color,
                               self.mColorProfile[i].color,

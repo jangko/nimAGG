@@ -77,7 +77,7 @@ proc createStar(app: App, w, h: float64) =
     r2 = r1 / 1.45
     nr = 14
 
-  for i in 0.. <nr:
+  for i in 0..<nr:
     var
       a = pi * 2.0 * i.float64 / nr.float64 - pi / 2.0
       dx = cos(a)

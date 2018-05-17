@@ -34,17 +34,17 @@ proc weightArray*(self: var ImageFilterLut): ptr int16 = self.mWeightArray[0].ad
 proc normalize(self: var ImageFilterLut) =
   var flip = 1
 
-  for i in 0.. <imageSubpixelScale:
+  for i in 0..<imageSubpixelScale:
     while true:
       var sum = 0
-      for j in 0.. <self.mDiameter:
+      for j in 0..<self.mDiameter:
         sum += self.mWeightArray[j * imageSubpixelScale + i]
 
       if sum == imageFilterScale: break
 
       var k = float64(imageFilterScale) / float64(sum)
       sum = 0
-      for j in 0.. <self.mDiameter:
+      for j in 0..<self.mDiameter:
         let t = iround(self.mWeightArray[j * imageSubpixelScale + i].float64 * k)
         sum += t
         self.mWeightArray[j * imageSubpixelScale + i] = t.int16
@@ -56,7 +56,7 @@ proc normalize(self: var ImageFilterLut) =
       while j < self.mDiameter and sum != 0:
         flip = flip xor 1
         var
-          idx = if flip  != 0: self.mDiameter div 2 + j div 2 else: self.mDiameter div 2 - j div 2
+          idx = if flip != 0: self.mDiameter div 2 + j div 2 else: self.mDiameter div 2 - j div 2
           v = self.mWeightArray[idx * imageSubpixelScale + i]
         if v < imageFilterScale:
           self.mWeightArray[idx * imageSubpixelScale + i] += inc.int16
@@ -64,7 +64,7 @@ proc normalize(self: var ImageFilterLut) =
         inc j
 
   var pivot = self.mDiameter shl (imageSubpixelShift - 1)
-  for i in 0.. <pivot:
+  for i in 0..<pivot:
     self.mWeightArray[pivot + i] = self.mWeightArray[pivot - i]
 
   var stop = (self.diameter() shl imageSubpixelShift) - 1
@@ -84,7 +84,7 @@ proc calculate*[FilterF](self: var ImageFilterLut, filter: FilterF, normalizatio
   self.reallocLut(r)
 
   let pivot = self.diameter() shl (imageSubpixelShift - 1)
-  for i in 0.. <pivot:
+  for i in 0..<pivot:
     let x = float64(i) / float64(imageSubpixelScale)
     let y = filter.calcWeight(x)
     let z = iround(y * imageFilterScale).int16
@@ -214,8 +214,8 @@ proc construct*(x: typedesc[ImageFilterCatrom]): ImageFilterCatrom =
 proc radius*(self: ImageFilterCatrom): float64 = 2.0
 
 proc calcWeight*(self: ImageFilterCatrom, x: float64): float64 =
-  if x <  1.0: return 0.5 * (2.0 + x * x * (-5.0 + x * 3.0))
-  if x <  2.0: return 0.5 * (4.0 + x * (-8.0 + x * (5.0 - x)))
+  if x < 1.0: return 0.5 * (2.0 + x * x * (-5.0 + x * 3.0))
+  if x < 2.0: return 0.5 * (4.0 + x * (-8.0 + x * (5.0 - x)))
   return 0.0
 
 type
@@ -272,9 +272,9 @@ proc calcWeight*(self: ImageFilterSpline36, x: float64): float64 =
     return ((13.0/11.0 * x - 453.0/209.0) * x - 3.0/209.0) * x + 1.0
 
   if x < 2.0:
-    return ((-6.0/11.0 * (x-1) + 270.0/209.0) * (x-1) - 156.0/ 209.0) * (x-1)
+    return ((-6.0/11.0 * (x-1) + 270.0/209.0) * (x-1) - 156.0/209.0) * (x-1)
 
-  result = ((1.0/11.0 * (x-2) - 45.0/209.0) * (x-2) +  26.0/209.0) * (x-2)
+  result = ((1.0/11.0 * (x-2) - 45.0/209.0) * (x-2) + 26.0/209.0) * (x-2)
 
 
 type

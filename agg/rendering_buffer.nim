@@ -102,7 +102,7 @@ proc copyFrom*[T](self: var RowAccessor[T], src: RowAccessor[T]) =
     s = min(self.strideAbs(), src.strideAbs()) * sizeof(T)
     w = min(self.width, src.width).int
 
-  for y in 0.. <h:
+  for y in 0..<h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), s)
 
 proc clear*[T](self: var RowAccessor[T], value: T) =
@@ -111,9 +111,9 @@ proc clear*[T](self: var RowAccessor[T], value: T) =
     h = self.height.int
     stride = self.strideAbs()
 
-  for y in 0.. <h:
+  for y in 0..<h:
     var p = self.rowPtr(0, y, w)
-    for x in 0.. <stride:
+    for x in 0..<stride:
       p[] = value
       inc p
 
@@ -130,7 +130,7 @@ proc attach*[T](self: var RowPtrCache[T], buf: ptr T, width, height: int, stride
   if stride < 0:
     p = buf - (height - 1) * stride
 
-  for i in 0.. <height:
+  for i in 0..<height:
     self.rows[i] = p
     inc(p, stride)
 
@@ -188,7 +188,7 @@ proc copyFrom*[T](self: var RowPtrCache[T], src: RowPtrCache[T]) =
     s = min(self.strideAbs(), src.strideAbs()) * sizeof(T)
     w = min(self.width, src.width).int
 
-  for y in 0.. <h:
+  for y in 0..<h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), s)
 
 proc clear*[T](self: var RowPtrCache[T], value: T) =
@@ -197,9 +197,9 @@ proc clear*[T](self: var RowPtrCache[T], value: T) =
     h = self.height.int
     stride = self.strideAbs()
 
-  for y in 0.. <h:
+  for y in 0..<h:
     var p = self.rowPtr(0, y, w)
-    for x in 0.. <stride:
+    for x in 0..<stride:
       p[] = value
       inc p
 
@@ -219,12 +219,12 @@ proc rowPtr*[T](self: var DynaRow[T], x, y, len: int): ptr T =
     r = self.rows[y].addr
     x2 = x + len - 1
   if r.data != nil:
-    if x  < r.x1: r.x1 = x
+    if x < r.x1: r.x1 = x
     if x2 > r.x2: r.x2 = x2
   else:
     r.data = newSeq[T](self.byteWidth)
-    r.x1  = x
-    r.x2  = x2
+    r.x1 = x
+    r.x2 = x2
   result = r.data[0].addr
 
 proc rowPtr*[T](self: var DynaRow[T], y: int): ptr T =
@@ -242,5 +242,5 @@ proc copyFrom*[T](self, src: var DynaRow[T]) =
     h = min(self.height, src.height).int
     w = min(self.width, src.width).int
 
-  for y in 0.. <h:
+  for y in 0..<h:
     copyMem(self.rowPtr(0, y, w), src.rowPtr(y), self.byteWidth)

@@ -158,7 +158,7 @@ method onMouseButtonDown(app: App, x, y: int, flags: InputFlags) =
       ras = initRasterizerScanlineAA()
 
     app.startTimer()
-    for i in 0.. <100:
+    for i in 0..<100:
       app.renderGouraud(sl, ras)
 
     var

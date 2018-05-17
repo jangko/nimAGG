@@ -32,13 +32,14 @@ build_script:
   - cd Nim
   - nim c -d:release koch
   - koch boot -d:release
-  - git clone https://github.com/nim-lang/nimble.git dist/nimble
-  - cd dist\nimble
-  - git checkout -f stable
-  - git pull
-  - cd ..\.. 
-  - nim c dist\nimble\src\nimble.nim
-  - copy dist\nimble\src\nimble.exe bin\nimble.exe
+  - koch nimble
+  # - git clone https://github.com/nim-lang/nimble.git dist/nimble
+  # - cd dist\nimble
+  # - git checkout -f stable
+  # - git pull
+  # - cd ..\.. 
+  # - nim c dist\nimble\src\nimble.nim
+  # - copy dist\nimble\src\nimble.exe bin\nimble.exe
   - cd ..
   - nimble refresh
   - nimble install nimBMP

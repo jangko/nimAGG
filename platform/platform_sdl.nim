@@ -223,7 +223,7 @@ proc caption*[T,R](self: GenericPlatform[T,R], cap: string) =
 
 proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
   type ValueT = getValueT(R)
-  if self.mSpecific.mSurface != nil:
+  if not self.mSpecific.mSurface.isNil:
     SDL.freeSurface(self.mSpecific.mSurface)
 
   self.mSpecific.mSurface = SDL.createRGBSurface(
@@ -233,7 +233,7 @@ proc resizeSurface[T,R](self: GenericPlatform[T,R], width, height: int): bool =
     self.mSpecific.mBMask.cuint,
     self.mSpecific.mAMask.cuint)
 
-  if self.mSpecific.mSurface == nil:
+  if self.mSpecific.mSurface.isNil:
     echo "cannot create surface"
     return false
 
@@ -274,7 +274,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
     WINDOWPOS_CENTERED.cint,
     width.cint, height.cint, wflags)
 
-  if self.mSpecific.mWindow == nil:
+  if self.mSpecific.mWindow.isNil:
     echo "SDL_CreateWindow Error: ", $SDL.getError()
     return false
 
@@ -284,7 +284,7 @@ proc init*[T,R](self: GenericPlatform[T,R], width, height: int, flags: WindowFla
   self.mSpecific.mRenderer = SDL.createRenderer(self.mSpecific.mWindow,
     -1, SDL.RENDERER_ACCELERATED or SDL.RENDERER_PRESENTVSYNC)
 
-  if self.mSpecific.mRenderer == nil:
+  if self.mSpecific.mRenderer.isNil:
     return false
 
   result = self.resizeSurface(width, height)
@@ -309,7 +309,7 @@ proc updateWindow[T,R](self: GenericPlatform[T,R]) =
 
   # Convert to texture
   var texture = SDL.createTextureFromSurface(renderer, surface)
-  if texture == nil: return
+  if texture.isNil: return
 
   # Render texture
   if renderer.renderCopy(texture, nil, addr(rect)) != 0:
@@ -376,7 +376,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       of KEYDOWN:
         var flags: InputFlags
         if (event.key.keysym.mods and KMOD_SHIFT.ord) != 0: flags.incl kbdShift
-        if (event.key.keysym.mods and KMOD_CTRL.ord)  != 0: flags.incl kbdCtrl
+        if (event.key.keysym.mods and KMOD_CTRL.ord) != 0: flags.incl kbdCtrl
 
         var
           left  = false
@@ -504,7 +504,7 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
       fileName.add ".bmp"
 
     var tmp = SDL.loadBMP(fileName)
-    if tmp == nil:
+    if tmp.isNil:
       echo "Couldn't load $1: $2" % [fileName, $SDL.getError()]
       return false
 
@@ -531,7 +531,7 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
 
     SDL.freeSurface(tmp)
 
-    if self.mSpecific.mSurfImg[idx] == nil:
+    if self.mSpecific.mSurfImg[idx].isNil:
       echo "failed to convert surface"
       return false
 
@@ -544,7 +544,7 @@ proc loadImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
   result = false
 
 proc saveImg[T,R](self: GenericPlatform[T,R], idx: int, file: string): bool =
-  if idx < maxImages and self.mSpecific.mSurfImg[idx] != nil:
+  if idx < maxImages and not self.mSpecific.mSurfImg[idx].isNil:
     var fileName = toLowerAscii(file)
     if rfind(fileName, ".bmp") == -1:
       fileName.add ".bmp"
@@ -555,7 +555,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
   type ValueT = getValueT(R)
 
   if idx < maxImages:
-    if self.mSpecific.mSurfImg[idx] != nil:
+    if not self.mSpecific.mSurfImg[idx].isNil:
       SDL.freeSurface(self.mSpecific.mSurfImg[idx])
 
     self.mSpecific.mSurfImg[idx] = SDL.createRGBSurface(
@@ -565,7 +565,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
       self.mSpecific.mBMask.cuint,
       self.mSpecific.mAMask.cuint)
 
-    if self.mSpecific.mSurfImg[idx] == nil:
+    if self.mSpecific.mSurfImg[idx].isNil:
       echo "Couldn't create image: ", SDL.getError()
       return false
 

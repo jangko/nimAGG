@@ -43,8 +43,8 @@ proc initMeshEdge(p1, p2, tl, tr: int): MeshEdge =
   result.tl = tl
   result.tr = tr
 
-proc random(v1, v2: float64): float64 =
-  result = (v2 - v1) * random(1000.0) / 999.0 + v1
+proc rand(v1, v2: float64): float64 =
+  result = (v2 - v1) * rand(1000.0) / 999.0 + v1
 
 type
   MeshCtrl = object
@@ -91,14 +91,14 @@ proc generate(self: var MeshCtrl, cols, rows: int, cell_w, cell_h, start_x, star
 
   self.vertices.setLen(0)
   var y = start_y
-  for i in 0.. <self.rows:
+  for i in 0..<self.rows:
     var x = start_x
-    for j in 0.. <self.cols:
+    for j in 0..<self.cols:
       let
-        dx = random(-0.5, 0.5)
-        dy = random(-0.5, 0.5)
-        c  = initRgba8(random(0xFF), random(0xFF), random(0xFF))
-        dc = initRgba8(random(1), random(1), random(1))
+        dx = rand(-0.5, 0.5)
+        dy = rand(-0.5, 0.5)
+        c  = initRgba8(rand(0xFF), rand(0xFF), rand(0xFF))
+        dc = initRgba8(rand(1), rand(1), rand(1))
       self.vertices.add(initMeshPoint(x, y, dx, dy, c, dc))
       x += cell_w
     y += cell_h
@@ -111,8 +111,8 @@ proc generate(self: var MeshCtrl, cols, rows: int, cell_w, cell_h, start_x, star
   self.triangles.setLen(0)
   self.edges.setLen(0)
 
-  for i in 0.. <self.rows - 1:
-    for j in 0.. <self.cols - 1:
+  for i in 0..<self.rows - 1:
+    for j in 0..<self.cols - 1:
       var
         p1 = i * self.cols + j
         p2 = p1 + 1
@@ -145,8 +145,8 @@ proc generate(self: var MeshCtrl, cols, rows: int, cell_w, cell_h, start_x, star
 
 
 proc randomize_points(self: var MeshCtrl, delta: float64) =
-  for i in 0.. <self.rows:
-    for j in 0.. <self.cols:
+  for i in 0..<self.rows:
+    for j in 0..<self.cols:
       var
         xc = j.float64 * self.cellW + self.startX
         yc = i.float64 * self.cellH + self.startY
@@ -164,7 +164,7 @@ proc randomize_points(self: var MeshCtrl, delta: float64) =
       if p.y > y2: p.y = y2; p.dy = -p.dy
 
 proc rotateColors(self: var MeshCtrl) =
-  for i in 1.. <self.vertices.len:
+  for i in 1..<self.vertices.len:
     var
       c = self.vertices[i].color.addr
       dc = self.vertices[i].dc.addr
@@ -185,7 +185,7 @@ proc rotateColors(self: var MeshCtrl) =
 
 proc onMouseButtonDown(self: var MeshCtrl, x, y: int, flags: InputFlags): bool =
   if mouseLeft in flags:
-    for i in 0.. <self.vertices.len():
+    for i in 0..<self.vertices.len():
       if calcDistance(x.float64, y.float64, self.vertices[i].x, self.vertices[i].y) < 5:
         self.dragIdx = i
         self.dragDx = x.float64 - self.vertices[i].x

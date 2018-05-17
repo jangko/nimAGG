@@ -27,14 +27,14 @@ proc initGraph(numNodes, numEdges: int): Graph =
 
   randomize()
 
-  for i in 0.. <numNodes:
-    result.nodes[i].x = random(1.0) * 0.75 + 0.1
-    result.nodes[i].y = random(1.0) * 0.85 + 0.1
+  for i in 0..<numNodes:
+    result.nodes[i].x = rand(1.0) * 0.75 + 0.1
+    result.nodes[i].y = rand(1.0) * 0.85 + 0.1
 
   var i = 0
   while i < numEdges:
-    result.edges[i].node1 = random(numNodes)
-    result.edges[i].node2 = random(numNodes)
+    result.edges[i].node1 = rand(numNodes)
+    result.edges[i].node2 = rand(numNodes)
     if result.edges[i].node1 == result.edges[i].node2: dec i
     inc i
 
@@ -326,7 +326,7 @@ proc draw_nodes_draft(app: App) =
     rb     = initRendererBase(pixf)
     prim   = initRendererPrimitives(rb)
 
-  for i in 0.. <app.graph.getNumNodes():
+  for i in 0..<app.graph.getNumNodes():
     let n = app.graph.getNode(i, app.width(), app.height())
     prim.fillColor(app.gradientColors[147])
     prim.lineColor(app.gradientColors[255])
@@ -340,7 +340,7 @@ proc draw_nodes_fine(app: App, ras: var RasterizerScanlineAA) =
     pixf   = initPixfmtRgb24(app.rbufWindow())
     rb     = initRendererBase(pixf)
 
-  for i in 0.. <app.graph.getNumNodes():
+  for i in 0..<app.graph.getNumNodes():
     var
       n = app.graph.getNode(i, app.width(), app.height())
       ell = initEllipse(n.x, n.y, 5.0 * app.mWidth.value(), 5.0 * app.mWidth.value())
@@ -396,9 +396,9 @@ proc render_edge_fine[Source](app: App, ras: var RasterizerScanlineAA,
     ras.sort()
   of 3:
     var
-      r = random(0x7F)
-      g = random(0x7F)
-      b = random(0x7F)
+      r = rand(0x7F)
+      g = rand(0x7F)
+      b = rand(0x7F)
       a = 255
     if app.translucent.status(): a = 80
     ras.addPath(src)
@@ -453,15 +453,15 @@ proc draw_lines_draft(app: App) =
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
 
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       e  = app.graph.getEdge(i)
       n1 = app.graph.getNode(e.node1, app.width(), app.height())
       n2 = app.graph.getNode(e.node2, app.width(), app.height())
       ln = initLine(n1.x, n1.y, n2.x, n2.y)
-      r = random(0x7F)
-      g = random(0x7F)
-      b = random(0x7F)
+      r = rand(0x7F)
+      g = rand(0x7F)
+      b = rand(0x7F)
       a = 255
     if app.translucent.status(): a = 80
     prim.lineColor(initRgba8(r, g, b, a))
@@ -474,15 +474,15 @@ proc draw_curves_draft(app: App) =
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
 
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       e  = app.graph.getEdge(i)
       n1 = app.graph.getNode(e.node1, app.width(), app.height())
       n2 = app.graph.getNode(e.node2, app.width(), app.height())
       c  = initCurve(n1.x, n1.y, n2.x, n2.y)
-      r = random(0x7F)
-      g = random(0x7F)
-      b = random(0x7F)
+      r = rand(0x7F)
+      g = rand(0x7F)
+      b = rand(0x7F)
       a = 255
     if app.translucent.status(): a = 80
     prim.lineColor(initRgba8(r, g, b, a))
@@ -495,15 +495,15 @@ proc draw_dashes_draft(app: App) =
     prim   = initRendererPrimitives(rb)
     ras    = initRasterizerOutline(prim)
 
-  for i in 0.. < app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       e  = app.graph.getEdge(i)
       n1 = app.graph.getNode(e.node1, app.width(), app.height())
       n2 = app.graph.getNode(e.node2, app.width(), app.height())
       c  = initCurve(n1.x, n1.y, n2.x, n2.y)
-      r = random(0x7F)
-      g = random(0x7F)
-      b = random(0x7F)
+      r = rand(0x7F)
+      g = rand(0x7F)
+      b = rand(0x7F)
       a = 255
     if app.translucent.status(): a = 80
     prim.lineColor(initRgba8(r, g, b, a))
@@ -512,7 +512,7 @@ proc draw_dashes_draft(app: App) =
 proc draw_lines_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
 
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       b  = app.graph.getEdge(i)
       n1 = app.graph.getNode(b.node1, app.width(), app.height())
@@ -524,7 +524,7 @@ proc draw_lines_fine(app: App, ras: var RasterizerScanlineAA,
 
 proc draw_curves_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       b  = app.graph.getEdge(i)
       n1 = app.graph.getNode(b.node1, app.width(), app.height())
@@ -535,7 +535,7 @@ proc draw_curves_fine(app: App, ras: var RasterizerScanlineAA,
 
 proc draw_dashes_fine(app: App, ras: var RasterizerScanlineAA,
   renFine: var SolidRenderer, renDraft: var DraftRenderer) =
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       b  = app.graph.getEdge(i)
       n1 = app.graph.getNode(b.node1, app.width(), app.height())
@@ -550,7 +550,7 @@ proc draw_polygons(app: App, ras: var RasterizerScanlineAA,
   if app.mType.curItem() == 4:
     ras.gamma(initGammaThreshold(0.5))
 
-  for i in 0.. <app.graph.getNumEdges():
+  for i in 0..<app.graph.getNumEdges():
     var
       b  = app.graph.getEdge(i)
       n1 = app.graph.getNode(b.node1, app.width(), app.height())
@@ -623,16 +623,16 @@ method onCtrlChange(app: App) =
 
     if app.draft.status():
       app.startTimer()
-      for i in 0.. <10:
+      for i in 0..<10:
         app.draw_scene(ras, renFine, renDraft)
       let t1 = app.elapsedTime()
       buf = "$1f milliseconds" % [t1.formatFloat(ffDecimal, 3)]
     else:
       var times: array[5, float64]
-      for x in 0.. <4:
+      for x in 0..<4:
         app.draw = x
         app.startTimer()
-        for i in 0.. <10:
+        for i in 0..<10:
           app.draw_scene(ras, renFine, renDraft)
         times[app.draw] = app.elapsedTime()
 

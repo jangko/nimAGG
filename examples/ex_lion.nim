@@ -46,7 +46,7 @@ method onDraw(app: App) =
     height = app.height()
     alpha  = app.mAlpha.value()
 
-  for i in 0.. <app.lion.numPaths:
+  for i in 0..<app.lion.numPaths:
     app.lion.colors[i].a = uint8(alpha * 255)
 
   var mtx = initTransAffine()

@@ -169,7 +169,7 @@ method onDraw(app: App) =
 
     p.removeAll()
     p.moveTo(xs+0.5, ys + dy * weights[0].float64 / imageFilterScale.float64)
-    for i in 1.. <nn:
+    for i in 1..<nn:
       p.lineTo(xs + dx * i.float64 / n.float64 + 0.5, ys + dy * weights[i].float64 / imageFilterScale.float64)
 
     ras.addPath(stroke)

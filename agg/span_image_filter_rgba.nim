@@ -471,12 +471,12 @@ proc generate*[S,I,ColorT](self: var SpanImageFilterRgba[S,I], span: ptr ColorT,
 
         dec xCount
         if xCount == 0: break
-        xHr  += imageSubpixelScale
+        xHr += imageSubpixelScale
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
       dec yCount
       if yCount == 0: break
-      yHr  += imageSubpixelScale
+      yHr += imageSubpixelScale
       fgPtr = cast[ptr ValueT](base(self).source().nextY())
 
     fg[0] = sar(fg[0], imageFilterShift)
@@ -568,7 +568,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgbaAffine[S,I], span: ptr
         fg[2] += fgPtr[].LongT * weight; inc fgPtr
         fg[3] += fgPtr[].LongT * weight; inc fgPtr
         totalWeight += weight
-        xHr  += base(self).mRxInv
+        xHr += base(self).mRxInv
         if xHr >= filterScale: break
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 
@@ -679,7 +679,7 @@ proc generate*[S,I,ColorT](self: var SpanImageResampleRgba[S,I], span: ptr Color
         fg[2] += fgPtr[].LongT * weight; inc fgPtr
         fg[3] += fgPtr[].LongT * weight; inc fgPtr
         totalWeight += weight
-        xHr  += rxInv
+        xHr += rxInv
         if xHr >= filterScale: break
         fgPtr = cast[ptr ValueT](base(self).source().nextX())
 

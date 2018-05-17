@@ -62,10 +62,10 @@ proc initRasterizerScanlineAA1*[ClipType, CoordType](): RasterizerScanlineAA1[Cl
   result.startX = 0
   result.startY = 0
   result.status = statusInitial
-  for i in 0.. <aaScale: result.mGamma[i] = i
+  for i in 0..<aaScale: result.mGamma[i] = i
 
 proc gamma*[ClipType, CoordType, GammaF](self: var RasterizerScanlineAA1[ClipType, CoordType], gamma: GammaF) =
-  for i in 0.. <aaScale:
+  for i in 0..<aaScale:
     self.mGamma[i] = uround(gamma.getGammaValue(i.float64 / aaMask) * aaMask)
 
 proc initRasterizerScanlineAA2*[ClipType, CoordType, GammaF](gammaFunction: GammaF): RasterizerScanlineAA1[ClipType, CoordType] =

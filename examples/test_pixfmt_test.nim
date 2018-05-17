@@ -102,17 +102,17 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
       baseMask = getBaseMask(ColorT)
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
-    for i in 0.. <buffer.len: buffer[i] = 0.chr
+    for i in 0..<buffer.len: buffer[i] = 0.chr
     var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * pixElem)
     var pixf = `init PixFmt`(rbuf)
 
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         pixf.copyPixel(x, y, `init ColorT`((x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint))
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let a = `init ColorT`((x and baseMask).uint, (y and baseMask).uint, (x and baseMask).uint, baseMask.uint)
         let b = pixf.pixel(x, y)
         doAssert(a == b)
@@ -133,19 +133,19 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
       covers: array[frameWidth, uint8]
 
     p = start
-    for x in 0.. <frameWidth:
+    for x in 0..<frameWidth:
       doAssert(p[OrderT.R] == color.r)
       doAssert(p[OrderT.G] == color.g)
       doAssert(p[OrderT.B] == color.b)
       inc(p, pixElem)
 
-    for y in 0.. <frameHeight:
+    for y in 0..<frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[OrderT.R] == color.r)
       doAssert(p[OrderT.G] == color.g)
       doAssert(p[OrderT.B] == color.b)
 
-    for i in 0.. <frameWidth:
+    for i in 0..<frameWidth:
       span[i].r = ValueT(i.uint and baseMask.uint)
       span[i].g = ValueT(i.uint and baseMask.uint)
       span[i].b = ValueT(i.uint and baseMask.uint)
@@ -155,13 +155,13 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
     pixf.copyColorVspan(0, 0, frameWidth, span[0].addr)
 
     p = start
-    for x in 0.. <frameWidth:
+    for x in 0..<frameWidth:
       doAssert(p[OrderT.R] == span[x].r)
       doAssert(p[OrderT.G] == span[x].g)
       doAssert(p[OrderT.B] == span[x].b)
       inc(p, pixElem)
 
-    for y in 0.. <frameHeight:
+    for y in 0..<frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[OrderT.R] == span[y].r)
       doAssert(p[OrderT.G] == span[y].g)
@@ -172,11 +172,11 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
       crbuf = create_rbuf(cbuf, frameWidth.cint, frameHeight.cint, (frameHeight * pixWidth).cint)
       cpixf = `create cname`(crbuf)
 
-    for i in 0.. <buffer.len: buffer[i] = 0.chr
-    for i in 0.. <cbuf.len: cbuf[i] = 0.chr
+    for i in 0..<buffer.len: buffer[i] = 0.chr
+    for i in 0..<cbuf.len: cbuf[i] = 0.chr
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -186,8 +186,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
         cpixf.blend_color_hspan(0, y.cint, frameWidth.cuint, span[0].addr, nil, xx.uint8)
@@ -197,8 +197,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -210,8 +210,8 @@ template genTest(name, PixFmt, ColorT, cname, nbit, RenBuf: untyped, pixElem: in
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -265,16 +265,16 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
       baseMask = getBaseMask(ColorT)
 
     var buffer = newString(frameWidth * frameHeight * pixWidth)
-    for i in 0.. <buffer.len: buffer[i] = 0.chr
+    for i in 0..<buffer.len: buffer[i] = 0.chr
     var rbuf = RenBuf(cast[ptr ValueT](buffer[0].addr), frameWidth, frameHeight, frameWidth * 2)
     var pixf = `init PixFmt`(rbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         pixf.copyPixel(x, y, `init ColorT`((x and baseMask).uint, baseMask.uint))
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let a = `init ColorT`((x and baseMask).uint, baseMask.uint)
         let b = pixf.pixel(x, y)
         doAssert(a == b)
@@ -293,16 +293,16 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
       covers: array[frameWidth, uint8]
 
     p = start
-    for x in 0.. <frameWidth:
+    for x in 0..<frameWidth:
       doAssert(p[] == color.v)
       inc p
 
-    for y in 0.. <frameHeight:
+    for y in 0..<frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[] == color.v)
 
 
-    for i in 0.. <frameWidth:
+    for i in 0..<frameWidth:
       span[i].v = ValueT(i.uint and baseMask.uint)
       covers[i] = uint8(i.uint and baseMask.uint)
 
@@ -310,11 +310,11 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
     pixf.copyColorVspan(0, 0, frameWidth, span[0].addr)
 
     p = start
-    for x in 0.. <frameWidth:
+    for x in 0..<frameWidth:
       doAssert(p[] == span[x].v)
       inc p
 
-    for y in 0.. <frameHeight:
+    for y in 0..<frameHeight:
       p = cast[ptr ValueT](cast[ByteAddress](start) + y * (frameWidth * pixWidth))
       doAssert(p[] == span[y].v)
 
@@ -323,11 +323,11 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
       crbuf = create_rbuf(cbuf, frameWidth.cint, frameHeight.cint, (frameHeight * pixWidth).cint)
       cpixf = `create_pixf ColorT`(crbuf)
 
-    for i in 0.. <buffer.len: buffer[i] = 0.chr
-    for i in 0.. <cbuf.len: cbuf[i] = 0.chr
+    for i in 0..<buffer.len: buffer[i] = 0.chr
+    for i in 0..<cbuf.len: cbuf[i] = 0.chr
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -337,8 +337,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
         cpixf.blend_color_hspan(0, y.cint, frameWidth.cuint, span[0].addr, nil, xx.uint8)
@@ -348,8 +348,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -361,8 +361,8 @@ template genTestGray(name, PixFmt, ColorT, nbit, RenBuf: untyped) =
 
     doAssert(buffer == cbuf)
 
-    for x in 0.. <frameWidth:
-      for y in 0.. <frameHeight:
+    for x in 0..<frameWidth:
+      for y in 0..<frameHeight:
         let
           xx = (x and baseMask).uint
           yy = (y and baseMask).uint
@@ -414,14 +414,14 @@ proc testRenderingBuffer[ColorT]() =
     rbufc1 = initRenderingBufferCached(cast[ptr ValueT](buf1[0].addr), frameWidth, frameHeight, frameWidth * 3)
     rbufc2 = initRenderingBufferCached(cast[ptr ValueT](buf2[0].addr), frameWidth, frameHeight, frameWidth * 3)
 
-  for i in 0.. <buf1.len:
+  for i in 0..<buf1.len:
     buf1[i] = 0.chr
     buf2[i] = 255.chr
 
   rbuf1.copyFrom(rbuf2)
   doAssert(buf1 == buf2)
 
-  for i in 0.. <buf1.len:
+  for i in 0..<buf1.len:
     buf1[i] = 0.chr
     buf2[i] = 255.chr
 
@@ -433,20 +433,20 @@ proc testRenderingBuffer[ColorT]() =
     dn1 = initDynaRow[ValueT](100, 120, byteWidth)
     dn2 = initDynaRow[ValueT](100, 120, byteWidth)
 
-  for i in 0.. <dn1.height():
+  for i in 0..<dn1.height():
     zeroMem(dn1.rowPtr(i), byteWidth)
     var p = dn2.rowPtr(i)
-    for x in 0.. <3:
+    for x in 0..<3:
       p[] = baseMask
       inc p
 
   dn1.copyFrom(dn2)
 
-  for i in 0.. <dn1.height():
+  for i in 0..<dn1.height():
     var
       p1 = dn1.rowPtr(i)
       p2 = dn2.rowPtr(i)
-    for x in 0.. <3:
+    for x in 0..<3:
       if p1[] != p2[]:
         doAssert(false)
       inc p1

@@ -189,25 +189,25 @@ proc add*(self: var CtrlContainer, c: CtrlBase) =
     inc self.mNumCtrl
 
 proc inRect*(self: CtrlContainer, x, y: float64): bool =
-  for i in 0.. <self.mNumCtrl:
+  for i in 0..<self.mNumCtrl:
     let ctrl = self.mCtrl[i]
     if ctrl.isEnabled() and ctrl.inRect(x, y): return true
   result = false
 
 proc onMouseButtonDown*(self: CtrlContainer, x, y: float64): bool =
-  for i in 0.. <self.mNumCtrl:
+  for i in 0..<self.mNumCtrl:
     let ctrl = self.mCtrl[i]
     if ctrl.isEnabled() and ctrl.onMouseButtonDown(x, y): return true
   result = false
 
 proc onMouseButtonUp*(self: CtrlContainer, x, y: float64): bool =
   result = false
-  for i in 0.. <self.mNumCtrl:
+  for i in 0..<self.mNumCtrl:
     let ctrl = self.mCtrl[i]
     if ctrl.isEnabled() and ctrl.onMouseButtonUp(x, y): result = true
 
 proc onMouseMove*(self: CtrlContainer, x, y: float64, buttonFlag: bool): bool =
-  for i in 0.. <self.mNumCtrl:
+  for i in 0..<self.mNumCtrl:
     let ctrl = self.mCtrl[i]
     if ctrl.isEnabled() and ctrl.onMouseMove(x, y, buttonFlag): return true
   result = false
@@ -219,7 +219,7 @@ proc onArrowKeys*(self: CtrlContainer, left, right, down, up: bool): bool =
   result = false
 
 proc setCur*(self: var CtrlContainer, x, y: float64): bool =
-  for i in 0.. <self.mNumCtrl:
+  for i in 0..<self.mNumCtrl:
     let ctrl = self.mCtrl[i]
     if ctrl.isEnabled() and ctrl.inRect(x, y):
       if self.mCurCtrl != i:

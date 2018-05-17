@@ -143,7 +143,7 @@ proc read(self: var Molecule, fd: File): bool =
 
   while fd.readLine(buf):
     buf = trimCRLF(buf)
-    if buf[0] == '$': return true
+    if buf.len > 0 and buf[0] == '$': return true
 
   result = false
 
@@ -523,7 +523,7 @@ method onDraw(app: App) =
   mtx *= transAffineTranslation(-(max_x + min_x) * 0.5, -(max_y + min_y) * 0.5)
 
   var
-    scale = width  / (max_x - min_x)
+    scale = width / (max_x - min_x)
     t = height / (max_y - min_y)
 
   if scale > t: scale = t

@@ -1,6 +1,21 @@
 import agg/[basics, color_conv_rgb8], times, nimBMP, strutils
 import x11/[xlib, x, keysym, xutil]
-include system/timers
+
+type
+  Ticks = distinct int64
+  Time = clong
+  
+  Timeval {.importc: "struct timeval", header: "<sys/select.h>",
+               final, pure.} = object ## struct timeval
+    tv_sec: Time  ## Seconds.
+    tv_usec: clong ## Microseconds.
+
+proc posix_gettimeofday(tp: var Timeval, unused: pointer = nil) {.importc: "gettimeofday", header: "<sys/time.h>".}
+
+proc getTicks(): Ticks =
+  var t: Timeval
+  posix_gettimeofday(t)
+  result = Ticks(int64(t.tv_sec) * 1000_000_000'i64 + int64(t.tv_usec) * 1000'i64)
 
 type
   PlatformSpecific[T] = object
@@ -522,7 +537,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       var flags: InputFlags
       if (x_event.xkey.state and Button1Mask) != 0: flags.incl mouse_left
       if (x_event.xkey.state and Button3Mask) != 0: flags.incl mouse_right
-      if (x_event.xkey.state and ShiftMask)   != 0: flags.incl kbd_shift
+      if (x_event.xkey.state and ShiftMask) != 0: flags.incl kbd_shift
       if (x_event.xkey.state and ControlMask) != 0: flags.incl kbd_ctrl
 
       var
@@ -586,7 +601,7 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
       var flags: InputFlags
       if (x_event.xmotion.state and Button1Mask) != 0: flags.incl mouse_left
       if (x_event.xmotion.state and Button3Mask) != 0: flags.incl mouse_right
-      if (x_event.xmotion.state and ShiftMask)   != 0: flags.incl kbd_shift
+      if (x_event.xmotion.state and ShiftMask) != 0: flags.incl kbd_shift
       if (x_event.xmotion.state and ControlMask) != 0: flags.incl kbd_ctrl
 
       cur_x = int(x_event.xbutton.x)
@@ -604,10 +619,10 @@ proc run[T,R](self: GenericPlatform[T,R]): int =
           self.onMouseMove(cur_x, cur_y, flags)
     of ButtonRelease:
       var flags: InputFlags
-      if (x_event.xbutton.state and ShiftMask)   != 0: flags.incl kbd_shift
+      if (x_event.xbutton.state and ShiftMask) != 0: flags.incl kbd_shift
       if (x_event.xbutton.state and ControlMask) != 0: flags.incl kbd_ctrl
-      if x_event.xbutton.button == Button1:   flags.incl mouse_left
-      if x_event.xbutton.button == Button3:   flags.incl mouse_right
+      if x_event.xbutton.button == Button1: flags.incl mouse_left
+      if x_event.xbutton.button == Button3: flags.incl mouse_right
 
       cur_x = int(x_event.xbutton.x)
       if self.mFlipY:

@@ -65,9 +65,9 @@ proc onDraw() =
     ]
 
   let w = 26
-  for k in 0.. <6:
+  for k in 0..<6:
     if k mod 2 == 0:
-      for i in 0.. <w:
+      for i in 0..<w:
         let up = if i mod 2 == 0: 1.0 else: -1.0
         if pola[(5 - k) * w + i] != 0:
           spanGen.triangle(x, y, x + side, y, x + cos60 * side, y + sin60 * side * up, d)
@@ -77,7 +77,7 @@ proc onDraw() =
         y = y + side * up
     else:
       y = y + side
-      for i in 0.. <w:
+      for i in 0..<w:
         let up = if i mod 2 == 0: -1.0 else: 1.0
         if pola[(5 - k) * w + i] != 0:
           spanGen.triangle(x, y, x + side, y, x + cos60 * side, y + sin60 * side * up, d)

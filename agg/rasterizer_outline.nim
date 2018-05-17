@@ -62,11 +62,11 @@ proc addPath*[Renderer,VertexSource](self: var RasterizerOutline[Renderer], vs: 
 
 proc renderAllPaths*[Renderer,VertexSource,ColorT](self: var RasterizerOutline[Renderer],
   vs: var VertexSource, colors: openArray[ColorT], pathId: openArray[int], numPaths: int) =
-  for i in 0.. <numPaths:
+  for i in 0..<numPaths:
     self.ren[].lineColor(colors[i])
     self.addPath(vs, pathId[i])
 
 proc renderCtrl*[Renderer, Ctrl](self: var RasterizerOutline[Renderer], c: var Ctrl) =
-  for i in 0.. <c.numPaths():
+  for i in 0..<c.numPaths():
     self.ren[].lineColor(c.color(i))
     self.addPath(c, i)

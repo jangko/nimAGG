@@ -210,8 +210,10 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasteri
         else: discard
 
       # increment pen position
-      x += glyph.advanceX
-      y += glyph.advanceY
+      if glyph != nil:
+        x += glyph.advanceX
+        y += glyph.advanceY
+        
       inc numGlyphs
   result = numGlyphs
 
@@ -268,7 +270,7 @@ method onCtrlChange(app: App) =
 
     var numGlyphs = 0
     app.startTimer()
-    for i in 0.. <50:
+    for i in 0..<50:
       numGlyphs += app.drawText(ras, sl, renSolid, renBin)
 
     let t = app.elapsedTime()

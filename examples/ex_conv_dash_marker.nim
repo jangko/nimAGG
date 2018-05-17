@@ -40,7 +40,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.addCtrl(result.close)
   result.addCtrl(result.evenOdd)
 
-  result.x[0] = 57  + 100; result.y[0] = 60.0
+  result.x[0] = 57 + 100; result.y[0] = 60.0
   result.x[1] = 369 + 100; result.y[1] = 170.0
   result.x[2] = 143 + 100; result.y[2] = 310.0
   result.cap.addItem("Butt Cap")
@@ -117,7 +117,7 @@ method onDraw(app: App) =
     k = math.pow(app.width.value(), 0.7)
     ah = initArrowHead()
 
-  ah.head(4 * k, 4   * k, 3 * k, 2 * k)
+  ah.head(4 * k, 4 * k, 3 * k, 2 * k)
   if not app.close.status():
     ah.tail(1 * k, 1.5 * k, 3 * k, 5 * k)
 

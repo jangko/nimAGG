@@ -21,9 +21,9 @@ proc loadBin(ps: var PathStorage, fn: string) =
   let numPoly = s.readInt32()
   var v: PointF
 
-  for i in 0.. <numPoly:
+  for i in 0..<numPoly:
     let numPoints = s.readInt32()
-    for j in 0.. <numPoints:
+    for j in 0..<numPoints:
       discard s.readData(v.addr, sizeof(v))
       if j == 0:
         ps.moveTo(v.x, v.y)

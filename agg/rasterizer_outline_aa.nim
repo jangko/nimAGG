@@ -113,17 +113,17 @@ proc addPath*[Renderer, VertexSource](self: var RasterizerOutlineAA[Renderer], v
 
 proc renderAllPaths*[Renderer, VertexSource, ColorT](self: var RasterizerOutlineAA[Renderer],
   vs: var VertexSource, colors: openArray[ColorT], pathId: openArray[int], numPaths: int) =
-  for i in 0.. <numPaths:
+  for i in 0..<numPaths:
     self.mRen[].color(colors[i])
     self.addPath(vs, pathId[i])
 
 proc renderCtrl*[Renderer, Ctrl](self: var RasterizerOutlineAA[Renderer], c: var Ctrl) =
-  for i in 0.. <c.numPaths():
+  for i in 0..<c.numPaths():
     self.mRen[].color(c.color(i))
     self.addPath(c, i)
 
 proc draw*[Renderer](self: var RasterizerOutlineAA[Renderer], dv: var DrawVars, start, stop: int) =
-  for i in start.. <stop:
+  for i in start..<stop:
     if self.mLineJoin == outlineRoundJoin:
       dv.xb1 = dv.curr.x1 + (dv.curr.y2 - dv.curr.y1)
       dv.yb1 = dv.curr.y1 - (dv.curr.x2 - dv.curr.x1)

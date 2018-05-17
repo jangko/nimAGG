@@ -112,8 +112,8 @@ method onMouseButtonDown*(self: ScaleCtrlImpl, x, y: float64): bool =
   if abs(self.m.x2 - self.m.x1) > abs(self.m.y2 - self.m.y1):
     xp1 = self.mXs1 + (self.mXs2 - self.mXs1) * self.mValue1
     xp2 = self.mXs1 + (self.mXs2 - self.mXs1) * self.mValue2
-    ys1 = self.m.y1  - self.mBorderExtra / 2.0
-    ys2 = self.m.y2  + self.mBorderExtra / 2.0
+    ys1 = self.m.y1 - self.mBorderExtra / 2.0
+    ys2 = self.m.y2 + self.mBorderExtra / 2.0
     yp = (self.mYs1 + self.mYs2) / 2.0
 
     if x > xp1 and y > ys1 and x < xp2 and y < ys2:
@@ -133,8 +133,8 @@ method onMouseButtonDown*(self: ScaleCtrlImpl, x, y: float64): bool =
       self.mMoveWhat = moveValue2;
       return true
   else:
-    xp1 = self.m.x1  - self.mBorderExtra / 2.0
-    xp2 = self.m.x2  + self.mBorderExtra / 2.0
+    xp1 = self.m.x1 - self.mBorderExtra / 2.0
+    xp2 = self.m.x2 + self.mBorderExtra / 2.0
     ys1 = self.mYs1 + (self.mYs2 - self.mYs1) * self.mValue1
     ys2 = self.mYs1 + (self.mYs2 - self.mYs1) * self.mValue2
     xp = (self.mXs1 + self.mXs2) / 2.0

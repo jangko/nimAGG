@@ -299,7 +299,7 @@ proc parsePath*(self: var PathRenderer, tok: var Pathtokenizer) =
       self.hlineTo(tok.lastNumber(), cmd == 'h')
     of 'Q', 'q':
       arg[0] = tok.lastNumber()
-      for i in 1.. <4:
+      for i in 1..<4:
         arg[i] = tok.next(cmd)
       self.curve3(arg[0], arg[1], arg[2], arg[3], cmd == 'q')
     of 'T', 't':
@@ -308,12 +308,12 @@ proc parsePath*(self: var PathRenderer, tok: var Pathtokenizer) =
       self.curve3(arg[0], arg[1], cmd == 't')
     of 'C', 'c':
       arg[0] = tok.lastNumber()
-      for i in 1.. <6:
+      for i in 1..<6:
         arg[i] = tok.next(cmd)
       self.curve4(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5], cmd == 'c')
     of 'S', 's':
       arg[0] = tok.lastNumber()
-      for i in 1.. <4:
+      for i in 1..<4:
         arg[i] = tok.next(cmd)
       self.curve4(arg[0], arg[1], arg[2], arg[3], cmd == 's')
     of 'A', 'a':

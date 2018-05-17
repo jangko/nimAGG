@@ -156,7 +156,7 @@ proc makeRose*(A: float64, N, D: int): CyclicCurve =
     proc (theta: float64): float64 = A * math.sin(Omega * theta),
     proc (theta: float64): float64 = Omega * A * math.cos(Omega * theta))
 
-  var cycle = float64(D) * 2* math.PI / GCD(N, D)
+  var cycle = float64(D) * 2 * math.PI / GCD(N, D)
   if ((N == 1) and ((D mod 2) == 1)): cycle = cycle / 2
 
   result = makePolarCyclicCurve(f, 0, cycle)

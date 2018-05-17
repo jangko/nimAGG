@@ -26,10 +26,10 @@ template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResSh
     result.dirGamma = newSeq[HiResT](gammaSize)
     result.invGamma = newSeq[LoResT](hiResSize)
 
-    for i in 0.. <gammaSize:
+    for i in 0..<gammaSize:
       result.dirGamma[i] = HiResT(i shl (hiResShift - gammaShift))
 
-    for i in 0.. <hiResSize:
+    for i in 0..<hiResSize:
       result.invGamma[i] = LoResT(i shr (hiResShift - gammaShift))
 
   proc gamma*(self: var nameT, g: float64) =
@@ -41,11 +41,11 @@ template gammaLut*(nameT: untyped, LoResT, HiResT: typedesc, GammaShift, HiResSh
 
     self.mGamma = g
 
-    for i in 0.. <gammaSize:
+    for i in 0..<gammaSize:
       self.dirGamma[i] = uround(math.pow(i.float64 / gammaMask, self.mGamma) * hiResMask).HiResT
 
     let inv_g = 1.0 / g
-    for i in 0.. <hiResSize:
+    for i in 0..<hiResSize:
       self.invGamma[i] = uround(math.pow(i.float64 / hiResMask, inv_g) * gammaMask).LoResT
 
   proc `init nameT`*(g: float64): nameT =

@@ -85,7 +85,7 @@ echo "  printf(\"  const test_width = ",test_width,"\\n\");"
 echo "  printf(\"  var src: array[test_width, uint8]\\n\");"
 echo "  printf(\"  var dst: array[test_width, uint8]\\n\");"
 echo "  printf(\"\\n\");"
-echo "  printf(\"  for i in 0.. <test_width:\\n\");"
+echo "  printf(\"  for i in 0..<test_width:\\n\");"
 echo "  printf(\"    src[i] = i.uint8\\n\");"
 
 proc output(src_color, dst_color: string, src_width, dst_width, dst_width_long: int) =
@@ -96,8 +96,8 @@ proc output(src_color, dst_color: string, src_width, dst_width, dst_width_long: 
   echo "  printf(\"  compare(\\\"",src_color,"_to_",dst_color,"\\\", dst[0].addr, dst_",src_color,"_to_",dst_color,"[0].unsafeAddr, ", dst_width_long, ")\\n\");"
 
 proc output(color_src, color_dst: openArray[string], width_src, width_dst: openArray[int]) =
-  for x in 0.. <color_src.len:
-    for y in 0.. <color_dst.len:
+  for x in 0..<color_src.len:
+    for y in 0..<color_dst.len:
       let src_color = color_src[x]
       let dst_color = color_dst[y]
       let src_width = test_width div width_src[x]
@@ -108,7 +108,7 @@ proc output(color_src, color_dst: openArray[string], width_src, width_dst: openA
 output(rgb8_color, rgb8_color, rgb8_width, rgb8_width)
 output(special_color_src, special_color_dst, special_width_src, special_width_dst)
 
-for i in 0.. <rgb16.len:
+for i in 0..<rgb16.len:
   let src_color = rgb16[i][0]
   let dst_color = rgb16[i][1]
   let src_width = test_width div rgb16[i][2]

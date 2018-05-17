@@ -91,7 +91,7 @@ proc calcArc[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, x, y,
     n = int((a2 - a1) / da)
     da = (a2 - a1) / (n + 1).float64
     a1 += da
-    for i in 0.. <n:
+    for i in 0..<n:
       vc.addVertex(x + cos(a1) * self.mWidth, y + sin(a1) * self.mWidth)
       a1 += da
   else:
@@ -99,7 +99,7 @@ proc calcArc[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, x, y,
     n = int((a1 - a2) / da)
     da = (a1 - a2) / (n + 1).float64
     a1 -= da
-    for i in 0.. <n:
+    for i in 0..<n:
       vc.addVertex(x + cos(a1) * self.mWidth, y + sin(a1) * self.mWidth)
       a1 -= da
 
@@ -207,13 +207,13 @@ proc calcCap*[VertexConsumer](self: var MathStroke, vc: var VertexConsumer, v0, 
     if self.mWidthSign > 0:
       a1 = arctan2(dy1, -dx1)
       a1 += da
-      for i in 0.. <n:
+      for i in 0..<n:
         vc.addVertex(v0.x + cos(a1) * self.mWidth, v0.y + sin(a1) * self.mWidth)
         a1 += da
     else:
       a1 = arctan2(-dy1, dx1)
       a1 -= da
-      for i in 0.. <n:
+      for i in 0..<n:
         vc.addVertex(v0.x + cos(a1) * self.mWidth, v0.y + sin(a1) * self.mWidth)
         a1 -= da
 

@@ -32,7 +32,7 @@ proc quadToQuad(self: var TransBilinear, src, dst: openArray[float64]) =
     left: array[4 * 4, float64]
     right: array[4 * 2, float64]
 
-  for i in 0.. <4:
+  for i in 0..<4:
     let
       ix = i * 2
       iy = ix + 1

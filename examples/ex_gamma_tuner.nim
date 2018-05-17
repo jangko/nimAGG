@@ -67,7 +67,7 @@ method onDraw(app: App) =
     h = frameHeight
 
   # Draw vertical gradient
-  for i in 0.. <h:
+  for i in 0..<h:
     var k = float64(i - 80) / float64(squareSize - 1)
     if i < 80:             k = 0.0
     if i >= 80+squareSize: k = 1.0
@@ -82,13 +82,13 @@ method onDraw(app: App) =
   # Calculate spans
   case app.pattern.curItem()
   of 0:
-    for i in 0.. <squareSize:
+    for i in 0..<squareSize:
       span1[i] = color
       span2[i] = color
       span1[i].a = uint8(i * baseMask div squareSize)
       span2[i].a = uint8(baseMask - span1[i].a.int)
   of 1:
-    for i in 0.. <squareSize:
+    for i in 0..<squareSize:
       span1[i] = color
       span2[i] = color
       if (i and 1) != 0:
@@ -98,7 +98,7 @@ method onDraw(app: App) =
         span1[i].a = uint8(baseMask - i * baseMask div squareSize)
         span2[i].a = span1[i].a
   of 2:
-    for i in 0.. <squareSize:
+    for i in 0..<squareSize:
       span1[i] = color
       span2[i] = color
       if (i and 1) != 0:
@@ -118,7 +118,7 @@ method onDraw(app: App) =
     var k = i.float64 / float64(squareSize - 1)
     k = 1 - pow(k, 1/app.gamma.value())
     let c = color.gradient(initRgba8(0,0,0), k)
-    for j in 0.. <squareSize:
+    for j in 0..<squareSize:
       span1[j].r = c.r; span2[j].r = c.r
       span1[j].g = c.g; span2[j].g = c.g
       span1[j].b = c.b; span2[j].b = c.b
@@ -126,11 +126,11 @@ method onDraw(app: App) =
     rb.blendColorHspan(50, i + 80 + 1, squareSize, span2[0].addr, nil, 255)
 
   # Draw vertical strips
-  for i in 0.. <squareSize:
+  for i in 0..<squareSize:
     var k = i.float64 / float64(squareSize - 1)
     k = 1 - pow(k/2, 1/app.gamma.value())
     let c = color.gradient(initRgba8(0,0,0), k)
-    for j in 0.. <verStrips:
+    for j in 0..<verStrips:
       let xc = squareSize * (j + 1) div (verStrips + 1)
       rb.copyHline(50+xc-10, i+80, 50+xc+10, c)
 

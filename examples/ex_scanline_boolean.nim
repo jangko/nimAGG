@@ -12,13 +12,13 @@ const
 
 proc generateCircles(ps: var PathStorage, quad: openArray[float64], numCircles: int, radius: float64) =
   ps.removeAll()
-  for i in 0.. <4:
+  for i in 0..<4:
     let
       n1 = i * 2
       n2 = if i < 3: i * 2 + 2 else: 0
 
-    for j in 0.. <numCircles:
-      var ell = initEllipse(quad[n1]+ (quad[n2] - quad[n1]) * j.float64 / numCircles.float64,
+    for j in 0..<numCircles:
+      var ell = initEllipse(quad[n1] + (quad[n2] - quad[n1]) * j.float64 / numCircles.float64,
                             quad[n1 + 1] + (quad[n2 + 1] - quad[n1 + 1]) * j.float64 / numCircles.float64,
                             radius, radius, 100)
       ps.concatPath(ell)

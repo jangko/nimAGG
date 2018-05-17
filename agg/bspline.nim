@@ -58,14 +58,14 @@ proc prepare*(self: var BSpline) =
       temp, r, s: ptr float64
       h, p, d, f, e: float64
 
-    for k in 0.. <self.mNum:
+    for k in 0..<self.mNum:
       self.mAm[k] = 0.0
 
     n1 = 3 * self.mNum
     var al = newSeq[float64](n1)
     temp = al[0].addr
 
-    for k in 0.. <n1:
+    for k in 0..<n1:
       temp[k] = 0.0
 
     r = temp + self.mNum
@@ -75,7 +75,7 @@ proc prepare*(self: var BSpline) =
     d = self.mX[1] - self.mX[0]
     e = (self.mY[1] - self.mY[0]) / d
 
-    for k in 1.. <n1:
+    for k in 1..<n1:
       h     = d
       d     = self.mX[k + 1] - self.mX[k]
       f     = e
@@ -84,7 +84,7 @@ proc prepare*(self: var BSpline) =
       r[k]  = 1.0 - al[k]
       s[k]  = 6.0 * (e - f) / (h + d)
 
-    for k in 1.. <n1:
+    for k in 1..<n1:
       p = 1.0 / (r[k] * al[k - 1] + 2.0)
       al[k] *= -p
       s[k] = (s[k] - r[k] * s[k - 1]) * p
@@ -94,7 +94,7 @@ proc prepare*(self: var BSpline) =
     self.mAm[n1 - 1] = al[n1 - 1]
 
     var k = n1 - 2
-    for i in 0.. <self.mNum - 2:
+    for i in 0..<self.mNum - 2:
       al[k]   = al[k] * al[k + 1] + s[k]
       self.mAm[k] = al[k]
       dec k
@@ -107,7 +107,7 @@ proc init(self: var BSpline, num: int, x, y: ptr float64) =
     y = y
   if num > 2:
     self.init(num)
-    for i in 0.. <num:
+    for i in 0..<num:
       self.addPoint(x[], y[])
       inc x; inc y
     self.prepare()

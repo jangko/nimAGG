@@ -84,7 +84,7 @@ template pathStorageInteger(name: untyped, CoordShift: int = 6) =
   proc serialize*[T](self: var name[T], p: ptr uint8) =
     type VertexType = `name VI`[T]
     var p = p
-    for i in 0.. <self.mStorage.len:
+    for i in 0..<self.mStorage.len:
       copyMem(p, self.mStorage[i].addr, sizeof(VertexType))
       p += sizeof(VertexType)
 
@@ -123,7 +123,7 @@ template pathStorageInteger(name: untyped, CoordShift: int = 6) =
       bounds.x2 = 0.0
       bounds.y2 = 0.0
     else:
-      for i in 0.. <self.mStorage.len:
+      for i in 0..<self.mStorage.len:
         var x, y: float64
         discard self.mStorage[i].vertex(x, y)
         if x < bounds.x1: bounds.x1 = x

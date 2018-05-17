@@ -57,9 +57,9 @@ method onInit(app: App) =
 
   app.quad.xn(0) = 100
   app.quad.yn(0) = 100
-  app.quad.xn(1) = width  - 100
+  app.quad.xn(1) = width - 100
   app.quad.yn(1) = 100
-  app.quad.xn(2) = width  - 100
+  app.quad.xn(2) = width - 100
   app.quad.yn(2) = height - 100
   app.quad.xn(3) = 100
   app.quad.yn(3) = height - 200

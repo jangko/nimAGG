@@ -88,7 +88,7 @@ method onMouseButtonDown*(self: RboxCtrlImpl, x, y: float64): bool =
     y = y
 
   self.inverseTransformXY(x, y)
-  for i in 0.. <self.mNumItems:
+  for i in 0..<self.mNumItems:
     var
       xp = self.mXs1 + self.mDy / 1.3
       yp = self.mYs1 + self.mDy * i.float64 + self.mDy / 1.3

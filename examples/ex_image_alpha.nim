@@ -52,20 +52,20 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.alpha.updateSpline()
 
 method onInit(app: App) =
-  for i in 0.. <50:
-    app.x[i]  = random(app.width())
-    app.y[i]  = random(app.height())
-    app.rx[i] = random(60.0) + 10.0
-    app.ry[i] = random(60.0) + 10.0
-    app.colors[i] = initRgba8(random(0xFF), random(0xFF), random(0xFF), random(0xFF))
+  for i in 0..<50:
+    app.x[i] = rand(app.width())
+    app.y[i] = rand(app.height())
+    app.rx[i] = rand(60.0) + 10.0
+    app.ry[i] = rand(60.0) + 10.0
+    app.colors[i] = initRgba8(rand(0xFF), rand(0xFF), rand(0xFF), rand(0xFF))
 
 method onDraw(app: App) =
   var
-    pf  = construct(PixFmt, app.rbufWindow())
-    rb  = initRendererBase(pf)
+    pf = construct(PixFmt, app.rbufWindow())
+    rb = initRendererBase(pf)
     mtx = initTransAffine()
     ras = initRasterizerScanlineAA()
-    sl  = initScanlineU8()
+    sl = initScanlineU8()
 
   rb.clear(initRgba(1.0, 1.0, 1.0))
 
@@ -88,17 +88,17 @@ method onDraw(app: App) =
 
   imgMtx.invert()
 
-  for i in 0.. <arraySize:
+  for i in 0..<arraySize:
     brightnessAlphaArray[i] = (app.alpha.value(float64(i) / float(arraySize)) * 255.0).uint8
 
-  for i in 0.. <50:
+  for i in 0..<50:
     ell.init(app.x[i], app.y[i], app.rx[i], app.ry[i], 50)
     ras.addPath(ell)
     renderScanlinesAAsolid(ras, sl, rb, app.colors[i])
 
-  ell.init(app.initialWidth()  / 2.0,
+  ell.init(app.initialWidth() / 2.0,
            app.initialHeight() / 2.0,
-           app.initialWidth()  / 1.9,
+           app.initialWidth() / 1.9,
            app.initialHeight() / 1.9, 200)
 
   var tr = initConvTransform(ell, mtx)

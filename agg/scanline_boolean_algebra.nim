@@ -404,7 +404,7 @@ proc sbool_intersect_scanlines[Scanline1, Scanline2, Scanline, CombineSpansFunct
       # The span with the least ending X should be advanced
       # advance_both is just an optimization when we ending
       # coordinates are the same and we can advance both
-      advance_span1 = xe1 <  xe2
+      advance_span1 = xe1 < xe2
       advance_both  = xe1 == xe2
 
     # Find the intersection of the spans

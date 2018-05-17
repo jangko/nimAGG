@@ -118,7 +118,7 @@ proc rgbaFromWavelength*(wl: float64, gamma = 1.0'f64): Rgba =
   var s = 1.0'f64
   if wl > 700.0:
     s = 0.3 + 0.7 * (780.0 - wl) / (780.0 - 700.0)
-  elif wl <  420.0:
+  elif wl < 420.0:
     s = 0.3 + 0.7 * (wl - 380.0) / (420.0 - 380.0)
 
   t.r = math.pow(t.r * s, gamma)
@@ -197,7 +197,7 @@ proc initRgba8*(c: Rgba, a: float64): Rgba8 =
   result.r = ValueT(uround(c.r * baseMask))
   result.g = ValueT(uround(c.g * baseMask))
   result.b = ValueT(uround(c.b * baseMask))
-  result.a = ValueT(uround(a   * baseMask))
+  result.a = ValueT(uround(a * baseMask))
 
 proc clear*(c: var Rgba8) =
   c.r = 0
@@ -436,7 +436,7 @@ proc initRgba16*(c: Rgba, a: float64): Rgba16 =
   result.r = ValueT(uround(c.r * baseMask))
   result.g = ValueT(uround(c.g * baseMask))
   result.b = ValueT(uround(c.b * baseMask))
-  result.a = ValueT(uround(a   * baseMask))
+  result.a = ValueT(uround(a * baseMask))
 
 proc initRgba16*(c: Rgba8): Rgba16 =
   type
@@ -454,7 +454,7 @@ proc initRgba16*(c: Rgba8, a: uint): Rgba16 =
   result.r = ValueT((CalcT(c.r) shl 8) or CalcT(c.r))
   result.g = ValueT((CalcT(c.g) shl 8) or CalcT(c.g))
   result.b = ValueT((CalcT(c.b) shl 8) or CalcT(c.b))
-  result.a = ValueT((CalcT(a)   shl 8) or CalcT(c.a))
+  result.a = ValueT((CalcT(a) shl 8) or CalcT(c.a))
 
 proc clear*(c: var Rgba16) =
   c.r = 0

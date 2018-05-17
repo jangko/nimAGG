@@ -147,7 +147,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
 
 proc measureTime[Curve](app: App, curve: var Curve): float64 =
   app.startTimer()
-  for i in 0.. <100:
+  for i in 0..<100:
     var x, y: float64
     curve.init(app.curve1.x1(), app.curve1.y1(),
                app.curve1.x2(), app.curve1.y2(),
@@ -200,7 +200,7 @@ proc calcMaxError[Curve](app: App, curve: var Curve, scale: float64,  maxAngleEr
       curvePoints.add(initVertexDist(x, y))
     cmd = curve.vertex(x, y)
 
-  for i in 1.. <curvePoints.len:
+  for i in 1..<curvePoints.len:
     curvePoints[i - 1].dist = curveDist
     curveDist += calcDistance(curvePoints[i-1].x,
                               curvePoints[i-1].y,
@@ -209,7 +209,7 @@ proc calcMaxError[Curve](app: App, curve: var Curve, scale: float64,  maxAngleEr
 
   curvePoints[curvePoints.len - 1].dist = curveDist
 
-  for i in 0.. <4096:
+  for i in 0..<4096:
     let mu = i.float64 / 4095.0
     bezier4Point(app.curve1.x1(), app.curve1.y1(),
                  app.curve1.x2(), app.curve1.y2(),
@@ -218,7 +218,7 @@ proc calcMaxError[Curve](app: App, curve: var Curve, scale: float64,  maxAngleEr
                  mu, x, y)
     referencePoints.add(initCurvePoint(x, y, mu))
 
-  for i in 1.. <referencePoints.len:
+  for i in 1..<referencePoints.len:
     referencePoints[i - 1].dist = referenceDist
     referenceDist += calcDistance(referencePoints[i-1].x,
                                   referencePoints[i-1].y,
@@ -233,14 +233,14 @@ proc calcMaxError[Curve](app: App, curve: var Curve, scale: float64,  maxAngleEr
     maxError = 0.0
     aerr = 0.0
 
-  for i in 0.. <referencePoints.len:
+  for i in 0..<referencePoints.len:
     if findPoint(curvePoints, referencePoints[i].dist, idx1, idx2):
       let err = abs(calcLinePointDistance(curvePoints[idx1].x,  curvePoints[idx1].y,
                                           curvePoints[idx2].x,  curvePoints[idx2].y,
                                           referencePoints[i].x, referencePoints[i].y))
       if err > maxError: maxError = err
 
-  for i in 2.. <curvePoints.len:
+  for i in 2..<curvePoints.len:
     let a1 = arctan2(curvePoints[i-1].y - curvePoints[i-2].y,
                      curvePoints[i-1].x - curvePoints[i-2].x)
     let a2 = arctan2(curvePoints[i].y - curvePoints[i-1].y,
@@ -260,8 +260,8 @@ method onCtrlChange(app: App) =
       let
         w = float64(frameWidth - 120)
         h = float64(frameHeight - 80)
-      app.curve1.curve(random(w), random(h)+ 80.0, random(w), random(h) + 80.0,
-                       random(w), random(h)+ 80.0, random(w), random(h) + 80.0)
+      app.curve1.curve(rand(w), rand(h) + 80.0, rand(w), rand(h) + 80.0,
+                       rand(w), rand(h) + 80.0, rand(w), rand(h) + 80.0)
     of 1: #m_of_type.add_item("13---24");
       app.curve1.curve(150, 150, 350, 150, 150, 150, 350, 150)
         #app.curve1.curve(252, 227, 16, 227, 506, 227, 285, 227);

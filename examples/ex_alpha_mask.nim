@@ -34,12 +34,12 @@ proc generateAlphaMask(cx, cy: int) =
 
   rb.clear(initGray8(0))
   randomize()
-  for i in 0.. <10:
-    ell.init(random(cx.float64), random(cy.float64),
-      random(100.0) + 20.0, random(100.0) + 20.0, 100)
+  for i in 0..<10:
+    ell.init(rand(cx.float64), rand(cy.float64),
+      rand(100.0) + 20.0, rand(100.0) + 20.0, 100)
 
     ras.addPath(ell)
-    ren.color(initGray8(random(0xFF).uint, random(0xFF).uint))
+    ren.color(initGray8(rand(0xFF).uint, rand(0xFF).uint))
     renderScanlines(ras, sl, ren)
 
 proc newApp(format: PixFormat, flipY: bool): App =
@@ -72,7 +72,7 @@ method onDraw(app: App) =
 
 proc transform(width, height, x, y: float64) =
   var
-    x = x  - (width / 2)
+    x = x - (width / 2)
     y = y - (height / 2)
 
   lion.angle = arctan2(y, x)

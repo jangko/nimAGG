@@ -79,9 +79,9 @@ proc blendPix*[C,O,T,G](self: BlenderRgbGamma[C,O,G], p: ptr T,
   let g = self.mGamma[].dir(p[O.G]).int
   let b = self.mGamma[].dir(p[O.B]).int
 
-  p[O.R] = self.mGamma[].inv(((((self.mGamma[].dir(cr).int - r) * alpha.int) shr baseShift) + r) and baseMask)
-  p[O.G] = self.mGamma[].inv(((((self.mGamma[].dir(cg).int - g) * alpha.int) shr baseShift) + g) and baseMask)
-  p[O.B] = self.mGamma[].inv(((((self.mGamma[].dir(cb).int - b) * alpha.int) shr baseShift) + b) and baseMask)
+  p[O.R] = self.mGamma[].inv((((((self.mGamma[].dir(cr).int - r) * alpha.int) shr baseShift) + r) and baseMask).uint)
+  p[O.G] = self.mGamma[].inv((((((self.mGamma[].dir(cg).int - g) * alpha.int) shr baseShift) + g) and baseMask).uint)
+  p[O.B] = self.mGamma[].inv((((((self.mGamma[].dir(cb).int - b) * alpha.int) shr baseShift) + b) and baseMask).uint)
 
 proc copyPixel*[Blender, RenBuf, ColorT](self: var PixfmtAlphaBlendRgb[Blender, RenBuf],
   x, y: int, c: ColorT) =
@@ -447,7 +447,7 @@ proc forEachPixel[PixFmt, Func](self: PixFmt, f: Func) =
   type ValueT = getValueT(PixFmt)
 
   let h = self.height()
-  for y in 0.. <h:
+  for y in 0..<h:
     let r = self.mRbuf[].row(y)
     if r.data != nil:
       var

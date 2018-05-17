@@ -46,7 +46,7 @@ proc init(self: SplineCtrlImpl, x1, y1, x2, y2: float64, numPnt: int, flipY = fa
   if self.mNumPnt < 4:  self.mNumPnt = 4
   if self.mNumPnt > 32: self.mNumPnt = 32
 
-  for i in 0.. <self.mNumPnt:
+  for i in 0..<self.mNumPnt:
     self.mXp[i] = float64(i) / float64(self.mNumPnt - 1)
     self.mYp[i] = 0.5
 
@@ -70,7 +70,7 @@ proc calcSplineBox(self: SplineCtrlImpl) =
 
 proc updateSpline(self: SplineCtrlImpl) =
   self.mSpline.init(self.mNumPnt, self.mXp[0].addr, self.mYp[0].addr)
-  for i in 0.. <256:
+  for i in 0..<256:
     self.mSplineValues[i] = self.mSpline.get(float64(i) / 255.0)
     if self.mSplineValues[i] < 0.0: self.mSplineValues[i] = 0.0
     if self.mSplineValues[i] > 1.0: self.mSplineValues[i] = 1.0
@@ -79,7 +79,7 @@ proc updateSpline(self: SplineCtrlImpl) =
 proc calcCurve*(self: SplineCtrlImpl) =
   self.mCurvePnt.removeAll()
   self.mCurvePnt.moveTo(self.mXs1, self.mYs1 + (self.mYs2 - self.mYs1) * self.mSplineValues[0])
-  for i in 1.. <256:
+  for i in 1..<256:
     self.mCurvePnt.lineTo(self.mXs1 + (self.mXs2 - self.mXs1) * float64(i) / 255.0,
                           self.mYs1 + (self.mYs2 - self.mYs1) * self.mSplineValues[i])
 
@@ -146,7 +146,7 @@ method onMouseButtonDown*(self: SplineCtrlImpl, x, y: float64): bool =
     y = y
 
   self.inverseTransformXY(x, y)
-  for i in 0.. <self.mNumPnt:
+  for i in 0..<self.mNumPnt:
     var
       xp = self.calcXp(i)
       yp = self.calcYp(i)
@@ -264,7 +264,7 @@ proc rewind*(self: SplineCtrlImpl, idx: int) =
     self.mCurvePoly.rewind(0)
   of 3:                 # Inactive points
     self.mCurvePnt.removeAll()
-    for i in 0.. <self.mNumPnt:
+    for i in 0..<self.mNumPnt:
       if i != self.mActivePnt:
         self.mEllipse.init(self.calcXp(i), self.calcYp(i),
                            self.mPointSize, self.mPointSize, 32)

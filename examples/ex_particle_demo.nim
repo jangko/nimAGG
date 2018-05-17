@@ -165,42 +165,42 @@ method onInit(app: App) =
   randomize()
 
   if app.mFirstTime:
-    for i in 0.. <N:
+    for i in 0..<N:
       app.mCenter[i].x = 0.5 * frameWidth
       app.mCenter[i].y = 0.5 * frameHeight
       if disorder:
-        app.mCenter[i].x = random(frameWidth.float64) - 5.0
-        app.mCenter[i].y = random(frameHeight.float64) - 5.0
+        app.mCenter[i].x = rand(frameWidth.float64) - 5.0
+        app.mCenter[i].y = rand(frameHeight.float64) - 5.0
 
-        if random(1) != 0:
-          app.mDelta[i].x = (random(5000.0) + 1000.0) / divisor
+        if rand(1) != 0:
+          app.mDelta[i].x = (rand(5000.0) + 1000.0) / divisor
         else:
-          app.mDelta[i].x = -(random(5000.0) + 1000.0) / divisor
+          app.mDelta[i].x = -(rand(5000.0) + 1000.0) / divisor
 
         app.mDelta[i].y = app.mDelta[i].x
 
-        if random(1) != 0:
+        if rand(1) != 0:
           app.mDelta[i].y = -app.mDelta[i].y
 
-        angle = random(0.25 * pi)
-        da = random(4)
+        angle = rand(0.25 * pi)
+        da = rand(4)
         angle = angle + pi * 0.1 * (5 * da.float64 + 1)
       else:
-        angle = random(2 * pi)
+        angle = rand(2 * pi)
 
-      speed = (random(5000.0) + 1000.0) / divisor
+      speed = (rand(5000.0) + 1000.0) / divisor
 
       app.mDelta[i].y = sin(angle) * speed
       app.mDelta[i].x = cos(angle) * speed
 
       K = 1.0 - N.float64 / 2000.0
 
-      app.mRadius[i] = (random(30.0) + 15.0) * K
+      app.mRadius[i] = (rand(30.0) + 15.0) * K
 
-      app.mColor1[i]= initRgba8(random(0xFF), random(0xFF), random(0xFF), 0)
-      app.mColor2[i]= initRgba8(random(0xFF), random(0xFF), random(0xFF), 255)
+      app.mColor1[i]= initRgba8(rand(0xFF), rand(0xFF), rand(0xFF), 0)
+      app.mColor2[i]= initRgba8(rand(0xFF), rand(0xFF), rand(0xFF), 255)
 
-      let component = random(4)
+      let component = rand(4)
 
       if component == 0: app.mColor2[i].r = 255
       if component == 1: app.mColor2[i].g = 255
@@ -210,11 +210,11 @@ method onInit(app: App) =
         app.mColor1[i] = app.mColor2[i]
         app.mColor1[i].a = 0
 
-      app.mColor3[i] = initRgba8(random(0xFF), random(0xFF), random(0xFF), 0)
+      app.mColor3[i] = initRgba8(rand(0xFF), rand(0xFF), rand(0xFF), 0)
 
       var grc = initGradientTricolor(app.mColor1[i], app.mColor2[i], app.mColor3[i])
       var grad = newSeq[Rgba8](256)
-      for j in 0.. <256:
+      for j in 0..<256:
         grad[j] = grc[j]
       app.mGradients[i] = grad
 
@@ -224,7 +224,7 @@ method onInit(app: App) =
     PixFmtDyna = PixfmtAlphaBlendRgba[BlenderBgra32, DynaRow[ValueT], Pixel32Type]
 
   if app.mUseCache.status():
-    for i in 0.. <N:
+    for i in 0..<N:
       let D = iround(app.mRadius[i]) * 2
       app.mCache[i] = initDynaRow[ValueT](D, D, D * getPixelem(PixFmt))
       var
@@ -253,14 +253,14 @@ method onDraw(app: App) =
     let N = iround(app.mParticles.value())
 
     if app.mUseCache.status():
-      for i in 0.. <N:
+      for i in 0..<N:
         var
           pixFmt = construct(PixFmtDyna, app.mCache[i])
           x = iround(app.mCenter[i].x - app.mRadius[i]) + 1
           y = iround(app.mCenter[i].y - app.mRadius[i]) + 1
         renbPre.blendFrom(pixFmt, nil, x, y)
     else:
-      for i in 0.. <N:
+      for i in 0..<N:
         app.renderParticle(renb, i, app.mCenter[i].x, app.mCenter[i].y)
 
     let endTime = app.elapsedTime()
@@ -301,7 +301,7 @@ method onIdle(app: App) =
     mCenter = 10.0
     mDC = -mDC
 
-  for i in 0.. <n:
+  for i in 0..<n:
     app.mCenter[i].x += app.mDelta[i].x * app.mSpeed.value()
     app.mCenter[i].y += app.mDelta[i].y * app.mSpeed.value()
 

@@ -14,7 +14,7 @@ proc initScanlineCellStorage*[T](v: ScanlineCellStorage[T]): ScanlineCellStorage
 proc removeAll*[T](self: var ScanlineCellStorage[T]) =
   self.mCells.setLen(0)
 
-proc `=`*[T](self: var ScanlineCellStorage[T], v: ScanlineCellStorage[T]) =
+proc copy*[T](self: var ScanlineCellStorage[T], v: ScanlineCellStorage[T]) =
   self.mCells = v.mCells
 
 proc addCells*[T](self: var ScanlineCellStorage[T], cells: ptr T, numCells: int): int =
@@ -224,7 +224,7 @@ proc sweepScanline*[T](self: var ScanlineStorageAA[T], sl: var EmbeddedScanlineA
 proc byteSize*[T](self: var ScanlineStorageAA[T]): int =
   var size = sizeof(int32) * 4 # minX, minY, maxX, maxY
 
-  for i in 0.. <self.mScanlines.len:
+  for i in 0..<self.mScanlines.len:
     size += sizeof(int32) * 3 # scanline size in bytes, Y, numSpans
 
     var
@@ -263,7 +263,7 @@ proc serialize*[T](self: var ScanlineStorageAA[T], data: ptr uint8) =
   writeInt32(data, self.maxY().int32) # maxY
   data += sizeof(int32)
 
-  for i in 0.. <self.mScanlines.len:
+  for i in 0..<self.mScanlines.len:
     var
       slThis  = self.mScanlines[i].addr
       sizePtr = data

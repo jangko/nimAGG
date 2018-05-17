@@ -37,7 +37,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.addCtrl(result.width)
   result.addCtrl(result.miterLimit)
 
-  result.x[0] = 57  + 100; result.y[0] = 60
+  result.x[0] = 57 + 100; result.y[0] = 60
   result.x[1] = 369 + 100; result.y[1] = 170
   result.x[2] = 143 + 100; result.y[2] = 310
 

@@ -192,11 +192,11 @@ method onCtrlChange(app: App) =
   if app.mAnimate.status() != app.mPrevAnimate:
     if app.mAnimate.status():
       app.onInit()
-      for i in 0.. <6:
-        app.mdx1[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdy1[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdx2[i] = (random(1000.0) - 500.0) * 0.01
-        app.mdy2[i] = (random(1000.0) - 500.0) * 0.01
+      for i in 0..<6:
+        app.mdx1[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdy1[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdx2[i] = (rand(1000.0) - 500.0) * 0.01
+        app.mdy2[i] = (rand(1000.0) - 500.0) * 0.01
       app.waitMode(false)
     else:
       app.waitMode(true)
@@ -231,7 +231,7 @@ proc normalizePoint(app: App, i: int) =
     app.mPoly2.yn(i) = app.mPoly1.yn(i) + (app.mPoly2.yn(i) - app.mPoly1.yn(i)) * 28.28 / d
 
 method onIdle(app: App) =
-  for i in 0.. <6:
+  for i in 0..<6:
     app.movePoint(app.mPoly1.xn(i), app.mPoly1.yn(i), app.mdx1[i], app.mdy1[i])
     app.movePoint(app.mPoly2.xn(i), app.mPoly2.yn(i), app.mdx2[i], app.mdy2[i])
     app.normalizePoint(i)

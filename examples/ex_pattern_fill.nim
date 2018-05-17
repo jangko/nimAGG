@@ -101,7 +101,7 @@ proc createStar(app: App, xc, yc, r1, r2: float64, n: int, startAngle = 0.0) =
   app.ps.removeAll()
   var startAngle = startAngle * pi / 180.0
 
-  for i in 0.. <n:
+  for i in 0..<n:
     let
        a = pi * 2.0 * i.float64 / n.float64 - pi / 2.0
        dx = cos(a + startAngle)
