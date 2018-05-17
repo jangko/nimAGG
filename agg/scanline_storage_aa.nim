@@ -316,7 +316,7 @@ type
   ScanlineStorageAA32* = ScanlineStorageAA[uint32]
 
 proc initScanlineStorageAA8*(): ScanlineStorageAA8 =
-  result = initScanlineStorageAA[uint8]()
+  initScanlineStorageAA[uint8]()
 
 proc initScanlineStorageAA16*(): ScanlineStorageAA16 =
   initScanlineStorageAA[uint16]()

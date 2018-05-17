@@ -471,7 +471,9 @@ method onDraw(app: App) =
   dist.center(cx, cy)
 
   var
-    inter = initSpanInterpolatorAdaptor[SpanInterpolatorLinear[TransAffine]](imgMtx, dist)
+    # bug #7829
+    # inter = initSpanInterpolatorAdaptor[SpanInterpolatorLinear[TransAffine]](imgMtx, dist)
+    inter = initSpanInterpolatorAdaptor(SpanInterpolatorLinear[TransAffine], imgMtx, dist)
     imgSrc = initImageAccessorClip(imgPixf, initRgba(1,1,1))
 
     # Version without filtering (nearest neighbor)

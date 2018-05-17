@@ -210,8 +210,10 @@ proc drawText[Rasterizer, Scanline, RenSolid, RenBin](app: App, ras: var Rasteri
         else: discard
 
       # increment pen position
-      x += glyph.advanceX
-      y += glyph.advanceY
+      if glyph != nil:
+        x += glyph.advanceX
+        y += glyph.advanceY
+        
       inc numGlyphs
   result = numGlyphs
 
