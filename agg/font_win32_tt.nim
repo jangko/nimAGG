@@ -288,6 +288,7 @@ proc updateSignature*(self: FontEngineWin32TTBase) =
 
 proc findFont*(self: FontEngineWin32TTBase, name: string): int =
   for i in 0..<self.mFontNames.len:
+    if name.len == 0 or self.mFontNames[i].len == 0: continue
     if name == self.mFontNames[i]: return i
   result = -1
 
