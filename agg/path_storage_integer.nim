@@ -1,4 +1,5 @@
 import basics, macros, strutils, vector
+export vector
 
 const
   cmdMoveTo = 0
@@ -21,8 +22,8 @@ template vertexInteger(name: untyped, CoordShift: int = 6) =
   proc vertex*[T](self: name[T], x, y: var float64, dx = 0.0, dy = 0.0, scale=1.0): uint =
     const coordScale = getCoordScale(self.type)
 
-    x = dx + (float64(self.x shr 1) / coordScale) * scale
-    y = dy + (float64(self.y shr 1) / coordScale) * scale
+    x = dx + (float64(sar(self.x, 1)) / coordScale) * scale
+    y = dy + (float64(sar(self.y, 1)) / coordScale) * scale
 
     case ((self.y and 1) shl 1) or (self.x and 1)
     of cmdMoveTo: return pathCmdMoveTo
@@ -131,6 +132,14 @@ template pathStorageInteger(name: untyped, CoordShift: int = 6) =
         if x > bounds.x2: bounds.x2 = x
         if y > bounds.y2: bounds.y2 = y
     result = bounds
+
+  proc `$`*[T](self: name[T]): string =
+    result = ""
+    var x, y: float64
+    for v in self.mStorage:
+      discard v.vertex(x, y)
+      result.add($x & "  " & $y)
+      result.add("\n")
 
 pathStorageInteger(PathStorageInteger, 6)
 

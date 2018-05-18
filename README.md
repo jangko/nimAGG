@@ -11,7 +11,7 @@ High Fidelity 2D Graphics. A High Quality Rendering Engine for Nim
 ![Screenshot](screenshot.png)
 
 This project relying on recent bugfixes of Nim compiler, so you should use devel
-branch on Github, or at least Nim ver 0.17.0 to compile this project.
+branch on Github, or at least Nim ver 0.18.1 to compile this project.
 
 Those bugfixes are:
   - proc parameter shadowing inside template
@@ -23,7 +23,7 @@ Those bugfixes are:
   - generic proc forward declaration
   - generic object with generic field(s) type obtained via template(WIP)
 
-  
+
 ## How to build demos?
 
 build all demos:

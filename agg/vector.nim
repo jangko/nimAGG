@@ -158,10 +158,10 @@ template podBVector(name: untyped, SS: int = 6) =
   proc valueAt*[T](self: name[T], i: int): T =
     self.mBlocks[i shr blockShift(name[T])][i and blockMask(name[T])]
 
-  iterator items*[T](self: var name[T]): T =
+  iterator items*[T](self: name[T]): T =
     let len = self.len
     for i in 0..<len:
-      yield self.at(i)
+      yield self.valueAt(i)
 
   iterator mitems*[T](self: var name[T]): var T =
     let len = self.len

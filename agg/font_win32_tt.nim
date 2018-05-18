@@ -220,6 +220,7 @@ proc decompose_win32_glyph_outline[PathStorage](gbuf: string, totalSize: int,
 
           mtx.transform(x,  y)
           mtx.transform(x2, y2)
+
           path.curve3(ValueT(dbl_to_int26p6(x)),
                       ValueT(dbl_to_int26p6(y)),
                       ValueT(dbl_to_int26p6(x2)),
