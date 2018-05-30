@@ -5,12 +5,12 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p, renderer_scanl
 import ctrl/[cbox, slider, polygon], platform.winapi, platform.support, random
 
 proc makeText(): string {.compileTime.} =
-  result = "Anti-Grain Geometry is designed as a set of loosely coupled"
-  result.add " algorithms and class templates united with a common idea,"
-  result.add " so that all the components can be easily combined. Also,"
-  result.add " the template based design allows you to replace any part of"
-  result.add " the library without the necessity to modify a single byte in"
-  result.add " the existing code."
+   result = "Anti-Grain Geometry is designed as a set of loosely coupled"
+   result.add " algorithms and class templates united with a common idea,"
+   result.add " so that all the components can be easily combined. Also,"
+   result.add " the template based design allows you to replace any part of"
+   result.add " the library without the necessity to modify a single byte in"
+   result.add " the existing code."
 
 const text = makeText()
 
