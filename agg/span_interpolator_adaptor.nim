@@ -34,11 +34,11 @@ proc initSpanInterpolatorAdaptor*[T, D](I: typedesc, trans: var T, dist: var D, 
   initSpanInterpolatorAdaptorAux[I, D, T](trans, dist, x, y, len)
 
 # bug #7829
-#template initSpanInterpolatorAdaptor*[I](trans, dist: untyped): untyped =
-#  initSpanInterpolatorAdaptorAux[I, dist.type, trans.type](trans, dist)
-#
-#template initSpanInterpolatorAdaptor*[I](trans, dist: typed, x, y :float64, len: int): untyped =
-#  initSpanInterpolatorAdaptorAux[I, dist.type, trans.type](trans, dist, x, y, len)
+template initSpanInterpolatorAdaptor*[I](trans, dist: untyped): untyped =
+  initSpanInterpolatorAdaptorAux[I, dist.type, trans.type](trans, dist)
+
+template initSpanInterpolatorAdaptor*[I](trans, dist: typed, x, y :float64, len: int): untyped =
+  initSpanInterpolatorAdaptorAux[I, dist.type, trans.type](trans, dist, x, y, len)
 
 proc distortion*[I,D](self: SpanInterpolatorAdaptor[I,D]): var D =
   result = self.mDistortion[]
