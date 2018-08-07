@@ -42,20 +42,24 @@ template doWhile*(a: typed, b: untyped) =
     if not a:
       break
 
-const
-  platIntWidth* = sizeof(int) * 8
+when defined(nimAshr):
+  template sar*[T: SomeSignedInt](x: T, shift: SomeInteger): T =
+    ashr(x, shift)
+else:
+  const
+    platIntWidth* = sizeof(int) * 8
 
-template sar*(x: int, shift: SomeInteger): int =
-  (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
+  template sar*(x: int, shift: SomeInteger): int =
+    (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
 
-template sar*(x: int64, shift: SomeInteger): int64 =
-  (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
+  template sar*(x: int64, shift: SomeInteger): int64 =
+    (x shr shift) or (((0-(x shr (platIntWidth-1))) shl 1) shl (platIntWidth-1-shift))
 
-template sar*(x: int32, shift: SomeInteger): int32 =
-  (x shr shift.int32) or (((0-(x shr (31))) shl 1) shl (31-shift.int32))
+  template sar*(x: int32, shift: SomeInteger): int32 =
+    (x shr shift.int32) or (((0-(x shr (31))) shl 1) shl (31-shift.int32))
 
-template sar*(x: int16, shift: SomeInteger): int16 =
-  (x shr shift.int16) or (((0-(x shr (15))) shl 1) shl (15-shift.int16))
+  template sar*(x: int16, shift: SomeInteger): int16 =
+    (x shr shift.int16) or (((0-(x shr (15))) shl 1) shl (15-shift.int16))
 
 proc c_memset(p: pointer, value: cint, size: csize): pointer {.
   importc: "memset", header: "<string.h>", discardable.}
