@@ -3,7 +3,7 @@ import agg/[rendering_buffer, conv_transform, conv_stroke,
   rasterizer_scanline_aa, span_allocator, span_gouraud_rgba, gamma_lut,
   arc, bezier_arc, pixfmt_rgb, pixfmt_rgba, bounding_rect, calc,
   rasterizer_compound_aa, renderer_base, color_rgba, gsv_text]
-import ctrl/[slider, bezier, rbox, cbox], random, strutils, platform.support
+import ctrl/[slider, bezier, rbox, cbox], random, strutils, platform/support
 
 const
   frameWidth = 400

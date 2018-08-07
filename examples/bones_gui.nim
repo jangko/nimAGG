@@ -3,7 +3,7 @@ import agg / [basics, rendering_buffer, scanline_u, renderer_scanline,
   path_storage, conv_stroke, math_stroke, rasterizer_scanline_aa,
   rounded_rect, span_gradient, trans_affine, span_interpolator_linear,
   span_allocator, color_util, arc, ellipse, conv_transform, conv_curve]
-import platform.support, ctrl.slider, math, strutils
+import platform/support, ctrl/slider, math, strutils
 
 const
   frameWidth = 800

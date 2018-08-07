@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   span_solid, conv_curve, conv_stroke, gsv_text, pixfmt_rgb,
   scanline_boolean_algebra, scanline_storage_aa, scanline_storage_bin,
   path_storage, trans_affine, conv_transform, color_rgba, renderer_base]
-import ctrl/[slider, cbox, rbox], make_arrows, make_gb_poly, strutils, platform.support
+import ctrl/[slider, cbox, rbox], make_arrows, make_gb_poly, strutils, platform/support
 
 const
   frameWidth = 655

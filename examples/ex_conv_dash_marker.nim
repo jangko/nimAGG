@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_stroke,
   conv_dash, conv_curve, conv_contour, conv_smooth_poly1, conv_marker,
   arrowhead, vcgen_markers_term, scanline_u, renderer_scanline, pixfmt_rgb,
   color_rgba, renderer_base, vector, path_storage]
-import ctrl/[slider, rbox, cbox], math, platform.support
+import ctrl/[slider, rbox, cbox], math, platform/support
 
 const
   frameWidth = 500

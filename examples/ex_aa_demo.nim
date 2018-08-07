@@ -1,7 +1,7 @@
 import agg / [basics, rendering_buffer, scanline_u, renderer_scanline,
   pixfmt_rgb, color_rgba, gamma_functions, renderer_base, calc,
   path_storage, conv_stroke, math_stroke, rasterizer_scanline_aa]
-import platform.support, ctrl.slider, math
+import platform/support, ctrl/slider, math
 
 type
   Square = object

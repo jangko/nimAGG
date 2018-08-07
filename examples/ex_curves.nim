@@ -2,7 +2,7 @@ import agg/[basics, path_storage, renderer_base, rendering_buffer,
   pixfmt_rgb, scanline_p, rasterizer_scanline_aa, conv_transform,
   renderer_scanline, conv_curve, color_rgba, conv_stroke, trans_affine,
   bounding_rect]
-import streams, os, platform.support, spline
+import streams, os, platform/support, spline
 import ctrl/[rbox, slider]
 
 const

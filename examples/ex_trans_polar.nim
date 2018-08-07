@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa,
   scanline_u, renderer_scanline, pixfmt_rgb, trans_affine,
   conv_transform, conv_segmentator, renderer_base, color_rgba]
-import ctrl.slider, ctrl.cbox, math, platform.support
+import ctrl/slider, ctrl/cbox, math, platform/support
 
 type
   TransformedControl[Ctrl, Pipeline] = object

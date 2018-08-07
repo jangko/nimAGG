@@ -4,7 +4,7 @@ import agg / [rendering_buffer, conv_transform, conv_stroke, conv_dash,
   bezier_arc, pixfmt_rgb, renderer_base, color_rgba, basics, calc, vertex_sequence,
   path_storage, ellipse, gsv_text]
 import ctrl / [slider, bezier, rbox, cbox]
-import math, strutils, random, platform.support
+import math, strutils, random, platform/support
 
 proc bezier4Point(x1, y1, x2, y2, x3, y3, x4, y4, mu: float64; x, y: var float64) =
    var mum1, mum13, mu3: float64

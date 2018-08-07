@@ -1,7 +1,7 @@
 import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p, renderer_scanline,
   conv_transform, conv_stroke, bspline, ellipse, gsv_text, pixfmt_rgb, color_rgba,
   renderer_base, calc, basics, trans_affine]
-import ctrl.slider, ctrl.scale, parseutils, strutils, os, math, platform.support
+import ctrl/slider, ctrl/scale, parseutils, strutils, os, math, platform/support
 
 const
   frameWidth = 800

@@ -3,7 +3,7 @@ import agg/[basics, ellipse, gamma_lut, rendering_buffer, rasterizer_scanline_aa
   span_allocator, pixfmt_rgba, pixfmt_rgba, renderer_base, color_rgba,
   path_storage, pixfmt_rgb, gamma_lut, rasterizer_sl_clip,
   trans_affine, conv_transform]
-import ctrl.slider, ctrl.cbox, platform.support
+import ctrl/slider, ctrl/cbox, platform/support
 
 type
   StyleHandler = object

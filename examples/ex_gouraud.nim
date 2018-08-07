@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   scanline_p, renderer_scanline, span_allocator, color_rgba,
   span_gouraud_gray, span_solid, calc, dda_line, pixfmt_rgb,
   renderer_base, gamma_functions, span_gouraud_rgba, renderer_scanline]
-import math, ctrl.slider, platform.support, strutils
+import math, ctrl/slider, platform/support, strutils
 
 const
   frameWidth = 400

@@ -4,7 +4,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, path_storage,
   span_pattern_rgb, span_pattern_rgba, image_accessors,
   pixfmt_rgba, renderer_base, color_rgba , basics, conv_stroke,
   color_gray, pixfmt_rgb, pixfmt_gray]
-import ctrl/[slider, rbox, cbox], math, platform.support
+import ctrl/[slider, rbox, cbox], math, platform/support
 
 const pix_format = pix_format_bgra32
 

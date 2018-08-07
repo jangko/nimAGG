@@ -4,7 +4,7 @@ import agg/[path_storage, gradient_lut, scanline_u, rasterizer_scanline_aa,
   span_gradient_contour, span_interpolator_linear, span_gradient, renderer_scanline,
   span_gradient_image, pixfmt_rgba, trans_perspective, span_interpolator_trans]
 import math, ctrl/[slider, rbox, cbox, polygon], make_arrows, make_gb_poly
-import platform.support
+import platform/support
 
 const Puzzle = [0x02'u8, 0x51, 0xAE, 0xFF, 0x00, 0x5C, 0xB0, 0xFF,
   0x0A, 0x85, 0xFF, 0xFF, 0x3B, 0x87, 0x95, 0xFF, 0x28, 0x27, 0x12, 0xFF, 0x5C, 0x6F, 0x03,

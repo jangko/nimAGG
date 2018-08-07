@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p, renderer_scanl
   conv_bspline, conv_segmentator, font_win32_tt, font_cache_manager,
   font_types, trans_double_path, basics, color_rgba, pixfmt_rgb, renderer_base,
   conv_curve, conv_transform, conv_stroke, path_storage_integer, calc]
-import ctrl/[cbox, slider, polygon], platform.winapi, platform.support, random
+import ctrl/[cbox, slider, polygon], platform/winapi, platform/support, random
 
 proc makeText(): string {.compileTime.} =
   result = "Anti-Grain Geometry is designed as a set of loosely coupled"

@@ -5,7 +5,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_curve,
   trans_affine, renderer_base, color_gray, conv_transform,
   color_conv, color_conv_rgb8, gsv_text]
 import ctrl/[slider, rbox, cbox, polygon]
-import strutils, platform.support
+import strutils, platform/support
 
 var
   gradient_colors = [

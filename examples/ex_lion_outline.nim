@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, renderer_outline_a
   rasterizer_outline_aa, scanline_p, renderer_scanline, path_storage, conv_transform,
   bounding_rect, pixfmt_rgb, renderer_base, color_rgba, trans_affine,
   conv_stroke, gamma_functions]
-import ctrl.slider, ctrl.cbox, math, platform.support, parse_lion
+import ctrl/slider, ctrl/cbox, math, platform/support, parse_lion
 
 const
   frameWidth = 512

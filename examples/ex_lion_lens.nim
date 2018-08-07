@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_p, trans_affine,
   renderer_scanline, path_storage, conv_transform, trans_warp_magnifier,
   conv_segmentator, bounding_rect, color_rgba, pixfmt_rgb, renderer_base]
-import parse_lion, platform.support, ctrl.slider, math
+import parse_lion, platform/support, ctrl/slider, math
 
 const
   frameWidth = 500

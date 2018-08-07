@@ -2,7 +2,7 @@ import agg/[ellipse, trans_affine, conv_transform, rendering_buffer,
   pixfmt_rgb, span_allocator, span_image_filter_rgb, image_accessors,
   span_interpolator_linear, span_converter, scanline_u, renderer_scanline,
   rasterizer_scanline_aa, pixfmt_rgb, color_rgba, renderer_base, basics]
-import ctrl.spline, random, strutils, os, platform.support
+import ctrl/spline, random, strutils, os, platform/support
 
 const
   arraySize = 256 * 3

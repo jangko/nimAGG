@@ -1,4 +1,4 @@
-import winapi, agg.basics
+import winapi, agg/basics
 
 type
   PixelMap*[T] = object

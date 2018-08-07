@@ -28,7 +28,7 @@ proc init[CoordT](self: var GrayCalc, c1, c2: CoordT) =
   self.mDv = c2.color.v.int - self.mV1
   self.mDa = c2.color.a.int - self.mA1
 
-proc calc(self: var GrayCalc, y: float64) =
+proc calc(self: var GrayCalc, y: float64) {.used.} =
   var k = (y - self.mY1) * self.m1Dy
   if k < 0.0: k = 0.0
   if k > 1.0: k = 1.0

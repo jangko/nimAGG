@@ -3,7 +3,7 @@ import agg/[rendering_buffer, trans_viewport, path_storage, conv_transform,
   renderer_scanline, rasterizer_scanline_aa, rasterizer_compound_aa,
   span_allocator, gamma_lut, pixfmt_rgba, bounding_rect, color_gray,
   color_rgba, trans_affine, basics, calc, renderer_base]
-import random, os, strutils, math, platform.support
+import random, os, strutils, math, platform/support
 
 const
   frameWidth = 655

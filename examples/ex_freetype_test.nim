@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, scanline_u, scanline_bin, renderer_scanlin
   pixfmt_rgb, gamma_lut, font_freetype, font_types, font_cache_manager,
   color_rgba, renderer_base, trans_affine, gamma_functions,
   scanline_storage_bin, scanline_storage_aa, path_storage_integer]
-import ctrl/[slider, cbox, rbox], os, strutils, platform.support
+import ctrl/[slider, cbox, rbox], os, strutils, platform/support
 
 const
   frameWidth = 640

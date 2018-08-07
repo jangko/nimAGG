@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_cells_aa,
   scanline_p, ellipse, pixfmt_gray, pixfmt_rgb, color_gray, renderer_base,
   color_rgba, renderer_scanline]
-import platform.support, ctrl.slider
+import platform/support, ctrl/slider
 
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 3, 2, PixfmtGray8bgr24r)
 pixfmtAlphaBlendGray(BlenderGray8, RenderingBuffer, 3, 1, PixfmtGray8bgr24g)

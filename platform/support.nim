@@ -1,6 +1,6 @@
 import agg / [basics, rendering_buffer, trans_viewport,
   trans_affine, color_conv_rgb8, color_conv_rgb16, color_conv]
-import ctrl.ctrl_base, os
+import ctrl/ctrl_base, os
 
 # These are flags used in method init(). Not all of them are
 # applicable on different platforms, for example the win32_api

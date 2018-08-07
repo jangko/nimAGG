@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_u, renderer_scanl
   span_allocator, span_gradient, gradient_lut, gamma_lut, span_interpolator_linear,
   basics, color_rgba, pixfmt_rgb, renderer_base, trans_affine, ellipse, conv_stroke,
   conv_transform, gsv_text]
-import platform.support, strutils, ctrl.slider
+import platform/support, strutils, ctrl/slider
 
 const
   frameWidth = 600

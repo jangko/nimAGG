@@ -3,7 +3,7 @@ import agg / [basics, rendering_buffer, color_rgba, color_gray, path_storage,
   scanline_u, scanline_p, renderer_base, trans_affine, ellipse,
   rasterizer_scanline_aa, alpha_mask_u8]
 
-import random, parse_lion, math, platform.support
+import random, parse_lion, math, platform/support
 
 const
   frameWidth = 512

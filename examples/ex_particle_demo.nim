@@ -2,7 +2,7 @@ import agg/[basics, pixfmt_rgba, color_rgba, rendering_buffer,
   renderer_base, span_allocator, span_gradient, gsv_text,
   renderer_scanline, scanline_u, rasterizer_scanline_aa,
   conv_stroke, ellipse, trans_affine, span_interpolator_linear, calc]
-import random, math, platform.support, strutils, ctrl.slider, ctrl.cbox
+import random, math, platform/support, strutils, ctrl/slider, ctrl/cbox
 
 const
   frameWidth = 600

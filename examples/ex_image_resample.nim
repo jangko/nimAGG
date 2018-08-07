@@ -4,7 +4,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   span_interpolator_trans, span_allocator, image_accessors, gamma_lut,
   span_image_filter_rgba, renderer_base, color_rgba, span_subdiv_adaptor,
   span_interpolator_persp, gsv_text, conv_stroke]
-import strutils, os, math, ctrl/[slider, rbox, polygon], platform.support
+import strutils, os, math, ctrl/[slider, rbox, polygon], platform/support
 
 const
   frameWidth = 600

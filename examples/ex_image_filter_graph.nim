@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, ellipse,
   trans_affine, conv_transform, conv_stroke, pixfmt_rgb, scanline_p,
   renderer_scanline, image_filters, renderer_base, color_rgba,
   path_storage, basics]
-import platform.support, math, strutils, ctrl.slider, ctrl.cbox
+import platform/support, math, strutils, ctrl/slider, ctrl/cbox
 
 type
   FilterBase = ref object of RootObj

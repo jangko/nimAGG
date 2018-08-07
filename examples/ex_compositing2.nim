@@ -3,7 +3,7 @@ import agg/[rendering_buffer, renderer_base, rasterizer_scanline_aa, scanline_u,
   gsv_text, span_interpolator_linear, color_rgba, trans_affine, calc, ellipse,
   comp_op, pixfmt_rgb, basics, conv_transform]
 import strutils, os, math
-import ctrl.rbox, ctrl.slider, platform.support
+import ctrl/rbox, ctrl/slider, platform/support
 
 proc generateColorRamp[CA,CB](c: var openArray[CA], c1, c2, c3, c4: CB) =
   when CA is not CB:

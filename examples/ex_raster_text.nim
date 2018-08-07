@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   renderer_scanline, pixfmt_rgb, span_allocator, span_gradient,
   glyph_raster_bin, renderer_raster_text, embedded_raster_fonts,
   renderer_base, color_rgba, trans_affine, span_interpolator_linear]
-import ctrl/[slider, cbox], math, platform.support
+import ctrl/[slider, cbox], math, platform/support
 
 const
   frameWidth = 640

@@ -2,7 +2,7 @@ import agg/[rasterizer_scanline_aa, ellipse, trans_affine, conv_transform,
   scanline_u, scanline_p, image_accessors, renderer_scanline, color_rgba,
   span_allocator, span_interpolator_linear, pixfmt_rgb, span_image_filter_rgb,
   rendering_buffer, renderer_base, gsv_text, conv_stroke, basics, image_filters]
-import ctrl/[slider, rbox, cbox], os, strutils, math, platform.support
+import ctrl/[slider, rbox, cbox], os, strutils, math, platform/support
 
 const
   flipY = true
