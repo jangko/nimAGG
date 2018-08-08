@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, conv_transform, conv_stroke,
   rasterizer_outline_aa, rasterizer_scanline_aa, pattern_filters_rgba,
   renderer_outline_aa, renderer_outline_image, pixfmt_rgb,
   renderer_base, trans_affine, path_storage, gsv_text, calc]
-import ctrl.slider, ctrl.polygon, strutils, os, platform.support
+import ctrl/slider, ctrl/polygon, strutils, os, platform/support
 
 const
   brightnessToAlpha = [

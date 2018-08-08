@@ -22,7 +22,8 @@ Those bugfixes are:
   - call proc of partial/specialized/some generic object by subtype object
   - generic proc forward declaration
   - generic object with generic field(s) type obtained via template(WIP)
-
+  - system.ashr addition
+  - deprecated  '.' import path handling
 
 ## How to build demos?
 

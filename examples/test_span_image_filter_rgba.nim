@@ -3,7 +3,7 @@ import agg/[basics, pixfmt_rgb, color_rgba, renderer_base,
   trans_affine, span_interpolator_linear, span_allocator,
   image_accessors, span_image_filter_rgba, renderer_scanline,
   image_filters, pixfmt_rgba, color_conv_rgb8]
-import nimBMP, ctrl.rbox
+import nimBMP, ctrl/rbox
 
 const
   frameWidth = 500

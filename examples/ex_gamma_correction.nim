@@ -1,7 +1,7 @@
 import agg/[trans_affine, conv_stroke, rasterizer_scanline_aa,
   rendering_buffer, scanline_u, renderer_scanline, gamma_lut,
   basics, gamma_lut, pixfmt_rgb, renderer_base, color_rgba, path_storage,
-  gamma_functions, ellipse], ctrl.slider, platform.support
+  gamma_functions, ellipse], ctrl/slider, platform/support
 
 const
   frameWidth = 400

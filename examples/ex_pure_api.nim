@@ -1,7 +1,7 @@
 import agg/[scanline_p, renderer_scanline, pixfmt_rgba,
   basics, color_rgba, renderer_base, rendering_buffer,
   scanline_p, rasterizer_scanline_aa]
-import platform.winapi
+import platform/winapi
 
 const
   NULL = 0

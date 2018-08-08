@@ -4,7 +4,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   renderer_base, path_storage, trans_affine, conv_transform,
   conv_poly_bool]
 import ctrl/[slider, cbox, rbox], make_arrows, make_gb_poly
-import platform.support, strutils
+import platform/support, strutils
 
 const
   frameWidth = 640

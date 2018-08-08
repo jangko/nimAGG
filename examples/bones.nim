@@ -3,7 +3,7 @@ import agg / [basics, rendering_buffer, scanline_u, renderer_scanline,
   pixfmt_rgb, color_rgba, gamma_functions, renderer_base, calc, trans_affine,
   path_storage, conv_stroke, math_stroke, rasterizer_scanline_aa, conv_transform,
   gsv_text, ellipse, scanline_bin, pixfmt_gray, color_gray]
-import platform.support, ctrl.slider, math, nimBMP
+import platform/support, ctrl/slider, math, nimBMP
 
 let human = """
 # 0.0000 0.0000 0.0000 0.0000 4 0 Root

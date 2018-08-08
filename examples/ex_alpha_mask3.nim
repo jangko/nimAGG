@@ -3,7 +3,7 @@ import agg / [basics, rendering_buffer, rasterizer_scanline_aa, renderer_base,
   conv_stroke, gsv_text, pixfmt_rgb, pixfmt_gray, math_stroke,
   pixfmt_amask_adaptor, span_allocator, alpha_mask_u8, color_gray,
   path_storage, trans_affine, conv_transform, conv_curve]
-import make_arrows, make_gb_poly, strutils, ctrl.rbox, platform.support
+import make_arrows, make_gb_poly, strutils, ctrl/rbox, platform/support
 
 const
   frameWidth = 640

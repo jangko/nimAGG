@@ -1,8 +1,8 @@
-import agg / [basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
+import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   renderer_scanline, span_gradient, span_gradient_alpha, span_interpolator_linear,
   span_allocator, span_converter, ellipse, pixfmt_rgb, vcgen_stroke, color_rgba,
   renderer_base, trans_affine, calc]
-import random, ctrl.spline, platform.support, math
+import random, ctrl/spline, platform/support, math
 
 const
   frameWidth = 400

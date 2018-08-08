@@ -4,7 +4,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_curve,
   trans_perspective, blur, renderer_base, color_rgba, color_gray, path_storage,
   trans_affine, conv_transform, gsv_text]
 import ctrl/[slider, rbox, cbox, polygon]
-import strutils, platform.support
+import strutils, platform/support
 
 const
   frameWidth = 440

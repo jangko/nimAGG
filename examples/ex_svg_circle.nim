@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   renderer_base, conv_curve, renderer_scanline, color_rgba, pixfmt_rgb,
   path_storage, trans_affine, conv_transform, conv_stroke,
   bounding_rect, bezier_arc]
-import colors, platform.support
+import colors, platform/support
 
 const
   frameWidth = 400

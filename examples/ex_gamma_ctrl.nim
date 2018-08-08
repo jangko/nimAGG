@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p,
   renderer_scanline, gsv_text, conv_stroke, path_storage,
   pixfmt_rgb, trans_affine, conv_transform, basics,
   renderer_base, color_rgba, ellipse]
-import ctrl.gamma, platform.support
+import ctrl/gamma, platform/support
 
 const
   frameWidth = 500

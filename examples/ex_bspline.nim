@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_p,
   renderer_scanline, conv_bspline, basics, color_rgba, pixfmt_rgb,
   renderer_base, conv_stroke]
 import ctrl/[cbox, slider, polygon]
-import platform.support
+import platform/support
 
 const
   frameWidth = 600

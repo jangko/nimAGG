@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline
   scanline_u, scanline_p, pixfmt_rgb, renderer_base, renderer_outline_aa,
   rasterizer_outline_aa, renderer_scanline, span_allocator, ellipse,
   trans_affine, color_rgba]
-import parse_lion, platform.support
+import parse_lion, platform/support
 
 type
   SpanSimpleBlurRgb24[OrderT] = object

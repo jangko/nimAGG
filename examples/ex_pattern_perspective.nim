@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   trans_bilinear, trans_perspective, span_interpolator_linear,
   span_interpolator_trans, span_allocator, image_accessors, image_filters,
   renderer_base, color_rgba, pixfmt_rgb, span_image_filter_rgb]
-import ctrl.rbox, ctrl.polygon, strutils, os, math, platform.support
+import ctrl/rbox, ctrl/polygon, strutils, os, math, platform/support
 
 const
   frameWidth = 600

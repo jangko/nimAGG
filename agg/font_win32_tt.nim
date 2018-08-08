@@ -1,4 +1,4 @@
-import basics, font_types, platform.winapi, scanline_storage_aa
+import basics, font_types, platform/winapi, scanline_storage_aa
 import scanline_storage_bin, scanline_u, scanline_bin
 import path_storage_integer, rasterizer_scanline_aa, conv_curve
 import trans_affine, bitset_iterator, strutils, algorithm

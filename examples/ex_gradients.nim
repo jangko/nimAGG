@@ -2,7 +2,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, scanline_u, scanline_p,
   conv_transform, color_rgba, color_gray, span_allocator, span_gradient,
   span_interpolator_linear, renderer_scanline, renderer_base, pixfmt_rgb,
   basics, trans_affine, ellipse]
-import ctrl/[rbox, spline, gamma], math, os, strutils, platform.support
+import ctrl/[rbox, spline, gamma], math, os, strutils, platform/support
 
 const
   frameWidth = 512

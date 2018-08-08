@@ -3,7 +3,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, ellipse, trans_affine,
   span_image_filter_gray, pixfmt_rgb, renderer_scanline, span_allocator,
   span_interpolator_linear, image_accessors, basics, renderer_base,
   trans_affine, color_rgba, image_filters]
-import platform.support, os, ctrl.slider
+import platform/support, os, ctrl/slider
 
 const
   flipY = true

@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_p,
   renderer_scanline, trans_affine, conv_stroke, conv_transform,
   path_storage, gamma_functions, pixfmt_rgb, color_rgba, renderer_base]
-import ctrl/[cbox, slider], math, platform.support
+import ctrl/[cbox, slider], math, platform/support
 
 const
   frameWidth = 250

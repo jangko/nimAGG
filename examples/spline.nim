@@ -9,7 +9,7 @@
 # originally written by Ken Johnson in C#
 # from this module, we learn that nim closure works perfectly
 
-import basic2d, math, agg.path_storage
+import basic2d, math, agg/path_storage
 
 type
   FuncType* = proc (v: float64): float64

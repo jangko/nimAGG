@@ -3,7 +3,7 @@ import scanline_bin, path_storage_integer, rasterizer_scanline_aa
 import conv_curve, font_types, trans_affine, basics
 import strutils, bitset_iterator, math, renderer_scanline
 import freetype / [freetype, ftimage, ftoutln, fttypes, fterrdef]
-include freetype.ftimport
+include freetype/ftimport
 
 type
   FontEngineFreetypeBase* = ref object of RootObj

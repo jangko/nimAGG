@@ -3,7 +3,7 @@ import agg/[basics, vector, rendering_buffer, rasterizer_scanline_aa,
   scanline_storage_aa, scanline_storage_bin, renderer_scanline,
   path_storage, conv_transform, ellipse, gamma_functions, scanline_u,
   renderer_base, color_rgba, pixfmt_rgb]
-import ctrl/[rbox, cbox, slider, polygon], platform.support
+import ctrl/[rbox, cbox, slider, polygon], platform/support
 
 const
   frameWidth = 800

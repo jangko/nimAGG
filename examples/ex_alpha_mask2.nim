@@ -4,7 +4,7 @@ import agg / [basics, rendering_buffer, rasterizer_scanline_aa, scanline_u, scan
   renderer_primitives, renderer_markers, span_allocator, span_gradient,
   span_interpolator_linear, rasterizer_outline_aa, alpha_mask_u8, ellipse,
   trans_affine, color_rgba, renderer_base, pixfmt_rgb]
-import parse_lion, random, ctrl.slider, platform.support, math
+import parse_lion, random, ctrl/slider, platform/support, math
 
 const
   frameWidth = 512

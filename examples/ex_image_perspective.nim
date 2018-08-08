@@ -4,7 +4,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_u,
   span_interpolator_trans, span_allocator, image_accessors,
   pixfmt_rgba, span_image_filter_rgba, renderer_base, color_rgba,
   image_filters, gsv_text]
-import ctrl/[rbox, polygon], strutils, os, math, platform.support
+import ctrl/[rbox, polygon], strutils, os, math, platform/support
 
 const
   frameWidth = 600

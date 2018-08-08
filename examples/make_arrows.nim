@@ -1,4 +1,4 @@
-import agg / [path_storage, basics], math
+import agg/[path_storage, basics], math
 
 type
   Spiral* = object

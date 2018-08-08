@@ -3,7 +3,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, rasterizer_outline
   renderer_primitives, rasterizer_outline, rasterizer_outline_aa,
   pattern_filters_rgba, renderer_outline_aa, renderer_outline_image,
   pixfmt_rgb, color_rgba, renderer_base, gsv_text]
-import ctrl.slider, ctrl.cbox, make_arrows, math, platform.support, strutils
+import ctrl/slider, ctrl/cbox, make_arrows, math, platform/support, strutils
 
 var
   pixmap_chain = [

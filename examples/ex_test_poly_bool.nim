@@ -1,6 +1,6 @@
 import agg/[basics, rendering_buffer, rasterizer_scanline_aa, conv_stroke,
   renderer_base, path_storage, pixfmt_rgb, color_rgba, scanline_p, renderer_scanline]
-import platform.support, polyBool.polyBool
+import platform/support, polyBool/polyBool
 
 const
   frameWidth = 600

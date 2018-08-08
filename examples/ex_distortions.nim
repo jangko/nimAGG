@@ -3,7 +3,7 @@ import agg/[rendering_buffer, rasterizer_scanline_aa, ellipse, trans_affine,
   scanline_u, renderer_scanline, span_interpolator_linear, image_filters,
   span_interpolator_adaptor, span_gradient, image_accessors,
   color_rgba, renderer_base, basics]
-import ctrl.slider, ctrl.rbox, math, os, strutils, platform.support
+import ctrl/slider, ctrl/rbox, math, os, strutils, platform/support
 
 const gradientColors = [
   255'u8, 255, 255, 255,

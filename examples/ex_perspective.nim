@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_p,
   renderer_scanline, path_storage, conv_transform,
   bounding_rect, ellipse, trans_bilinear, trans_perspective,
   color_rgba, renderer_base, pixfmt_rgb, conv_stroke]
-import parse_lion, ctrl.polygon, ctrl.rbox, platform.support
+import parse_lion, ctrl/polygon, ctrl/rbox, platform/support
 
 const
   frameWidth = 600

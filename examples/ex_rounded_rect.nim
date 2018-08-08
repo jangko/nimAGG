@@ -1,7 +1,7 @@
 import agg/[basics, rendering_buffer, scanline_p, renderer_base,
   pixfmt_rgb, gamma_lut, ellipse, rounded_rect, color_rgba,
   conv_stroke, rasterizer_scanline_aa, renderer_scanline]
-import ctrl.slider, ctrl.cbox, platform.support, math
+import ctrl/slider, ctrl/cbox, platform/support, math
 
 const
   frameWidth = 600

@@ -2,7 +2,7 @@ import agg/[basics, rendering_buffer, rasterizer_scanline_aa, scanline_p,
   renderer_scanline, pixfmt_rgb, color_rgba, conv_transform,
   renderer_base, gamma_functions, gsv_text, conv_stroke, trans_affine,
   path_storage, conv_contour]
-import os, strutils, platform.support, ctrl.slider
+import os, strutils, platform/support, ctrl/slider
 
 import svg_parser, svg_path_renderer
 
