@@ -426,7 +426,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
     if height == 0: height = self.rbufWindow().height()
     let size = width * height * (self.mBpp div 8)
 
-    if self.mSpecific.mBufImg[idx].isNil:
+    if self.mSpecific.mBufImg[idx].len == 0:
       self.mSpecific.mBufImg[idx] = newSeq[ValueT](size)
     else:
       self.mSpecific.mBufImg[idx].setLen(size)

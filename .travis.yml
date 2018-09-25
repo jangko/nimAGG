@@ -16,34 +16,34 @@ install:
   - ./configure CFLAGS="-fPIC" --without-zlib --without-png --without-bzip2
   - make
   - cd objs
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then clang -shared -fPIC -o libfreetype-6.dylib *.o; fi 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc -shared -fPIC -o libfreetype.so.6 *.o; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then clang -shared -fPIC -o libfreetype-6.dylib *.o; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then gcc -shared -fPIC -o libfreetype.so.6 *.o; fi
   - cd ..
   - cd ..
-  
+
 before_script:
   - set -e
   - git clone --depth 1 https://github.com/nim-lang/csources.git
   - cd csources
   - sh build.sh
-  - cd ..    
+  - cd ..
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
   - mv $(pwd)/csources/bin/nim $(pwd)/Nim/bin/
   - cd Nim
   - sed -i -e 's,cc = gcc,cc = clang,' config/nim.cfg
   - export PATH=$(pwd)/bin:$PATH
-  - nim c -d:release koch
-  - ./koch boot -d:release
+  - nim c -d:release --verbosity:0 --hints:off koch
+  - ./koch boot -d:release --verbosity:0 --hints:off
   - ./koch nimble
   - cd ..
   - nimble refresh
   - nimble install nimBMP
   - nimble install polyBool
   - nimble install freetype
-  
+
 script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/; fi 
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype-6.dylib ./examples/; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype.so.6 ./examples/; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then mv $(pwd)/freetype-2.7.1/objs/libfreetype-6.dylib ./examples/; fi
   - cd examples
   - nim e build.nims
   - nim e -d:release build.nims

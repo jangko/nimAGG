@@ -18,15 +18,14 @@ template vertexBlockStorage*(name: untyped, BlockShift: int = 8, BlockPool: int 
     result.mTotalVertices = 0
     result.mTotalBlocks = 0
     result.mMaxBlocks = 0
-    result.mBlocks = nil
 
   proc allocateBlock*[T](self: var name[T], nb: int) =
-    if self.mBlocks == nil: self.mBlocks = newSeq[seq[T]](BlockPool)
+    if self.mBlocks.len == 0: self.mBlocks = newSeq[seq[T]](BlockPool)
     if nb >= self.mMaxBlocks:
       self.mBlocks.setLen(self.mMaxBlocks + BlockPool)
       inc(self.mMaxBlocks, BlockPool)
 
-    if self.mBlocks[nb] == nil: self.mBlocks[nb] = newSeq[T](blockSize(name[T]))
+    if self.mBlocks[nb].len == 0: self.mBlocks[nb] = newSeq[T](blockSize(name[T]))
     inc self.mTotalBlocks
 
   proc storagePtr*[T](self: var name[T]): ptr T =

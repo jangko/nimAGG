@@ -1360,6 +1360,10 @@ proc GetModuleHandleW(lpModuleName: LPCWSTR): HMODULE {.stdcall, dynlib: "kernel
 template getModuleHandle*(moduleName: string): HMODULE =
   when defined(winUnicode): GetModuleHandleW(WC(moduleName))
   else: GetModuleHandleA(moduleName.cstring)
+  
+template getModuleHandle*(): HMODULE =
+  when defined(winUnicode): GetModuleHandleW(nil)
+  else: GetModuleHandleA(nil)
 
 proc LoadLibraryA(lpLibFileName: LPCSTR): HINST {.stdcall, dynlib: "kernel32", importc: "LoadLibraryA".}
 proc LoadLibraryW(lpLibFileName: LPCWSTR): HINST {.stdcall, dynlib: "kernel32", importc: "LoadLibraryW".}

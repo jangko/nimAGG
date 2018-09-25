@@ -19,21 +19,18 @@ template podBVector(name: untyped, SS: int = 6) =
     result.mSize = 0
     result.mNumBlocks = 0
     result.mMaxBlocks = 0
-    result.mBlocks = nil
     result.mBlockPtrInc = blockSize(name[T])
 
   proc `init name`*[T](blockPtrInc: int): name[T] =
     result.mSize = 0
     result.mNumBlocks = 0
     result.mMaxBlocks = 0
-    result.mBlocks = nil
     result.mBlockPtrInc = blockPtrInc
 
   proc init*[T](self: var name[T]) =
     self.mSize = 0
     self.mNumBlocks = 0
     self.mMaxBlocks = 0
-    self.mBlocks = nil
     self.mBlockPtrInc = blockSize(name[T])
 
   proc removeAll*[T](self: var name[T]) =
@@ -48,7 +45,7 @@ template podBVector(name: untyped, SS: int = 6) =
       while self.mNumBlocks > nb: dec self.mNumBlocks
       self.mBlocks.setLen(self.mNumBlocks)
       if self.mNumBlocks == 0:
-        self.mBlocks = nil
+        self.mBlocks = @[]
         self.mMaxBlocks = 0
       self.mSize = size
 
@@ -57,7 +54,7 @@ template podBVector(name: untyped, SS: int = 6) =
 
   proc allocateBlock[T](self: var name[T], nb: int) =
     if nb >= self.mMaxBlocks:
-      if self.mBlocks == nil:
+      if self.mBlocks.len == 0:
         self.mBlocks = newSeq[seq[T]](self.mMaxBlocks + self.mBlockPtrInc)
       else:
         self.mBlocks.setLen(self.mMaxBlocks + self.mBlockPtrInc)
@@ -395,7 +392,6 @@ type
 proc initPodVector*[T](): PodVector[T] =
   result.mSize = 0
   result.mCapacity = 0
-  result.mArray = nil
 
 proc initPodVector*[T](cap: int, extraTail = 0): PodVector[T] =
   result.mSize = 0
@@ -408,7 +404,7 @@ proc capacity*[T](self: var PodVector[T], cap: int, extraTail = 0) =
   if cap > self.mCapacity:
     self.mCapacity = cap + extraTail
     if self.mCapacity != 0:
-      if self.mArray != nil: self.mArray.setLen(self.mCapacity)
+      if self.mArray.len > 0: self.mArray.setLen(self.mCapacity)
       else: self.mArray = newSeq[T](self.mCapacity)
 
 proc capacity*[T](self: PodVector[T]): int =

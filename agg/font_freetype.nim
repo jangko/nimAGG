@@ -261,10 +261,10 @@ proc init(self: FontEngineFreetypeBase, flag32: bool, maxFaces = 32) =
   self.mFlag32 = flag32
   self.mChangeStamp = 0
   self.mLastError = 0
-  self.mName = nil
+  self.mName = ""
   self.mFaceIndex = 0
   self.mCharMap = FT_ENCODING_NONE
-  self.mSignature = nil
+  self.mSignature = ""
   self.mHeight = 0
   self.mWidth = 0
   self.mHinting = true
@@ -309,7 +309,7 @@ proc toFxHex(x: float64): string =
   result = y.toHex(8)
 
 proc updateSignature(self: FontEngineFreetypeBase) =
-  if not self.mCurFace.isNil and self.mName != nil:
+  if not self.mCurFace.isNil and self.mName.len > 0:
     var gammaHash = 0
     if self.mGlyphRendering in {glyph_ren_native_gray8, glyph_ren_mono, glyph_ren_gray8}:
       var gammaTable = newSeq[uint8](getAAScale(self.mRasterizer.type))
@@ -390,9 +390,9 @@ proc loadFont*(self: FontEngineFreetypeBase, fontName: string, faceIndex: int,
         self.mName    = self.mFaceNames[self.mNumFaces]
         inc self.mNumFaces
       else:
-        self.mFaceNames[self.mNumFaces] = nil
+        self.mFaceNames[self.mNumFaces] = ""
         self.mCurFace = nil
-        self.mName = nil
+        self.mName = ""
 
     if self.mLastError == 0:
       result = true

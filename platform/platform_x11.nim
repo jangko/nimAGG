@@ -4,7 +4,7 @@ import x11/[xlib, x, keysym, xutil]
 type
   Ticks = distinct int64
   Time = clong
-  
+
   Timeval {.importc: "struct timeval", header: "<sys/select.h>",
                final, pure.} = object ## struct timeval
     tv_sec: Time  ## Seconds.
@@ -728,7 +728,7 @@ proc createImg[T,R](self: GenericPlatform[T,R], idx: int, w = 0, h = 0): bool =
     if height == 0: height = self.rbufWindow().height()
     let size = width * height * (self.mBpp div 8)
 
-    if self.mSpecific.mBufImg[idx].isNil:
+    if self.mSpecific.mBufImg[idx].len == 0:
       self.mSpecific.mBufImg[idx] = newSeq[ValueT](size)
     else:
       self.mSpecific.mBufImg[idx].setLen(size)
@@ -756,7 +756,7 @@ proc startTimer[T,R](self: GenericPlatform[T,R]) =
   self.mSpecific.mSwStart = getTicks()
 
 proc elapsedTime[T,R](self: GenericPlatform[T,R]): float64 =
-  result = float64(getTicks() - self.mSpecific.mSwStart) / 1000_000.0
+  result = (float64(getTicks()) - float64(self.mSpecific.mSwStart)) / 1000_000.0
 
 proc fullFileName[T,R](self: GenericPlatform[T,R], fileName: string): string =
   result = fileName

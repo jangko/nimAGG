@@ -13,7 +13,6 @@ type
     mD1, mD2: float64
 
 proc initGradientContour*(d1 = 0.0; d2 = 100.0): GradientContour =
-  result.mBuffer = nil
   result.mWidth = 0
   result.mHeight = 0
   result.mFrame = 10
@@ -159,7 +158,7 @@ proc contourCreate*(self: var GradientContour, ps: var PathStorage) =
   self.mHeight = height
 
 proc calculate*(self: var GradientContour, x, y, d: int): int =
-  if self.mBuffer != nil:
+  if self.mBuffer.len > 0:
     var
       px = sar(x, gradientSubpixelShift)
       py = sar(y, gradientSubpixelShift)

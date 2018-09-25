@@ -20,7 +20,7 @@ install:
   - SET PATH=%CD%\DIST\%MINGW_DIR%\BIN;%CD%\BIN;%PATH%
   - git clone --depth 1 https://github.com/nim-lang/csources
   - cd csources
-  - IF "%PLATFORM%" == "x64" ( build64.bat ) else ( build.bat )
+  - IF "%PLATFORM%" == "x64" ( build64.bat > nul ) else ( build.bat > nul )
   - cd ..
   - git clone --depth 1 https://github.com/nim-lang/Nim.git
   - copy %CD%\csources\bin\nim.exe %CD%\Nim\bin\nim.exe
@@ -30,14 +30,14 @@ install:
 build_script:
   - SET PATH=%CD%\Nim\bin;%PATH%
   - cd Nim
-  - nim c -d:release koch
-  - koch boot -d:release
+  - nim c -d:release --verbosity:0 --hints:off koch
+  - koch boot -d:release --verbosity:0 --hints:off
   - koch nimble
   # - git clone https://github.com/nim-lang/nimble.git dist/nimble
   # - cd dist\nimble
   # - git checkout -f stable
   # - git pull
-  # - cd ..\.. 
+  # - cd ..\..
   # - nim c dist\nimble\src\nimble.nim
   # - copy dist\nimble\src\nimble.exe bin\nimble.exe
   - cd ..

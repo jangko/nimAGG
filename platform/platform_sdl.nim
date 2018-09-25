@@ -1,4 +1,4 @@
-import sdl2.sdl as SDL, strutils
+import sdl2/sdl as SDL, strutils
 
 type
   PlatformSpecific[T] = ref object

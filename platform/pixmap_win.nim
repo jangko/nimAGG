@@ -17,7 +17,6 @@ proc initPixelMap*[T](): PixelMap[T] =
   result.mIsInternal = false
   result.mImgSize = 0
   result.mFullSize = 0
-  result.mBuffer = nil
 
 proc destroy*[T](self: var PixelMap[T]) =
   self.mBmp = nil
@@ -68,7 +67,7 @@ proc createBitmapInfo*[T](self: var PixelMap[T], width, height, bitsPerPixel: in
     rgbSize = calcPaletteSize(0, bitsPerPixel) * sizeof(RGBQUAD)
     fullSize = sizeof(BITMAPINFOHEADER) + rgbSize + imgSize
 
-  if self.mBuffer.isNil:
+  if self.mBuffer.len == 0:
     self.mBuffer = newSeq[T](fullSize div sizeof(T))
 
   if self.mBuffer.len < fullSize:

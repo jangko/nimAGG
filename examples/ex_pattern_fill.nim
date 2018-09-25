@@ -83,7 +83,7 @@ proc newApp(format: PixFormat, flipY: bool): App =
   result.addCtrl(result.tiePattern   )
 
   result.flag = 0
-  result.pattern = nil
+  result.pattern = @[]
   result.polygonAngle.label("Polygon Angle=$1")
   result.polygonAngle.setRange(-180.0, 180.0)
   result.polygonScale.label("Polygon Scale=$1")

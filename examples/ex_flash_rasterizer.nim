@@ -89,6 +89,7 @@ proc readNext(self: var CompoundShape): bool =
     return true
   result = false
 
+
 proc `[]`(self: CompoundShape, i: int): int =
   self.styles[i].pathId
 

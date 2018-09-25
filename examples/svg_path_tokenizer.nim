@@ -68,7 +68,9 @@ proc parseNumber(self: var PathTokenizer): bool =
     inc self.mPos
 
   # Copy all numeric characters
-  while self.isNumeric(self.mPath[self.mPos].ord):
+  while self.mPos < self.mPath.len:
+    if not self.isNumeric(self.mPath[self.mPos].ord):
+      break
     buf.add self.mPath[self.mPos]
     inc self.mPos
 

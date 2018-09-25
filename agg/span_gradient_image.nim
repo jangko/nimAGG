@@ -13,7 +13,6 @@ type
     mColorF: array[1, ColorT]
 
 proc initGradientImageAux*[PixFmt,ColorT](): GradientImage[PixFmt,ColorT] =
-  result.mBuffer = nil
   result.mAlocDeltaX = 0
   result.mAlocDeltaY = 0
   result.mWidth = 0
@@ -59,7 +58,7 @@ proc calculate*[PixFmt,ColorT](self: var GradientImage[PixFmt,ColorT], x, y, d: 
   mixin getPixWidth
   const pixWidth = getPixWidth(PixFmt)
 
-  if self.mBuffer != nil:
+  if self.mBuffer.len > 0:
     var
       px = sar(x, gradientSubpixelShift)
       py = sar(y, gradientSubpixelShift)

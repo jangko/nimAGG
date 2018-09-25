@@ -96,6 +96,9 @@ proc renderScanlineAA*[Scanline, BaseRenderer, SpanAllocator, SpanGenerator](sl:
   ren: var BaseRenderer, alloc: var SpanAllocator, spanGen: var SpanGenerator) =
   mixin blendColorHSpan
 
+  type
+    T = ptr uint8
+    
   let y = sl.getY()
   var
     numSpans = sl.numSpans()
@@ -110,7 +113,7 @@ proc renderScanlineAA*[Scanline, BaseRenderer, SpanAllocator, SpanGenerator](sl:
     if len < 0: len = -len
     var colors = alloc.allocate(len)
     spanGen.generate(colors, x, y, len)
-    ren.blendColorHspan(x, y, len, colors, if span.len < 0: nil else: covers, covers[])
+    ren.blendColorHspan(x, y, len, colors, if span.len < 0: T(nil) else: covers, covers[])
 
     dec numSpans
     if numSpans == 0: break
