@@ -40,37 +40,33 @@ proc initRgba*(c: Rgba, a: float64): Rgba =
 proc clear*(c: var Rgba) =
   c.r = 0.0; c.g = 0.0; c.b = 0.0; c.a = 0.0
 
-proc transparent*(c: var Rgba): var Rgba {.discardable.} =
+proc transparent*(c: var Rgba) =
   c.a = 0.0
-  result = c
 
-proc opacity*(c: var Rgba, a: float64): var Rgba {.discardable.} =
+proc opacity*(c: var Rgba, a: float64) =
   if a < 0.0: c.a = 0.0
   if a > 1.0: c.a = 1.0
-  result = c
 
 proc opacity*(c: Rgba): float64 =
   result = c.a
 
-proc premultiply*(c: var Rgba): var Rgba {.discardable.} =
+proc premultiply*(c: var Rgba) =
   c.r = c.r * c.a
   c.g = c.g * c.a
   c.b = c.b * c.a
-  result = c
 
-proc premultiply*(c: var Rgba, a: float64): var Rgba {.discardable.} =
+proc premultiply*(c: var Rgba, a: float64) =
   if (c.a <= 0.0) or (a <= 0.0):
     c.r = 0.0
     c.g = 0.0
     c.b = 0.0
     c.a = 0.0
-    return c
+    return
 
   c.a = a / c.a
   c.r = c.r * c.a
   c.g = c.g * c.a
   c.b = c.b * c.a
-  result = c
 
 proc demultiply*(c: var Rgba): var Rgba {.discardable.} =
   if c.a == 0.0:
@@ -205,24 +201,22 @@ proc clear*(c: var Rgba8) =
   c.b = 0
   c.a = 0
 
-proc transparent*(c: var Rgba8): var Rgba8 {.discardable.} =
+proc transparent*(c: var Rgba8) =
   c.a = 0
-  result = c
 
-proc opacity*(c: var Rgba8, a: float64): var Rgba8 {.discardable.} =
+proc opacity*(c: var Rgba8, a: float64) =
   type ValueT = getValueT(Rgba8)
   const baseMask = getBaseMask(Rgba8).float64
   var aa = a
   if a < 0.0: aa = 0.0
   if a > 1.0: aa = 1.0
   c.a = ValueT(uround(aa * baseMask))
-  result = c
 
 proc opacity*(c: Rgba8): float64 {.discardable.} =
   const baseMask = getBaseMask(Rgba8).float64
   result = c.a.float64 / baseMask
 
-proc premultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
+proc premultiply*(c: var Rgba8) =
   type
     ValueT = getValueT(Rgba8)
     CalcT  = getCalcT(Rgba8)
@@ -230,32 +224,31 @@ proc premultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
     baseMask  = getBaseMask(Rgba8)
     baseShift = getBaseShift(Rgba8)
 
-  if c.a == baseMask: return c
+  if c.a == baseMask: return
   if c.a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
-    return c
+    return
 
   c.r = ValueT((CalcT(c.r) * c.a) shr baseShift)
   c.g = ValueT((CalcT(c.g) * c.a) shr baseShift)
   c.b = ValueT((CalcT(c.b) * c.a) shr baseShift)
-  result = c
 
-proc premultiply*(c: var Rgba8, a: uint): var Rgba8 {.discardable, inline.} =
+proc premultiply*(c: var Rgba8, a: uint) =
   type
     ValueT = getValueT(Rgba8)
     CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
 
-  if c.a.int == baseMask and a.int >= baseMask: return c
+  if c.a.int == baseMask and a.int >= baseMask: return
   if c.a == 0 or a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
     c.a = 0
-    return c
+    return
 
   let r = (CalcT(c.r) * a.CalcT) div c.a
   let g = (CalcT(c.g) * a.CalcT) div c.a
@@ -264,21 +257,20 @@ proc premultiply*(c: var Rgba8, a: uint): var Rgba8 {.discardable, inline.} =
   c.g = ValueT(if g > a: a else: g)
   c.b = ValueT(if b > a: a else: b)
   c.a = ValueT(a)
-  result = c
 
-proc demultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
+proc demultiply*(c: var Rgba8) =
   type
     ValueT = getValueT(Rgba8)
     CalcT  = getCalcT(Rgba8)
   const
     baseMask  = getBaseMask(Rgba8)
 
-  if c.a == baseMask: return c
+  if c.a == baseMask: return
   if c.a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
-    return c
+    return
 
   let r = (CalcT(c.r) * baseMask) div c.a
   let g = (CalcT(c.g) * baseMask) div c.a
@@ -286,7 +278,6 @@ proc demultiply*(c: var Rgba8): var Rgba8 {.discardable, inline.} =
   c.r = ValueT(if r > CalcT(baseMask): CalcT(baseMask) else: r)
   c.g = ValueT(if g > CalcT(baseMask): CalcT(baseMask) else: g)
   c.b = ValueT(if b > CalcT(baseMask): CalcT(baseMask) else: b)
-  result = c
 
 proc gradient*(self, c: Rgba8, k: float64): Rgba8 =
   type
@@ -462,24 +453,22 @@ proc clear*(c: var Rgba16) =
   c.b = 0
   c.b = 0
 
-proc transparent*(c: var Rgba16): var Rgba16 {.discardable.} =
+proc transparent*(c: var Rgba16) =
   c.a = 0
-  result = c
 
-proc opacity*(c: var Rgba16, a: float64): var Rgba16 {.discardable.} =
+proc opacity*(c: var Rgba16, a: float64) =
   type ValueT = getValueT(Rgba16)
   const baseMask = getBaseMask(Rgba16).float64
   var aa = a
   if a < 0.0: aa = 0.0
   if a > 1.0: aa = 1.0
   c.a = ValueT(uround(aa * baseMask))
-  result = c
 
 proc opacity*(c: var Rgba16): float64 =
   const baseMask = getBaseMask(Rgba16).float64
   result = c.a.float64 / baseMask
 
-proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
+proc premultiply*(c: var Rgba16) =
   type
     ValueT = getValueT(Rgba16)
     CalcT  = getCalcT(Rgba16)
@@ -487,32 +476,31 @@ proc premultiply*(c: var Rgba16): var Rgba16 {.discardable.} =
     baseMask  = getBaseMask(Rgba16)
     baseShift = getBaseShift(Rgba16)
 
-  if c.a == baseMask: return c
+  if c.a == baseMask: return
   if c.a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
-    return c
+    return
 
   c.r = ValueT((CalcT(c.r) * c.a) shr baseShift)
   c.g = ValueT((CalcT(c.g) * c.a) shr baseShift)
   c.b = ValueT((CalcT(c.b) * c.a) shr baseShift)
-  result = c
 
-proc premultiply*(c: var Rgba16, a: uint): var Rgba16 {.discardable, inline.} =
+proc premultiply*(c: var Rgba16, a: uint) =
   type
     ValueT = getValueT(Rgba16)
     CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
 
-  if c.a.int == baseMask and a.int >= baseMask: return c
+  if c.a.int == baseMask and a.int >= baseMask: return
   if c.a == 0 or a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
     c.a = 0
-    return c
+    return
 
   let r = (CalcT(c.r) * a.CalcT) div c.a
   let g = (CalcT(c.g) * a.CalcT) div c.a
@@ -521,21 +509,20 @@ proc premultiply*(c: var Rgba16, a: uint): var Rgba16 {.discardable, inline.} =
   c.g = ValueT(if g > a: a else: g)
   c.b = ValueT(if b > a: a else: b)
   c.a = ValueT(a)
-  result = c
 
-proc demultiply*(c: var Rgba16): var Rgba16 {.discardable, inline.} =
+proc demultiply*(c: var Rgba16) =
   type
     ValueT = getValueT(Rgba16)
     CalcT  = getCalcT(Rgba16)
   const
     baseMask  = getBaseMask(Rgba16)
 
-  if c.a == baseMask: return c
+  if c.a == baseMask: return
   if c.a == 0:
     c.r = 0
     c.g = 0
     c.b = 0
-    return c
+    return
 
   let r = (CalcT(c.r) * baseMask) div c.a
   let g = (CalcT(c.g) * baseMask) div c.a
@@ -543,7 +530,6 @@ proc demultiply*(c: var Rgba16): var Rgba16 {.discardable, inline.} =
   c.r = ValueT(if r > CalcT(baseMask): CalcT(baseMask) else: r)
   c.g = ValueT(if g > CalcT(baseMask): CalcT(baseMask) else: g)
   c.b = ValueT(if b > CalcT(baseMask): CalcT(baseMask) else: b)
-  result = c
 
 proc gradient*(self, c: Rgba16, k: float64): Rgba16 =
   type

@@ -218,7 +218,7 @@ proc rowPtr*[T](self: var DynaRow[T], x, y, len: int): ptr T =
   var
     r = self.rows[y].addr
     x2 = x + len - 1
-  if r.data != nil:
+  if r.data.len > 0:
     if x < r.x1: r.x1 = x
     if x2 > r.x2: r.x2 = x2
   else:

@@ -25,7 +25,7 @@ type
 
 proc initPlatformSpecific[T](format: PixFormat, flipY: bool): PlatformSpecific[T] =
   if windowsInstance == NULL:
-    windowsInstance = getModuleHandle(nil)
+    windowsInstance = getModuleHandle()
 
   result.mFormat = format
   result.mSysFormat = pix_format_undefined

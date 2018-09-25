@@ -31,7 +31,7 @@ proc fontIs*(self: var FontCache, fontSignature: string): bool =
 
 proc findGlyph*(self: var FontCache, glyphCode: int): GlyphCache =
   let msb = (glyphCode shr 8) and 0xFF
-  if self.mGlyphs[msb] != nil:
+  if self.mGlyphs[msb].len > 0:
     return self.mGlyphs[msb][glyphCode and 0xFF]
   result = nil
 
@@ -39,7 +39,7 @@ proc cacheGlyph*(self: var FontCache, glyphCode, glyphIndex, dataSize: int,
   dataType: GlyphDataType, bounds: RectI, advanceX, advanceY: float64): GlyphCache =
 
   let msb = (glyphCode shr 8) and 0xFF
-  if self.mGlyphs[msb] == nil:
+  if self.mGlyphs[msb].len == 0:
     self.mGlyphs[msb] = newSeq[GlyphCache](256)
 
   let lsb = glyphCode and 0xFF

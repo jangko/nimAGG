@@ -1,5 +1,5 @@
 packageName   = "nimAGG"
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "Andri Lim"
 description   = "nimAGG is a Nim port of Anti Grain Geometry(AGG)"
 license       = "MIT"

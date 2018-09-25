@@ -25,7 +25,7 @@ proc registerWindowClass(hInstance: HINST, className: string, wndProc: WNDPROC) 
   wndclass.hIcon = 0
   wndclass.hCursor = NULL
   wndclass.hbrBackground = NULL
-  wndclass.lpszMenuName = WC(nil)
+  wndclass.lpszMenuName = nil
   wndclass.lpszClassName = WC(className)
 
   if registerClass(wndclass) == NULL:
@@ -134,7 +134,7 @@ proc mainWndProc(hWnd: HWND, iMsg: WINUINT, wParam: WPARAM, lParam: LPARAM): LPA
   result = 0
 
 proc main() =
-  hInstance = getModuleHandle(nil)
+  hInstance = getModuleHandle()
   if hInstance == NULL: fatalError("cannot get module handle")
 
   registerWindowClass(hInstance, mainClass, mainWndProc)
