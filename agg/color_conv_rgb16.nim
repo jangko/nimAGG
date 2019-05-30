@@ -61,9 +61,9 @@ template color_conv_rgbAAA_rgb24(R, B: int, x: untyped) =
 
     doWhile w != 0:
       let rgb = cast[ptr uint32](s)[]
-      d[R] = uint8(rgb shr 22)
-      d[1] = uint8(rgb shr 12)
-      d[B] = uint8(rgb shr 2)
+      d[R] = uint8((rgb shr 22) and 0xFF)
+      d[1] = uint8((rgb shr 12) and 0xFF)
+      d[B] = uint8((rgb shr 2)  and 0xFF)
       inc(s, 4)
       inc(d, 3)
       dec w
@@ -83,9 +83,9 @@ template color_conv_rgbBBA_rgb24(R, B: int, x: untyped) =
 
     doWhile w != 0:
       let rgb = cast[ptr uint32](s)[]
-      d[R] = uint8(rgb shr 24)
-      d[1] = uint8(rgb shr 13)
-      d[B] = uint8(rgb shr 2)
+      d[R] = uint8((rgb shr 24) and 0xFF)
+      d[1] = uint8((rgb shr 13) and 0xFF)
+      d[B] = uint8((rgb shr 2)  and 0xFF)
       inc(s, 4)
       inc(d, 3)
       dec w
@@ -103,9 +103,9 @@ template color_conv_bgrABB_rgb24(B, R: int, x: untyped) =
 
     doWhile w != 0:
       let bgr = cast[ptr uint32](s)[]
-      d[R] = uint8(bgr shr 3)
-      d[1] = uint8(bgr shr 14)
-      d[B] = uint8(bgr shr 24)
+      d[R] = uint8((bgr shr 3)  and 0xFF)
+      d[1] = uint8((bgr shr 14) and 0xFF)
+      d[B] = uint8((bgr shr 24) and 0xFF)
       inc(s, 4)
       inc(d, 3)
       dec w
@@ -216,7 +216,7 @@ template color_conv_gray16_rgb24(R, B: int, x: untyped) =
       w = width
       s = cast[ptr uint16](src)
     doWhile w != 0:
-      let ss = uint8(s[] shr 8)
+      let ss = uint8((s[] shr 8) and 0xFF)
       d[R] = ss
       d[1] = ss
       d[B] = ss

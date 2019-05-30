@@ -311,7 +311,7 @@ proc onDraw(pixFormat: PixFormat) =
   for i in 0..<spanCover.len:
     let x = i.float64 / spanCover.len.float64
     let c = uround(x * 65535.0).uint
-    spanCover[i] = uint8(i)
+    spanCover[i] = uint8(i and 0xFF)
     spanColor[i] = initRgba16(c, c, c, c)
 
   for y in 250..300:

@@ -3,10 +3,10 @@ import color_rgba, basics, math
 proc RgbaClear_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, cover: uint) {.cdecl.} =
   if cover < 255:
     let cover = 255'u - cover
-    p[OrderT.R] = ValueT((p[OrderT.R].uint * cover + 255) shr 8)
-    p[OrderT.G] = ValueT((p[OrderT.G].uint * cover + 255) shr 8)
-    p[OrderT.B] = ValueT((p[OrderT.B].uint * cover + 255) shr 8)
-    p[OrderT.A] = ValueT((p[OrderT.A].uint * cover + 255) shr 8)
+    p[OrderT.R] = cast[ValueT]((p[OrderT.R].uint * cover + 255) shr 8)
+    p[OrderT.G] = cast[ValueT]((p[OrderT.G].uint * cover + 255) shr 8)
+    p[OrderT.B] = cast[ValueT]((p[OrderT.B].uint * cover + 255) shr 8)
+    p[OrderT.A] = cast[ValueT]((p[OrderT.A].uint * cover + 255) shr 8)
   else:
     p[0] = 0
     p[1] = 0
@@ -17,15 +17,15 @@ proc RgbaClear_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, c
 proc RgbaSrc_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, cover: uint) {.cdecl.} =
   if cover < 255:
     let alpha = 255'u - cover
-    p[OrderT.R] = ValueT(((p[OrderT.R].uint * alpha + 255) shr 8) + ((sr * cover + 255) shr 8))
-    p[OrderT.G] = ValueT(((p[OrderT.G].uint * alpha + 255) shr 8) + ((sg * cover + 255) shr 8))
-    p[OrderT.B] = ValueT(((p[OrderT.B].uint * alpha + 255) shr 8) + ((sb * cover + 255) shr 8))
-    p[OrderT.A] = ValueT(((p[OrderT.A].uint * alpha + 255) shr 8) + ((sa * cover + 255) shr 8))
+    p[OrderT.R] = cast[ValueT](((p[OrderT.R].uint * alpha + 255) shr 8) + ((sr * cover + 255) shr 8))
+    p[OrderT.G] = cast[ValueT](((p[OrderT.G].uint * alpha + 255) shr 8) + ((sg * cover + 255) shr 8))
+    p[OrderT.B] = cast[ValueT](((p[OrderT.B].uint * alpha + 255) shr 8) + ((sb * cover + 255) shr 8))
+    p[OrderT.A] = cast[ValueT](((p[OrderT.A].uint * alpha + 255) shr 8) + ((sa * cover + 255) shr 8))
   else:
-    p[OrderT.R] = ValueT(sr)
-    p[OrderT.G] = ValueT(sg)
-    p[OrderT.B] = ValueT(sb)
-    p[OrderT.A] = ValueT(sa)
+    p[OrderT.R] = cast[ValueT](sr)
+    p[OrderT.G] = cast[ValueT](sg)
+    p[OrderT.B] = cast[ValueT](sb)
+    p[OrderT.A] = cast[ValueT](sa)
 
 proc RgbaDst_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, cover: uint) {.cdecl.} =
   discard
@@ -50,10 +50,10 @@ proc RgbaSrcOver_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
     sa = (sa * cover + 255) shr 8
 
   var s1a = baseMask - CalcT(sa)
-  p[OrderT.R] = ValueT(sr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
-  p[OrderT.G] = ValueT(sg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
-  p[OrderT.B] = ValueT(sb + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
-  p[OrderT.A] = ValueT(sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
+  p[OrderT.R] = cast[ValueT](sr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
+  p[OrderT.G] = cast[ValueT](sg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
+  p[OrderT.B] = cast[ValueT](sb + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
+  p[OrderT.A] = cast[ValueT](sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
 
 
 # Dca' = Dca + Sca.(1 - Da)
@@ -76,10 +76,10 @@ proc RgbaDstOver_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
     sa = (sa * cover + 255) shr 8
 
   var d1a = baseMask - CalcT(p[OrderT.A])
-  p[OrderT.R] = ValueT(p[OrderT.R].CalcT + ((sr.CalcT * d1a + baseMask) shr baseShift))
-  p[OrderT.G] = ValueT(p[OrderT.G].CalcT + ((sg.CalcT * d1a + baseMask) shr baseShift))
-  p[OrderT.B] = ValueT(p[OrderT.B].CalcT + ((sb.CalcT * d1a + baseMask) shr baseShift))
-  p[OrderT.A] = ValueT(sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
+  p[OrderT.R] = cast[ValueT](p[OrderT.R].CalcT + ((sr.CalcT * d1a + baseMask) shr baseShift))
+  p[OrderT.G] = cast[ValueT](p[OrderT.G].CalcT + ((sg.CalcT * d1a + baseMask) shr baseShift))
+  p[OrderT.B] = cast[ValueT](p[OrderT.B].CalcT + ((sb.CalcT * d1a + baseMask) shr baseShift))
+  p[OrderT.A] = cast[ValueT](sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
 
 # Dca' = Sca.Da
 # Da'  = Sa.Da
@@ -93,15 +93,15 @@ proc RgbaSrcIn_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, c
   let da = CalcT(p[OrderT.A])
   if cover < 255:
     let alpha = 255'u - cover
-    p[OrderT.R] = ValueT(((p[OrderT.R].uint * alpha + 255) shr 8) + ((((sr * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.G] = ValueT(((p[OrderT.G].uint * alpha + 255) shr 8) + ((((sg * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.B] = ValueT(((p[OrderT.B].uint * alpha + 255) shr 8) + ((((sb * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.A] = ValueT(((p[OrderT.A].uint * alpha + 255) shr 8) + ((((sa * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.R] = cast[ValueT](((p[OrderT.R].uint * alpha + 255) shr 8) + ((((sr * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.G] = cast[ValueT](((p[OrderT.G].uint * alpha + 255) shr 8) + ((((sg * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.B] = cast[ValueT](((p[OrderT.B].uint * alpha + 255) shr 8) + ((((sb * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.A] = cast[ValueT](((p[OrderT.A].uint * alpha + 255) shr 8) + ((((sa * da + baseMask) shr baseShift) * cover + 255) shr 8))
   else:
-    p[OrderT.R] = ValueT((sr * da + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((sg * da + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((sb * da + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT((sa * da + baseMask) shr baseShift)
+    p[OrderT.R] = cast[ValueT]((sr * da + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((sg * da + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((sb * da + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT]((sa * da + baseMask) shr baseShift)
 
 # Dca' = Dca.Sa
 # Da'  = Sa.Da
@@ -113,10 +113,10 @@ proc RgbaDstIn_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, c
   if cover < 255:
     sa = baseMask - ((cover * (baseMask - sa) + 255'u) shr 8'u)
 
-  p[OrderT.R] = ValueT((p[OrderT.R].uint * sa + baseMask) shr baseShift)
-  p[OrderT.G] = ValueT((p[OrderT.G].uint * sa + baseMask) shr baseShift)
-  p[OrderT.B] = ValueT((p[OrderT.B].uint * sa + baseMask) shr baseShift)
-  p[OrderT.A] = ValueT((p[OrderT.A].uint * sa + baseMask) shr baseShift)
+  p[OrderT.R] = cast[ValueT]((p[OrderT.R].uint * sa + baseMask) shr baseShift)
+  p[OrderT.G] = cast[ValueT]((p[OrderT.G].uint * sa + baseMask) shr baseShift)
+  p[OrderT.B] = cast[ValueT]((p[OrderT.B].uint * sa + baseMask) shr baseShift)
+  p[OrderT.A] = cast[ValueT]((p[OrderT.A].uint * sa + baseMask) shr baseShift)
 
 # Dca' = Sca.(1 - Da)
 # Da'  = Sa.(1 - Da)
@@ -130,15 +130,15 @@ proc RgbaSrcOut_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, 
   let da = baseMask - CalcT(p[OrderT.A])
   if cover < 255:
     let alpha = 255'u - cover
-    p[OrderT.R] = ValueT(((p[OrderT.R].uint * alpha + 255) shr 8) + ((((sr * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.G] = ValueT(((p[OrderT.G].uint * alpha + 255) shr 8) + ((((sg * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.B] = ValueT(((p[OrderT.B].uint * alpha + 255) shr 8) + ((((sb * da + baseMask) shr baseShift) * cover + 255) shr 8))
-    p[OrderT.A] = ValueT(((p[OrderT.A].uint * alpha + 255) shr 8) + ((((sa * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.R] = cast[ValueT](((p[OrderT.R].uint * alpha + 255) shr 8) + ((((sr * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.G] = cast[ValueT](((p[OrderT.G].uint * alpha + 255) shr 8) + ((((sg * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.B] = cast[ValueT](((p[OrderT.B].uint * alpha + 255) shr 8) + ((((sb * da + baseMask) shr baseShift) * cover + 255) shr 8))
+    p[OrderT.A] = cast[ValueT](((p[OrderT.A].uint * alpha + 255) shr 8) + ((((sa * da + baseMask) shr baseShift) * cover + 255) shr 8))
   else:
-    p[OrderT.R] = ValueT((sr * da + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((sg * da + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((sb * da + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT((sa * da + baseMask) shr baseShift)
+    p[OrderT.R] = cast[ValueT]((sr * da + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((sg * da + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((sb * da + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT]((sa * da + baseMask) shr baseShift)
 
 # Dca' = Dca.(1 - Sa)
 # Da'  = Da.(1 - Sa)
@@ -151,10 +151,10 @@ proc RgbaDstOut_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, 
     sa = (sa * cover + 255) shr 8
 
   sa = baseMask - sa
-  p[OrderT.R] = ValueT((p[OrderT.R].uint * sa + baseShift) shr baseShift)
-  p[OrderT.G] = ValueT((p[OrderT.G].uint * sa + baseShift) shr baseShift)
-  p[OrderT.B] = ValueT((p[OrderT.B].uint * sa + baseShift) shr baseShift)
-  p[OrderT.A] = ValueT((p[OrderT.A].uint * sa + baseShift) shr baseShift)
+  p[OrderT.R] = cast[ValueT]((p[OrderT.R].uint * sa + baseShift) shr baseShift)
+  p[OrderT.G] = cast[ValueT]((p[OrderT.G].uint * sa + baseShift) shr baseShift)
+  p[OrderT.B] = cast[ValueT]((p[OrderT.B].uint * sa + baseShift) shr baseShift)
+  p[OrderT.A] = cast[ValueT]((p[OrderT.A].uint * sa + baseShift) shr baseShift)
 
 # Dca' = Sca.Da + Dca.(1 - Sa)
 # Da'  = Da
@@ -177,9 +177,9 @@ proc RgbaSrcAtop_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
 
   var da = CalcT(p[OrderT.A])
   sa = baseMask - sa.CalcT
-  p[OrderT.R] = ValueT((sr.CalcT * da + p[OrderT.R].CalcT * sa.CalcT + baseMask) shr baseShift)
-  p[OrderT.G] = ValueT((sg.CalcT * da + p[OrderT.G].CalcT * sa.CalcT + baseMask) shr baseShift)
-  p[OrderT.B] = ValueT((sb.CalcT * da + p[OrderT.B].CalcT * sa.CalcT + baseMask) shr baseShift)
+  p[OrderT.R] = cast[ValueT]((sr.CalcT * da + p[OrderT.R].CalcT * sa.CalcT + baseMask) shr baseShift)
+  p[OrderT.G] = cast[ValueT]((sg.CalcT * da + p[OrderT.G].CalcT * sa.CalcT + baseMask) shr baseShift)
+  p[OrderT.B] = cast[ValueT]((sb.CalcT * da + p[OrderT.B].CalcT * sa.CalcT + baseMask) shr baseShift)
 
 # Dca' = Dca.Sa + Sca.(1 - Da)
 # Da'  = Sa
@@ -201,15 +201,15 @@ proc RgbaDstAtop_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
     sr = (p[OrderT.R].uint * sa + sr * da + baseMask) shr baseShift
     sg = (p[OrderT.G].uint * sa + sg * da + baseMask) shr baseShift
     sb = (p[OrderT.B].uint * sa + sb * da + baseMask) shr baseShift
-    p[OrderT.R] = ValueT(((p[OrderT.R].uint * alpha + 255) shr 8) + ((sr * cover + 255) shr 8))
-    p[OrderT.G] = ValueT(((p[OrderT.G].uint * alpha + 255) shr 8) + ((sg * cover + 255) shr 8))
-    p[OrderT.B] = ValueT(((p[OrderT.B].uint * alpha + 255) shr 8) + ((sb * cover + 255) shr 8))
-    p[OrderT.A] = ValueT(((p[OrderT.A].uint * alpha + 255) shr 8) + ((sa * cover + 255) shr 8))
+    p[OrderT.R] = cast[ValueT](((p[OrderT.R].uint * alpha + 255) shr 8) + ((sr * cover + 255) shr 8))
+    p[OrderT.G] = cast[ValueT](((p[OrderT.G].uint * alpha + 255) shr 8) + ((sg * cover + 255) shr 8))
+    p[OrderT.B] = cast[ValueT](((p[OrderT.B].uint * alpha + 255) shr 8) + ((sb * cover + 255) shr 8))
+    p[OrderT.A] = cast[ValueT](((p[OrderT.A].uint * alpha + 255) shr 8) + ((sa * cover + 255) shr 8))
   else:
-    p[OrderT.R] = ValueT((p[OrderT.R].uint * sa + sr * da + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((p[OrderT.G].uint * sa + sg * da + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((p[OrderT.B].uint * sa + sb * da + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa)
+    p[OrderT.R] = cast[ValueT]((p[OrderT.R].uint * sa + sr * da + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((p[OrderT.G].uint * sa + sg * da + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((p[OrderT.B].uint * sa + sb * da + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa)
 
 # Dca' = Sca.(1 - Da) + Dca.(1 - Sa)
 # Da'  = Sa + Da - 2.Sa.Da
@@ -234,10 +234,10 @@ proc RgbaXor_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, cov
     var
       s1a = baseMask - CalcT(sa)
       d1a = baseMask - CalcT(p[OrderT.A])
-    p[OrderT.R] = ValueT((p[OrderT.R].CalcT * s1a + sr.CalcT * d1a + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((p[OrderT.G].CalcT * s1a + sg.CalcT * d1a + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((p[OrderT.B].CalcT * s1a + sb.CalcT * d1a + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask div 2) shr (baseShift - 1)))
+    p[OrderT.R] = cast[ValueT]((p[OrderT.R].CalcT * s1a + sr.CalcT * d1a + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((p[OrderT.G].CalcT * s1a + sg.CalcT * d1a + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((p[OrderT.B].CalcT * s1a + sb.CalcT * d1a + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask div 2) shr (baseShift - 1)))
 
 # Dca' = Sca + Dca
 # Da'  = Sa + Da
@@ -262,10 +262,10 @@ proc RgbaPlus_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, co
       dg = CalcT(p[OrderT.G]) + sg.CalcT
       db = CalcT(p[OrderT.B]) + sb.CalcT
       da = CalcT(p[OrderT.A]) + sa.CalcT
-    p[OrderT.R] = ValueT(if dr > baseMask: baseMask else: dr)
-    p[OrderT.G] = ValueT(if dg > baseMask: baseMask else: dg)
-    p[OrderT.B] = ValueT(if db > baseMask: baseMask else: db)
-    p[OrderT.A] = ValueT(if da > baseMask: baseMask else: da)
+    p[OrderT.R] = cast[ValueT](if dr > baseMask: baseMask else: dr)
+    p[OrderT.G] = cast[ValueT](if dg > baseMask: baseMask else: dg)
+    p[OrderT.B] = cast[ValueT](if db > baseMask: baseMask else: db)
+    p[OrderT.A] = cast[ValueT](if da > baseMask: baseMask else: da)
 
 # Dca' = Dca - Sca
 # Da' = 1 - (1 - Sa).(1 - Da)
@@ -292,10 +292,10 @@ proc RgbaMinus_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, c
       dr = CalcT(p[OrderT.R]) - sr.CalcT
       dg = CalcT(p[OrderT.G]) - sg.CalcT
       db = CalcT(p[OrderT.B]) - sb.CalcT
-    p[OrderT.R] = ValueT(if dr > baseMask: 0.CalcT else: dr)
-    p[OrderT.G] = ValueT(if dg > baseMask: 0.CalcT else: dg)
-    p[OrderT.B] = ValueT(if db > baseMask: 0.CalcT else: db)
-    p[OrderT.A] = ValueT(sa + CalcT(p[OrderT.A]) - ((sa * CalcT(p[OrderT.A]) + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT](if dr > baseMask: 0.CalcT else: dr)
+    p[OrderT.G] = cast[ValueT](if dg > baseMask: 0.CalcT else: dg)
+    p[OrderT.B] = cast[ValueT](if db > baseMask: 0.CalcT else: db)
+    p[OrderT.A] = cast[ValueT](sa + CalcT(p[OrderT.A]) - ((sa * CalcT(p[OrderT.A]) + baseMask) shr baseShift))
 
 # Dca' = Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -323,10 +323,10 @@ proc RgbaMultiply_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa
       dr = CalcT(p[OrderT.R])
       dg = CalcT(p[OrderT.G])
       db = CalcT(p[OrderT.B])
-    p[OrderT.R] = ValueT((sr * dr + sr * d1a + dr * s1a + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((sg * dg + sg * d1a + dg * s1a + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((sb * db + sb * d1a + db * s1a + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT]((sr * dr + sr * d1a + dr * s1a + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((sg * dg + sg * d1a + dg * s1a + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((sb * db + sb * d1a + db * s1a + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa + p[OrderT.A] - ((sa * p[OrderT.A] + baseMask) shr baseShift))
 
 # Dca' = Sca + Dca - Sca.Dca
 # Da'  = Sa + Da - Sa.Da
@@ -352,10 +352,10 @@ proc RgbaScreen_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, 
       dg = CalcT(p[OrderT.G])
       db = CalcT(p[OrderT.B])
       da = CalcT(p[OrderT.A])
-    p[OrderT.R] = ValueT(sr + dr - ((sr * dr + baseMask) shr baseShift))
-    p[OrderT.G] = ValueT(sg + dg - ((sg * dg + baseMask) shr baseShift))
-    p[OrderT.B] = ValueT(sb + db - ((sb * db + baseMask) shr baseShift))
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT](sr + dr - ((sr * dr + baseMask) shr baseShift))
+    p[OrderT.G] = cast[ValueT](sg + dg - ((sg * dg + baseMask) shr baseShift))
+    p[OrderT.B] = cast[ValueT](sb + db - ((sb * db + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # if 2.Dca < Da
 #   Dca' = 2.Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
@@ -389,19 +389,19 @@ proc RgbaOverlay_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
       da   = CalcT(p[OrderT.A])
       sada = sa.CalcT * CalcT(p[OrderT.A])
 
-    p[OrderT.R] = ValueT((if 2.CalcT*dr < da:
+    p[OrderT.R] = cast[ValueT]((if 2.CalcT*dr < da:
         2.CalcT*sr.CalcT*dr + sr.CalcT*d1a + dr*s1a else:
         sada - 2.CalcT*(da - dr)*CalcT(sa - sr) + sr.CalcT*d1a + dr*s1a + baseMask) shr baseShift)
 
-    p[OrderT.G] = ValueT((if 2.CalcT*dg < da:
+    p[OrderT.G] = cast[ValueT]((if 2.CalcT*dg < da:
         2.CalcT*sg.CalcT*dg + sg.CalcT*d1a + dg*s1a else:
         sada - 2.CalcT*(da - dg)*CalcT(sa - sg) + sg.CalcT*d1a + dg*s1a + baseMask) shr baseShift)
 
-    p[OrderT.B] = ValueT((if 2.CalcT*db < da:
+    p[OrderT.B] = cast[ValueT]((if 2.CalcT*db < da:
         2.CalcT*sb.CalcT*db + sb.CalcT*d1a + db*s1a else:
         sada - 2.CalcT*(da - db)*CalcT(sa - sb) + sb.CalcT*d1a + db*s1a + baseMask) shr baseShift)
 
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # Dca' = min(Sca.Da, Dca.Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -431,10 +431,10 @@ proc RgbaDarken_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, 
       db  = CalcT(p[OrderT.B])
       da  = CalcT(p[OrderT.A])
 
-    p[OrderT.R] = ValueT((min(sr.CalcT * da, dr * sa.CalcT) + sr.CalcT * d1a + dr * s1a + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((min(sg.CalcT * da, dg * sa.CalcT) + sg.CalcT * d1a + dg * s1a + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((min(sb.CalcT * da, db * sa.CalcT) + sb.CalcT * d1a + db * s1a + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT]((min(sr.CalcT * da, dr * sa.CalcT) + sr.CalcT * d1a + dr * s1a + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((min(sg.CalcT * da, dg * sa.CalcT) + sg.CalcT * d1a + dg * s1a + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((min(sb.CalcT * da, db * sa.CalcT) + sb.CalcT * d1a + db * s1a + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # Dca' = max(Sca.Da, Dca.Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -465,10 +465,10 @@ proc RgbaLighten_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa,
       db  = CalcT(p[OrderT.B])
       da  = CalcT(p[OrderT.A])
 
-    p[OrderT.R] = ValueT((max(sr.CalcT * da, dr * sa.CalcT) + sr.CalcT * d1a + dr * s1a + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((max(sg.CalcT * da, dg * sa.CalcT) + sg.CalcT * d1a + dg * s1a + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((max(sb.CalcT * da, db * sa.CalcT) + sb.CalcT * d1a + db * s1a + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT]((max(sr.CalcT * da, dr * sa.CalcT) + sr.CalcT * d1a + dr * s1a + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((max(sg.CalcT * da, dg * sa.CalcT) + sg.CalcT * d1a + dg * s1a + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((max(sb.CalcT * da, db * sa.CalcT) + sb.CalcT * d1a + db * s1a + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # if Sca.Da + Dca.Sa >= Sa.Da
 #   Dca' = Sa.Da + Sca.(1 - Da) + Dca.(1 - Sa)
@@ -511,19 +511,19 @@ proc RgbaColorDodge_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, 
       sbda = LongT(sb.LongT * da)
       sada = LongT(sa.LongT * da)
 
-    p[OrderT.R] = ValueT(if srda + drsa >= sada:
+    p[OrderT.R] = cast[ValueT](if srda + drsa >= sada:
         (sada + sr.LongT * d1a + dr * s1a + baseMask) shr baseShift else:
         drsa div (baseMask - (sr.LongT shl baseShift) div sa.LongT) + ((sr.LongT * d1a + dr * s1a + baseMask) shr baseShift))
 
-    p[OrderT.G] = ValueT(if sgda + dgsa >= sada:
+    p[OrderT.G] = cast[ValueT](if sgda + dgsa >= sada:
         (sada + sg.LongT * d1a + dg * s1a + baseMask) shr baseShift else:
         dgsa div (baseMask - (sg.LongT shl baseShift) div sa.LongT) + ((sg.LongT * d1a + dg * s1a + baseMask) shr baseShift))
 
-    p[OrderT.B] = ValueT(if sbda + dbsa >= sada:
+    p[OrderT.B] = cast[ValueT](if sbda + dbsa >= sada:
         (sada + sb.LongT * d1a + db * s1a + baseMask) shr baseShift else:
         dbsa div (baseMask - (sb.LongT shl baseShift) div sa.LongT) + ((sb.LongT * d1a + db * s1a + baseMask) shr baseShift))
 
-    p[OrderT.A] = ValueT(sa.LongT + da - ((sa.LongT * da + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa.LongT + da - ((sa.LongT * da + baseMask) shr baseShift))
 
 # if Sca.Da + Dca.Sa <= Sa.Da
 #   Dca' = Sca.(1 - Da) + Dca.(1 - Sa)
@@ -567,19 +567,19 @@ proc RgbaColorBurn_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, s
       sbda = sb * da
       sada = sa * da
 
-    p[OrderT.R] = ValueT((if srda + drsa <= sada:
+    p[OrderT.R] = cast[ValueT]((if srda + drsa <= sada:
         sr * d1a + dr * s1a else:
         sa * (srda + drsa - sada) div sr + sr * d1a + dr * s1a + baseMask) shr baseShift)
 
-    p[OrderT.G] = ValueT((if sgda + dgsa <= sada:
+    p[OrderT.G] = cast[ValueT]((if sgda + dgsa <= sada:
         sg * d1a + dg * s1a else:
         sa * (sgda + dgsa - sada) div sg + sg * d1a + dg * s1a + baseMask) shr baseShift)
 
-    p[OrderT.B] = ValueT((if sbda + dbsa <= sada:
+    p[OrderT.B] = cast[ValueT]((if sbda + dbsa <= sada:
         sb * d1a + db * s1a else:
         sa * (sbda + dbsa - sada) div sb + sb * d1a + db * s1a + baseMask) shr baseShift)
 
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # if 2.Sca < Sa
 #    Dca' = 2.Sca.Dca + Sca.(1 - Da) + Dca.(1 - Sa)
@@ -614,19 +614,19 @@ proc RgbaHardLight_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, s
       da   = CalcT(p[OrderT.A])
       sada = CalcT(sa * da)
 
-    p[OrderT.R] = ValueT((if 2'u*sr < sa:
+    p[OrderT.R] = cast[ValueT]((if 2'u*sr < sa:
         2'u*sr*dr + sr*d1a + dr*s1a else:
         sada - 2.CalcT*(da - dr)*(sa - sr) + sr*d1a + dr*s1a + baseMask) shr baseShift)
 
-    p[OrderT.G] = ValueT((if 2'u*sg < sa:
+    p[OrderT.G] = cast[ValueT]((if 2'u*sg < sa:
         2'u*sg*dg + sg*d1a + dg*s1a else:
         sada - 2.CalcT*(da - dg)*(sa - sg) + sg*d1a + dg*s1a + baseMask) shr baseShift)
 
-    p[OrderT.B] = ValueT((if 2'u*sb < sa:
+    p[OrderT.B] = cast[ValueT]((if 2'u*sb < sa:
         2'u*sb*db + sb*d1a + db*s1a else:
         sada - 2.CalcT*(da - db)*(sa - sb) + sb*d1a + db*s1a + baseMask) shr baseShift)
 
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # if 2.Sca < Sa
 #   Dca' = Dca.(Sa + (1 - Dca/Da).(2.Sca - Sa)) + Sca.(1 - Da) + Dca.(1 - Sa)
@@ -671,10 +671,10 @@ proc RgbaSoftLight_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, r, g, b, a, c
     elif 8*db <= da: db = db*(sa + (1 - db/da)*(2*sb - sa)*(3 - 8*db/da)) + sb*(1 - da) + db*(1 - sa)
     else:            db = (db*sa + (sqrt(db/da)*da - db)*(2*sb - sa)) + sb*(1 - da) + db*(1 - sa)
 
-    p[OrderT.R] = ValueT(uround(dr * baseMask))
-    p[OrderT.G] = ValueT(uround(dg * baseMask))
-    p[OrderT.B] = ValueT(uround(db * baseMask))
-    p[OrderT.A] = ValueT(a + CalcT(p[OrderT.A]) - ((a * CalcT(p[OrderT.A]) + baseMask.CalcT) shr baseShift))
+    p[OrderT.R] = cast[ValueT](uround(dr * baseMask))
+    p[OrderT.G] = cast[ValueT](uround(dg * baseMask))
+    p[OrderT.B] = cast[ValueT](uround(db * baseMask))
+    p[OrderT.A] = cast[ValueT](a + CalcT(p[OrderT.A]) - ((a * CalcT(p[OrderT.A]) + baseMask.CalcT) shr baseShift))
 
 # Dca' = Sca + Dca - 2.min(Sca.Da, Dca.Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -700,10 +700,10 @@ proc RgbaDifference_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, 
       dg = CalcT(p[OrderT.G])
       db = CalcT(p[OrderT.B])
       da = CalcT(p[OrderT.A])
-    p[OrderT.R] = ValueT(sr + dr - ((2.CalcT * min(sr.CalcT*da, dr*sa.CalcT) + baseMask) shr baseShift))
-    p[OrderT.G] = ValueT(sg + dg - ((2.CalcT * min(sg.CalcT*da, dg*sa.CalcT) + baseMask) shr baseShift))
-    p[OrderT.B] = ValueT(sb + db - ((2.CalcT * min(sb.CalcT*da, db*sa.CalcT) + baseMask) shr baseShift))
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT](sr + dr - ((2.CalcT * min(sr.CalcT*da, dr*sa.CalcT) + baseMask) shr baseShift))
+    p[OrderT.G] = cast[ValueT](sg + dg - ((2.CalcT * min(sg.CalcT*da, dg*sa.CalcT) + baseMask) shr baseShift))
+    p[OrderT.B] = cast[ValueT](sb + db - ((2.CalcT * min(sb.CalcT*da, db*sa.CalcT) + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # Dca' = (Sca.Da + Dca.Sa - 2.Sca.Dca) + Sca.(1 - Da) + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -732,10 +732,10 @@ proc RgbaExclusion_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, s
       dg = CalcT(p[OrderT.G])
       db = CalcT(p[OrderT.B])
       da = CalcT(p[OrderT.A])
-    p[OrderT.R] = ValueT((sr.CalcT*da + dr*sa.CalcT - 2.CalcT*sr.CalcT*dr + sr.CalcT*d1a + dr*s1a + baseMask) shr baseShift)
-    p[OrderT.G] = ValueT((sg.CalcT*da + dg*sa.CalcT - 2.CalcT*sg.CalcT*dg + sg.CalcT*d1a + dg*s1a + baseMask) shr baseShift)
-    p[OrderT.B] = ValueT((sb.CalcT*da + db*sa.CalcT - 2.CalcT*sb.CalcT*db + sb.CalcT*d1a + db*s1a + baseMask) shr baseShift)
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT]((sr.CalcT*da + dr*sa.CalcT - 2.CalcT*sr.CalcT*dr + sr.CalcT*d1a + dr*s1a + baseMask) shr baseShift)
+    p[OrderT.G] = cast[ValueT]((sg.CalcT*da + dg*sa.CalcT - 2.CalcT*sg.CalcT*dg + sg.CalcT*d1a + dg*s1a + baseMask) shr baseShift)
+    p[OrderT.B] = cast[ValueT]((sb.CalcT*da + db*sa.CalcT - 2.CalcT*sb.CalcT*db + sb.CalcT*d1a + db*s1a + baseMask) shr baseShift)
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 proc RgbaContrast_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, cover: uint) {.cdecl.} =
   type
@@ -770,9 +770,9 @@ proc RgbaContrast_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa
   g = if g < 0: 0 else: g
   b = if b < 0: 0 else: b
 
-  p[OrderT.R] = ValueT(if r > da: da else: r)
-  p[OrderT.G] = ValueT(if g > da: da else: g)
-  p[OrderT.B] = ValueT(if b > da: da else: b)
+  p[OrderT.R] = cast[ValueT](if r > da: da else: r)
+  p[OrderT.G] = cast[ValueT](if g > da: da else: g)
+  p[OrderT.B] = cast[ValueT](if b > da: da else: b)
 
 # Dca' = (Da - Dca) * Sa + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -792,10 +792,10 @@ proc RgbaInvert_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, sa, 
       dg = CalcT(((da - p[OrderT.G]) * sa.CalcT + baseMask) shr baseShift)
       db = CalcT(((da - p[OrderT.B]) * sa.CalcT + baseMask) shr baseShift)
       s1a = baseMask - sa.CalcT
-    p[OrderT.R] = ValueT(dr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.G] = ValueT(dg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.B] = ValueT(db + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT](dr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.G] = cast[ValueT](dg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.B] = cast[ValueT](db + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 # Dca' = (Da - Dca) * Sca + Dca.(1 - Sa)
 # Da'  = Sa + Da - Sa.Da
@@ -822,10 +822,10 @@ proc RgbaInvertRgb_BlendPix[ColorT, OrderT, ValueT](p: ptr ValueT, sr, sg, sb, s
       dg = CalcT(((da - p[OrderT.G]) * sg.CalcT + baseMask) shr baseShift)
       db = CalcT(((da - p[OrderT.B]) * sb.CalcT + baseMask) shr baseShift)
       s1a = baseMask - sa.CalcT
-    p[OrderT.R] = ValueT(dr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.G] = ValueT(dg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.B] = ValueT(db + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
-    p[OrderT.A] = ValueT(sa + da - ((sa * da + baseMask) shr baseShift))
+    p[OrderT.R] = cast[ValueT](dr + ((p[OrderT.R].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.G] = cast[ValueT](dg + ((p[OrderT.G].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.B] = cast[ValueT](db + ((p[OrderT.B].CalcT * s1a + baseMask) shr baseShift))
+    p[OrderT.A] = cast[ValueT](sa + da - ((sa * da + baseMask) shr baseShift))
 
 type
   CompOpFunc[ValueT] = proc(p: ptr ValueT, sr, sg, sb, sa, cover: uint) {.cdecl.}
@@ -916,7 +916,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = getValueT(C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = getcast[ValueT](C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorClipToDstRgba[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -942,7 +942,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = getValueT(C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = getcast[ValueT](C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorRgbaPre[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -953,7 +953,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = getValueT(C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = getcast[ValueT](C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorClipToDstRgbaPre[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -974,7 +974,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getValueT(getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getcast[ValueT](getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -993,7 +993,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getValueT(getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getcast[ValueT](getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -1020,7 +1020,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getValueT(getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getcast[ValueT](getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgbaPre[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =

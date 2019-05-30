@@ -170,10 +170,10 @@ proc initRgba8*(r,g,b,a:int): Rgba8 {.inline.} =
 proc initRgba8*(c: Rgba): Rgba8 =
   type ValueT = getValueT(Rgba8)
   const baseMask = getBaseMask(Rgba8).float64
-  result.r = ValueT(uround(c.r * baseMask))
-  result.g = ValueT(uround(c.g * baseMask))
-  result.b = ValueT(uround(c.b * baseMask))
-  result.a = ValueT(uround(c.a * baseMask))
+  result.r = ValueT(uround(c.r * baseMask) and 0xFF)
+  result.g = ValueT(uround(c.g * baseMask) and 0xFF)
+  result.b = ValueT(uround(c.b * baseMask) and 0xFF)
+  result.a = ValueT(uround(c.a * baseMask) and 0xFF)
 
 proc initRgba8*(c: Rgba8, a: uint): Rgba8 =
   type ValueT = getValueT(Rgba8)
