@@ -138,8 +138,8 @@ proc gradient*(self: var Gray8, c: Gray8, k: float64): Gray8 =
     baseShift = getBaseShift(Gray8).CalcT
 
   let ik = uround(k * baseScale).CalcT
-  result.v = ValueT(CalcT(self.v) + (((CalcT(c.v) - CalcT(self.v)) * ik) shr baseShift))
-  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - CalcT(self.a)) * ik) shr baseShift))
+  result.v = cast[ValueT](CalcT(self.v) + (((CalcT(c.v) - CalcT(self.v)) * ik) shr baseShift))
+  result.a = cast[ValueT](CalcT(self.a) + (((CalcT(c.a) - CalcT(self.a)) * ik) shr baseShift))
 
 
 proc add*(self: var Gray8, c: Gray8, cover: uint) {.inline.} =
@@ -340,8 +340,8 @@ proc gradient*(self: var Gray16, c: Gray16, k: float64): Gray16 =
     baseShift = getBaseShift(Gray16)
 
   let ik = uround(k * baseScale).CalcT
-  result.v = ValueT(CalcT(self.v) + (((CalcT(c.v) - self.v) * ik) shr baseShift))
-  result.a = ValueT(CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
+  result.v = cast[ValueT](CalcT(self.v) + (((CalcT(c.v) - self.v) * ik) shr baseShift))
+  result.a = cast[ValueT](CalcT(self.a) + (((CalcT(c.a) - self.a) * ik) shr baseShift))
 
 proc add*(self: var Gray16, c: Gray16, cover: uint) {.inline.} =
   type

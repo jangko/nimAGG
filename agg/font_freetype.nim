@@ -650,8 +650,7 @@ proc prepareGlyph*(self: FontEngineFreetypeBase, glyphCode: int): bool =
   of glyph_ren_outline: result = self.prepareOutline()
   of glyph_ren_mono: result = self.prepareMono()
   of glyph_ren_gray8: result = self.prepareGray8()
-  else: return false
-
+  
 proc glyphIndex*(self: FontEngineFreetypeBase): int =
   int(self.mGlyphIndex)
 
@@ -678,6 +677,7 @@ proc writeGlyphTo*(self: FontEngineFreetypeBase, data: ptr uint8) =
     of glyph_data_outline:
       if self.mFlag32: self.mPath32.serialize(data)
       else: self.mPath16.serialize(data)
+    else: discard
 
 proc addKerning*(self: FontEngineFreetypeBase, first, second: int, x, y: var float64): bool =
   const renType = {glyph_ren_outline, glyph_ren_mono, glyph_ren_gray8}
