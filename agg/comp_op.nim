@@ -916,7 +916,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = getcast[ValueT](C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgba[C,O]]): typedesc = getValueT(C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorClipToDstRgba[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -942,7 +942,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = getcast[ValueT](C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorRgbaPre[C,O]]): typedesc = getValueT(C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorRgbaPre[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -953,7 +953,7 @@ type
 
 template getOrderT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = O
 template getColorT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = C
-template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = getcast[ValueT](C.type)
+template getValueT*[C,O](x: typedesc[CompOpAdaptorClipToDstRgbaPre[C,O]]): typedesc = getValueT(C.type)
 
 proc blendPix*[ColorT, OrderT, ValueT](x: typedesc[CompOpAdaptorClipToDstRgbaPre[ColorT, OrderT]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -974,7 +974,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getcast[ValueT](getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorRgba[B]]): typedesc = getValueT(getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -993,7 +993,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getcast[ValueT](getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgba[B]]): typedesc = getValueT(getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgba[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
@@ -1020,7 +1020,7 @@ type
 
 template getOrderT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getOrderT(B.type)
 template getColorT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getColorT(B.type)
-template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getcast[ValueT](getColorT(B.type))
+template getValueT*[B](x: typedesc[CompAdaptorClipToDstRgbaPre[B]]): typedesc = getValueT(getColorT(B.type))
 
 proc blendPix*[BlenderPre, ValueT](x: typedesc[CompAdaptorClipToDstRgbaPre[BlenderPre]],
   f: pointer, p: ptr ValueT, cr, cg, cb, ca, cover: uint) {.cdecl.} =
