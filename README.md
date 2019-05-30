@@ -73,6 +73,17 @@ if you want to use SDL instead of native API, compile like this:
 nim c -d:platform_sdl ex_lion
 ```
 
+On Linux and macOS, font renderers are freetype and AGG font renderer.
+On Windows, you get additional native windows truetype renderer.
+If you want to use freetype instead of windows native truetype renderer on windows platform,
+please use `use_freetype` compiler switch:
+
+```bash
+nim c -d:use_freetype ex_trans_curve1_ft
+nim c -d:use_freetype ex_trans_curve2_ft
+nim c -d:use_freetype ex_freetype_test
+```
+
 ## Dependencies
   * These are nimble packages needed to build nimAGG
     * [nimBMP](https://github.com/jangko/nimBMP)
