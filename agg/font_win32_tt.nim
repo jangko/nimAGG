@@ -95,7 +95,7 @@ proc dbl_to_plain_fx(d: float64): int {.inline.} =
 #  result = cast[ptr FIXED](k.addr)[]
 
 proc fx_to_dbl(p: FIXED): float64 {.inline.} =
-  result = float64(p.value) + float64(p.fract.uint16) * (1.0 / 65536.0)
+  result = float64(p.value) + float64(cast[uint16](p.fract)) * (1.0 / 65536.0)
 
 #proc fx_to_plain_int(fx: FIXED): int {.inline.} =
 #  result = int(cast[ptr int32](fx.unsafeAddr)[])
@@ -533,7 +533,6 @@ proc prepareGlyph*(self: FontEngineWin32TTBase, glyphCode: int): bool =
       self.mDataSize = self.mScanlinesAA.byteSize()
       self.mDataType = glyph_data_gray8
       return true
-    else: discard
   return false
 
 proc glyphIndex*(self: FontEngineWin32TTBase): int =
@@ -564,6 +563,7 @@ proc writeGlyphTo*(self: FontEngineWin32TTBase, data: ptr uint8) =
        self.mPath32.serialize(data)
      else:
        self.mPath16.serialize(data)
+    else: discard
 
 proc cmp(a, b: KERNINGPAIR): int =
   if a.wFirst != b.wFirst:
