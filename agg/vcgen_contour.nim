@@ -139,7 +139,5 @@ proc vertex*(self: var VcgenContour, x, y: var float64): uint =
       return pathCmdEndPoly or pathFlagsClose or pathFlagsCcw
     of stop:
       return pathCmdStop
-    else:
-      discard
 
   result = cmd

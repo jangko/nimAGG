@@ -229,8 +229,6 @@ proc render*[Renderer](self: var RasterizerOutlineAA[Renderer], closePolygon: bo
           ((dv.curr.diagonalQuadrant() == dv.next.diagonalQuadrant()).int shl 1)).uint
       of outlineMiterAccurateJoin:
         dv.flags = 0
-      else: discard
-
 
       if (dv.flags and 1) == 0 and self.mLineJoin != outlineRoundJoin:
          bisectrix(prev, dv.curr, dv.xb1, dv.yb1)

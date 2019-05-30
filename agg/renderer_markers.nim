@@ -384,7 +384,6 @@ proc marker*[Renderer,ColorT](self: var RendererMarkers[Renderer,ColorT], x, y, 
   of MarkerDash:             self.dash(x, y, r)
   of MarkerDot:              self.dot(x, y, r)
   of MarkerPixel:            self.pixel(x, y, r)
-  else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y: ptr T, r: T, shape: Marker) =
@@ -422,7 +421,6 @@ proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   of MarkerDash:             doWhile n != 0: self.dash(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
   of MarkerDot:              doWhile n != 0: self.dot(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
   of MarkerPixel:            doWhile n != 0: self.pixel(int(x[]), int(y[]), int(r)); inc x; inc y; dec n
-  else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, shape: Marker) =
@@ -446,7 +444,6 @@ proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   of MarkerDash:             doWhile n != 0: self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
   of MarkerDot:              doWhile n != 0: self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
   of MarkerPixel:            doWhile n != 0: self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; dec n
-  else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, fc: ptr ColorT, shape: Marker) =
@@ -470,7 +467,6 @@ proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   of MarkerDash:             doWhile n != 0: base(self).fillColor(fc[]); self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
   of MarkerDot:              doWhile n != 0: base(self).fillColor(fc[]); self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
   of MarkerPixel:            doWhile n != 0: base(self).fillColor(fc[]); self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; dec n
-  else: discard
 
 proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   n: int, x, y, r: ptr T, fc, lc: ptr ColorT, shape: Marker) =
@@ -494,4 +490,3 @@ proc markers*[Renderer,ColorT,T](self: var RendererMarkers[Renderer,ColorT],
   of MarkerDash:             doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.dash(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
   of MarkerDot:              doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.dot(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
   of MarkerPixel:            doWhile n != 0: base(self).fillColor(fc[]); base(self).lineColor(lc[]); self.pixel(int(x[]), int(y[]), int(r[])); inc x; inc y; inc r; inc fc; inc lc; dec n
-  else: discard

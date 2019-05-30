@@ -149,8 +149,6 @@ proc vertex*(self: var VcgenDash, x, y: var float64): uint =
       return cmd
     of stop:
       cmd = pathCmdStop
-    else:
-      discard
 
   result = pathCmdStop
 

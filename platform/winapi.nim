@@ -244,7 +244,7 @@ type
   TTTPOLYGONHEADER* = TTPOLYGONHEADER
   PTTPOLYGONHEADER* = ptr TTPOLYGONHEADER
 
-  APFXARRAY {.unchecked.} = array[0..0, POINTFX]
+  APFXARRAY = UncheckedArray[POINTFX]
 
   TTPOLYCURVE* {.final, pure.} = object
     wType*: int16
@@ -584,8 +584,8 @@ const
   WS_MINIMIZEBOX* = 0x00020000
   WS_OVERLAPPED* = 0
   WS_OVERLAPPEDWINDOW* = 0x00CF0000
-  WS_POPUP* = LONG(0x80000000)
-  WS_POPUPWINDOW* = LONG(0x80880000)
+  WS_POPUP* = cast[LONG](0x80000000'u32)
+  WS_POPUPWINDOW* = cast[LONG](0x80880000'u32)
   WS_SIZEBOX* = 0x00040000
   WS_SYSMENU* = 0x00080000
   WS_TABSTOP* = 0x00010000
@@ -1203,10 +1203,10 @@ const
   IDI_INFORMATION* = IDI_ASTERISK
 
 proc RGB*(r, g, b: int): COLORREF =
-  result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
+  result = cast[COLORREF](uint32(r) or (uint32(g) shl 8) or (uint32(b) shl 16))
 
 proc RGB*(r, g, b: range[0 .. 255]): COLORREF =
-  result = toU32(r) or (toU32(g) shl 8) or (toU32(b) shl 16)
+  result = cast[COLORREF](uint32(r) or (uint32(g) shl 8) or (uint32(b) shl 16))
 
 proc PALETTERGB*(r, g, b: range[0..255]): COLORREF =
   result = 0x02000000 or RGB(r, g, b)
@@ -1215,25 +1215,25 @@ proc PALETTEINDEX*(i: DWORD): COLORREF =
   result = COLORREF(0x01000000'i32 or i and 0xffff'i32)
 
 proc GetRValue*(rgb: COLORREF): int8 =
-  result = toU8(rgb)
+  result = cast[int8](rgb and 0xFF)
 
 proc GetGValue*(rgb: COLORREF): int8 =
-  result = toU8(rgb shr 8)
+  result = cast[int8]((rgb shr 8) and 0xFF)
 
 proc GetBValue*(rgb: COLORREF): int8 =
-  result = toU8(rgb shr 16)
+  result = cast[int8]((rgb shr 16) and 0xFF)
 
 proc HIBYTE*(w: int32): int8 =
-  result = toU8(w shr 8'i32 and 0x000000FF'i32)
+  result = cast[int8](w shr 8'i32 and 0x000000FF'i32)
 
 proc HIWORD*(L: int32): int16 =
-  result = toU16(L shr 16'i32 and 0x0000FFFF'i32)
+  result = cast[int16](L shr 16'i32 and 0x0000FFFF'i32)
 
 proc LOBYTE*(w: int32): int8 =
-  result = toU8(w)
+  result = cast[int8](w and 0xFF)
 
 proc LOWORD*(L: int32): int16 =
-  result = toU16(L)
+  result = cast[int16](L and 0xFFFF)
 
 proc HIWORD*(L: LPARAM): int =
   HIWORD(int32(L))
@@ -1245,7 +1245,7 @@ proc MAKELONG*(a, b: int32): LONG =
   result = a and 0x0000ffff'i32 or b shl 16'i32
 
 proc MAKEWORD*(a, b: int32): int16 =
-  result = toU16(a and 0xff'i32) or toU16(b shl 8'i32)
+  result = cast[int16](uint16(a and 0xff'i32) or uint16(b shl 8'i32))
 
 when defined(winUniCode):
   proc WC*(s: string): LPCWSTR =
@@ -1360,7 +1360,7 @@ proc GetModuleHandleW(lpModuleName: LPCWSTR): HMODULE {.stdcall, dynlib: "kernel
 template getModuleHandle*(moduleName: string): HMODULE =
   when defined(winUnicode): GetModuleHandleW(WC(moduleName))
   else: GetModuleHandleA(moduleName.cstring)
-  
+
 template getModuleHandle*(): HMODULE =
   when defined(winUnicode): GetModuleHandleW(nil)
   else: GetModuleHandleA(nil)

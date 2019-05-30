@@ -564,7 +564,6 @@ proc writeGlyphTo*(self: FontEngineWin32TTBase, data: ptr uint8) =
        self.mPath32.serialize(data)
      else:
        self.mPath16.serialize(data)
-    else: discard
 
 proc cmp(a, b: KERNINGPAIR): int =
   if a.wFirst != b.wFirst:

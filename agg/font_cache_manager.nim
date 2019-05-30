@@ -183,7 +183,6 @@ template fontCacheManager(name: untyped, FontEngine: typedesc) =
         self.mGray8Adaptor.init(data, gl.dataSize, x, y)
       of glyph_data_outline:
         self.mPathAdaptor.init(data, gl.dataSize, x, y, scale)
-      else: discard
 
   proc pathAdaptor*(self: name): var pathAdaptorT(FontEngine) = self.mPathAdaptor
   proc gray8Adaptor*(self: name): var gray8AdaptorT(FontEngine) = self.mGray8Adaptor

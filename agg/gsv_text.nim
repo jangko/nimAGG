@@ -604,8 +604,6 @@ proc vertex*(self: var GsvText, x, y: var float64): uint =
       x = self.mX
       y = self.mY
       return if yf != 0: pathCmdMoveTo else: pathCmdLineTo
-    else:
-      discard
   result = pathCmdStop
 
 proc textWidth*(self: var GsvText): float64 =

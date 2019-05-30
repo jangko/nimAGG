@@ -141,6 +141,5 @@ proc vertex*(self: var VcgenBspline, x, y: var float64): uint =
       return pathCmdEndPoly or self.mClosed
     of stop:
       return pathCmdStop
-    else:
-      discard
+
   result = cmd
